@@ -1,0 +1,68 @@
+{
+  "number": 34,
+  "category": "Application milestone",
+  "estimatedTime": "45 minutes",
+  "connection": "Session 33 completed the HTTP failure boundary. This final session follows one operation across domain validation, asynchronous EF Core persistence, query execution, and automated verification.",
+  "objectives": [
+    "Trace a TimeLedger operation across domain and persistence boundaries.",
+    "Keep validation ahead of state-changing work.",
+    "Propagate cancellation through asynchronous database operations.",
+    "Verify both successful persistence and failure atomicity with an integration test."
+  ],
+  "visuals": [
+    {"diagram":"pipeline","title":"One request, explicit stages","explanation":"Input flows through construction, validation, persistence, and a typed summary result."},
+    {"diagram":"invariant","title":"Validation guards persistence","explanation":"Invalid completion stops before the DbContext receives a new entity."},
+    {"diagram":"flowstate","title":"Result state controls the path","explanation":"A failed completion returns immediately; success continues with a known duration."},
+    {"diagram":"tests","title":"Integration checks the boundary","explanation":"A real SQLite in-memory database verifies mapping, saving, querying, and the no-write failure case."}
+  ],
+  "preQuiz": [
+    {"prompt":"When should persistence begin?","options":["After domain validation succeeds","Before constructing the domain object","After ignoring the completion result"],"correct":0,"explanation":"Validation must protect the state-changing boundary."},
+    {"prompt":"What does an in-memory SQLite test add beyond a mocked repository?","options":["Real provider mapping and query execution","A production database server","Automatic proof of every HTTP behavior"],"correct":0,"explanation":"It exercises EF Core against the actual SQLite provider without external infrastructure."},
+    {"prompt":"Where should the cancellation token travel?","options":["Into the asynchronous persistence operation","Only into synchronous constructors","Nowhere once validation succeeds"],"correct":0,"explanation":"Passing the token lets the database operation cooperate with cancellation."}
+  ],
+  "concept": [
+    {"title":"Compose previously learned boundaries","paragraphs":["The workflow does not invent a second validation rule. It creates the domain object and delegates completion to EntryCompletion.","Only a successful Result permits mapping to a persistence entity."],"code":"Result<TimeSpan> completion = EntryCompletion.TryComplete(entry, clockedOutAt);\nif (!completion.IsSuccess) return Result<WorkSummary>.Failure(completion.Error!);"},
+    {"title":"Persist after the invariant holds","paragraphs":["The EF Core entity represents storage shape, while TimeEntry remains responsible for domain behavior.","SaveChangesAsync receives the caller's cancellation token, keeping asynchronous control explicit."],"code":"db.TimeEntries.Add(entity);\nawait db.SaveChangesAsync(cancellationToken);"},
+    {"title":"Verify outcome and atomicity","paragraphs":["The success test queries through the provider and checks the stored clock-out value.","The failure test confirms an invalid completion produces a failure result and leaves the table empty."],"code":"Assert.False(result.IsSuccess);\nAssert.Empty(await db.TimeEntries.ToListAsync());"}
+  ],
+  "lab": {
+    "objective": "Build and verify the integrated record-completed-entry workflow.",
+    "startingCondition": "Sessions 01–33 are complete; domain validation, result values, async methods, EF Core, SQLite queries, and tests are available.",
+    "steps": [
+      "Predict which stages execute for valid and invalid clock-out times.",
+      "Add TimeEntryWorkflow with TimeLedgerDbContext supplied by constructor injection.",
+      "Delegate completion to EntryCompletion and return early on failure.",
+      "Map successful domain state to TimeEntryEntity and save asynchronously with cancellation.",
+      "Add SQLite integration tests for successful persistence and failure atomicity.",
+      "Run the complete Release build, test suite, application, and site validator."
+    ],
+    "expectedBehavior": "A valid eight-hour entry is persisted and returned as WorkSummary; an invalid clock-out returns failure and persists nothing; 64 tests pass.",
+    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release && npm test"
+  },
+  "expectedFiles": [
+    {"path":"src/TimeLedger.Infrastructure/TimeEntryWorkflow.cs","action":"Add","why":"Compose domain validation and EF Core persistence."},
+    {"path":"tests/TimeLedger.Domain.Tests/TimeEntryWorkflowTests.cs","action":"Add","why":"Verify the integrated success and failure paths with SQLite."},
+    {"path":"site/data/sessions/session-34.json","action":"Add","why":"Publish the final lesson, lab, and quiz."}
+  ],
+  "commit": "session-34: integrate and verify the time entry workflow",
+  "review": [
+    "Domain validation runs before persistence.",
+    "Failure returns without adding or saving an entity.",
+    "Persistence models do not replace domain behavior.",
+    "Cancellation reaches SaveChangesAsync.",
+    "Tests use a real relational provider without external services.",
+    "The full solution and course site pass validation."
+  ],
+  "postQuiz": [
+    {"prompt":"Why does the workflow call EntryCompletion instead of duplicating its checks?","options":["To keep one authoritative domain rule","To make EF Core validate timestamps","To avoid returning a result"],"correct":0,"explanation":"Delegation prevents validation rules from drifting across layers."},
+    {"prompt":"What proves the invalid workflow is atomic in this lab?","options":["The failure result and empty table","The entity has a generated ID","The query uses OrderBy"],"correct":0,"explanation":"No persisted row remains after the rejected operation."},
+    {"prompt":"What boundary does ToListAsync cross?","options":["Query description to provider execution and materialized results","Domain object to HTTP request","Task to dedicated thread"],"correct":0,"explanation":"Materialization causes the provider to execute the composed query."}
+  ],
+  "reflections": [
+    "Which session supplied each part of the final workflow?",
+    "Where would logging and an HTTP DTO map around this workflow?",
+    "Which failures belong in Result and which should still propagate as exceptions?"
+  ],
+  "whatBreaks": "Removing domain validation permits invalid persistence. Removing SaveChangesAsync makes successful results disagree with stored state. Removing the cancellation token prevents cooperative cancellation at the database boundary. Removing the integration tests allows mapping, provider translation, or atomicity regressions to escape detection.",
+  "summary": "The completed workflow composes domain invariants, result-based expected failure, asynchronous persistence, cancellation, relational query execution, and integration testing without collapsing their boundaries."
+}
