@@ -1,0 +1,170 @@
+{
+  "number": 8,
+  "category": "parameter passing modes",
+  "estimatedTime": "40 minutes",
+  "connection": "Session 7 established the prerequisite model. This session applies it to parameter passing modes with observable TimeLedger examples.",
+  "objectives": [
+    "Explain ordinary parameters copy their argument value, while ref, out, and in make aliasing or initialization explicit.",
+    "Predict behavior before running a focused parameter passing modes example.",
+    "Apply parameter passing with ref, out, and in without weakening existing domain invariants.",
+    "Verify the behavior with automated tests."
+  ],
+  "visuals": [
+    {
+      "diagram": "call",
+      "title": "State before the operation",
+      "explanation": "Start by identifying the values, identities, and capabilities involved in parameter passing modes."
+    },
+    {
+      "diagram": "frame",
+      "title": "The operation boundary",
+      "explanation": "Follow what crosses the boundary; C# syntax makes the permitted operation explicit."
+    },
+    {
+      "diagram": "return",
+      "title": "State after the operation",
+      "explanation": "Compare the resulting state with the prediction instead of relying on surface syntax."
+    },
+    {
+      "diagram": "signature",
+      "title": "Contract at the API edge",
+      "explanation": "Choose the narrowest contract that communicates what callers may safely do."
+    }
+  ],
+  "preQuiz": [
+    {
+      "prompt": "Which approach best explains parameter passing with ref, out, and in?",
+      "options": [
+        "ordinary parameters copy their argument value, while ref, out, and in make aliasing or initialization explicit",
+        "All types behave identically",
+        "Runtime behavior is unrelated to the declared contract"
+      ],
+      "correct": 0,
+      "explanation": "The accurate model distinguishes identity, value, and API capability."
+    },
+    {
+      "prompt": "Why predict before running the example?",
+      "options": [
+        "To make the mental model testable",
+        "To avoid writing tests",
+        "To disable compiler checks"
+      ],
+      "correct": 0,
+      "explanation": "A prediction exposes assumptions that output and tests can confirm or correct."
+    },
+    {
+      "prompt": "What should guide the public parameter type?",
+      "options": [
+        "The minimum capability the method needs",
+        "The most concrete type available",
+        "The longest type name"
+      ],
+      "correct": 0,
+      "explanation": "A narrow contract reduces coupling while retaining required operations."
+    }
+  ],
+  "concept": [
+    {
+      "title": "Build the behavioral model",
+      "paragraphs": [
+        "The central rule is that ordinary parameters copy their argument value, while ref, out, and in make aliasing or initialization explicit.",
+        "Names and syntax matter because they communicate whether code copies, aliases, enumerates, compares, or constrains a value."
+      ],
+      "code": "ParameterExamples.TryParseHours(\"7.5\", out decimal hours);\nParameterExamples.AddHour(ref hours);"
+    },
+    {
+      "title": "Program to the required capability",
+      "paragraphs": [
+        "A caller should not need to provide more capability than the operation consumes.",
+        "Concrete implementations remain useful at construction boundaries; interfaces and generic contracts keep consuming code focused."
+      ],
+      "code": "// Prefer the smallest contract that supports the operation.\nParameterExamples.TryParseHours(\"7.5\", out decimal hours);"
+    },
+    {
+      "title": "Verify cause and effect",
+      "paragraphs": [
+        "The lab changes one behavior at a time and uses tests to preserve the observation.",
+        "If the prediction differs from the result, explain the language rule before continuing."
+      ],
+      "code": "dotnet test TimeLedger.sln --configuration Release"
+    }
+  ],
+  "lab": {
+    "objective": "Add a focused TimeLedger example that demonstrates parameter passing with ref, out, and in.",
+    "startingCondition": "Sessions 01–07 are complete and the solution builds with all existing tests passing.",
+    "steps": [
+      "Read the starting test and predict the result using the session mental model.",
+      "Add src/TimeLedger.Domain/ParameterExamples.cs with the smallest API needed for the example.",
+      "Add tests/TimeLedger.Domain.Tests/ParameterExamplesTests.cs to check the important before-and-after behavior.",
+      "Run the focused tests, then run the complete Release test suite.",
+      "Review whether each parameter and return type exposes only the capability it needs."
+    ],
+    "expectedBehavior": "The new tests demonstrate ordinary parameters copy their argument value, while ref, out, and in make aliasing or initialization explicit; all existing behavior remains green.",
+    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+  },
+  "expectedFiles": [
+    {
+      "path": "src/TimeLedger.Domain/ParameterExamples.cs",
+      "action": "Add",
+      "why": "Provide the canonical parameter passing modes example."
+    },
+    {
+      "path": "tests/TimeLedger.Domain.Tests/ParameterExamplesTests.cs",
+      "action": "Add",
+      "why": "Lock the observed language behavior into executable checks."
+    },
+    {
+      "path": "site/data/sessions/session-08.json",
+      "action": "Add",
+      "why": "Publish the synchronized lesson, lab, and quiz."
+    }
+  ],
+  "commit": "session-08: teach ref out and in parameters",
+  "review": [
+    "The example isolates one primary concept.",
+    "Public types express the minimum required capability.",
+    "Names describe behavior rather than implementation trivia.",
+    "Tests cover the important cause-and-effect relationship.",
+    "Nullable analysis remains enabled with no warnings.",
+    "The entire solution builds and all tests pass."
+  ],
+  "postQuiz": [
+    {
+      "prompt": "What did the lab establish about parameter passing with ref, out, and in?",
+      "options": [
+        "ordinary parameters copy their argument value, while ref, out, and in make aliasing or initialization explicit",
+        "The compiler cannot describe the behavior",
+        "Tests replace the need for a mental model"
+      ],
+      "correct": 0,
+      "explanation": "The test makes the language rule observable and repeatable."
+    },
+    {
+      "prompt": "Why run the entire suite after the focused test?",
+      "options": [
+        "To detect regressions across cumulative code",
+        "To change test ordering",
+        "To avoid building"
+      ],
+      "correct": 0,
+      "explanation": "The course application grows cumulatively, so earlier guarantees must remain intact."
+    },
+    {
+      "prompt": "When should a concrete collection or implementation leak into an API?",
+      "options": [
+        "Only when its specific capability is part of the contract",
+        "Whenever it is convenient",
+        "For every read-only operation"
+      ],
+      "correct": 0,
+      "explanation": "Expose concrete capability only when callers genuinely need it."
+    }
+  ],
+  "reflections": [
+    "How would you explain parameter passing with ref, out, and in without using a memory-location shortcut?",
+    "Which compiler error or test most clearly reveals the contract?",
+    "Where could an unnecessarily concrete type make future change harder?"
+  ],
+  "whatBreaks": "Removing the new domain example removes the executable model for parameter passing modes. Removing its tests allows subtle changes to assignment, equality, enumeration, or generic contracts to pass unnoticed. Widening the API unnecessarily gives callers capabilities the operation does not need.",
+  "summary": "This session established that ordinary parameters copy their argument value, while ref, out, and in make aliasing or initialization explicit. The TimeLedger example, tests, and API review turn that rule into durable engineering practice."
+}
