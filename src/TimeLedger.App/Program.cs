@@ -6,7 +6,6 @@ DateTimeOffset shiftEnd = shiftStart.AddHours(8);
 TimeEntry entry = new("worker-001", shiftStart);
 entry.Complete(shiftEnd);
 
-Console.WriteLine("TimeLedger sample");
+Console.WriteLine("TimeLedger course application");
 Console.WriteLine($"Worker: {entry.WorkerId}");
 Console.WriteLine($"Duration: {entry.GetDuration().TotalHours:F2} hours");
-

@@ -7,7 +7,7 @@ menuButton?.addEventListener("click", () => {
   navigation?.toggleAttribute("data-open", !expanded);
 });
 
-document.querySelectorAll(".reveal-card > button").forEach((button) => {
+document.querySelectorAll(".reveal-card > button, .visual-card > button").forEach((button) => {
   button.addEventListener("click", () => {
     const panel = button.nextElementSibling;
     const expanded = button.getAttribute("aria-expanded") === "true";
@@ -30,10 +30,12 @@ document.querySelectorAll("[data-check-answer]").forEach((button) => {
       return;
     }
     const correct = chosen.value === button.dataset.correct;
-    feedback.textContent = correct
-      ? "Correct. Prediction exposes the learner's current mental model."
-      : "Not quite. A strong question asks for a prediction that can be compared with observed behavior.";
+    const explanation = feedback.dataset.explanation;
+    feedback.textContent = explanation
+      ? `${correct ? "Correct." : "Not quite."} ${explanation}`
+      : correct
+        ? "Correct. Prediction exposes the learner's current mental model."
+        : "Not quite. A strong question asks for a prediction that can be compared with observed behavior.";
     feedback.dataset.state = correct ? "correct" : "incorrect";
   });
 });
-

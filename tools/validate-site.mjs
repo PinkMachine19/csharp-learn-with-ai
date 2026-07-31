@@ -42,7 +42,7 @@ if (manifest) {
   if (new Set(sessions.map((session) => session.id)).size !== sessions.length) errors.push("Duplicate session IDs exist");
   if (new Set(sessions.map((session) => session.slug)).size !== sessions.length) errors.push("Duplicate session slugs exist");
   if (layers.length !== 9) errors.push(`Expected 9 curriculum layers, found ${layers.length}`);
-  sessions.forEach((session, index) => {
+  for (const [index, session] of sessions.entries()) {
     const expected = index + 1;
     if (session.number !== expected) errors.push(`Session sequence breaks at ${session.id}`);
     if (session.prerequisiteSession !== (expected === 1 ? null : expected - 1)) errors.push(`Unexpected prerequisite for ${session.id}`);
@@ -52,10 +52,11 @@ if (manifest) {
     if (!Array.isArray(session.filesExpectedToChange)) errors.push(`${session.id} filesExpectedToChange must be an array`);
     if (session.completionStatus === "complete") {
       for (const field of ["lessonPath", "labPath", "quizPath"]) {
-        access(path.join(dist, session[field])).catch(() => errors.push(`${session.id} completed ${field} does not exist`));
+        try { await access(path.join(dist, session[field])); }
+        catch { errors.push(`${session.id} completed ${field} does not exist`); }
       }
     }
-  });
+  }
 }
 
 const htmlFiles = (await walk(dist)).filter((file) => file.endsWith(".html"));
@@ -89,6 +90,21 @@ if (!quizPage.includes("data-check-answer") || !quizPage.includes('role="status"
 if (!quizPage.includes("reveal-card") || !quizPage.includes('aria-expanded="false"')) errors.push("Reveal interaction contract is incomplete");
 const script = await readFile(path.join(dist, "assets", "app.js"), "utf8");
 if (!script.includes("dataset.correct") || !script.includes("aria-expanded")) errors.push("Interaction JavaScript is incomplete");
+
+const requiredLessonHeadings = [
+  "1. Learning Objectives", "2. Pre-Coding Quiz", "3. The Concept", "4. Lab",
+  "5. Expected Files Changed", "6. Commit Checkpoint", "7. Code Review Checklist",
+  "8. Post-Coding Quiz", "9. Reflection Questions", "10. What Breaks If This Code Is Removed?",
+  "11. What C#/.NET Concept Was Learned Today?"
+];
+for (const session of manifest.sessions.filter((item) => item.completionStatus === "complete")) {
+  const lesson = await readFile(path.join(dist, session.lessonPath), "utf8");
+  for (const heading of requiredLessonHeadings) if (!lesson.includes(`>${heading}</h2>`)) errors.push(`${session.id} is missing section: ${heading}`);
+  const svgCount = (lesson.match(/<svg /g) || []).length;
+  if (svgCount < 4 || svgCount > 8) errors.push(`${session.id} must contain 4–8 opening SVGs; found ${svgCount}`);
+  if (!lesson.includes('aria-label="Session navigation"')) errors.push(`${session.id} is missing session navigation`);
+  if (!lesson.includes(session.suggestedCommitMessage)) errors.push(`${session.id} commit checkpoint does not match the manifest`);
+}
 
 if (errors.length) {
   console.error(`Validation failed with ${errors.length} issue(s):`);
