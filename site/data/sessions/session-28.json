@@ -1,0 +1,170 @@
+{
+  "number": 28,
+  "category": "test structure",
+  "estimatedTime": "40 minutes",
+  "connection": "Session 27 supplies the required foundation. This session extends TimeLedger with test structure while keeping execution observable and deterministic.",
+  "objectives": [
+    "Explain why Arrange creates the scenario, Act performs one behavior, and Assert checks its observable result.",
+    "Trace the operation across its execution or application boundary.",
+    "Implement the focused unit tests and arrange–act–assert lab.",
+    "Verify success and failure behavior with automated checks."
+  ],
+  "visuals": [
+    {
+      "diagram": "tests",
+      "title": "Start at the caller",
+      "explanation": "Identify the input, owned state, and caller expectation for test structure."
+    },
+    {
+      "diagram": "pipeline",
+      "title": "Cross the boundary",
+      "explanation": "Follow the explicit contract rather than assuming hidden runtime behavior."
+    },
+    {
+      "diagram": "comparison",
+      "title": "Observe execution",
+      "explanation": "Execution timing and collaborator behavior become visible through controlled examples."
+    },
+    {
+      "diagram": "feedback",
+      "title": "Return a stable outcome",
+      "explanation": "The caller receives a documented value, exception, cancellation, or HTTP result."
+    }
+  ],
+  "preQuiz": [
+    {
+      "prompt": "Which statement best describes unit tests and arrange–act–assert?",
+      "options": [
+        "Arrange creates the scenario, Act performs one behavior, and Assert checks its observable result",
+        "The runtime always creates a new operating-system thread",
+        "Implementation details should be exposed to every caller"
+      ],
+      "correct": 0,
+      "explanation": "The session rule separates the public contract from a common implementation shortcut."
+    },
+    {
+      "prompt": "What should an integration boundary make explicit?",
+      "options": [
+        "Inputs, dependencies, execution, and outcomes",
+        "Only private field names",
+        "Unrelated infrastructure details"
+      ],
+      "correct": 0,
+      "explanation": "Explicit boundaries are easier to reason about, test, and change."
+    },
+    {
+      "prompt": "Why test a failure path?",
+      "options": [
+        "Failure behavior is part of the contract",
+        "It prevents successful code from compiling",
+        "Only failure tests are valuable"
+      ],
+      "correct": 0,
+      "explanation": "A dependable API specifies both successful and unsuccessful outcomes."
+    }
+  ],
+  "concept": [
+    {
+      "title": "Use the accurate execution model",
+      "paragraphs": [
+        "The governing rule is that Arrange creates the scenario, Act performs one behavior, and Assert checks its observable result.",
+        "Avoid equating an abstraction with one possible implementation detail; reason from its documented contract."
+      ],
+      "code": "// Arrange\n// Act\n// Assert"
+    },
+    {
+      "title": "Keep boundaries explicit",
+      "paragraphs": [
+        "Dependencies, cancellation, persistence, and transport values should cross named boundaries.",
+        "This makes ownership clear and supplies seams for deterministic tests."
+      ],
+      "code": "// The boundary exposes intent.\n// Arrange"
+    },
+    {
+      "title": "Verify observable outcomes",
+      "paragraphs": [
+        "Focused tests control inputs and collaborators so timing and failure assertions stay stable.",
+        "The full suite checks that new infrastructure has not weakened the domain model."
+      ],
+      "code": "dotnet test TimeLedger.sln --configuration Release"
+    }
+  ],
+  "lab": {
+    "objective": "Implement one production-sized slice demonstrating unit tests and arrange–act–assert.",
+    "startingCondition": "Sessions 01–27 are complete and the solution is green.",
+    "steps": [
+      "Predict one success outcome and one failure, cancellation, or boundary outcome.",
+      "Add the implementation centered on EntryRecorder.cs.",
+      "Add EntryRecorderTests.cs with deterministic Arrange–Act–Assert checks.",
+      "Run the focused checks and inspect the relevant returned value or state.",
+      "Run the full Release build, test suite, and site validator."
+    ],
+    "expectedBehavior": "The checks establish that Arrange creates the scenario, Act performs one behavior, and Assert checks its observable result; all earlier tests continue to pass.",
+    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+  },
+  "expectedFiles": [
+    {
+      "path": "src/TimeLedger.Domain/EntryRecorder.cs",
+      "action": "Add or integrate",
+      "why": "Provide the canonical test structure implementation; infrastructure sessions place the equivalent file in their project."
+    },
+    {
+      "path": "tests/TimeLedger.Domain.Tests/EntryRecorderTests.cs",
+      "action": "Add or integrate",
+      "why": "Verify the new contract with controlled inputs."
+    },
+    {
+      "path": "site/data/sessions/session-28.json",
+      "action": "Add",
+      "why": "Publish synchronized lesson, lab, and quiz material."
+    }
+  ],
+  "commit": "session-28: teach unit tests and arrange act assert",
+  "review": [
+    "The abstraction is not confused with one runtime implementation.",
+    "Inputs and dependencies cross explicit boundaries.",
+    "Async methods return Task and accept cancellation where relevant.",
+    "Persistence and HTTP models remain separate from domain objects.",
+    "Tests are deterministic and cover a meaningful failure path.",
+    "The complete solution builds without warnings."
+  ],
+  "postQuiz": [
+    {
+      "prompt": "What did this session establish about unit tests and arrange–act–assert?",
+      "options": [
+        "Arrange creates the scenario, Act performs one behavior, and Assert checks its observable result",
+        "The compiler removes all failure cases",
+        "Every boundary should use the same concrete type"
+      ],
+      "correct": 0,
+      "explanation": "The implementation and tests demonstrate the stated contract."
+    },
+    {
+      "prompt": "Where is an asynchronous exception observed?",
+      "options": [
+        "When its faulted task is awaited",
+        "Only when a thread is manually created",
+        "Before the operation starts"
+      ],
+      "correct": 0,
+      "explanation": "Await unwraps and rethrows the task failure at the awaiting boundary."
+    },
+    {
+      "prompt": "Why separate transport or persistence models from domain behavior?",
+      "options": [
+        "Each boundary can evolve without distorting domain invariants",
+        "To duplicate every rule",
+        "To disable validation"
+      ],
+      "correct": 0,
+      "explanation": "Mapping keeps responsibilities and change reasons distinct."
+    }
+  ],
+  "reflections": [
+    "Which assumption about test structure did the executable example confirm or correct?",
+    "Where does failure cross the boundary, and who should handle it?",
+    "Which dependency can a test replace with a controlled implementation?"
+  ],
+  "whatBreaks": "Removing EntryRecorder.cs removes the canonical example for test structure. Removing its tests makes timing, failure, persistence, or HTTP behavior easier to regress. Hiding the boundary behind global state would also make the behavior harder to observe and control.",
+  "summary": "This session established that Arrange creates the scenario, Act performs one behavior, and Assert checks its observable result. Explicit boundaries and deterministic checks make the application behavior dependable."
+}
