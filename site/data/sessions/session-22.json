@@ -1,0 +1,170 @@
+{
+  "number": 22,
+  "category": "query execution timing",
+  "estimatedTime": "40 minutes",
+  "connection": "Session 21 provides the prerequisite vocabulary. This session develops query execution timing through a focused TimeLedger change.",
+  "objectives": [
+    "Explain why IEnumerable queries normally execute when enumerated, ToList materializes a snapshot, and IQueryable records an expression for a provider.",
+    "Trace control and data across the new API boundary.",
+    "Implement deferred execution, materialization, and query sources in the canonical application.",
+    "Prove the contract with focused and regression tests."
+  ],
+  "visuals": [
+    {
+      "diagram": "pipeline",
+      "title": "Identify the boundary",
+      "explanation": "Locate the state and behavior owned by the query execution timing example."
+    },
+    {
+      "diagram": "feedback",
+      "title": "Follow the dependency",
+      "explanation": "Arrows show which component knows about or calls the next component."
+    },
+    {
+      "diagram": "path",
+      "title": "Observe the behavior",
+      "explanation": "Trace one concrete input to its output before generalizing the rule."
+    },
+    {
+      "diagram": "instances",
+      "title": "Protect the contract",
+      "explanation": "The public contract should preserve valid state and expose only required capability."
+    }
+  ],
+  "preQuiz": [
+    {
+      "prompt": "Which statement accurately frames deferred execution, materialization, and query sources?",
+      "options": [
+        "IEnumerable queries normally execute when enumerated, ToList materializes a snapshot, and IQueryable records an expression for a provider",
+        "Every implementation must expose all internal details",
+        "The runtime ignores declared contracts"
+      ],
+      "correct": 0,
+      "explanation": "The session rule connects the language feature to an observable design consequence."
+    },
+    {
+      "prompt": "Where should a required collaborator be supplied?",
+      "options": [
+        "At an explicit construction or method boundary",
+        "Through hidden global state",
+        "By searching unrelated objects"
+      ],
+      "correct": 0,
+      "explanation": "Explicit boundaries make dependencies visible and testable."
+    },
+    {
+      "prompt": "What makes a prediction useful?",
+      "options": [
+        "It names the expected cause and effect",
+        "It avoids executing tests",
+        "It depends on implementation trivia"
+      ],
+      "correct": 0,
+      "explanation": "A causal prediction can be compared with output and corrected."
+    }
+  ],
+  "concept": [
+    {
+      "title": "Name the contract",
+      "paragraphs": [
+        "The governing rule is that IEnumerable queries normally execute when enumerated, ToList materializes a snapshot, and IQueryable records an expression for a provider.",
+        "Start with what callers need to know, then keep incidental implementation details behind the boundary."
+      ],
+      "code": "IEnumerable<TimeEntry> query = entries.Where(e => !e.IsOpen);\nList<TimeEntry> snapshot = query.ToList();"
+    },
+    {
+      "title": "Trace dependencies and control",
+      "paragraphs": [
+        "Follow calls from the public operation through each collaborator or transformation.",
+        "A clear direction reduces branching, duplication, and accidental coupling."
+      ],
+      "code": "// Read the pipeline from caller to result.\nIEnumerable<TimeEntry> query = entries.Where(e => !e.IsOpen);"
+    },
+    {
+      "title": "Make behavior executable",
+      "paragraphs": [
+        "Focused tests demonstrate the new rule with small deterministic values.",
+        "The complete suite then confirms the cumulative application still honors earlier contracts."
+      ],
+      "code": "dotnet test TimeLedger.sln --configuration Release"
+    }
+  ],
+  "lab": {
+    "objective": "Add a compact TimeLedger example for deferred execution, materialization, and query sources.",
+    "startingCondition": "Sessions 01–21 are complete and all existing tests pass.",
+    "steps": [
+      "Predict the successful path and one boundary or failure case.",
+      "Add src/TimeLedger.Domain/DeferredEntryQuery.cs with a narrow public contract.",
+      "Add tests/TimeLedger.Domain.Tests/DeferredEntryQueryTests.cs for the prediction and boundary case.",
+      "Run the focused tests and inspect the observed values or control flow.",
+      "Run the full Release build and test suite."
+    ],
+    "expectedBehavior": "The new tests establish that IEnumerable queries normally execute when enumerated, ToList materializes a snapshot, and IQueryable records an expression for a provider; prior behavior remains unchanged.",
+    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+  },
+  "expectedFiles": [
+    {
+      "path": "src/TimeLedger.Domain/DeferredEntryQuery.cs",
+      "action": "Add",
+      "why": "Provide the canonical query execution timing example."
+    },
+    {
+      "path": "tests/TimeLedger.Domain.Tests/DeferredEntryQueryTests.cs",
+      "action": "Add",
+      "why": "Verify the contract and its boundary case."
+    },
+    {
+      "path": "site/data/sessions/session-22.json",
+      "action": "Add",
+      "why": "Publish synchronized lesson, lab, and quiz material."
+    }
+  ],
+  "commit": "session-22: teach deferred execution and materialization",
+  "review": [
+    "The public API states one coherent responsibility.",
+    "Dependencies and state changes are explicit.",
+    "The example remains deterministic and compact.",
+    "Tests cover success and a meaningful boundary.",
+    "No nullable warnings are introduced.",
+    "The complete suite passes."
+  ],
+  "postQuiz": [
+    {
+      "prompt": "What did the implementation prove about deferred execution, materialization, and query sources?",
+      "options": [
+        "IEnumerable queries normally execute when enumerated, ToList materializes a snapshot, and IQueryable records an expression for a provider",
+        "Design contracts cannot be tested",
+        "Every caller needs concrete implementation details"
+      ],
+      "correct": 0,
+      "explanation": "The passing tests make the stated rule observable."
+    },
+    {
+      "prompt": "Why keep the public contract narrow?",
+      "options": [
+        "To reduce coupling and preserve implementation freedom",
+        "To prevent tests",
+        "To make all operations mutable"
+      ],
+      "correct": 0,
+      "explanation": "A narrow contract communicates capability without leaking unrelated details."
+    },
+    {
+      "prompt": "Why run regression tests?",
+      "options": [
+        "The application grows cumulatively",
+        "Only the newest file can compile",
+        "Test count changes runtime behavior"
+      ],
+      "correct": 0,
+      "explanation": "Earlier instructional guarantees must remain true after each session."
+    }
+  ],
+  "reflections": [
+    "Which boundary in this session carries the most design responsibility?",
+    "How does the test reveal cause and effect rather than just a final value?",
+    "What implementation detail can change without affecting callers?"
+  ],
+  "whatBreaks": "Removing DeferredEntryQuery.cs removes the executable model for query execution timing. Removing its tests permits contract regressions. If the boundary leaks its implementation details, callers become harder to change and isolated testing loses value.",
+  "summary": "This session established that IEnumerable queries normally execute when enumerated, ToList materializes a snapshot, and IQueryable records an expression for a provider. The application change and tests preserve that model as executable documentation."
+}
