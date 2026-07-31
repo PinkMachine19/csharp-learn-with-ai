@@ -22,7 +22,7 @@ The repository has an independent history and intentionally reconstructed course
 
 ## Published course
 
-GitHub Pages: <https://pinkmachine.github.io/csharp-learn-with-ai/>
+GitHub Pages: <https://pinkmachine19.github.io/csharp-learn-with-ai/>
 
 ## Requirements
 
