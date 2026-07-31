@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\TimeLedger.Domain\TimeLedger.Domain.csproj" />
+    <ProjectReference Include="..\TimeLedger.Infrastructure\TimeLedger.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,27 +1,27 @@
 {
-  "number": 31,
-  "category": "query translation",
+  "number": 32,
+  "category": "HTTP request boundary",
   "estimatedTime": "40 minutes",
-  "connection": "Session 30 supplies the required foundation. This session extends TimeLedger with query translation while keeping execution observable and deterministic.",
+  "connection": "Session 31 supplies the required foundation. This session extends TimeLedger with HTTP request boundary while keeping execution observable and deterministic.",
   "objectives": [
-    "Explain why IQueryable builds an expression a provider may translate, while materialization executes it and moves later work into memory.",
+    "Explain why routing selects an endpoint, DTOs describe transport data, and mapping keeps HTTP concerns outside the domain model.",
     "Trace the operation across its execution or application boundary.",
-    "Implement the focused ef core queries: in-memory versus database execution lab.",
+    "Implement the focused asp.net core requests, routing, and dto boundaries lab.",
     "Verify success and failure behavior with automated checks."
   ],
   "visuals": [
     {
       "diagram": "pipeline",
       "title": "Start at the caller",
-      "explanation": "Identify the input, owned state, and caller expectation for query translation."
+      "explanation": "Identify the input, owned state, and caller expectation for HTTP request boundary."
     },
     {
-      "diagram": "path",
+      "diagram": "branch",
       "title": "Cross the boundary",
       "explanation": "Follow the explicit contract rather than assuming hidden runtime behavior."
     },
     {
-      "diagram": "type",
+      "diagram": "call",
       "title": "Observe execution",
       "explanation": "Execution timing and collaborator behavior become visible through controlled examples."
     },
@@ -33,9 +33,9 @@
   ],
   "preQuiz": [
     {
-      "prompt": "Which statement best describes ef core queries: in-memory versus database execution?",
+      "prompt": "Which statement best describes asp.net core requests, routing, and dto boundaries?",
       "options": [
-        "IQueryable builds an expression a provider may translate, while materialization executes it and moves later work into memory",
+        "routing selects an endpoint, DTOs describe transport data, and mapping keeps HTTP concerns outside the domain model",
         "The runtime always creates a new operating-system thread",
         "Implementation details should be exposed to every caller"
       ],
@@ -67,10 +67,10 @@
     {
       "title": "Use the accurate execution model",
       "paragraphs": [
-        "The governing rule is that IQueryable builds an expression a provider may translate, while materialization executes it and moves later work into memory.",
+        "The governing rule is that routing selects an endpoint, DTOs describe transport data, and mapping keeps HTTP concerns outside the domain model.",
         "Avoid equating an abstraction with one possible implementation detail; reason from its documented contract."
       ],
-      "code": "IQueryable<TimeEntryEntity> query = db.TimeEntries.Where(...);\nList<TimeEntryEntity> rows = await query.ToListAsync();"
+      "code": "app.MapPost(\"/entries\", TimeEntryEndpoints.Create);"
     },
     {
       "title": "Keep boundaries explicit",
@@ -78,7 +78,7 @@
         "Dependencies, cancellation, persistence, and transport values should cross named boundaries.",
         "This makes ownership clear and supplies seams for deterministic tests."
       ],
-      "code": "// The boundary exposes intent.\nIQueryable<TimeEntryEntity> query = db.TimeEntries.Where(...);"
+      "code": "// The boundary exposes intent.\napp.MapPost(\"/entries\", TimeEntryEndpoints.Create);"
     },
     {
       "title": "Verify observable outcomes",
@@ -90,36 +90,36 @@
     }
   ],
   "lab": {
-    "objective": "Implement one production-sized slice demonstrating ef core queries: in-memory versus database execution.",
-    "startingCondition": "Sessions 01–30 are complete and the solution is green.",
+    "objective": "Implement one production-sized slice demonstrating asp.net core requests, routing, and dto boundaries.",
+    "startingCondition": "Sessions 01–31 are complete and the solution is green.",
     "steps": [
       "Predict one success outcome and one failure, cancellation, or boundary outcome.",
-      "Add the implementation centered on TimeEntryDataQueries.cs.",
-      "Add TimeEntryDataQueriesTests.cs with deterministic Arrange–Act–Assert checks.",
+      "Add the implementation centered on TimeEntryEndpoints.cs.",
+      "Add TimeEntryEndpointTests.cs with deterministic Arrange–Act–Assert checks.",
       "Run the focused checks and inspect the relevant returned value or state.",
       "Run the full Release build, test suite, and site validator."
     ],
-    "expectedBehavior": "The checks establish that IQueryable builds an expression a provider may translate, while materialization executes it and moves later work into memory; all earlier tests continue to pass.",
+    "expectedBehavior": "The checks establish that routing selects an endpoint, DTOs describe transport data, and mapping keeps HTTP concerns outside the domain model; all earlier tests continue to pass.",
     "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeLedger.Infrastructure/TimeEntryDataQueries.cs",
+      "path": "src/TimeLedger.Web/TimeEntryEndpoints.cs",
       "action": "Add or integrate",
-      "why": "Provide the canonical query translation implementation; infrastructure sessions place the equivalent file in their project."
+      "why": "Provide the canonical HTTP request boundary implementation; infrastructure sessions place the equivalent file in their project."
     },
     {
-      "path": "tests/TimeLedger.Domain.Tests/TimeEntryDataQueriesTests.cs",
+      "path": "tests/TimeLedger.Domain.Tests/TimeEntryEndpointTests.cs",
       "action": "Add or integrate",
       "why": "Verify the new contract with controlled inputs."
     },
     {
-      "path": "site/data/sessions/session-31.json",
+      "path": "site/data/sessions/session-32.json",
       "action": "Add",
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-31: teach ef core query execution boundaries",
+  "commit": "session-32: teach aspnet core routing and dto boundaries",
   "review": [
     "The abstraction is not confused with one runtime implementation.",
     "Inputs and dependencies cross explicit boundaries.",
@@ -130,9 +130,9 @@
   ],
   "postQuiz": [
     {
-      "prompt": "What did this session establish about ef core queries: in-memory versus database execution?",
+      "prompt": "What did this session establish about asp.net core requests, routing, and dto boundaries?",
       "options": [
-        "IQueryable builds an expression a provider may translate, while materialization executes it and moves later work into memory",
+        "routing selects an endpoint, DTOs describe transport data, and mapping keeps HTTP concerns outside the domain model",
         "The compiler removes all failure cases",
         "Every boundary should use the same concrete type"
       ],
@@ -161,10 +161,10 @@
     }
   ],
   "reflections": [
-    "Which assumption about query translation did the executable example confirm or correct?",
+    "Which assumption about HTTP request boundary did the executable example confirm or correct?",
     "Where does failure cross the boundary, and who should handle it?",
     "Which dependency can a test replace with a controlled implementation?"
   ],
-  "whatBreaks": "Removing TimeEntryDataQueries.cs removes the canonical example for query translation. Removing its tests makes timing, failure, persistence, or HTTP behavior easier to regress. Hiding the boundary behind global state would also make the behavior harder to observe and control.",
-  "summary": "This session established that IQueryable builds an expression a provider may translate, while materialization executes it and moves later work into memory. Explicit boundaries and deterministic checks make the application behavior dependable."
+  "whatBreaks": "Removing TimeEntryEndpoints.cs removes the canonical example for HTTP request boundary. Removing its tests makes timing, failure, persistence, or HTTP behavior easier to regress. Hiding the boundary behind global state would also make the behavior harder to observe and control.",
+  "summary": "This session established that routing selects an endpoint, DTOs describe transport data, and mapping keeps HTTP concerns outside the domain model. Explicit boundaries and deterministic checks make the application behavior dependable."
 }

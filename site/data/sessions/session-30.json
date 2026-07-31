@@ -104,7 +104,7 @@
   },
   "expectedFiles": [
     {
-      "path": "src/TimeLedger.Domain/TimeLedgerDbContext.cs",
+      "path": "src/TimeLedger.Infrastructure/TimeLedgerDbContext.cs",
       "action": "Add or integrate",
       "why": "Provide the canonical persistence context implementation; infrastructure sessions place the equivalent file in their project."
     },

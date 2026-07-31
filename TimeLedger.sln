@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeLedger.Domain.Tests", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeLedger.Infrastructure", "src\TimeLedger.Infrastructure\TimeLedger.Infrastructure.csproj", "{90EE341A-4B53-469D-886B-85EBD66BFE12}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TimeLedger.Web", "src\TimeLedger.Web\TimeLedger.Web.csproj", "{431131CC-6AAB-47F2-B073-2D78B28EA614}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -73,6 +75,18 @@ Global
 		{90EE341A-4B53-469D-886B-85EBD66BFE12}.Release|x64.Build.0 = Release|Any CPU
 		{90EE341A-4B53-469D-886B-85EBD66BFE12}.Release|x86.ActiveCfg = Release|Any CPU
 		{90EE341A-4B53-469D-886B-85EBD66BFE12}.Release|x86.Build.0 = Release|Any CPU
+		{431131CC-6AAB-47F2-B073-2D78B28EA614}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{431131CC-6AAB-47F2-B073-2D78B28EA614}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{431131CC-6AAB-47F2-B073-2D78B28EA614}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{431131CC-6AAB-47F2-B073-2D78B28EA614}.Debug|x64.Build.0 = Debug|Any CPU
+		{431131CC-6AAB-47F2-B073-2D78B28EA614}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{431131CC-6AAB-47F2-B073-2D78B28EA614}.Debug|x86.Build.0 = Debug|Any CPU
+		{431131CC-6AAB-47F2-B073-2D78B28EA614}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{431131CC-6AAB-47F2-B073-2D78B28EA614}.Release|Any CPU.Build.0 = Release|Any CPU
+		{431131CC-6AAB-47F2-B073-2D78B28EA614}.Release|x64.ActiveCfg = Release|Any CPU
+		{431131CC-6AAB-47F2-B073-2D78B28EA614}.Release|x64.Build.0 = Release|Any CPU
+		{431131CC-6AAB-47F2-B073-2D78B28EA614}.Release|x86.ActiveCfg = Release|Any CPU
+		{431131CC-6AAB-47F2-B073-2D78B28EA614}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -82,5 +96,6 @@ Global
 		{F8399AE7-2662-49AB-BAF1-AAA2FC4F31BA} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 		{8F0F9A94-C9C8-4152-A6FE-82EC067BE25B} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{90EE341A-4B53-469D-886B-85EBD66BFE12} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
+		{431131CC-6AAB-47F2-B073-2D78B28EA614} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 EndGlobal
