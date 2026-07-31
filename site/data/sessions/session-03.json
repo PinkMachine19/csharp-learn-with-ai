@@ -1,0 +1,68 @@
+{
+  "number": 3,
+  "category": "Language foundations",
+  "estimatedTime": "40 minutes",
+  "connection": "Session 02 produced a numeric variance. This session turns that value into a decision, tracing which execution path runs and why.",
+  "objectives": [
+    "Explain how Boolean conditions select an execution path.",
+    "Predict the result of relational comparisons at boundary values.",
+    "Use a switch expression with relational patterns to classify a value.",
+    "Recognize ordering and fallback behavior in a decision."
+  ],
+  "visuals": [
+    {"diagram":"branch","title":"A condition selects a branch","explanation":"A condition is evaluated once at the decision point. Only the matching path runs, and execution continues after that branch."},
+    {"diagram":"comparison","title":"Comparisons produce Boolean values","explanation":"Relational operators compare compatible operands and produce true or false. They do not change either operand."},
+    {"diagram":"switch","title":"Patterns map input to an outcome","explanation":"A switch expression evaluates arms from top to bottom and returns the expression from the first matching pattern."},
+    {"diagram":"path","title":"One input follows one path","explanation":"For a single switch evaluation, one arm supplies the result. The discard pattern provides a deliberate fallback for remaining values."}
+  ],
+  "preQuiz": [
+    {"prompt":"If varianceHours is 0m, which comparison is true?","options":["varianceHours > 0m","varianceHours < 0m","Neither comparison"],"correct":2,"explanation":"Zero is neither greater than nor less than zero, so a fallback handles it."},
+    {"prompt":"In a switch expression, what does the first matching arm do?","options":["Its result becomes the value of the switch expression","Every later arm also runs","It changes the input variable"],"correct":0,"explanation":"The first match supplies the result; later arms are not evaluated."},
+    {"prompt":"Why include the discard pattern _?","options":["It deletes the input","It handles values not matched by earlier arms","It converts every value to null"],"correct":1,"explanation":"The discard pattern is a fallback that matches any remaining input."}
+  ],
+  "concept": [
+    {"title":"Conditions answer yes-or-no questions","paragraphs":["A comparison such as varianceHours > 0m is an expression whose result is Boolean. Control-flow constructs use that result to choose what executes.","Boundary values matter. Zero needs explicit reasoning because it matches neither greater-than nor less-than comparisons."],"code":"bool isOverSchedule = varianceHours > 0m;"},
+    {"title":"if statements control execution","paragraphs":["An if statement runs a block only when its condition is true. else if adds another condition, and else handles everything left over.","The order communicates priority. Overlapping conditions can make later branches unreachable or surprising, so conditions should be reviewed as a set."],"code":"if (varianceHours > 0m)\n{\n    Console.WriteLine(\"Over schedule\");\n}\nelse if (varianceHours < 0m)\n{\n    Console.WriteLine(\"Under schedule\");\n}\nelse\n{\n    Console.WriteLine(\"On schedule\");\n}"},
+    {"title":"A switch expression maps one value to another","paragraphs":["A switch expression is useful when the goal is to produce one result from a set of patterns. Here, one decimal variance becomes one status string.","Relational patterns keep comparisons beside their outcomes. The discard arm handles zero after positive and negative values have been matched."],"code":"string scheduleStatus = varianceHours switch\n{\n    > 0m => \"over schedule\",\n    < 0m => \"under schedule\",\n    _ => \"on schedule\"\n};"}
+  ],
+  "lab": {
+    "objective": "Classify the numeric variance as over schedule, under schedule, or on schedule.",
+    "startingCondition": "Program.cs calculates a +0.50 decimal variance and displays its numeric value.",
+    "steps": [
+      "Predict the status for positive, negative, and zero variance before editing.",
+      "Add a switch expression whose input is varianceHours.",
+      "Use relational patterns for positive and negative values and a discard pattern for zero.",
+      "Display Schedule status after the numeric variance.",
+      "Run once with scheduledHours equal to 7.5m, then temporarily try 8m and 8.5m to observe all paths.",
+      "Restore scheduledHours to 7.5m, then build and run all tests."
+    ],
+    "expectedBehavior": "The stable application reports over schedule for +0.50 variance. Temporary 0.00 and -0.50 experiments report on schedule and under schedule respectively.",
+    "validation": "dotnet run --project src/TimeLedger.App/TimeLedger.App.csproj --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+  },
+  "expectedFiles": [
+    {"path":"src/TimeLedger.App/Program.cs","action":"Modify","why":"Map numeric variance to one observable status using relational patterns."},
+    {"path":"site/data/sessions/session-03.json","action":"Add","why":"Publish the synchronized lesson, lab, and quizzes."}
+  ],
+  "commit": "session-03: teach control flow and pattern decisions",
+  "review": [
+    "Positive, negative, and zero inputs each have one documented outcome.",
+    "More specific relational patterns appear before the fallback.",
+    "The discard pattern is used intentionally for the remaining zero case.",
+    "Temporary boundary experiments were reverted to the stable starting value.",
+    "Displayed status agrees with the displayed numeric variance.",
+    "The solution builds without warnings and all tests pass."
+  ],
+  "postQuiz": [
+    {"prompt":"With scheduledHours at 8.5m and recordedHours at 8m, which arm matches?","options":["> 0m","< 0m","_"],"correct":1,"explanation":"Recorded minus scheduled is -0.5m, so the less-than-zero pattern matches."},
+    {"prompt":"What breaks if the discard arm is removed?","options":["Positive values stop matching","The switch is not exhaustive for zero and fails to compile","The decimal becomes a string"],"correct":1,"explanation":"The compiler requires the switch expression to produce a result for every possible decimal input."},
+    {"prompt":"Does evaluating varianceHours > 0m modify varianceHours?","options":["Yes, it increments the value","No, it produces a separate Boolean result","Only in Release builds"],"correct":1,"explanation":"A comparison observes operands and produces true or false; it does not mutate them."}
+  ],
+  "reflections": [
+    "Why is zero a boundary case in this decision?",
+    "When would an if statement communicate intent better than a switch expression?",
+    "How does the order of patterns affect overlapping cases?"
+  ],
+  "whatBreaks": "Removing the status calculation leaves the numeric variance intact but removes its domain interpretation. Removing the fallback makes the switch non-exhaustive for zero. Reversing the positive and negative labels produces believable but incorrect output, so the build alone would not catch the semantic error.",
+  "summary": "Comparisons produce Boolean values, control flow selects execution paths, and relational patterns map one input to one outcome. Boundary cases and fallback behavior are part of the decision, not afterthoughts."
+}
+
