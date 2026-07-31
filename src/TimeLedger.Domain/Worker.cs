@@ -21,4 +21,6 @@ public sealed class Worker
     public string Id { get; }
 
     public string DisplayName { get; }
+
+    public string? TeamName { get; init; }
 }

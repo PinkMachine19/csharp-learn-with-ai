@@ -11,6 +11,18 @@ public sealed class WorkerTests
 
         Assert.Equal("worker-001", worker.Id);
         Assert.Equal("Avery Chen", worker.DisplayName);
+        Assert.Null(worker.TeamName);
+    }
+
+    [Fact]
+    public void Object_initializer_sets_optional_team()
+    {
+        Worker worker = new("worker-001", "Avery Chen")
+        {
+            TeamName = "Platform"
+        };
+
+        Assert.Equal("Platform", worker.TeamName);
     }
 
     [Theory]
