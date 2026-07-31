@@ -1,0 +1,17 @@
+{
+  "name": "csharp-learn-with-ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Static course site for C#/.NET Learn with AI",
+  "scripts": {
+    "build": "node tools/build-site.mjs",
+    "validate": "node tools/validate-site.mjs",
+    "test": "npm run build && npm run validate",
+    "serve": "node tools/serve-site.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
+
