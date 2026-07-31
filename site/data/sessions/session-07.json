@@ -1,0 +1,170 @@
+{
+  "number": 7,
+  "category": "value and reference assignment",
+  "estimatedTime": "40 minutes",
+  "connection": "Session 6 established the prerequisite model. This session applies it to value and reference assignment with observable TimeLedger examples.",
+  "objectives": [
+    "Explain copying a value produces independent data while copying a reference preserves shared identity.",
+    "Predict behavior before running a focused value and reference assignment example.",
+    "Apply value and reference assignment without weakening existing domain invariants.",
+    "Verify the behavior with automated tests."
+  ],
+  "visuals": [
+    {
+      "diagram": "variable",
+      "title": "State before the operation",
+      "explanation": "Start by identifying the values, identities, and capabilities involved in value and reference assignment."
+    },
+    {
+      "diagram": "instances",
+      "title": "The operation boundary",
+      "explanation": "Follow what crosses the boundary; C# syntax makes the permitted operation explicit."
+    },
+    {
+      "diagram": "call",
+      "title": "State after the operation",
+      "explanation": "Compare the resulting state with the prediction instead of relying on surface syntax."
+    },
+    {
+      "diagram": "invariant",
+      "title": "Contract at the API edge",
+      "explanation": "Choose the narrowest contract that communicates what callers may safely do."
+    }
+  ],
+  "preQuiz": [
+    {
+      "prompt": "Which approach best explains value and reference assignment?",
+      "options": [
+        "copying a value produces independent data while copying a reference preserves shared identity",
+        "All types behave identically",
+        "Runtime behavior is unrelated to the declared contract"
+      ],
+      "correct": 0,
+      "explanation": "The accurate model distinguishes identity, value, and API capability."
+    },
+    {
+      "prompt": "Why predict before running the example?",
+      "options": [
+        "To make the mental model testable",
+        "To avoid writing tests",
+        "To disable compiler checks"
+      ],
+      "correct": 0,
+      "explanation": "A prediction exposes assumptions that output and tests can confirm or correct."
+    },
+    {
+      "prompt": "What should guide the public parameter type?",
+      "options": [
+        "The minimum capability the method needs",
+        "The most concrete type available",
+        "The longest type name"
+      ],
+      "correct": 0,
+      "explanation": "A narrow contract reduces coupling while retaining required operations."
+    }
+  ],
+  "concept": [
+    {
+      "title": "Build the behavioral model",
+      "paragraphs": [
+        "The central rule is that copying a value produces independent data while copying a reference preserves shared identity.",
+        "Names and syntax matter because they communicate whether code copies, aliases, enumerates, compares, or constrains a value."
+      ],
+      "code": "int first = 8; int second = first;\nWorker primary = worker; Worker alias = primary;"
+    },
+    {
+      "title": "Program to the required capability",
+      "paragraphs": [
+        "A caller should not need to provide more capability than the operation consumes.",
+        "Concrete implementations remain useful at construction boundaries; interfaces and generic contracts keep consuming code focused."
+      ],
+      "code": "// Prefer the smallest contract that supports the operation.\nint first = 8; int second = first;"
+    },
+    {
+      "title": "Verify cause and effect",
+      "paragraphs": [
+        "The lab changes one behavior at a time and uses tests to preserve the observation.",
+        "If the prediction differs from the result, explain the language rule before continuing."
+      ],
+      "code": "dotnet test TimeLedger.sln --configuration Release"
+    }
+  ],
+  "lab": {
+    "objective": "Add a focused TimeLedger example that demonstrates value and reference assignment.",
+    "startingCondition": "Sessions 01–06 are complete and the solution builds with all existing tests passing.",
+    "steps": [
+      "Read the starting test and predict the result using the session mental model.",
+      "Add src/TimeLedger.Domain/AssignmentExamples.cs with the smallest API needed for the example.",
+      "Add tests/TimeLedger.Domain.Tests/AssignmentExamplesTests.cs to check the important before-and-after behavior.",
+      "Run the focused tests, then run the complete Release test suite.",
+      "Review whether each parameter and return type exposes only the capability it needs."
+    ],
+    "expectedBehavior": "The new tests demonstrate copying a value produces independent data while copying a reference preserves shared identity; all existing behavior remains green.",
+    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+  },
+  "expectedFiles": [
+    {
+      "path": "src/TimeLedger.Domain/AssignmentExamples.cs",
+      "action": "Add",
+      "why": "Provide the canonical value and reference assignment example."
+    },
+    {
+      "path": "tests/TimeLedger.Domain.Tests/AssignmentExamplesTests.cs",
+      "action": "Add",
+      "why": "Lock the observed language behavior into executable checks."
+    },
+    {
+      "path": "site/data/sessions/session-07.json",
+      "action": "Add",
+      "why": "Publish the synchronized lesson, lab, and quiz."
+    }
+  ],
+  "commit": "session-07: teach value and reference assignment",
+  "review": [
+    "The example isolates one primary concept.",
+    "Public types express the minimum required capability.",
+    "Names describe behavior rather than implementation trivia.",
+    "Tests cover the important cause-and-effect relationship.",
+    "Nullable analysis remains enabled with no warnings.",
+    "The entire solution builds and all tests pass."
+  ],
+  "postQuiz": [
+    {
+      "prompt": "What did the lab establish about value and reference assignment?",
+      "options": [
+        "copying a value produces independent data while copying a reference preserves shared identity",
+        "The compiler cannot describe the behavior",
+        "Tests replace the need for a mental model"
+      ],
+      "correct": 0,
+      "explanation": "The test makes the language rule observable and repeatable."
+    },
+    {
+      "prompt": "Why run the entire suite after the focused test?",
+      "options": [
+        "To detect regressions across cumulative code",
+        "To change test ordering",
+        "To avoid building"
+      ],
+      "correct": 0,
+      "explanation": "The course application grows cumulatively, so earlier guarantees must remain intact."
+    },
+    {
+      "prompt": "When should a concrete collection or implementation leak into an API?",
+      "options": [
+        "Only when its specific capability is part of the contract",
+        "Whenever it is convenient",
+        "For every read-only operation"
+      ],
+      "correct": 0,
+      "explanation": "Expose concrete capability only when callers genuinely need it."
+    }
+  ],
+  "reflections": [
+    "How would you explain value and reference assignment without using a memory-location shortcut?",
+    "Which compiler error or test most clearly reveals the contract?",
+    "Where could an unnecessarily concrete type make future change harder?"
+  ],
+  "whatBreaks": "Removing the new domain example removes the executable model for value and reference assignment. Removing its tests allows subtle changes to assignment, equality, enumeration, or generic contracts to pass unnoticed. Widening the API unnecessarily gives callers capabilities the operation does not need.",
+  "summary": "This session established that copying a value produces independent data while copying a reference preserves shared identity. The TimeLedger example, tests, and API review turn that rule into durable engineering practice."
+}
