@@ -210,5 +210,5 @@ Reference-course observations: five primary navigation areas; clear curriculum c
 - [x] Create and commit the destination foundation.
 - [x] Create the source audit and reconstruction plan.
 - [x] Phase 2: implement site foundation, manifest, generation, and validation.
-- [ ] Phase 3: create canonical .NET solution and tests.
+- [x] Phase 3: create canonical .NET solution and tests.
 - [ ] Phase 4+: reconstruct sessions in validated batches.

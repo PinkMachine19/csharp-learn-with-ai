@@ -3,16 +3,16 @@
 - **Source repository:** `C:\Users\azureuser\repos\csharp-refresher` (read-only)
 - **Destination repository:** `C:\Users\azureuser\repos\csharp-learn-with-ai`
 - **Current destination branch:** `main`
-- **Current phase:** Phase 2 — complete
-- **Completed work:** independent repository foundation; source audit and curriculum plan; manifest-driven static site; Home, Syllabus, Sessions, Quizzes, and Labs areas; shared responsive styling; accessible instructional SVG; quiz and reveal interactions; GitHub Pages workflow; automated build and validation
+- **Current phase:** Phase 3 — complete
+- **Completed work:** independent repository foundation; source audit and curriculum plan; validated static course site; .NET 10 TimeLedger solution; domain, console, and xUnit projects; deterministic sample workflow; nullable and formatting policy; application progression strategy; seven automated domain tests
 - **Sessions completed:** 0 of 34
-- **Latest content commit:** `3188e96` — `feat: establish course site foundation`
+- **Latest content commit:** `988e3dd` — `feat: establish canonical course application`
 - **Site build result:** passed with Node.js; six foundational pages generated for `/csharp-learn-with-ai/`
-- **.NET build result:** not run; `dotnet` is unavailable on this machine
-- **Test result:** `npm test` passed; focused browser checks passed for quiz feedback, reveal controls, desktop layout, mobile navigation, accessible SVG metadata, and browser console errors
-- **Validation result:** passed for 34 unique manifest sessions, required navigation, internal references, base-path handling at `/csharp-learn-with-ai/` and `/`, interaction contracts, SVG accessibility, and learner-facing content scans
-- **Remaining work:** create the canonical .NET solution and automated tests, then reconstruct sessions in validated batches
-- **Exact next action:** begin Phase 3 by creating the minimal TimeLedger solution, console application, domain/test projects, nullable and formatting configuration, and initial automated tests
+- **.NET build result:** passed — Release build completed with 0 warnings and 0 errors on .NET SDK 10.0.302
+- **Test result:** passed — 7 of 7 xUnit tests; deterministic console output verified; `dotnet format --verify-no-changes` passed; `npm test` passed
+- **Validation result:** passed — no vulnerable direct or transitive NuGet packages reported; site manifest, navigation, accessibility, interactions, base path, links, and learner-facing content checks remain green
+- **Remaining work:** reconstruct the 34 sessions in dependency-ordered, validated batches
+- **Exact next action:** begin Phase 4 with Sessions 01–03, updating lesson, lab, quiz, manifest, application code, tests, navigation, and one commit per completed session
 
 ## Baseline integrity
 
