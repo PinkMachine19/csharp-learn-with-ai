@@ -1,0 +1,170 @@
+{
+  "number": 25,
+  "category": "task-based work",
+  "estimatedTime": "40 minutes",
+  "connection": "Session 24 supplies the required foundation. This session extends TimeLedger with task-based work while keeping execution observable and deterministic.",
+  "objectives": [
+    "Explain why a Task represents an operation that may complete later; it is not a promise that a dedicated thread exists.",
+    "Trace the operation across its execution or application boundary.",
+    "Implement the focused tasks, threads, and awaitable work lab.",
+    "Verify success and failure behavior with automated checks."
+  ],
+  "visuals": [
+    {
+      "diagram": "pipeline",
+      "title": "Start at the caller",
+      "explanation": "Identify the input, owned state, and caller expectation for task-based work."
+    },
+    {
+      "diagram": "call",
+      "title": "Cross the boundary",
+      "explanation": "Follow the explicit contract rather than assuming hidden runtime behavior."
+    },
+    {
+      "diagram": "return",
+      "title": "Observe execution",
+      "explanation": "Execution timing and collaborator behavior become visible through controlled examples."
+    },
+    {
+      "diagram": "feedback",
+      "title": "Return a stable outcome",
+      "explanation": "The caller receives a documented value, exception, cancellation, or HTTP result."
+    }
+  ],
+  "preQuiz": [
+    {
+      "prompt": "Which statement best describes tasks, threads, and awaitable work?",
+      "options": [
+        "a Task represents an operation that may complete later; it is not a promise that a dedicated thread exists",
+        "The runtime always creates a new operating-system thread",
+        "Implementation details should be exposed to every caller"
+      ],
+      "correct": 0,
+      "explanation": "The session rule separates the public contract from a common implementation shortcut."
+    },
+    {
+      "prompt": "What should an integration boundary make explicit?",
+      "options": [
+        "Inputs, dependencies, execution, and outcomes",
+        "Only private field names",
+        "Unrelated infrastructure details"
+      ],
+      "correct": 0,
+      "explanation": "Explicit boundaries are easier to reason about, test, and change."
+    },
+    {
+      "prompt": "Why test a failure path?",
+      "options": [
+        "Failure behavior is part of the contract",
+        "It prevents successful code from compiling",
+        "Only failure tests are valuable"
+      ],
+      "correct": 0,
+      "explanation": "A dependable API specifies both successful and unsuccessful outcomes."
+    }
+  ],
+  "concept": [
+    {
+      "title": "Use the accurate execution model",
+      "paragraphs": [
+        "The governing rule is that a Task represents an operation that may complete later; it is not a promise that a dedicated thread exists.",
+        "Avoid equating an abstraction with one possible implementation detail; reason from its documented contract."
+      ],
+      "code": "Task<TimeEntry> pending = source.LoadAsync(id);\nTimeEntry entry = await pending;"
+    },
+    {
+      "title": "Keep boundaries explicit",
+      "paragraphs": [
+        "Dependencies, cancellation, persistence, and transport values should cross named boundaries.",
+        "This makes ownership clear and supplies seams for deterministic tests."
+      ],
+      "code": "// The boundary exposes intent.\nTask<TimeEntry> pending = source.LoadAsync(id);"
+    },
+    {
+      "title": "Verify observable outcomes",
+      "paragraphs": [
+        "Focused tests control inputs and collaborators so timing and failure assertions stay stable.",
+        "The full suite checks that new infrastructure has not weakened the domain model."
+      ],
+      "code": "dotnet test TimeLedger.sln --configuration Release"
+    }
+  ],
+  "lab": {
+    "objective": "Implement one production-sized slice demonstrating tasks, threads, and awaitable work.",
+    "startingCondition": "Sessions 01–24 are complete and the solution is green.",
+    "steps": [
+      "Predict one success outcome and one failure, cancellation, or boundary outcome.",
+      "Add the implementation centered on AsyncEntrySource.cs.",
+      "Add AsyncEntrySourceTests.cs with deterministic Arrange–Act–Assert checks.",
+      "Run the focused checks and inspect the relevant returned value or state.",
+      "Run the full Release build, test suite, and site validator."
+    ],
+    "expectedBehavior": "The checks establish that a Task represents an operation that may complete later; it is not a promise that a dedicated thread exists; all earlier tests continue to pass.",
+    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+  },
+  "expectedFiles": [
+    {
+      "path": "src/TimeLedger.Domain/AsyncEntrySource.cs",
+      "action": "Add or integrate",
+      "why": "Provide the canonical task-based work implementation; infrastructure sessions place the equivalent file in their project."
+    },
+    {
+      "path": "tests/TimeLedger.Domain.Tests/AsyncEntrySourceTests.cs",
+      "action": "Add or integrate",
+      "why": "Verify the new contract with controlled inputs."
+    },
+    {
+      "path": "site/data/sessions/session-25.json",
+      "action": "Add",
+      "why": "Publish synchronized lesson, lab, and quiz material."
+    }
+  ],
+  "commit": "session-25: teach tasks threads and awaitable work",
+  "review": [
+    "The abstraction is not confused with one runtime implementation.",
+    "Inputs and dependencies cross explicit boundaries.",
+    "Async methods return Task and accept cancellation where relevant.",
+    "Persistence and HTTP models remain separate from domain objects.",
+    "Tests are deterministic and cover a meaningful failure path.",
+    "The complete solution builds without warnings."
+  ],
+  "postQuiz": [
+    {
+      "prompt": "What did this session establish about tasks, threads, and awaitable work?",
+      "options": [
+        "a Task represents an operation that may complete later; it is not a promise that a dedicated thread exists",
+        "The compiler removes all failure cases",
+        "Every boundary should use the same concrete type"
+      ],
+      "correct": 0,
+      "explanation": "The implementation and tests demonstrate the stated contract."
+    },
+    {
+      "prompt": "Where is an asynchronous exception observed?",
+      "options": [
+        "When its faulted task is awaited",
+        "Only when a thread is manually created",
+        "Before the operation starts"
+      ],
+      "correct": 0,
+      "explanation": "Await unwraps and rethrows the task failure at the awaiting boundary."
+    },
+    {
+      "prompt": "Why separate transport or persistence models from domain behavior?",
+      "options": [
+        "Each boundary can evolve without distorting domain invariants",
+        "To duplicate every rule",
+        "To disable validation"
+      ],
+      "correct": 0,
+      "explanation": "Mapping keeps responsibilities and change reasons distinct."
+    }
+  ],
+  "reflections": [
+    "Which assumption about task-based work did the executable example confirm or correct?",
+    "Where does failure cross the boundary, and who should handle it?",
+    "Which dependency can a test replace with a controlled implementation?"
+  ],
+  "whatBreaks": "Removing AsyncEntrySource.cs removes the canonical example for task-based work. Removing its tests makes timing, failure, persistence, or HTTP behavior easier to regress. Hiding the boundary behind global state would also make the behavior harder to observe and control.",
+  "summary": "This session established that a Task represents an operation that may complete later; it is not a promise that a dedicated thread exists. Explicit boundaries and deterministic checks make the application behavior dependable."
+}
