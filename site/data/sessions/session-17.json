@@ -1,0 +1,170 @@
+{
+  "number": 17,
+  "category": "substitutable contracts",
+  "estimatedTime": "40 minutes",
+  "connection": "Session 16 provides the prerequisite vocabulary. This session develops substitutable contracts through a focused TimeLedger change.",
+  "objectives": [
+    "Explain why an interface defines a callable contract and polymorphism lets callers use different implementations without branching on concrete types.",
+    "Trace control and data across the new API boundary.",
+    "Implement interfaces and polymorphism in the canonical application.",
+    "Prove the contract with focused and regression tests."
+  ],
+  "visuals": [
+    {
+      "diagram": "signature",
+      "title": "Identify the boundary",
+      "explanation": "Locate the state and behavior owned by the substitutable contracts example."
+    },
+    {
+      "diagram": "branch",
+      "title": "Follow the dependency",
+      "explanation": "Arrows show which component knows about or calls the next component."
+    },
+    {
+      "diagram": "call",
+      "title": "Observe the behavior",
+      "explanation": "Trace one concrete input to its output before generalizing the rule."
+    },
+    {
+      "diagram": "return",
+      "title": "Protect the contract",
+      "explanation": "The public contract should preserve valid state and expose only required capability."
+    }
+  ],
+  "preQuiz": [
+    {
+      "prompt": "Which statement accurately frames interfaces and polymorphism?",
+      "options": [
+        "an interface defines a callable contract and polymorphism lets callers use different implementations without branching on concrete types",
+        "Every implementation must expose all internal details",
+        "The runtime ignores declared contracts"
+      ],
+      "correct": 0,
+      "explanation": "The session rule connects the language feature to an observable design consequence."
+    },
+    {
+      "prompt": "Where should a required collaborator be supplied?",
+      "options": [
+        "At an explicit construction or method boundary",
+        "Through hidden global state",
+        "By searching unrelated objects"
+      ],
+      "correct": 0,
+      "explanation": "Explicit boundaries make dependencies visible and testable."
+    },
+    {
+      "prompt": "What makes a prediction useful?",
+      "options": [
+        "It names the expected cause and effect",
+        "It avoids executing tests",
+        "It depends on implementation trivia"
+      ],
+      "correct": 0,
+      "explanation": "A causal prediction can be compared with output and corrected."
+    }
+  ],
+  "concept": [
+    {
+      "title": "Name the contract",
+      "paragraphs": [
+        "The governing rule is that an interface defines a callable contract and polymorphism lets callers use different implementations without branching on concrete types.",
+        "Start with what callers need to know, then keep incidental implementation details behind the boundary."
+      ],
+      "code": "IHoursPolicy policy = new StandardHoursPolicy(8m);\ndecimal variance = policy.GetVariance(7.5m);"
+    },
+    {
+      "title": "Trace dependencies and control",
+      "paragraphs": [
+        "Follow calls from the public operation through each collaborator or transformation.",
+        "A clear direction reduces branching, duplication, and accidental coupling."
+      ],
+      "code": "// Read the pipeline from caller to result.\nIHoursPolicy policy = new StandardHoursPolicy(8m);"
+    },
+    {
+      "title": "Make behavior executable",
+      "paragraphs": [
+        "Focused tests demonstrate the new rule with small deterministic values.",
+        "The complete suite then confirms the cumulative application still honors earlier contracts."
+      ],
+      "code": "dotnet test TimeLedger.sln --configuration Release"
+    }
+  ],
+  "lab": {
+    "objective": "Add a compact TimeLedger example for interfaces and polymorphism.",
+    "startingCondition": "Sessions 01–16 are complete and all existing tests pass.",
+    "steps": [
+      "Predict the successful path and one boundary or failure case.",
+      "Add src/TimeLedger.Domain/IHoursPolicy.cs with a narrow public contract.",
+      "Add tests/TimeLedger.Domain.Tests/HoursPolicyTests.cs for the prediction and boundary case.",
+      "Run the focused tests and inspect the observed values or control flow.",
+      "Run the full Release build and test suite."
+    ],
+    "expectedBehavior": "The new tests establish that an interface defines a callable contract and polymorphism lets callers use different implementations without branching on concrete types; prior behavior remains unchanged.",
+    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+  },
+  "expectedFiles": [
+    {
+      "path": "src/TimeLedger.Domain/IHoursPolicy.cs",
+      "action": "Add",
+      "why": "Provide the canonical substitutable contracts example."
+    },
+    {
+      "path": "tests/TimeLedger.Domain.Tests/HoursPolicyTests.cs",
+      "action": "Add",
+      "why": "Verify the contract and its boundary case."
+    },
+    {
+      "path": "site/data/sessions/session-17.json",
+      "action": "Add",
+      "why": "Publish synchronized lesson, lab, and quiz material."
+    }
+  ],
+  "commit": "session-17: teach interfaces and polymorphism",
+  "review": [
+    "The public API states one coherent responsibility.",
+    "Dependencies and state changes are explicit.",
+    "The example remains deterministic and compact.",
+    "Tests cover success and a meaningful boundary.",
+    "No nullable warnings are introduced.",
+    "The complete suite passes."
+  ],
+  "postQuiz": [
+    {
+      "prompt": "What did the implementation prove about interfaces and polymorphism?",
+      "options": [
+        "an interface defines a callable contract and polymorphism lets callers use different implementations without branching on concrete types",
+        "Design contracts cannot be tested",
+        "Every caller needs concrete implementation details"
+      ],
+      "correct": 0,
+      "explanation": "The passing tests make the stated rule observable."
+    },
+    {
+      "prompt": "Why keep the public contract narrow?",
+      "options": [
+        "To reduce coupling and preserve implementation freedom",
+        "To prevent tests",
+        "To make all operations mutable"
+      ],
+      "correct": 0,
+      "explanation": "A narrow contract communicates capability without leaking unrelated details."
+    },
+    {
+      "prompt": "Why run regression tests?",
+      "options": [
+        "The application grows cumulatively",
+        "Only the newest file can compile",
+        "Test count changes runtime behavior"
+      ],
+      "correct": 0,
+      "explanation": "Earlier instructional guarantees must remain true after each session."
+    }
+  ],
+  "reflections": [
+    "Which boundary in this session carries the most design responsibility?",
+    "How does the test reveal cause and effect rather than just a final value?",
+    "What implementation detail can change without affecting callers?"
+  ],
+  "whatBreaks": "Removing IHoursPolicy.cs removes the executable model for substitutable contracts. Removing its tests permits contract regressions. If the boundary leaks its implementation details, callers become harder to change and isolated testing loses value.",
+  "summary": "This session established that an interface defines a callable contract and polymorphism lets callers use different implementations without branching on concrete types. The application change and tests preserve that model as executable documentation."
+}
