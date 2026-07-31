@@ -2,21 +2,27 @@
 
 **A Practical C# and .NET Refresher**
 
-This repository is the foundation for a professional, documentation-first course that develops dependable competence in modern C# and .NET. The course will combine precise mental models, small experiments, focused labs, quizzes, code review, automated tests, and incremental source-control checkpoints.
+This repository contains a professional, documentation-first course for developing dependable competence in modern C# and .NET. It combines precise mental models, small experiments, focused labs, quizzes, code review, automated tests, and incremental source-control checkpoints.
 
 ## Course status
 
-The course foundation and canonical TimeLedger application are established. The curriculum contains 34 planned sessions; complete learner-facing sessions will be reconstructed and validated in later batches.
+All 34 dependency-ordered sessions are complete. The generated course contains lessons, labs, quizzes, accessible inline diagrams, and a cumulative TimeLedger application spanning C# foundations through ASP.NET Core and EF Core integration.
 
-## Planned repository areas
+## Repository areas
 
 - `site/` — GitHub Pages course site
 - `src/TimeLedger.Domain/` — domain model and business rules
 - `src/TimeLedger.App/` — deterministic console application
-- `tests/TimeLedger.Domain.Tests/` — xUnit domain tests
+- `src/TimeLedger.Infrastructure/` — EF Core persistence and integrated workflows
+- `src/TimeLedger.Web/` — ASP.NET Core API boundary
+- `tests/TimeLedger.Domain.Tests/` — xUnit domain and integration tests
 - `tools/` — course and site validation
 
-No Git remote is configured. The repository has a fresh history and is independent of all source material reviewed during reconstruction.
+The repository has an independent history and intentionally reconstructed course material.
+
+## Published course
+
+GitHub Pages: <https://pinkmachine.github.io/csharp-learn-with-ai/>
 
 ## Requirements
 
