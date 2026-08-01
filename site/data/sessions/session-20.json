@@ -12,23 +12,23 @@
   "visuals": [
     {
       "diagram": "pipeline",
-      "title": "Identify the boundary",
-      "explanation": "Locate the state and behavior owned by the query pipelines example."
+      "title": "GetEmployeeClockEntries filters, in one compound Where",
+      "explanation": "entry.EmployeeId == employeeId && entry.ClockOut != null && entry.ClockIn >= startDate && entry.ClockIn <= endDate -- three real AND-ed conditions in one lambda."
     },
     {
       "diagram": "path",
-      "title": "Follow the dependency",
-      "explanation": "Arrows show which component knows about or calls the next component."
+      "title": "CalculateTotalHours projects and aggregates in one Sum call",
+      "explanation": ".Sum(x => x.GetDuartion().TotalHours) -- decision-0007: no separate Select stage exists in the real code."
     },
     {
       "diagram": "comparison",
-      "title": "Observe the behavior",
-      "explanation": "Trace one concrete input to its output before generalizing the rule."
+      "title": "TotalHours, not Hours",
+      "explanation": "TimeSpan.Hours truncates to a 0-23 component; TotalHours is the real, full duration CalculateTotalHours actually sums."
     },
     {
       "diagram": "return",
-      "title": "Protect the contract",
-      "explanation": "The public contract should preserve valid state and expose only required capability."
+      "title": "PayrollServiceTests.cs proves the pipeline end to end",
+      "explanation": "Two mocked shifts of 2 and 3 hours sum to exactly 5.0 through the real GetEmployeeClockEntries + CalculateTotalHours pipeline."
     }
   ],
   "preQuiz": [
@@ -90,7 +90,7 @@
     }
   ],
   "lab": {
-    "objective": "Add a compact TimeClock example for linq pipelines with where, select, and ordering.",
+    "objective": "Write a second LINQ query (ClockEntryQueries.LongestFirst) using the same Where-then-project-and-aggregate shape as the real CalculateTotalHours, filtered and ordered differently.",
     "startingCondition": "Sessions 01–19 are complete and all existing tests pass.",
     "steps": [
       "Predict the successful path and one boundary or failure case.",
@@ -106,7 +106,7 @@
     {
       "path": "src/TimeClock.Domain/ClockEntryQueries.cs",
       "action": "Add",
-      "why": "Provide the canonical query pipelines example."
+      "why": "Provide the LongestFirst query built on the same Where-then-Sum shape as the real CalculateTotalHours."
     },
     {
       "path": "tests/TimeClock.Domain.Tests/ClockEntryQueriesTests.cs",

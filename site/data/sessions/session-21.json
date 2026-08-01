@@ -12,23 +12,23 @@
   "visuals": [
     {
       "diagram": "branch",
-      "title": "Identify the boundary",
-      "explanation": "Locate the state and behavior owned by the relational transformations example."
+      "title": "GroupBy partitions by EmployeeId",
+      "explanation": "entries.GroupBy(entry => entry.EmployeeId) -- the same key CalculateTotalHours filters on for one employee, applied to every employee at once."
     },
     {
       "diagram": "pipeline",
-      "title": "Follow the dependency",
-      "explanation": "Arrows show which component knows about or calls the next component."
+      "title": "Each group sums with the real GetDuartion projection",
+      "explanation": "group.Sum(entry => (decimal)entry.GetDuartion().TotalHours) -- identical to PayrollService.CalculateTotalHours's own Sum lambda."
     },
     {
       "diagram": "instances",
-      "title": "Observe the behavior",
-      "explanation": "Trace one concrete input to its output before generalizing the rule."
+      "title": "Join correlates two independent sequences by key",
+      "explanation": "employees.Join(summaries, e => e.EmployeeId, s => s.EmployeeId, ...) -- inner-join semantics: unmatched employees are silently excluded."
     },
     {
       "diagram": "return",
-      "title": "Protect the contract",
-      "explanation": "The public contract should preserve valid state and expose only required capability."
+      "title": "A genuine extension beyond the real PayrollService",
+      "explanation": "CalculateTotalHours only ever handles one employeeId; HoursByEmployee and EmployeeLabels answer a multi-employee question it does not."
     }
   ],
   "preQuiz": [
@@ -90,7 +90,7 @@
     }
   ],
   "lab": {
-    "objective": "Add a compact TimeClock example for grouping, joining, and aggregation.",
+    "objective": "Add a multi-employee report using GroupBy and Join, built on the exact same GetDuartion().TotalHours projection PayrollService.CalculateTotalHours already uses for one employee.",
     "startingCondition": "Sessions 01–20 are complete and all existing tests pass.",
     "steps": [
       "Predict the successful path and one boundary or failure case.",
@@ -106,7 +106,7 @@
     {
       "path": "src/TimeClock.Domain/ClockEntryAnalytics.cs",
       "action": "Add",
-      "why": "Provide the canonical relational transformations example."
+      "why": "Provide the GroupBy/Join multi-employee report extending PayrollService's real single-employee Sum projection."
     },
     {
       "path": "tests/TimeClock.Domain.Tests/ClockEntryAnalyticsTests.cs",

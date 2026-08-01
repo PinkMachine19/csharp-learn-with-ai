@@ -12,23 +12,23 @@
   "visuals": [
     {
       "diagram": "pipeline",
-      "title": "Identify the boundary",
-      "explanation": "Locate the state and behavior owned by the query execution timing example."
+      "title": "GetEmployeeClockEntries returns an unevaluated query",
+      "explanation": "IEnumerable<ClockEntry> is a promise, not a result -- the real Where clause has not run yet when GetEmployeeClockEntries returns."
     },
     {
-      "diagram": "feedback",
-      "title": "Follow the dependency",
-      "explanation": "Arrows show which component knows about or calls the next component."
+      "diagram": "call",
+      "title": ".Sum() is what actually triggers execution",
+      "explanation": "CalculateTotalHours's .Sum() call is the real point where GetEmployeeClockEntries's deferred query is finally enumerated."
     },
     {
-      "diagram": "path",
-      "title": "Observe the behavior",
-      "explanation": "Trace one concrete input to its output before generalizing the rule."
+      "diagram": "return",
+      "title": ".ToList() forces a fixed snapshot",
+      "explanation": "DeferredEntryQuery.Completed(entries).ToList() materializes immediately -- later changes to entries will not affect the snapshot."
     },
     {
-      "diagram": "instances",
-      "title": "Protect the contract",
-      "explanation": "The public contract should preserve valid state and expose only required capability."
+      "diagram": "invariant",
+      "title": "IQueryable defers to a provider, not just to enumeration",
+      "explanation": "Session 30-31's EF Core queries return IQueryable<ClockEntryEntity> -- the same deferred principle, translated to SQL instead of run in-process."
     }
   ],
   "preQuiz": [
@@ -90,7 +90,7 @@
     }
   ],
   "lab": {
-    "objective": "Add a compact TimeClock example for deferred execution, materialization, and query sources.",
+    "objective": "Trace GetEmployeeClockEntries's deferred IEnumerable<ClockEntry> through CalculateTotalHours's .Sum() call, and confirm .ToList() produces a genuinely independent snapshot.",
     "startingCondition": "Sessions 01–21 are complete and all existing tests pass.",
     "steps": [
       "Predict the successful path and one boundary or failure case.",
@@ -106,7 +106,7 @@
     {
       "path": "src/TimeClock.Domain/DeferredEntryQuery.cs",
       "action": "Add",
-      "why": "Provide the canonical query execution timing example."
+      "why": "Provide the DeferredEntryQuery.Completed example demonstrating IEnumerable<ClockEntry> deferred execution."
     },
     {
       "path": "tests/TimeClock.Domain.Tests/DeferredEntryQueryTests.cs",

@@ -2,12 +2,12 @@
   "number": 34,
   "category": "Application milestone",
   "estimatedTime": "45 minutes",
-  "connection": "Session 33 completed the HTTP failure boundary. This final session follows one operation across domain validation, asynchronous EF Core persistence, query execution, and automated verification.",
+  "connection": "Session 33 completed the HTTP failure boundary and fixed the real missing-IEmployeeService registration bug. Session 27 already fixed Program.cs's real CS4014 unawaited-Clockout bug. This final session follows one operation across domain validation, asynchronous EF Core persistence, query execution, and automated verification -- the last real gap the source syllabus's Step 40-44 milestones point toward.",
   "objectives": [
-    "Fix the real, long-standing CS4014 bug in TimeClock.App/Program.cs: clockEntryService.Clockout(1) called with no await.",
-    "Explain why fixing that bug changes CalculateTotalHours's printed total from near-zero to a real, non-trivial number.",
-    "Trace a TimeClock operation across domain and persistence boundaries.",
-    "Verify both successful persistence and failure atomicity with an integration test."
+    "Trace a TimeClock operation across domain and persistence boundaries, from EntryCompletion's validation through PayrollDbContext's persistence to a typed WorkSummary result.",
+    "Confirm Session 27's Clockout fix and Session 33's IEmployeeService registration fix are both still in place and still passing their respective tests.",
+    "Keep validation ahead of state-changing work: an invalid clock-out must never reach the database.",
+    "Verify both successful persistence and failure atomicity with a real SQLite integration test."
   ],
   "visuals": [
     {"diagram":"pipeline","title":"One request, explicit stages","explanation":"Input flows through construction, validation, persistence, and a typed summary result."},
@@ -21,7 +21,6 @@
     {"prompt":"Where should the cancellation token travel?","options":["Into the asynchronous persistence operation","Only into synchronous constructors","Nowhere once validation succeeds"],"correct":0,"explanation":"Passing the token lets the database operation cooperate with cancellation."}
   ],
   "concept": [
-    {"title":"Fix the bug Session 25 only diagnosed", "paragraphs":["Session 25 located, but deliberately did not fix, the real CS4014 warning: clockEntryService.Clockout(1) in Program.cs is called with no await. This session fixes it.", "Once Program.cs's top-level statements await Clockout(1) before calling CalculateTotalHours, ClockIn and the completed Clockout are guaranteed to finish in order -- so CalculateTotalHours reliably finds a completed entry instead of racing an open one, and the printed total changes from a near-zero accident to a real, small-but-nonzero number of hours."], "code":"// TimeClock.App/Program.cs -- the fix\nclockEntryService.ClockIn(1);\nawait clockEntryService.Clockout(1);   // was: clockEntryService.Clockout(1);\nvar result = payrollService.CalculateTotalHours(1, DateTime.Today.AddHours(-4), DateTime.Now.AddHours(4));"},
     {"title":"Compose previously learned boundaries","paragraphs":["The workflow does not invent a second validation rule. It creates the domain object and delegates completion to EntryCompletion.","Only a successful Result permits mapping to a persistence entity."],"code":"Result<TimeSpan> completion = EntryCompletion.TryComplete(entry, clockedOutAt);\nif (!completion.IsSuccess) return Result<WorkSummary>.Failure(completion.Error!);"},
     {"title":"Persist after the invariant holds","paragraphs":["The EF Core entity represents storage shape, while ClockEntry remains responsible for domain behavior.","SaveChangesAsync receives the caller's cancellation token, keeping asynchronous control explicit."],"code":"db.ClockEntries.Add(entity);\nawait db.SaveChangesAsync(cancellationToken);"},
     {"title":"Verify outcome and atomicity","paragraphs":["The success test queries through the provider and checks the stored clock-out value.","The failure test confirms an invalid completion produces a failure result and leaves the table empty."],"code":"Assert.False(result.IsSuccess);\nAssert.Empty(await db.ClockEntries.ToListAsync());"}
@@ -30,8 +29,7 @@
     "objective": "Build and verify the integrated record-completed-entry workflow.",
     "startingCondition": "Sessions 01–33 are complete; domain validation, result values, async methods, EF Core, SQLite queries, and tests are available.",
     "steps": [
-      "Add await to TimeClock.App/Program.cs's clockEntryService.Clockout(1) call and remove the CS4014 pragma suppression, confirming the build is warning-free without it.",
-      "Run the console app before and after the fix and compare the printed 'Total hours worked' line.",
+      "Confirm Session 27's Program.cs Clockout fix and Session 33's WebApi IEmployeeService registration fix are both still present and their tests still pass.",
       "Predict which stages execute for valid and invalid clock-out times.",
       "Add ClockEntryWorkflow with PayrollDbContext supplied by constructor injection.",
       "Delegate completion to EntryCompletion and return early on failure.",

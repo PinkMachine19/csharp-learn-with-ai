@@ -1,117 +1,116 @@
 {
   "number": 26,
-  "category": "async composition",
+  "category": "Asynchronous programming",
   "estimatedTime": "40 minutes",
-  "connection": "Session 25 supplies the required foundation. This session extends TimeClock with async composition while keeping execution observable and deterministic.",
+  "connection": "Session 25 identified (but did not fix) Program.cs's real unawaited Clockout(1) call. This session studies EntryBatchLoader's real LoadSequentialAsync versus LoadConcurrentAsync -- a new extension showing what running several async operations one-at-a-time versus all-at-once actually looks like, since the real Clockout is always called for exactly one employee at a time.",
   "objectives": [
-    "Explain why awaiting in sequence preserves ordering while Task.WhenAll allows independent operations to make progress together.",
-    "Trace the operation across its execution or application boundary.",
-    "Implement the focused sequential and concurrent asynchronous flow lab.",
-    "Verify success and failure behavior with automated checks."
+    "Trace LoadSequentialAsync's real await load(id) inside a foreach loop, and explain why each iteration waits for the previous one to finish before starting.",
+    "Trace LoadConcurrentAsync's real Task.WhenAll(ids.Select(load)), and explain why every load call starts before any of them necessarily finishes.",
+    "Predict, then confirm with EntryBatchLoaderTests's real active/maximum counters, that LoadSequentialAsync never has more than one operation in flight while LoadConcurrentAsync starts all of them immediately.",
+    "Explain why the real Clockout(int employeeId) has no equivalent choice to make -- it always operates on exactly one employee, so 'sequential vs concurrent' has never been a real question for it."
   ],
   "visuals": [
     {
       "diagram": "pipeline",
-      "title": "Start at the caller",
-      "explanation": "Identify the input, owned state, and caller expectation for async composition."
-    },
-    {
-      "diagram": "path",
-      "title": "Cross the boundary",
-      "explanation": "Follow the explicit contract rather than assuming hidden runtime behavior."
+      "title": "Sequential: one await, then the next",
+      "explanation": "foreach (int id in ids) results.Add(await load(id)); -- the loop does not call load again until the current await completes."
     },
     {
       "diagram": "call",
-      "title": "Observe execution",
-      "explanation": "Execution timing and collaborator behavior become visible through controlled examples."
+      "title": "Concurrent: every operation starts immediately",
+      "explanation": "await Task.WhenAll(ids.Select(load)) calls load for every id up front (Select is enumerated eagerly here), then awaits all of them together."
     },
     {
-      "diagram": "return",
-      "title": "Return a stable outcome",
-      "explanation": "The caller receives a documented value, exception, cancellation, or HTTP result."
+      "diagram": "branch",
+      "title": "The real test proves it with a counter, not just a description",
+      "explanation": "EntryBatchLoaderTests tracks active/maximum concurrent operations: LoadSequentialAsync's maximum never exceeds 1; LoadConcurrentAsync's started count reaches the full batch size before any complete."
+    },
+    {
+      "diagram": "feedback",
+      "title": "Clockout never had this choice to make",
+      "explanation": "ClockEntryService.Clockout(int employeeId) processes one employee per call -- there is no batch of employees to run sequentially or concurrently, which is exactly why this session needed a new example."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Which statement best describes sequential and concurrent asynchronous flow?",
+      "prompt": "In LoadSequentialAsync's foreach (int id in ids) results.Add(await load(id));, does the loop call load for the second id before the first load call has completed?",
       "options": [
-        "awaiting in sequence preserves ordering while Task.WhenAll allows independent operations to make progress together",
-        "The runtime always creates a new operating-system thread",
-        "Implementation details should be exposed to every caller"
+        "No -- await load(id) suspends the loop until that specific call completes before moving to the next iteration; only one load operation is ever in flight",
+        "Yes -- foreach starts every iteration immediately regardless of await",
+        "It depends on how many ids there are"
       ],
       "correct": 0,
-      "explanation": "The session rule separates the public contract from a common implementation shortcut."
+      "explanation": "This is exactly what the real EntryBatchLoaderTests.cs proves with its active/maximum counter: LoadSequentialAsync's maximum concurrent count never exceeds 1."
     },
     {
-      "prompt": "What should an integration boundary make explicit?",
+      "prompt": "In LoadConcurrentAsync's Task.WhenAll(ids.Select(load)), when does the second load call happen relative to the first?",
       "options": [
-        "Inputs, dependencies, execution, and outcomes",
-        "Only private field names",
-        "Unrelated infrastructure details"
+        "Effectively immediately -- ids.Select(load) is enumerated eagerly by WhenAll's argument evaluation, calling load for every id before any of the resulting Tasks are awaited together",
+        "Only after the first load call's Task completes",
+        "Never -- WhenAll only calls load once"
       ],
       "correct": 0,
-      "explanation": "Explicit boundaries are easier to reason about, test, and change."
+      "explanation": "WhenAll takes a collection of already-started Tasks; Select(load) is what starts them all before WhenAll begins waiting for the whole set to finish."
     },
     {
-      "prompt": "Why test a failure path?",
+      "prompt": "Why doesn't ClockEntryService.Clockout(int employeeId) ever need to choose between sequential and concurrent execution?",
       "options": [
-        "Failure behavior is part of the contract",
-        "It prevents successful code from compiling",
-        "Only failure tests are valuable"
+        "It only ever processes one employeeId per call -- 'sequential vs concurrent' is a question about running MULTIPLE independent async operations together, which never applies to a method that handles exactly one",
+        "Clockout is always sequential by definition",
+        "Clockout cannot be called for multiple employees under any circumstances"
       ],
       "correct": 0,
-      "explanation": "A dependable API specifies both successful and unsuccessful outcomes."
+      "explanation": "This is precisely why EntryBatchLoader needed to be a new, purpose-built extension -- there was no real multi-item async operation in the source app to study this concept against."
     }
   ],
   "concept": [
     {
-      "title": "Use the accurate execution model",
+      "title": "LoadSequentialAsync: one operation, then the next",
       "paragraphs": [
-        "The governing rule is that awaiting in sequence preserves ordering while Task.WhenAll allows independent operations to make progress together.",
-        "Avoid equating an abstraction with one possible implementation detail; reason from its documented contract."
+        "The real implementation is a plain foreach loop that awaits each load call before moving to the next id -- exactly the shape ClockEntryService.Clockout already uses for its single await _clockEntryRepository.GetClockEntry(employeeId) call, just repeated across a collection instead of called once.",
+        "Total time for LoadSequentialAsync is roughly the sum of every individual load call's duration, because none of them overlap."
       ],
-      "code": "ClockEntry[] entries = await Task.WhenAll(loads);"
+      "code": "// src/TimeClock.Domain/EntryBatchLoader.cs -- real implementation\npublic static async Task<IReadOnlyList<ClockEntry>> LoadSequentialAsync(IEnumerable<int> ids, Func<int, Task<ClockEntry>> load)\n{\n    List<ClockEntry> results = [];\n    foreach (int id in ids) results.Add(await load(id));\n    return results;\n}"
     },
     {
-      "title": "Keep boundaries explicit",
+      "title": "LoadConcurrentAsync: every operation starts together",
       "paragraphs": [
-        "Dependencies, cancellation, persistence, and transport values should cross named boundaries.",
-        "This makes ownership clear and supplies seams for deterministic tests."
+        "ids.Select(load) calls load once per id, starting every operation before Task.WhenAll begins waiting -- the operations overlap in time instead of running one after another.",
+        "Total time for LoadConcurrentAsync is roughly the duration of the SLOWEST individual load call, not the sum of all of them, because they all run concurrently rather than one at a time."
       ],
-      "code": "// The boundary exposes intent.\nClockEntry[] entries = await Task.WhenAll(loads);"
+      "code": "public static async Task<IReadOnlyList<ClockEntry>> LoadConcurrentAsync(IEnumerable<int> ids, Func<int, Task<ClockEntry>> load) =>\n    await Task.WhenAll(ids.Select(load));"
     },
     {
-      "title": "Verify observable outcomes",
+      "title": "The real test proves the difference with counters, not timing guesses",
       "paragraphs": [
-        "Focused tests control inputs and collaborators so timing and failure assertions stay stable.",
-        "The full suite checks that new infrastructure has not weakened the domain model."
+        "EntryBatchLoaderTests's sequential test tracks an active counter, incrementing before each load call and decrementing after, then asserts the observed maximum never exceeded 1.",
+        "The concurrent test uses a TaskCompletionSource as a gate every load call awaits, then asserts all load calls had already started (incrementing a started counter) before any of them are allowed to complete -- proving concurrency directly, not by guessing at timing."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "// tests/.../EntryBatchLoaderTests.cs -- real assertions\nawait EntryBatchLoader.LoadSequentialAsync(new[] { 1, 2 }, Load);\nAssert.Equal(1, maximum);   // sequential: never more than one in flight\n\nawait Task.Yield();\nAssert.Equal(2, started);   // concurrent: both started before either completed"
     }
   ],
   "lab": {
-    "objective": "Implement one production-sized slice demonstrating sequential and concurrent asynchronous flow.",
-    "startingCondition": "Sessions 01–25 are complete and the solution is green.",
+    "objective": "Run both LoadSequentialAsync and LoadConcurrentAsync against a controlled, artificially-delayed load function and confirm their real timing difference directly.",
+    "startingCondition": "EntryBatchLoader already exists with both real methods; EntryBatchLoaderTests already exists with its real active/maximum and started/gate assertions.",
     "steps": [
-      "Predict one success outcome and one failure, cancellation, or boundary outcome.",
-      "Add the implementation centered on EntryBatchLoader.cs.",
-      "Add EntryBatchLoaderTests.cs with deterministic Arrange–Act–Assert checks.",
-      "Run the focused checks and inspect the relevant returned value or state.",
-      "Run the full Release build, test suite, and site validator."
+      "Write a load function with an artificial Task.Delay, and time how long LoadSequentialAsync takes for three ids.",
+      "Time how long LoadConcurrentAsync takes for the same three ids and the same delayed load function.",
+      "Confirm LoadConcurrentAsync's total time is close to one delay period, while LoadSequentialAsync's is close to three delay periods.",
+      "Run the existing EntryBatchLoaderTests.cs and confirm both counter-based assertions pass."
     ],
-    "expectedBehavior": "The checks establish that awaiting in sequence preserves ordering while Task.WhenAll allows independent operations to make progress together; all earlier tests continue to pass.",
+    "expectedBehavior": "LoadSequentialAsync's total duration scales with the number of items; LoadConcurrentAsync's stays roughly constant regardless of item count, matching a single delay period.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
       "path": "src/TimeClock.Domain/EntryBatchLoader.cs",
-      "action": "Add or integrate",
-      "why": "Provide the canonical async composition implementation; infrastructure sessions place the equivalent file in their project."
+      "action": "Verify",
+      "why": "Confirm the real LoadSequentialAsync and LoadConcurrentAsync implementations."
     },
     {
       "path": "tests/TimeClock.Domain.Tests/EntryBatchLoaderTests.cs",
-      "action": "Add or integrate",
-      "why": "Verify the new contract with controlled inputs."
+      "action": "Verify",
+      "why": "Confirm the existing counter-based proof of sequential-vs-concurrent behavior."
     },
     {
       "path": "site/data/sessions/session-26.json",
@@ -119,52 +118,50 @@
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-26: teach sequential and concurrent async flow",
+  "commit": "session-26: teach sequential and concurrent asynchronous flow",
   "review": [
-    "The abstraction is not confused with one runtime implementation.",
-    "Inputs and dependencies cross explicit boundaries.",
-    "Async methods return Task and accept cancellation where relevant.",
-    "Persistence and HTTP models remain separate from domain objects.",
-    "Tests are deterministic and cover a meaningful failure path.",
-    "The complete solution builds without warnings."
+    "LoadSequentialAsync and LoadConcurrentAsync's real implementations are quoted directly, not paraphrased.",
+    "The real test's counter-based proof (not a timing guess) is used as the primary evidence for the sequential-vs-concurrent claim.",
+    "Clockout's real lack of a sequential-vs-concurrent decision is explained honestly as the reason this session needed a new example.",
+    "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "What did this session establish about sequential and concurrent asynchronous flow?",
+      "prompt": "If ClockEntryService gained a new method that clocked out an entire list of employees at once, which of EntryBatchLoader's two patterns would it most resemble if implemented naively with a foreach loop and await inside it?",
       "options": [
-        "awaiting in sequence preserves ordering while Task.WhenAll allows independent operations to make progress together",
-        "The compiler removes all failure cases",
-        "Every boundary should use the same concrete type"
+        "LoadSequentialAsync's pattern -- a foreach loop awaiting each Clockout call in turn processes one employee at a time, exactly like LoadSequentialAsync processes one id at a time",
+        "LoadConcurrentAsync's pattern -- foreach loops are always concurrent",
+        "Neither -- foreach cannot contain await"
       ],
       "correct": 0,
-      "explanation": "The implementation and tests demonstrate the stated contract."
+      "explanation": "A plain foreach with await inside it is definitionally sequential -- this is exactly the shape LoadSequentialAsync demonstrates, and exactly what such a hypothetical batch-Clockout method would need to deliberately change (to Task.WhenAll, LoadConcurrentAsync's pattern) if concurrency were desired instead."
     },
     {
-      "prompt": "Where is an asynchronous exception observed?",
+      "prompt": "Why might LoadSequentialAsync sometimes be preferred over LoadConcurrentAsync, even though it is slower in total wall-clock time?",
       "options": [
-        "When its faulted task is awaited",
-        "Only when a thread is manually created",
-        "Before the operation starts"
+        "When the operations share a resource that cannot safely handle concurrent access (like the real, Singleton-registered ClockEntryRepository's mutable _clockEntries list), running them sequentially avoids race conditions that concurrent execution could introduce",
+        "LoadSequentialAsync is always strictly better in every situation",
+        "There is never a reason to prefer it"
       ],
       "correct": 0,
-      "explanation": "Await unwraps and rethrows the task failure at the awaiting boundary."
+      "explanation": "This connects directly back to the real DI lifetime discussion (Session 19/29): a Singleton-registered, mutable repository is exactly the kind of shared resource where uncontrolled concurrent writes could cause real problems."
     },
     {
-      "prompt": "Why separate transport or persistence models from domain behavior?",
+      "prompt": "What would happen if LoadConcurrentAsync's ids.Select(load) were changed to ids.Select(load).ToList() before being passed to Task.WhenAll?",
       "options": [
-        "Each boundary can evolve without distorting domain invariants",
-        "To duplicate every rule",
-        "To disable validation"
+        "Functionally very little would change here -- .ToList() would force eager enumeration explicitly, but Select(load) passed directly to WhenAll already causes every load call to run before WhenAll starts waiting",
+        "It would make the calls run sequentially instead",
+        "It would prevent the calls from starting until awaited"
       ],
       "correct": 0,
-      "explanation": "Mapping keeps responsibilities and change reasons distinct."
+      "explanation": "This is a subtle but real point: LINQ's Select is lazy in general, but passing it directly as WhenAll's argument still causes it to be enumerated (and therefore every load call invoked) immediately, before any awaiting happens -- .ToList() here would be redundant, not a behavior change."
     }
   ],
   "reflections": [
-    "Which assumption about async composition did the executable example confirm or correct?",
-    "Where does failure cross the boundary, and who should handle it?",
-    "Which dependency can a test replace with a controlled implementation?"
+    "Why did teaching sequential-vs-concurrent async flow require a brand-new example (EntryBatchLoader) instead of extending something already real in the source app?",
+    "What real resource in this codebase (think back to Session 19's DI lifetimes) would make LoadConcurrentAsync's approach risky if applied carelessly?",
+    "How does EntryBatchLoaderTests's counter-based proof give you more confidence than simply timing the two methods and comparing durations?"
   ],
-  "whatBreaks": "Removing EntryBatchLoader.cs removes the canonical example for async composition. Removing its tests makes timing, failure, persistence, or HTTP behavior easier to regress. Hiding the boundary behind global state would also make the behavior harder to observe and control.",
-  "summary": "This session established that awaiting in sequence preserves ordering while Task.WhenAll allows independent operations to make progress together. Explicit boundaries and deterministic checks make the application behavior dependable."
+  "whatBreaks": "Changing LoadSequentialAsync's foreach loop to start every load call before awaiting any of them would turn it into a concurrent implementation in disguise, breaking the real active/maximum test's assertion that at most one operation is ever in flight. Changing LoadConcurrentAsync to await each load call individually inside its Select callback (instead of collecting Tasks for WhenAll) would make it behave like LoadSequentialAsync instead, breaking the real started/gate test's assertion that all operations start together.",
+  "summary": "EntryBatchLoader's real LoadSequentialAsync awaits each operation before starting the next, keeping at most one in flight at a time -- proven by the real test's active/maximum counter, not just asserted. LoadConcurrentAsync starts every operation immediately via Task.WhenAll, proven by the real test's started-count/gate assertion. ClockEntryService.Clockout never faced this choice, because it always processes exactly one employee -- which is exactly why this session needed a new, purpose-built example."
 }

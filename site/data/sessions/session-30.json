@@ -1,117 +1,116 @@
 {
   "number": 30,
-  "category": "persistence context",
-  "estimatedTime": "40 minutes",
-  "connection": "Session 29 supplies the required foundation. This session extends TimeClock with persistence context while keeping execution observable and deterministic.",
+  "category": "Data access and application integration",
+  "estimatedTime": "45 minutes",
+  "connection": "Session 29 covered DI lifetimes. EF Core does not exist anywhere in the real practice-07092026 source -- ClockEntryRepository's real storage is a plain in-memory List<ClockEntry>. This session studies PayrollDbContext, a new, clearly-labeled extension giving IClockEntryRepository a genuine database-backed alternative implementation.",
   "objectives": [
-    "Explain why DbContext coordinates entity mapping, change tracking, and persistence within a bounded unit of work.",
-    "Trace the operation across its execution or application boundary.",
-    "Implement the focused ef core context, entities, and tracking lab.",
-    "Verify success and failure behavior with automated checks."
+    "Explain the real gap this session fills: the source app's real ClockEntryRepository has no persistence beyond an in-memory list that is discarded when the process exits.",
+    "Read PayrollDbContext : DbContext as this codebase's first genuinely framework-required inheritance, previewed in Session 18.",
+    "Map ClockEntryEntity's fields to ClockEntry's real properties, and explain why the entity is a separate type rather than reusing ClockEntry directly.",
+    "Explain what 'change tracking' means concretely: db.ClockEntries.Add(entity) marks the entity as Added before SaveChangesAsync ever runs."
   ],
   "visuals": [
     {
-      "diagram": "blueprint",
-      "title": "Start at the caller",
-      "explanation": "Identify the input, owned state, and caller expectation for persistence context."
+      "diagram": "invariant",
+      "title": "The real gap: no persistence beyond one process's lifetime",
+      "explanation": "ClockEntryRepository's real _clockEntries list exists only in memory -- restarting Parm.Practice.ConsoleApplication loses every clocked-in employee. PayrollDbContext fills this real, unaddressed gap."
     },
     {
-      "diagram": "pipeline",
-      "title": "Cross the boundary",
-      "explanation": "Follow the explicit contract rather than assuming hidden runtime behavior."
+      "diagram": "blueprint",
+      "title": "PayrollDbContext : DbContext -- required inheritance, not chosen",
+      "explanation": "EF Core requires your context type to literally be a DbContext; there is no interface-based alternative for this specific framework capability."
     },
     {
       "diagram": "instances",
-      "title": "Observe execution",
-      "explanation": "Execution timing and collaborator behavior become visible through controlled examples."
+      "title": "ClockEntryEntity mirrors ClockEntry's shape, but is a distinct type",
+      "explanation": "EmployeeId, ClockIn, ClockOut are copied field-for-field from the real ClockEntry -- but ClockEntryEntity is EF Core's storage-shaped type, not the domain's behavior-shaped ClockEntry."
     },
     {
-      "diagram": "feedback",
-      "title": "Return a stable outcome",
-      "explanation": "The caller receives a documented value, exception, cancellation, or HTTP result."
+      "diagram": "call",
+      "title": "Add marks an entity tracked before anything is saved",
+      "explanation": "db.ClockEntries.Add(entity) changes the entity's EntityState to Added immediately -- SaveChangesAsync later translates every tracked change into the actual database write."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Which statement best describes ef core context, entities, and tracking?",
+      "prompt": "What happens to every ClockEntry the real console app has recorded when the process exits?",
       "options": [
-        "DbContext coordinates entity mapping, change tracking, and persistence within a bounded unit of work",
-        "The runtime always creates a new operating-system thread",
-        "Implementation details should be exposed to every caller"
+        "All of it is lost -- ClockEntryRepository's real storage is an in-memory List<ClockEntry> with no persistence to disk or a database",
+        "It is automatically saved to a local file",
+        "Nothing -- the real repository already uses EF Core"
       ],
       "correct": 0,
-      "explanation": "The session rule separates the public contract from a common implementation shortcut."
+      "explanation": "This is a real, verified gap in practice-07092026 -- confirmed by reading Repositories/ClockEntryRepository.cs, which has no persistence mechanism at all."
     },
     {
-      "prompt": "What should an integration boundary make explicit?",
+      "prompt": "Why must PayrollDbContext be declared as a class that inherits from DbContext, rather than just implementing an interface?",
       "options": [
-        "Inputs, dependencies, execution, and outcomes",
-        "Only private field names",
-        "Unrelated infrastructure details"
+        "EF Core's design requires your context type to literally extend DbContext to gain its real infrastructure (DbSet<T> properties, change tracking, SaveChangesAsync) -- there is no interface-only way to opt into that machinery",
+        "It is a stylistic preference this course chose",
+        "DbContext is itself an interface"
       ],
       "correct": 0,
-      "explanation": "Explicit boundaries are easier to reason about, test, and change."
+      "explanation": "This is the genuinely framework-required inheritance Session 18 previewed -- the first inheritance relationship in this codebase that isn't a deliberate teaching choice."
     },
     {
-      "prompt": "Why test a failure path?",
+      "prompt": "What does db.ClockEntries.Add(entity) do before SaveChangesAsync is ever called?",
       "options": [
-        "Failure behavior is part of the contract",
-        "It prevents successful code from compiling",
-        "Only failure tests are valuable"
+        "It marks the entity as tracked with EntityState.Added -- SaveChangesAsync later reads every tracked entity's state to decide what SQL to generate",
+        "It immediately writes the entity to the database",
+        "Nothing -- Add has no effect until SaveChangesAsync runs"
       ],
       "correct": 0,
-      "explanation": "A dependable API specifies both successful and unsuccessful outcomes."
+      "explanation": "Change tracking is exactly this: EF Core records what changed in memory first, then translates the accumulated changes into database operations only when SaveChangesAsync is explicitly called."
     }
   ],
   "concept": [
     {
-      "title": "Use the accurate execution model",
+      "title": "A real gap, honestly named",
       "paragraphs": [
-        "The governing rule is that DbContext coordinates entity mapping, change tracking, and persistence within a bounded unit of work.",
-        "Avoid equating an abstraction with one possible implementation detail; reason from its documented contract."
+        "Nothing in practice-07092026 persists a ClockEntry anywhere beyond process memory. Every employee's clock-in and clock-out history is gone the moment the console app exits.",
+        "This session does not claim EF Core already exists in the real source -- it builds PayrollDbContext specifically because that gap is real, and giving IClockEntryRepository a second, database-backed implementation is the natural next step once the gap is visible."
       ],
-      "code": "db.ClockEntries.Add(entity);\nawait db.SaveChangesAsync();"
+      "code": "// The real gap, confirmed by reading the source directly\npublic class ClockEntryRepository : IClockEntryRepository\n{\n    public readonly List<ClockEntry> _clockEntries = new();   // in-memory only -- gone on process exit\n}"
     },
     {
-      "title": "Keep boundaries explicit",
+      "title": "PayrollDbContext: the entity, the context, and change tracking",
       "paragraphs": [
-        "Dependencies, cancellation, persistence, and transport values should cross named boundaries.",
-        "This makes ownership clear and supplies seams for deterministic tests."
+        "PayrollDbContext(DbContextOptions<PayrollDbContext> options) : DbContext(options) exposes DbSet<ClockEntryEntity> ClockEntries -- EF Core's queryable, trackable representation of a database table.",
+        "ClockEntryEntity deliberately mirrors ClockEntry's real fields (EmployeeId, ClockIn, ClockOut) plus an Id primary key EF Core needs -- it is a separate, storage-shaped type, not a reuse of the domain's ClockEntry class."
       ],
-      "code": "// The boundary exposes intent.\ndb.ClockEntries.Add(entity);"
+      "code": "// src/TimeClock.Infrastructure/TimeClockDbContext.cs -- new extension\npublic sealed class PayrollDbContext(DbContextOptions<PayrollDbContext> options) : DbContext(options)\n{\n    public DbSet<ClockEntryEntity> ClockEntries => Set<ClockEntryEntity>();\n}\n\npublic sealed class ClockEntryEntity\n{\n    public int Id { get; set; }\n    public int EmployeeId { get; set; }\n    public DateTime ClockIn { get; set; }\n    public DateTime? ClockOut { get; set; }\n}"
     },
     {
-      "title": "Verify observable outcomes",
+      "title": "Why a separate entity, not ClockEntry itself",
       "paragraphs": [
-        "Focused tests control inputs and collaborators so timing and failure assertions stay stable.",
-        "The full suite checks that new infrastructure has not weakened the domain model."
+        "ClockEntry's real constructor takes only employeeId and clockIn, and ClockOut has a private setter -- both deliberate domain invariants (Session 5-6). EF Core needs to construct and populate ClockEntryEntity freely (including an Id it generates), which would conflict with those same invariants if forced onto ClockEntry directly.",
+        "Keeping them separate means ClockEntry's domain rules stay exactly as strict as Sessions 5-24 established, while ClockEntryEntity is free to be exactly as permissive as EF Core's mapping needs."
       ],
       "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
-    "objective": "Implement one production-sized slice demonstrating ef core context, entities, and tracking.",
-    "startingCondition": "Sessions 01–29 are complete and the solution is green.",
+    "objective": "Trace PayrollDbContext's real shape and confirm change tracking's Added state, using an in-memory SQLite database.",
+    "startingCondition": "PayrollDbContext and ClockEntryEntity already exist as a new extension in TimeClock.Infrastructure.",
     "steps": [
-      "Predict one success outcome and one failure, cancellation, or boundary outcome.",
-      "Add the implementation centered on PayrollDbContext.cs.",
-      "Add PayrollDbContextTests.cs with deterministic Arrange–Act–Assert checks.",
-      "Run the focused checks and inspect the relevant returned value or state.",
-      "Run the full Release build, test suite, and site validator."
+      "Open an in-memory SQLite connection and create a PayrollDbContext against it.",
+      "Add a new ClockEntryEntity and check db.Entry(entity).State before calling SaveChangesAsync -- confirm it reports Added.",
+      "Call SaveChangesAsync and check db.Entry(entity).State again -- confirm it now reports Unchanged.",
+      "Query db.ClockEntries.CountAsync() and confirm exactly one row was persisted."
     ],
-    "expectedBehavior": "The checks establish that DbContext coordinates entity mapping, change tracking, and persistence within a bounded unit of work; all earlier tests continue to pass.",
+    "expectedBehavior": "The entity's EntityState transitions from Added to Unchanged exactly when SaveChangesAsync is called; the row count reflects the real, persisted entity afterward.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Infrastructure/PayrollDbContext.cs",
-      "action": "Add or integrate",
-      "why": "Provide the canonical persistence context implementation; infrastructure sessions place the equivalent file in their project."
+      "path": "src/TimeClock.Infrastructure/TimeClockDbContext.cs",
+      "action": "Verify",
+      "why": "Confirm PayrollDbContext and ClockEntryEntity's real declarations."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/PayrollDbContextTests.cs",
-      "action": "Add or integrate",
-      "why": "Verify the new contract with controlled inputs."
+      "path": "tests/TimeClock.Domain.Tests/TimeClockDbContextTests.cs",
+      "action": "Verify",
+      "why": "Confirm the real EntityState-transition test."
     },
     {
       "path": "site/data/sessions/session-30.json",
@@ -121,50 +120,48 @@
   ],
   "commit": "session-30: teach ef core context entities and tracking",
   "review": [
-    "The abstraction is not confused with one runtime implementation.",
-    "Inputs and dependencies cross explicit boundaries.",
-    "Async methods return Task and accept cancellation where relevant.",
-    "Persistence and HTTP models remain separate from domain objects.",
-    "Tests are deterministic and cover a meaningful failure path.",
-    "The complete solution builds without warnings."
+    "The real gap (no persistence in the source app) is stated honestly, not assumed away.",
+    "PayrollDbContext's inheritance from DbContext is explained as framework-required, connecting back to Session 18's preview.",
+    "ClockEntryEntity's separateness from ClockEntry is justified by real, specific domain invariants (constructor shape, private setter), not asserted as a generic best practice.",
+    "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "What did this session establish about ef core context, entities, and tracking?",
+      "prompt": "If ClockEntryEntity were removed and ClockEntry were used directly as the EF Core entity, what real conflict would arise?",
       "options": [
-        "DbContext coordinates entity mapping, change tracking, and persistence within a bounded unit of work",
-        "The compiler removes all failure cases",
-        "Every boundary should use the same concrete type"
+        "EF Core needs to construct ClockEntry objects and assign an Id/ClockOut freely when materializing query results, which conflicts with ClockEntry's real constructor (no Id parameter) and ClockOut's private setter",
+        "There would be no conflict -- EF Core can use any class as an entity",
+        "ClockEntry would need to become an interface"
       ],
       "correct": 0,
-      "explanation": "The implementation and tests demonstrate the stated contract."
+      "explanation": "This is the concrete, specific reason for the separate entity type -- not a generic 'always separate your layers' rule, but a real conflict between EF Core's needs and ClockEntry's real domain invariants."
     },
     {
-      "prompt": "Where is an asynchronous exception observed?",
+      "prompt": "Why does db.Entry(entity).State change from Added to Unchanged only after SaveChangesAsync, not immediately after Add?",
       "options": [
-        "When its faulted task is awaited",
-        "Only when a thread is manually created",
-        "Before the operation starts"
+        "Add only registers the entity with the context's in-memory change tracker; SaveChangesAsync is the operation that actually executes the database write and then updates tracking to reflect the now-persisted, unchanged state",
+        "State never changes -- this is a bug in EF Core",
+        "Add and SaveChangesAsync do the same thing"
       ],
       "correct": 0,
-      "explanation": "Await unwraps and rethrows the task failure at the awaiting boundary."
+      "explanation": "This two-step behavior -- track first, persist on demand -- is exactly what allows EntryCompletion's validation (Session 23) to run before anything reaches the database (Session 34's workflow)."
     },
     {
-      "prompt": "Why separate transport or persistence models from domain behavior?",
+      "prompt": "Does adding PayrollDbContext change anything about the real, in-memory ClockEntryRepository or its consumers (ClockEntryService, PayrollService)?",
       "options": [
-        "Each boundary can evolve without distorting domain invariants",
-        "To duplicate every rule",
-        "To disable validation"
+        "No -- PayrollDbContext is a new, separate, alternative implementation of persistence; the real ClockEntryRepository and every class depending on IClockEntryRepository continue to work exactly as before",
+        "Yes -- ClockEntryRepository is deleted and replaced",
+        "Yes -- IClockEntryRepository's interface must change"
       ],
       "correct": 0,
-      "explanation": "Mapping keeps responsibilities and change reasons distinct."
+      "explanation": "This session adds a new capability alongside the real, unmodified source code -- exactly the 'clearly-labeled extension' framing the task's own instructions call for."
     }
   ],
   "reflections": [
-    "Which assumption about persistence context did the executable example confirm or correct?",
-    "Where does failure cross the boundary, and who should handle it?",
-    "Which dependency can a test replace with a controlled implementation?"
+    "Why does this session build a new entity type instead of trying to make ClockEntry itself EF Core-compatible?",
+    "What would you need to change about PayrollDbContext to make it usable as a real, additional implementation of IClockEntryRepository, alongside the existing in-memory one?",
+    "Where else in this codebase might a domain type's strict invariants make it a poor fit for direct use as a persistence entity?"
   ],
-  "whatBreaks": "Removing PayrollDbContext.cs removes the canonical example for persistence context. Removing its tests makes timing, failure, persistence, or HTTP behavior easier to regress. Hiding the boundary behind global state would also make the behavior harder to observe and control.",
-  "summary": "This session established that DbContext coordinates entity mapping, change tracking, and persistence within a bounded unit of work. Explicit boundaries and deterministic checks make the application behavior dependable."
+  "whatBreaks": "Constructing ClockEntryEntity with EF Core's usual pattern (a parameterless constructor plus property setters) would fail if attempted against ClockEntry directly, since ClockEntry's real constructor requires employeeId and clockIn and ClockOut cannot be set from outside ClockOutEmployee. Skipping SaveChangesAsync after Add leaves the entity tracked as Added but never actually written to the database -- a common source of 'why didn't my data save' bugs when the two steps are conflated.",
+  "summary": "The real practice-07092026 source has no persistence beyond an in-memory List<ClockEntry> -- a genuine, verified gap. PayrollDbContext : DbContext is this codebase's first framework-required inheritance (previewed in Session 18), and ClockEntryEntity is a deliberately separate, storage-shaped type -- not a reuse of ClockEntry -- because ClockEntry's real domain invariants (constructor shape, private ClockOut setter) would conflict with how EF Core needs to construct and populate entities."
 }

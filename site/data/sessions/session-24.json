@@ -1,117 +1,121 @@
 {
   "number": 24,
-  "category": "resource lifetime",
+  "category": "Errors and resource management",
   "estimatedTime": "40 minutes",
-  "connection": "Session 23 provides the prerequisite vocabulary. This session develops resource lifetime through a focused TimeClock change.",
+  "connection": "Session 23 established the real throw-vs-return rule. This session traces a real exception's full propagation path -- GetDuartion's InvalidOperationException, uncaught anywhere between ClockEntry and Program.cs -- and studies IDisposable/using through the real database connections Sessions 30-31's tests already open.",
   "objectives": [
-    "Explain why exceptions propagate until handled, and using guarantees Dispose runs when control leaves a scope through success or failure.",
-    "Trace control and data across the new API boundary.",
-    "Implement exception propagation, idisposable, and using in the canonical application.",
-    "Prove the contract with focused and regression tests."
+    "Trace GetDuartion's real InvalidOperationException from where it is thrown up through PayrollService.CalculateTotalHours to Program.cs, and identify that nothing in that path catches it.",
+    "Explain what 'unhandled exception' means concretely for this console app: the process terminates and prints a stack trace, since Program.cs never wraps its calls in try/catch.",
+    "Explain what using (or await using) guarantees for a SqliteConnection or PayrollDbContext, even if an exception is thrown partway through the code block.",
+    "Identify a real await using PayrollDbContext db = new(options); statement in the test suite and explain what would leak without it."
   ],
   "visuals": [
     {
-      "diagram": "path",
-      "title": "Identify the boundary",
-      "explanation": "Locate the state and behavior owned by the resource lifetime example."
+      "diagram": "call",
+      "title": "An exception propagates up, unchanged, until something catches it",
+      "explanation": "GetDuartion throws inside ClockEntry; CalculateTotalHours does not catch it; Program.cs does not catch it either -- the exception reaches the very top of the call stack unmodified."
     },
     {
-      "diagram": "frame",
-      "title": "Follow the dependency",
-      "explanation": "Arrows show which component knows about or calls the next component."
-    },
-    {
-      "diagram": "feedback",
-      "title": "Observe the behavior",
-      "explanation": "Trace one concrete input to its output before generalizing the rule."
+      "diagram": "branch",
+      "title": "No catch means the process terminates",
+      "explanation": "dotnet run for a console app with an unhandled exception prints the exception's stack trace to stderr and exits with a non-zero code -- there is no generic 'error page' the way a web app might have."
     },
     {
       "diagram": "invariant",
-      "title": "Protect the contract",
-      "explanation": "The public contract should preserve valid state and expose only required capability."
+      "title": "using guarantees Dispose runs, exception or not",
+      "explanation": "await using SqliteConnection connection = new(...) ensures the connection is closed even if an exception is thrown between opening it and the end of the block."
+    },
+    {
+      "diagram": "return",
+      "title": "IDisposable is a contract for releasing unmanaged resources",
+      "explanation": "SqliteConnection and DbContext both implement IDisposable/IAsyncDisposable because they hold real, external resources (a database connection) that the garbage collector alone cannot reliably clean up promptly."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Which statement accurately frames exception propagation, idisposable, and using?",
+      "prompt": "If GetDuartion throws InvalidOperationException on an open entry, and PayrollService.CalculateTotalHours never catches it, what happens when Program.cs calls CalculateTotalHours?",
       "options": [
-        "exceptions propagate until handled, and using guarantees Dispose runs when control leaves a scope through success or failure",
-        "Every implementation must expose all internal details",
-        "The runtime ignores declared contracts"
+        "The exception propagates unchanged all the way out of CalculateTotalHours, out of Program.cs's top-level statements, and terminates the process with an unhandled-exception stack trace",
+        "The exception is silently swallowed and CalculateTotalHours returns 0",
+        "The compiler prevents this code from ever throwing"
       ],
       "correct": 0,
-      "explanation": "The session rule connects the language feature to an observable design consequence."
+      "explanation": "Nothing in the real call chain -- ClockEntry, PayrollService, or Program.cs -- catches this exception, so it propagates all the way to the runtime's default unhandled-exception behavior."
     },
     {
-      "prompt": "Where should a required collaborator be supplied?",
+      "prompt": "What does await using SqliteConnection connection = new(...) guarantee that a plain SqliteConnection connection = new(...) (without using) does not?",
       "options": [
-        "At an explicit construction or method boundary",
-        "Through hidden global state",
-        "By searching unrelated objects"
+        "connection.DisposeAsync() runs automatically at the end of the block, even if an exception is thrown partway through -- releasing the underlying database connection either way",
+        "The connection opens faster",
+        "The connection cannot throw exceptions"
       ],
       "correct": 0,
-      "explanation": "Explicit boundaries make dependencies visible and testable."
+      "explanation": "using (and await using) compiles to a try/finally under the hood -- Dispose/DisposeAsync is guaranteed to run in the finally, regardless of whether the try block completed normally or threw."
     },
     {
-      "prompt": "What makes a prediction useful?",
+      "prompt": "Why do SqliteConnection and DbContext implement IDisposable/IAsyncDisposable at all?",
       "options": [
-        "It names the expected cause and effect",
-        "It avoids executing tests",
-        "It depends on implementation trivia"
+        "They hold real external resources (an open database connection) that need explicit, timely release -- the garbage collector would eventually clean them up, but not promptly or deterministically enough for a resource this expensive",
+        "IDisposable is required by every C# class",
+        "It is purely a style convention with no functional purpose"
       ],
       "correct": 0,
-      "explanation": "A causal prediction can be compared with output and corrected."
+      "explanation": "IDisposable exists specifically for exactly this category of resource -- something external to the .NET managed heap that benefits from prompt, deterministic release."
     }
   ],
   "concept": [
     {
-      "title": "Name the contract",
+      "title": "Tracing GetDuartion's real, unhandled exception",
       "paragraphs": [
-        "The governing rule is that exceptions propagate until handled, and using guarantees Dispose runs when control leaves a scope through success or failure.",
-        "Start with what callers need to know, then keep incidental implementation details behind the boundary."
+        "The path is real and short: ClockEntry.GetDuartion throws InvalidOperationException(\"Employee has not clcoked out yet\") if ClockOut is null; PayrollService.CalculateTotalHours calls .Sum(x => x.GetDuartion().TotalHours) with no try/catch around it; Program.cs calls CalculateTotalHours with no try/catch either.",
+        "This is not a bug this course is inventing -- it is the real, current shape of the codebase, verified by reading all three files. GetEmployeeClockEntries's real ClockOut != null filter is what normally prevents this from happening in practice, by excluding open entries before Sum ever sees them."
       ],
-      "code": "using OperationScope scope = new(onDispose);\nthrow new InvalidOperationException();"
+      "code": "// Models/ClockEntry.cs\npublic TimeSpan GetDuartion()\n{\n    if (ClockOut == null)\n    {\n        throw new InvalidOperationException(\"Employee has not clcoked out yet\");\n    }\n    return ClockOut.Value - ClockIn;\n}"
     },
     {
-      "title": "Trace dependencies and control",
+      "title": "An unhandled exception in a console app terminates the process",
       "paragraphs": [
-        "Follow calls from the public operation through each collaborator or transformation.",
-        "A clear direction reduces branching, duplication, and accidental coupling."
+        "There is no global exception handler anywhere in TimeClock.App's real Program.cs. If an exception ever did reach it unhandled, .NET's default behavior for a console app is to print the exception type, message, and stack trace to stderr, then exit with a non-zero exit code.",
+        "This is different from what Session 33 will cover for the WebApi project: ASP.NET Core has its own exception-handling middleware pipeline that a console app's top-level statements simply do not have."
       ],
-      "code": "// Read the pipeline from caller to result.\nusing OperationScope scope = new(onDispose);"
+      "code": "// No try/catch anywhere in the real Program.cs -- an exception here would terminate the process\nvar result = payrollService.CalculateTotalHours(1, DateTime.Today.AddHours(-4), DateTime.Now.AddHours(4));"
     },
     {
-      "title": "Make behavior executable",
+      "title": "using/await using: Dispose runs no matter what",
       "paragraphs": [
-        "Focused tests demonstrate the new rule with small deterministic values.",
-        "The complete suite then confirms the cumulative application still honors earlier contracts."
+        "The real integration tests already do this: await using SqliteConnection connection = new(\"Data Source=:memory:\"); and await using PayrollDbContext db = new(options); both guarantee the connection and context are disposed at the end of their block, exception or not.",
+        "Without using, an exception thrown between opening the connection and the end of the method would skip whatever cleanup code came after it -- leaving the connection open until the garbage collector eventually, non-deterministically, finalizes it."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "// tests/.../ClockEntryWorkflowTests.cs -- real, existing usage\nawait using SqliteConnection connection = new(\"Data Source=:memory:\");\nawait connection.OpenAsync();\n...\nawait using PayrollDbContext db = new(options);\nawait db.Database.EnsureCreatedAsync();\n// Both connection and db are disposed automatically at the end of this method, even on failure."
     }
   ],
   "lab": {
-    "objective": "Add a compact TimeClock example for exception propagation, idisposable, and using.",
-    "startingCondition": "Sessions 01–23 are complete and all existing tests pass.",
+    "objective": "Reproduce GetDuartion's real unhandled exception end to end, and confirm using/await using's guaranteed cleanup by deliberately throwing inside a using block.",
+    "startingCondition": "ClockEntry.GetDuartion, PayrollService.CalculateTotalHours, and the real SQLite-based integration tests already exist.",
     "steps": [
-      "Predict the successful path and one boundary or failure case.",
-      "Add src/TimeClock.Domain/OperationScope.cs with a narrow public contract.",
-      "Add tests/TimeClock.Domain.Tests/OperationScopeTests.cs for the prediction and boundary case.",
-      "Run the focused tests and inspect the observed values or control flow.",
-      "Run the full Release build and test suite."
+      "Call CalculateTotalHours in a way that includes an open (not clocked out) entry in the date range, and confirm the real, unhandled InvalidOperationException propagates out of the call.",
+      "Wrap that same call in a try/catch in a throwaway test and confirm you can observe the exact real exception message.",
+      "Write a small test that opens a using SqliteConnection, throws an exception inside the block, and confirms (via a flag or mock) that Dispose still ran.",
+      "Explain, in writing, why GetEmployeeClockEntries's ClockOut != null filter is what normally prevents this exception from surfacing in ordinary use."
     ],
-    "expectedBehavior": "The new tests establish that exceptions propagate until handled, and using guarantees Dispose runs when control leaves a scope through success or failure; prior behavior remains unchanged.",
+    "expectedBehavior": "The unhandled InvalidOperationException is reproduced and its exact message confirmed; the using-block test confirms Dispose runs even when an exception is thrown inside the block.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/OperationScope.cs",
-      "action": "Add",
-      "why": "Provide the canonical resource lifetime example."
+      "path": "src/TimeClock.Domain/ClockEntry.cs",
+      "action": "Verify",
+      "why": "Confirm GetDuartion's real, unhandled exception path."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/OperationScopeTests.cs",
-      "action": "Add",
-      "why": "Verify the contract and its boundary case."
+      "path": "src/TimeClock.Domain/TimeClockService.cs",
+      "action": "Verify",
+      "why": "Confirm PayrollService.CalculateTotalHours has no try/catch around its Sum call."
+    },
+    {
+      "path": "tests/TimeClock.Domain.Tests/ClockEntryTests.cs",
+      "action": "Modify",
+      "why": "Add a test reproducing the real unhandled-exception path and a using-block Dispose guarantee test."
     },
     {
       "path": "site/data/sessions/session-24.json",
@@ -121,50 +125,48 @@
   ],
   "commit": "session-24: teach exception propagation idisposable and using",
   "review": [
-    "The public API states one coherent responsibility.",
-    "Dependencies and state changes are explicit.",
-    "The example remains deterministic and compact.",
-    "Tests cover success and a meaningful boundary.",
-    "No nullable warnings are introduced.",
-    "The complete suite passes."
+    "GetDuartion's real exception path is traced through all three real files (ClockEntry, PayrollService, Program.cs), not asserted abstractly.",
+    "The console app's real lack of a global exception handler is contrasted honestly with what Session 33's WebApi will need.",
+    "using/await using's Dispose guarantee is demonstrated with a real, deliberately-throwing test, not just described.",
+    "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "What did the implementation prove about exception propagation, idisposable, and using?",
+      "prompt": "Why doesn't GetEmployeeClockEntries's real filter (ClockOut != null) fully eliminate the possibility of GetDuartion throwing inside CalculateTotalHours?",
       "options": [
-        "exceptions propagate until handled, and using guarantees Dispose runs when control leaves a scope through success or failure",
-        "Design contracts cannot be tested",
-        "Every caller needs concrete implementation details"
+        "It eliminates it for THAT specific call path -- but any other code that calls GetDuartion directly on an open ClockEntry (bypassing GetEmployeeClockEntries's filter) would still trigger the same real exception",
+        "It does fully eliminate the possibility everywhere in the codebase",
+        "GetDuartion cannot be called on an open entry -- the compiler prevents it"
       ],
       "correct": 0,
-      "explanation": "The passing tests make the stated rule observable."
+      "explanation": "The filter protects one specific call path, not GetDuartion itself -- GetDuartion's own guard clause is what actually protects it universally, which is exactly why Session 6 studied that guard clause directly."
     },
     {
-      "prompt": "Why keep the public contract narrow?",
+      "prompt": "What would you need to add to Program.cs for an unhandled exception from CalculateTotalHours to be caught and handled gracefully instead of terminating the process?",
       "options": [
-        "To reduce coupling and preserve implementation freedom",
-        "To prevent tests",
-        "To make all operations mutable"
+        "A try/catch block around the call, or a broader pattern like a global unhandled-exception handler -- neither currently exists in the real Program.cs",
+        "Nothing -- Program.cs already handles this",
+        "async/await, since only asynchronous exceptions can be caught"
       ],
       "correct": 0,
-      "explanation": "A narrow contract communicates capability without leaking unrelated details."
+      "explanation": "This is a genuine, currently-true gap in the real console app -- there is no exception handling anywhere in Program.cs today."
     },
     {
-      "prompt": "Why run regression tests?",
+      "prompt": "If a using block's Dispose call itself throws an exception, what happens to an exception that was already being thrown from inside the block?",
       "options": [
-        "The application grows cumulatively",
-        "Only the newest file can compile",
-        "Test count changes runtime behavior"
+        "This is a genuinely subtle edge case (Dispose exceptions during unwinding) -- in the common case relevant to this codebase's SqliteConnection/DbContext usage, Dispose completing without its own exception is what actually happens, so the original exception propagates normally",
+        "The original exception is always silently discarded",
+        "The program always crashes immediately with no information"
       ],
       "correct": 0,
-      "explanation": "Earlier instructional guarantees must remain true after each session."
+      "explanation": "This session focuses on the common, real case (Dispose succeeding) rather than the rarer double-fault scenario -- worth naming as a known edge case without needing to solve it here."
     }
   ],
   "reflections": [
-    "Which boundary in this session carries the most design responsibility?",
-    "How does the test reveal cause and effect rather than just a final value?",
-    "What implementation detail can change without affecting callers?"
+    "Why does this session trace a real exception path instead of inventing a hypothetical one?",
+    "What would change about Program.cs's behavior if it wrapped its ClockIn/Clockout/CalculateTotalHours sequence in a single try/catch?",
+    "Where else in this codebase (beyond the SQLite tests) might a resource benefit from using/await using that doesn't currently have it?"
   ],
-  "whatBreaks": "Removing OperationScope.cs removes the executable model for resource lifetime. Removing its tests permits contract regressions. If the boundary leaks its implementation details, callers become harder to change and isolated testing loses value.",
-  "summary": "This session established that exceptions propagate until handled, and using guarantees Dispose runs when control leaves a scope through success or failure. The application change and tests preserve that model as executable documentation."
+  "whatBreaks": "Calling GetDuartion on an open ClockEntry anywhere outside GetEmployeeClockEntries's filtered path reproduces the real, unhandled InvalidOperationException -- and because Program.cs has no try/catch, that would terminate the console app. Forgetting using/await using around a SqliteConnection or PayrollDbContext would leave the connection open if an exception occurred mid-method, relying on non-deterministic garbage collection to eventually release it instead of a guaranteed, immediate Dispose call.",
+  "summary": "GetDuartion's real InvalidOperationException propagates unchanged through PayrollService.CalculateTotalHours and Program.cs, because none of the three catches it -- a real, currently-true fact about this console app, not a hypothetical. using and await using (already at work in the real SQLite integration tests) guarantee Dispose/DisposeAsync runs at the end of a block regardless of whether an exception was thrown inside it, which is exactly why SqliteConnection and DbContext -- both real, external-resource-holding types -- are always opened inside one."
 }

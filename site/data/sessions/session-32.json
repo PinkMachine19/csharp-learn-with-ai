@@ -1,117 +1,116 @@
 {
   "number": 32,
-  "category": "HTTP request boundary",
-  "estimatedTime": "40 minutes",
-  "connection": "Session 31 supplies the required foundation. This session extends TimeClock with HTTP request boundary while keeping execution observable and deterministic.",
+  "category": "Data access and application integration",
+  "estimatedTime": "45 minutes",
+  "connection": "Session 29 covered Scoped lifetime, previewing ASP.NET Core's per-request scoping. This session studies the real Parm.Practice.WebApi/Program.cs scaffold, mirrored verbatim in TimeClock.Web/Program.cs: it calls AddControllers()/MapControllers() against zero controller classes. This session writes the first one.",
   "objectives": [
-    "Explain why routing selects an endpoint, DTOs describe transport data, and mapping keeps HTTP concerns outside the domain model.",
-    "Trace the operation across its execution or application boundary.",
-    "Implement the focused asp.net core requests, routing, and dto boundaries lab.",
-    "Verify success and failure behavior with automated checks."
+    "Read TimeClock.Web/Program.cs and confirm, by inspection, that AddControllers()/MapControllers() are wired up with no Controllers/ directory and no controller classes anywhere in the project -- a real, verified gap, not a hypothetical.",
+    "Write ClockEntriesController, the project's first real controller, exposing an HTTP endpoint over the real IClockEntryService.",
+    "Explain why a controller action's parameters and return type form a DTO boundary distinct from the domain's ClockEntry/Employee types.",
+    "Confirm MapControllers() now has at least one real route to map, by calling the new endpoint."
   ],
   "visuals": [
     {
-      "diagram": "pipeline",
-      "title": "Start at the caller",
-      "explanation": "Identify the input, owned state, and caller expectation for HTTP request boundary."
-    },
-    {
-      "diagram": "branch",
-      "title": "Cross the boundary",
-      "explanation": "Follow the explicit contract rather than assuming hidden runtime behavior."
+      "diagram": "invariant",
+      "title": "The real, verified gap",
+      "explanation": "builder.Services.AddControllers(); ... app.MapControllers(); -- both real lines exist in Parm.Practice.WebApi/Program.cs today, with zero [ApiController] classes anywhere in the project for them to map."
     },
     {
       "diagram": "call",
-      "title": "Observe execution",
-      "explanation": "Execution timing and collaborator behavior become visible through controlled examples."
+      "title": "A controller action is the missing piece",
+      "explanation": "[HttpPost] public IActionResult ClockIn(int employeeId) gives MapControllers() something real to route requests to -- the first controller this real project has ever had."
     },
     {
       "diagram": "return",
-      "title": "Return a stable outcome",
-      "explanation": "The caller receives a documented value, exception, cancellation, or HTTP result."
+      "title": "The action's parameters are the HTTP boundary, not the domain boundary",
+      "explanation": "A controller action receives request data (route values, query strings, request bodies) -- it is not the same thing as calling IClockEntryService.ClockIn(int employeeId) directly from C# code."
+    },
+    {
+      "diagram": "pipeline",
+      "title": "One request, routed to one action, calling the real service",
+      "explanation": "POST /employees/1/clock-in -> ClockEntriesController.ClockIn(1) -> the real, unmodified IClockEntryService.ClockIn(1)."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Which statement best describes asp.net core requests, routing, and dto boundaries?",
+      "prompt": "Why does the real Parm.Practice.WebApi project currently have zero working HTTP endpoints, despite calling AddControllers() and MapControllers()?",
       "options": [
-        "routing selects an endpoint, DTOs describe transport data, and mapping keeps HTTP concerns outside the domain model",
-        "The runtime always creates a new operating-system thread",
-        "Implementation details should be exposed to every caller"
+        "Those two calls only wire up the infrastructure FOR controllers -- MapControllers() maps whatever [ApiController]-attributed classes it finds, and the real project has never had any",
+        "AddControllers() and MapControllers() are broken in this version of ASP.NET Core",
+        "The project uses minimal APIs instead, which are incompatible with MapControllers()"
       ],
       "correct": 0,
-      "explanation": "The session rule separates the public contract from a common implementation shortcut."
+      "explanation": "This is confirmed by inspecting the real project directly -- the DI/routing infrastructure is present and correctly configured; only the controllers themselves are missing."
     },
     {
-      "prompt": "What should an integration boundary make explicit?",
+      "prompt": "What does ClockEntriesController.ClockIn(int employeeId) actually call to perform the real work?",
       "options": [
-        "Inputs, dependencies, execution, and outcomes",
-        "Only private field names",
-        "Unrelated infrastructure details"
+        "The real, unmodified IClockEntryService.ClockIn(int employeeId) -- the controller is a thin HTTP-facing wrapper around logic that already exists and is already tested",
+        "A new, duplicate implementation of the clock-in logic written specifically for the controller",
+        "PayrollService directly"
       ],
       "correct": 0,
-      "explanation": "Explicit boundaries are easier to reason about, test, and change."
+      "explanation": "This is the whole point of Sessions 5-19's interface-based design: the controller is new, but the logic it calls into is the same real, already-tested ClockEntryService."
     },
     {
-      "prompt": "Why test a failure path?",
+      "prompt": "Is a controller action's int employeeId parameter (bound from the URL) the same thing as calling IClockEntryService.ClockIn(employeeId) directly in C# code?",
       "options": [
-        "Failure behavior is part of the contract",
-        "It prevents successful code from compiling",
-        "Only failure tests are valuable"
+        "Not exactly -- the controller parameter is bound from an HTTP request (route value, query string, or body) by ASP.NET Core's model binding, THEN passed to the real ClockIn method; the HTTP boundary and the domain method call are two distinct steps",
+        "Yes -- they are identical in every respect",
+        "No -- controller actions cannot call domain services at all"
       ],
       "correct": 0,
-      "explanation": "A dependable API specifies both successful and unsuccessful outcomes."
+      "explanation": "This distinction matters for Session 33's DTO/validation discussion: HTTP requests need explicit binding and validation before their values can be trusted as valid domain method arguments."
     }
   ],
   "concept": [
     {
-      "title": "Use the accurate execution model",
+      "title": "The real, verified gap",
       "paragraphs": [
-        "The governing rule is that routing selects an endpoint, DTOs describe transport data, and mapping keeps HTTP concerns outside the domain model.",
-        "Avoid equating an abstraction with one possible implementation detail; reason from its documented contract."
+        "TimeClock.Web/Program.cs mirrors Parm.Practice.WebApi/Program.cs verbatim: builder.Services.AddControllers(); wires up controller-related services, and app.MapControllers(); tells ASP.NET Core's routing to map any [ApiController]-attributed classes it discovers -- but there is no Controllers/ directory anywhere in the project, and zero such classes exist.",
+        "This is real and current, not a hypothetical scenario -- confirmed by inspecting both the real practice-07092026 repository and this course's own TimeClock.Web project before this session's lab."
       ],
-      "code": "app.MapPost(\"/entries\", ClockEntryEndpoints.Create);"
+      "code": "// src/TimeClock.Web/Program.cs -- real, mirrored verbatim from the source WebApi\nvar builder = WebApplication.CreateBuilder(args);\nbuilder.Services.AddControllers();\n\nbuilder.Services.AddSingleton<IClockEntryRepository, ClockEntryRepository>();\nbuilder.Services.AddSingleton<IEmployeeRepository, EmployeeRepositor>();\nbuilder.Services.AddSingleton<IClockEntryService, ClockEntryService>();\nbuilder.Services.AddSingleton<PayrollService>();\n\nvar app = builder.Build();\napp.MapControllers();   // maps nothing today -- zero controllers exist\napp.Run();"
     },
     {
-      "title": "Keep boundaries explicit",
+      "title": "ClockEntriesController: the first real controller",
       "paragraphs": [
-        "Dependencies, cancellation, persistence, and transport values should cross named boundaries.",
-        "This makes ownership clear and supplies seams for deterministic tests."
+        "A minimal controller action exposing the real, already-tested IClockEntryService.ClockIn over HTTP -- new code, but calling into logic Sessions 5 and 19 already built and tested.",
+        "[ApiController] plus a route attribute is what makes this class discoverable by MapControllers(); nothing about IClockEntryService itself needs to change for this to work."
       ],
-      "code": "// The boundary exposes intent.\napp.MapPost(\"/entries\", ClockEntryEndpoints.Create);"
+      "code": "// New: TimeClock.Web/Controllers/ClockEntriesController.cs\n[ApiController]\n[Route(\"employees/{employeeId}/clock-in\")]\npublic sealed class ClockEntriesController(IClockEntryService clockEntryService) : ControllerBase\n{\n    [HttpPost]\n    public IActionResult ClockIn(int employeeId)\n    {\n        clockEntryService.ClockIn(employeeId);\n        return Accepted();\n    }\n}"
     },
     {
-      "title": "Verify observable outcomes",
+      "title": "The HTTP boundary is a separate step from the domain call",
       "paragraphs": [
-        "Focused tests control inputs and collaborators so timing and failure assertions stay stable.",
-        "The full suite checks that new infrastructure has not weakened the domain model."
+        "Before ClockIn(int employeeId) ever runs, ASP.NET Core's model binding has already parsed employeeId out of the URL segment {employeeId} and converted it to an int -- a step Session 33 studies more closely when it can fail (a non-numeric segment, for instance).",
+        "This is why controller actions are described as a boundary: everything on one side (HTTP requests, routing, model binding) is new to this session; everything on the other side (IClockEntryService, ClockEntry, the real domain) is unchanged from Sessions 5-29."
       ],
       "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
-    "objective": "Implement one production-sized slice demonstrating asp.net core requests, routing, and dto boundaries.",
-    "startingCondition": "Sessions 01–31 are complete and the solution is green.",
+    "objective": "Add ClockEntriesController as the real project's first controller, and confirm MapControllers() now routes a real HTTP request to it.",
+    "startingCondition": "TimeClock.Web/Program.cs already calls AddControllers()/MapControllers() with zero controllers, mirroring the real, current Parm.Practice.WebApi project exactly.",
     "steps": [
-      "Predict one success outcome and one failure, cancellation, or boundary outcome.",
-      "Add the implementation centered on ClockEntryEndpoints.cs.",
-      "Add ClockEntryEndpointTests.cs with deterministic Arrange–Act–Assert checks.",
-      "Run the focused checks and inspect the relevant returned value or state.",
-      "Run the full Release build, test suite, and site validator."
+      "Confirm, by searching the project, that no Controllers/ directory or [ApiController] class currently exists.",
+      "Add Controllers/ClockEntriesController.cs with a ClockIn action calling the real IClockEntryService.ClockIn.",
+      "Run the WebApi host and send a POST request to the new route, confirming a successful response.",
+      "Confirm the underlying ClockEntryRepository now has a new open ClockEntry for that employee, proving the controller genuinely reached the real domain logic."
     ],
-    "expectedBehavior": "The checks establish that routing selects an endpoint, DTOs describe transport data, and mapping keeps HTTP concerns outside the domain model; all earlier tests continue to pass.",
+    "expectedBehavior": "Before the lab, no route exists for clocking in over HTTP. After adding ClockEntriesController, the POST request succeeds and a new open ClockEntry is created through the same real ClockEntryService used by the console app.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Web/ClockEntryEndpoints.cs",
-      "action": "Add or integrate",
-      "why": "Provide the canonical HTTP request boundary implementation; infrastructure sessions place the equivalent file in their project."
+      "path": "src/TimeClock.Web/Program.cs",
+      "action": "Verify",
+      "why": "Confirm the real, current AddControllers()/MapControllers() scaffold with zero controllers."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/ClockEntryEndpointTests.cs",
-      "action": "Add or integrate",
-      "why": "Verify the new contract with controlled inputs."
+      "path": "src/TimeClock.Web/Controllers/ClockEntriesController.cs",
+      "action": "Add",
+      "why": "Write the project's first real controller, filling the gap MapControllers() has been waiting on."
     },
     {
       "path": "site/data/sessions/session-32.json",
@@ -119,52 +118,50 @@
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-32: teach aspnet core routing and dto boundaries",
+  "commit": "session-32: teach aspnet core requests routing and dto boundaries",
   "review": [
-    "The abstraction is not confused with one runtime implementation.",
-    "Inputs and dependencies cross explicit boundaries.",
-    "Async methods return Task and accept cancellation where relevant.",
-    "Persistence and HTTP models remain separate from domain objects.",
-    "Tests are deterministic and cover a meaningful failure path.",
-    "The complete solution builds without warnings."
+    "The real, current zero-controller gap is confirmed by inspection before any code is written, not assumed.",
+    "ClockEntriesController calls the real, unmodified IClockEntryService rather than duplicating its logic.",
+    "The HTTP boundary (model binding, routing) is explicitly distinguished from the domain method call it eventually makes.",
+    "The full test suite passes, and the new endpoint is confirmed working end to end."
   ],
   "postQuiz": [
     {
-      "prompt": "What did this session establish about asp.net core requests, routing, and dto boundaries?",
+      "prompt": "If PayrollService were resolved inside a new controller action today, without any other changes, what real bug from the source WebApi would surface?",
       "options": [
-        "routing selects an endpoint, DTOs describe transport data, and mapping keeps HTTP concerns outside the domain model",
-        "The compiler removes all failure cases",
-        "Every boundary should use the same concrete type"
+        "The real, latent missing-IEmployeeService-registration bug -- PayrollService's constructor requires IEmployeeService, which TimeClock.Web/Program.cs (mirroring the real WebApi) never registers, so resolution would throw InvalidOperationException",
+        "Nothing -- PayrollService resolves without issue in the WebApi host",
+        "A compile error, not a runtime error"
       ],
       "correct": 0,
-      "explanation": "The implementation and tests demonstrate the stated contract."
+      "explanation": "This is exactly the bug Session 33 discovers and fixes -- Session 32 deliberately used IClockEntryService, which IS fully registered, so this particular controller avoids the bug; Session 33 confronts it directly."
     },
     {
-      "prompt": "Where is an asynchronous exception observed?",
+      "prompt": "Why does ClockEntriesController.ClockIn accept int employeeId as a route parameter rather than, say, a full ClockEntry object in the request body?",
       "options": [
-        "When its faulted task is awaited",
-        "Only when a thread is manually created",
-        "Before the operation starts"
+        "Clocking in only requires an identity (which employee); ClockEntry's ClockIn timestamp is set by the server (DateTime.Now, inside the real ClockEntryService.ClockIn), not supplied by the client -- the route parameter matches exactly what the operation actually needs from the caller",
+        "ASP.NET Core does not support request bodies",
+        "ClockEntry cannot be deserialized from JSON"
       ],
       "correct": 0,
-      "explanation": "Await unwraps and rethrows the task failure at the awaiting boundary."
+      "explanation": "This mirrors the real ClockEntryService.ClockIn(int employeeId) signature exactly -- the controller's parameter list is deliberately no wider than the domain method it calls."
     },
     {
-      "prompt": "Why separate transport or persistence models from domain behavior?",
+      "prompt": "Was writing ClockEntriesController itself a change to any existing, real, tested code?",
       "options": [
-        "Each boundary can evolve without distorting domain invariants",
-        "To duplicate every rule",
-        "To disable validation"
+        "No -- it is entirely new code; IClockEntryService, ClockEntryService, and every existing test remain completely unmodified",
+        "Yes -- IClockEntryService needed a new HTTP-specific method",
+        "Yes -- ClockEntry's constructor needed to change"
       ],
       "correct": 0,
-      "explanation": "Mapping keeps responsibilities and change reasons distinct."
+      "explanation": "This is deliberate: the controller is additive, calling into the exact same real, already-verified domain logic every earlier session already tested."
     }
   ],
   "reflections": [
-    "Which assumption about HTTP request boundary did the executable example confirm or correct?",
-    "Where does failure cross the boundary, and who should handle it?",
-    "Which dependency can a test replace with a controlled implementation?"
+    "Why did MapControllers() compile and run successfully for 31 sessions with zero controllers to map, without ever producing an error?",
+    "What would you need to add to ClockEntriesController for it to also expose Clockout and CalculateTotalHours over HTTP?",
+    "How does keeping ClockEntriesController's action parameters narrow (just employeeId) protect it from becoming coupled to internal domain details that might change?"
   ],
-  "whatBreaks": "Removing ClockEntryEndpoints.cs removes the canonical example for HTTP request boundary. Removing its tests makes timing, failure, persistence, or HTTP behavior easier to regress. Hiding the boundary behind global state would also make the behavior harder to observe and control.",
-  "summary": "This session established that routing selects an endpoint, DTOs describe transport data, and mapping keeps HTTP concerns outside the domain model. Explicit boundaries and deterministic checks make the application behavior dependable."
+  "whatBreaks": "Forgetting the [ApiController] attribute (or a valid route) on a new controller class means MapControllers() still will not discover it -- ASP.NET Core needs both the attribute and app.MapControllers() together to route requests to it. Calling PayrollService instead of IClockEntryService from a new controller action today would surface the real, still-unfixed missing-IEmployeeService-registration bug before Session 33 formally addresses it.",
+  "summary": "TimeClock.Web/Program.cs -- mirroring the real, current Parm.Practice.WebApi/Program.cs -- calls AddControllers()/MapControllers() against zero controller classes, a real and verified gap, not a hypothetical one. This session's lab writes ClockEntriesController, the project's first real controller, calling directly into the same real, already-tested IClockEntryService every earlier session built -- the HTTP boundary (routing, model binding) is new; the domain logic it reaches is not."
 }

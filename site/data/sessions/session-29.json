@@ -1,117 +1,126 @@
 {
   "number": 29,
-  "category": "service composition",
+  "category": "Testing and dependency injection",
   "estimatedTime": "40 minutes",
-  "connection": "Session 28 supplies the required foundation. This session extends TimeClock with service composition while keeping execution observable and deterministic.",
+  "connection": "Session 28 traced the real PayrollServiceTests.cs, which uses Moq. This session studies a second, real test-double style already in the test suite -- hand-written fake repositories like EntryRecorderTests's RecordingRepository -- and the real, mixed Transient/Singleton DI lifetimes from Program.cs (decision-0005), demonstrated with ServiceComposition's Scoped-lifetime example.",
   "objectives": [
-    "Explain why test doubles provide controlled collaborator behavior while DI lifetimes decide whether resolutions share or recreate service instances.",
-    "Trace the operation across its execution or application boundary.",
-    "Implement the focused test doubles, di lifetimes, and service tests lab.",
-    "Verify success and failure behavior with automated checks."
+    "Contrast Moq's Mock<IClockEntryRepository> (Session 28) with a real, hand-written RecordingRepository : IClockEntryRepository test double -- both implement the same interface, by two different mechanisms.",
+    "Explain why a hand-written fake and a Moq mock are both valid test doubles, and what each costs (lines of code written by hand versus a small library dependency and some indirection).",
+    "Explain the real decision-0005 finding: Program.cs registers IClockEntryRepository as Singleton but IClockEntryService, PayrollService, and IEmployeeService as Transient -- and why that mix is safe for this specific console app.",
+    "Use ServiceComposition's real AddTimeClockCore extension to observe Scoped lifetime behavior: one instance per scope, a new instance per new scope."
   ],
   "visuals": [
     {
-      "diagram": "constructor",
-      "title": "Start at the caller",
-      "explanation": "Identify the input, owned state, and caller expectation for service composition."
-    },
-    {
-      "diagram": "instances",
-      "title": "Cross the boundary",
-      "explanation": "Follow the explicit contract rather than assuming hidden runtime behavior."
+      "diagram": "tests",
+      "title": "Two real ways to fake IClockEntryRepository",
+      "explanation": "Mock<IClockEntryRepository>() (Session 28, via Moq) and a hand-written RecordingRepository : IClockEntryRepository (this session) both satisfy the same interface for testing purposes."
     },
     {
       "diagram": "pipeline",
-      "title": "Observe execution",
-      "explanation": "Execution timing and collaborator behavior become visible through controlled examples."
+      "title": "Both doubles work because ClockEntryService depends on the interface",
+      "explanation": "Session 17/19 already established this: any class implementing IClockEntryRepository can stand in wherever the interface is expected, hand-written or Moq-generated."
     },
     {
-      "diagram": "invariant",
-      "title": "Return a stable outcome",
-      "explanation": "The caller receives a documented value, exception, cancellation, or HTTP result."
+      "diagram": "comparison",
+      "title": "The real, mixed lifetimes in Program.cs",
+      "explanation": "AddSingleton<IClockEntryRepository, ClockEntryRepository>() shares one repository; AddTransient<IClockEntryService, ClockEntryService>() creates a new service instance on every resolution."
+    },
+    {
+      "diagram": "feedback",
+      "title": "Scoped sits between Transient and Singleton",
+      "explanation": "ServiceComposition's AddScoped<EntryRecorder>() gives one EntryRecorder per scope -- the same instance within one scope, a different one in the next."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Which statement best describes test doubles, di lifetimes, and service tests?",
+      "prompt": "What do Mock<IClockEntryRepository>() and RecordingRepository : IClockEntryRepository have in common as test doubles?",
       "options": [
-        "test doubles provide controlled collaborator behavior while DI lifetimes decide whether resolutions share or recreate service instances",
-        "The runtime always creates a new operating-system thread",
-        "Implementation details should be exposed to every caller"
+        "Both are objects that implement the real IClockEntryRepository interface, letting a test control GetEmployeeClockEntries/GetClockEntry/SaveClockEntry's behavior without touching the real, in-memory ClockEntryRepository",
+        "Nothing -- they are unrelated testing techniques",
+        "Both require the real database to be running"
       ],
       "correct": 0,
-      "explanation": "The session rule separates the public contract from a common implementation shortcut."
+      "explanation": "The mechanism differs (Moq generates an implementation at runtime; RecordingRepository is a small class written by hand), but the underlying principle -- substituting an interface implementation for testing -- is identical."
     },
     {
-      "prompt": "What should an integration boundary make explicit?",
+      "prompt": "Why does Program.cs register IClockEntryRepository as Singleton while IClockEntryService is Transient?",
       "options": [
-        "Inputs, dependencies, execution, and outcomes",
-        "Only private field names",
-        "Unrelated infrastructure details"
+        "ClockEntryRepository holds the actual state (_clockEntries) that ClockIn and Clockout both need to share across calls; ClockEntryService itself holds no state of its own, so a new instance per resolution costs nothing and shares the same underlying (Singleton) repository anyway",
+        "It is an arbitrary, unexplained inconsistency",
+        "Transient services cannot depend on Singleton services"
       ],
       "correct": 0,
-      "explanation": "Explicit boundaries are easier to reason about, test, and change."
+      "explanation": "decision-0005 documents this as real and verified against the actual Program.cs: the lifetime choice tracks which class actually needs shared state, not a uniform policy."
     },
     {
-      "prompt": "Why test a failure path?",
+      "prompt": "What does AddScoped<EntryRecorder>() guarantee within a single IServiceScope?",
       "options": [
-        "Failure behavior is part of the contract",
-        "It prevents successful code from compiling",
-        "Only failure tests are valuable"
+        "Every GetRequiredService<EntryRecorder>() call within that one scope returns the SAME EntryRecorder instance; a different scope gets a different instance",
+        "A new instance every single call, scope or not",
+        "Exactly one instance for the entire application's lifetime"
       ],
       "correct": 0,
-      "explanation": "A dependable API specifies both successful and unsuccessful outcomes."
+      "explanation": "Scoped is the real middle ground between Transient (always new) and Singleton (always the same) -- ServiceCompositionTests.cs demonstrates this directly with two different scopes."
     }
   ],
   "concept": [
     {
-      "title": "Use the accurate execution model",
+      "title": "Two real test-double mechanisms in this codebase",
       "paragraphs": [
-        "The governing rule is that test doubles provide controlled collaborator behavior while DI lifetimes decide whether resolutions share or recreate service instances.",
-        "Avoid equating an abstraction with one possible implementation detail; reason from its documented contract."
+        "Session 28's PayrollServiceTests.cs uses Moq: new Mock<IClockEntryRepository>() generates an implementation at runtime, configured with .Setup(...).Returns(...).",
+        "EntryRecorderTests.cs's RecordingRepository is hand-written: a small, real private class implementing every member of IClockEntryRepository directly, tracking what was saved in a simple property."
       ],
-      "code": "services.AddScoped<EntryRecorder>();"
+      "code": "// Hand-written fake -- real, existing code\nprivate sealed class RecordingRepository : IClockEntryRepository\n{\n    public ClockEntry? Saved { get; private set; }\n    public void SaveClockEntry(ClockEntry clockEntry) => Saved = clockEntry;\n    public Task<ClockEntry?> GetClockEntry(int employeeId, CancellationToken cancellationToken = default) =>\n        Task.FromResult<ClockEntry?>(null);\n    public IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate) => [];\n}"
     },
     {
-      "title": "Keep boundaries explicit",
+      "title": "The real, mixed DI lifetimes, and why they are safe here",
       "paragraphs": [
-        "Dependencies, cancellation, persistence, and transport values should cross named boundaries.",
-        "This makes ownership clear and supplies seams for deterministic tests."
+        "decision-0005, verified directly against the real Program.cs: IClockEntryRepository is Singleton (one shared instance, holding the real _clockEntries state); IClockEntryService, PayrollService, and IEmployeeService are all Transient (a new instance every resolution).",
+        "This mix is safe specifically because ClockEntryService and PayrollService hold no mutable state of their own -- every Transient instance simply forwards to the one shared Singleton repository, so creating a new service instance costs a small allocation and nothing more."
       ],
-      "code": "// The boundary exposes intent.\nservices.AddScoped<EntryRecorder>();"
+      "code": "// Program.cs -- the real, verified registrations\nservices.AddTransient<IClockEntryService, ClockEntryService>();\nservices.AddSingleton<IClockEntryRepository, ClockEntryRepository>();\nservices.AddTransient<PayrollService>();\nservices.AddTransient<IEmployeeService, EmployeeService>();"
     },
     {
-      "title": "Verify observable outcomes",
+      "title": "Scoped: the lifetime this console app never needed, but ASP.NET Core will",
       "paragraphs": [
-        "Focused tests control inputs and collaborators so timing and failure assertions stay stable.",
-        "The full suite checks that new infrastructure has not weakened the domain model."
+        "ServiceComposition.AddTimeClockCore registers EntryRecorder as Scoped -- one instance per IServiceScope, demonstrated by ServiceCompositionTests.cs resolving it twice within one scope (same instance) and once in a second scope (a different instance).",
+        "Scoped becomes directly relevant once Session 32's ASP.NET Core WebApi is built: ASP.NET Core creates one scope per HTTP request automatically, so a Scoped registration there means one instance per request -- a pattern this console app, with no request boundary, never needed until now."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "// A new extension, demonstrating a lifetime the real console app never used\nservices.AddScoped<EntryRecorder>();\n\nusing (IServiceScope scope = provider.CreateScope())\n{\n    var first = scope.ServiceProvider.GetRequiredService<EntryRecorder>();\n    var second = scope.ServiceProvider.GetRequiredService<EntryRecorder>();\n    // first and second are the SAME instance -- one per scope\n}"
     }
   ],
   "lab": {
-    "objective": "Implement one production-sized slice demonstrating test doubles, di lifetimes, and service tests.",
-    "startingCondition": "Sessions 01–28 are complete and the solution is green.",
+    "objective": "Compare Moq-based and hand-written test doubles for IClockEntryRepository, and confirm all three real DI lifetimes (Transient, Singleton, Scoped) behave as documented.",
+    "startingCondition": "PayrollServiceTests.cs (Moq), EntryRecorderTests.cs (hand-written RecordingRepository), and ServiceCompositionTests.cs (Scoped) already exist.",
     "steps": [
-      "Predict one success outcome and one failure, cancellation, or boundary outcome.",
-      "Add the implementation centered on ServiceComposition.cs.",
-      "Add ServiceCompositionTests.cs with deterministic Arrange–Act–Assert checks.",
-      "Run the focused checks and inspect the relevant returned value or state.",
-      "Run the full Release build, test suite, and site validator."
+      "Read RecordingRepository's four interface members and compare its line count and readability to the equivalent Mock<IClockEntryRepository> setup in PayrollServiceTests.cs.",
+      "Resolve IClockEntryService twice from the same ServiceProvider and confirm you get two different (Transient) instances.",
+      "Resolve IClockEntryRepository twice from the same ServiceProvider and confirm you get the SAME (Singleton) instance.",
+      "Run ServiceCompositionTests.cs and confirm EntryRecorder is the same instance within one scope but different across two scopes."
     ],
-    "expectedBehavior": "The checks establish that test doubles provide controlled collaborator behavior while DI lifetimes decide whether resolutions share or recreate service instances; all earlier tests continue to pass.",
+    "expectedBehavior": "Both test-double styles work correctly for their respective tests; Transient/Singleton/Scoped each demonstrate their documented, distinct behavior when resolved directly from a ServiceProvider.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
+      "path": "tests/TimeClock.Domain.Tests/EntryRecorderTests.cs",
+      "action": "Verify",
+      "why": "Confirm the real, hand-written RecordingRepository test double."
+    },
+    {
+      "path": "tests/TimeClock.Domain.Tests/PayrollServiceTests.cs",
+      "action": "Verify",
+      "why": "Confirm the real Moq-based test double, for contrast."
+    },
+    {
       "path": "src/TimeClock.Domain/ServiceComposition.cs",
-      "action": "Add or integrate",
-      "why": "Provide the canonical service composition implementation; infrastructure sessions place the equivalent file in their project."
+      "action": "Verify",
+      "why": "Confirm the real AddScoped<EntryRecorder>() registration."
     },
     {
       "path": "tests/TimeClock.Domain.Tests/ServiceCompositionTests.cs",
-      "action": "Add or integrate",
-      "why": "Verify the new contract with controlled inputs."
+      "action": "Verify",
+      "why": "Confirm the real scoped-vs-cross-scope instance assertions."
     },
     {
       "path": "site/data/sessions/session-29.json",
@@ -119,52 +128,50 @@
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-29: teach test doubles and dependency injection lifetimes",
+  "commit": "session-29: teach test doubles di lifetimes and service tests",
   "review": [
-    "The abstraction is not confused with one runtime implementation.",
-    "Inputs and dependencies cross explicit boundaries.",
-    "Async methods return Task and accept cancellation where relevant.",
-    "Persistence and HTTP models remain separate from domain objects.",
-    "Tests are deterministic and cover a meaningful failure path.",
-    "The complete solution builds without warnings."
+    "Both real test-double mechanisms (Moq and hand-written) are compared directly, not treated as interchangeable without discussion.",
+    "decision-0005's real, mixed DI lifetimes are explained by what state each class holds, not applied as an unexplained rule.",
+    "Scoped lifetime is demonstrated with the real ServiceCompositionTests.cs assertions, and connected forward to Session 32's ASP.NET Core per-request scoping.",
+    "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "What did this session establish about test doubles, di lifetimes, and service tests?",
+      "prompt": "Why would registering IClockEntryRepository as Transient (instead of the real Singleton) break ClockIn/Clockout's real behavior in Program.cs?",
       "options": [
-        "test doubles provide controlled collaborator behavior while DI lifetimes decide whether resolutions share or recreate service instances",
-        "The compiler removes all failure cases",
-        "Every boundary should use the same concrete type"
+        "Each resolution would get a fresh, empty _clockEntries list -- ClockIn's saved entry would live in a different repository instance than the one Clockout later queries, so Clockout would never find it",
+        "Nothing would break -- Transient and Singleton behave identically for this class",
+        "It would cause a compile error"
       ],
       "correct": 0,
-      "explanation": "The implementation and tests demonstrate the stated contract."
+      "explanation": "This is exactly the scenario Session 19's lab explored -- Singleton is what lets ClockIn and Clockout share the same underlying state across two separate method calls."
     },
     {
-      "prompt": "Where is an asynchronous exception observed?",
+      "prompt": "When would you choose a hand-written fake like RecordingRepository over a Moq-based mock?",
       "options": [
-        "When its faulted task is awaited",
-        "Only when a thread is manually created",
-        "Before the operation starts"
+        "When the interface is small and the fake's behavior is simple enough that hand-writing it is clearer and has no extra library dependency -- both are legitimate choices, and this codebase genuinely uses both",
+        "Never -- Moq should always be preferred",
+        "Hand-written fakes are only valid for interfaces with one member"
       ],
       "correct": 0,
-      "explanation": "Await unwraps and rethrows the task failure at the awaiting boundary."
+      "explanation": "There is no universal rule -- IClockEntryRepository's real test suite uses both approaches in different tests, which is itself the honest answer: it depends on the specific test's needs."
     },
     {
-      "prompt": "Why separate transport or persistence models from domain behavior?",
+      "prompt": "If ClockEntryService.Clockout were called from two different HTTP requests handled concurrently by the real WebApi project (Session 32), and IClockEntryRepository stayed registered as Singleton there too, what real risk would that introduce?",
       "options": [
-        "Each boundary can evolve without distorting domain invariants",
-        "To duplicate every rule",
-        "To disable validation"
+        "Concurrent requests could race on the same shared, mutable _clockEntries list with no synchronization -- a genuine risk this codebase's real, single-threaded console app never had to face",
+        "No risk -- Singleton services are always thread-safe automatically",
+        "The WebApi would fail to start"
       ],
       "correct": 0,
-      "explanation": "Mapping keeps responsibilities and change reasons distinct."
+      "explanation": "This is a real, forward-looking risk worth naming honestly: Singleton state that was safe in a single-threaded console app becomes a genuine concurrency concern once multiple requests can run in parallel."
     }
   ],
   "reflections": [
-    "Which assumption about service composition did the executable example confirm or correct?",
-    "Where does failure cross the boundary, and who should handle it?",
-    "Which dependency can a test replace with a controlled implementation?"
+    "Why does this codebase's test suite use two different test-double styles (Moq and hand-written) instead of standardizing on one?",
+    "What would you need to verify before trusting that IClockEntryRepository's real Singleton registration is still safe once the WebApi project (Session 32) starts handling concurrent requests?",
+    "Where might Scoped be a better fit than Transient or Singleton for a class this codebase doesn't have yet?"
   ],
-  "whatBreaks": "Removing ServiceComposition.cs removes the canonical example for service composition. Removing its tests makes timing, failure, persistence, or HTTP behavior easier to regress. Hiding the boundary behind global state would also make the behavior harder to observe and control.",
-  "summary": "This session established that test doubles provide controlled collaborator behavior while DI lifetimes decide whether resolutions share or recreate service instances. Explicit boundaries and deterministic checks make the application behavior dependable."
+  "whatBreaks": "Registering IClockEntryRepository as Transient instead of Singleton breaks the real ClockIn-then-Clockout sequence, because each resolution would receive an independent, empty _clockEntries list. Using Moq for every single test double, even trivially simple ones, adds a library dependency and a layer of setup-call indirection where a five-line hand-written fake like RecordingRepository would be just as clear. Assuming Singleton services are automatically safe under concurrent access ignores a real risk that becomes relevant the moment this codebase gains a multi-request host (Session 32).",
+  "summary": "This codebase's real test suite uses two legitimate test-double styles side by side: Moq (Session 28's PayrollServiceTests.cs) and hand-written fakes (EntryRecorderTests.cs's RecordingRepository) -- both satisfy IClockEntryRepository, by different mechanisms. decision-0005's real, mixed Transient/Singleton registrations in Program.cs are safe specifically because only ClockEntryRepository holds shared state; ServiceComposition's Scoped example previews a third lifetime this console app never needed but Session 32's ASP.NET Core WebApi (one scope per request) will."
 }
