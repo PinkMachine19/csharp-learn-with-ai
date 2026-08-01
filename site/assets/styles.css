@@ -172,7 +172,7 @@ footer a { color: var(--lime); }
 
 /* Academy alignment: React Learn with AI is the canonical design system. */
 :root { --ink:#c9d1d9; --muted:#8b949e; --paper:#0d1117; --white:#161b22; --surface-2:#21262d; --line:#30363d; --violet:#58a6ff; --violet-dark:#58a6ff; --cyan:#58a6ff; --lime:#3fb950; --amber:#d29922; --radius:6px; --shadow:none; }
-body { font-size:16px; line-height:1.65; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif; font-size:16px; line-height:1.65; }
 .shell { width:100%; max-width:920px; padding-inline:24px; }
 .site-header { background:var(--white); border-color:var(--line); backdrop-filter:none; }
 .nav-wrap { min-height:0; padding-block:14px; justify-content:flex-start; gap:8px; }
