@@ -1,117 +1,116 @@
 {
   "number": 18,
-  "category": "shared implementation",
+  "category": "Object-oriented design",
   "estimatedTime": "40 minutes",
-  "connection": "Session 17 provides the prerequisite vocabulary. This session develops shared implementation through a focused TimeClock change.",
+  "connection": "Session 17 studied interface polymorphism. Nothing in the real practice-07092026 source uses inheritance or abstract classes at all -- this session introduces HoursPolicyBase, a new, clearly-labeled abstract class that StandardHoursPolicy and FlexibleHoursPolicy now inherit from, and previews PayrollDbContext's real inheritance from EF Core's DbContext (Session 30).",
   "objectives": [
-    "Explain why an abstract base can share a stable algorithm while overrides supply one intentional variation.",
-    "Trace control and data across the new API boundary.",
-    "Implement abstract classes, inheritance, and overrides in the canonical application.",
-    "Prove the contract with focused and regression tests."
+    "Explain what HoursPolicyBase adds beyond what IHoursPolicy alone already provided: a shared, non-abstract Round helper both derived classes inherit for free.",
+    "Distinguish HoursPolicyBase's abstract GetVariance (each derived class must supply its own) from its concrete Round (shared, inherited, never overridden).",
+    "Confirm StandardHoursPolicy.GetVariance's override keyword is required, and explain what the compiler checks it against.",
+    "Preview why PayrollDbContext (Session 30) will be this codebase's first real, necessary use of inheritance -- EF Core requires a DbContext subclass, not just an interface implementation."
   ],
   "visuals": [
     {
       "diagram": "blueprint",
-      "title": "Identify the boundary",
-      "explanation": "Locate the state and behavior owned by the shared implementation example."
-    },
-    {
-      "diagram": "path",
-      "title": "Follow the dependency",
-      "explanation": "Arrows show which component knows about or calls the next component."
+      "title": "An abstract class can mix required and shared members",
+      "explanation": "HoursPolicyBase declares GetVariance as abstract (each subclass must implement it) and Round as a concrete, shared protected method (subclasses inherit it unchanged)."
     },
     {
       "diagram": "call",
-      "title": "Observe the behavior",
-      "explanation": "Trace one concrete input to its output before generalizing the rule."
+      "title": "override is checked against the abstract declaration",
+      "explanation": "StandardHoursPolicy.GetVariance must use override, and its signature must match HoursPolicyBase's abstract declaration exactly, or the compiler rejects it."
     },
     {
-      "diagram": "return",
-      "title": "Protect the contract",
-      "explanation": "The public contract should preserve valid state and expose only required capability."
+      "diagram": "instances",
+      "title": "Round is never duplicated",
+      "explanation": "Neither StandardHoursPolicy nor FlexibleHoursPolicy defines its own Round method -- both inherit the single implementation from HoursPolicyBase."
+    },
+    {
+      "diagram": "invariant",
+      "title": "An interface alone could not have done this",
+      "explanation": "IHoursPolicy could declare GetVariance, but interfaces (before default interface members) cannot supply Round's shared implementation the way an abstract base class can."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Which statement accurately frames abstract classes, inheritance, and overrides?",
+      "prompt": "What could HoursPolicyBase do that IHoursPolicy alone could not?",
       "options": [
-        "an abstract base can share a stable algorithm while overrides supply one intentional variation",
-        "Every implementation must expose all internal details",
-        "The runtime ignores declared contracts"
+        "Provide Round as a real, shared method body that both StandardHoursPolicy and FlexibleHoursPolicy inherit without rewriting it -- an interface can declare a member's signature but an ordinary interface cannot supply reusable implementation the way an abstract class can",
+        "Nothing -- interfaces and abstract classes are functionally identical",
+        "Prevent FlexibleHoursPolicy from ever changing its GetVariance result"
       ],
       "correct": 0,
-      "explanation": "The session rule connects the language feature to an observable design consequence."
+      "explanation": "This is the concrete difference this session demonstrates: shared, inherited implementation is an abstract class capability that a plain interface does not give you."
     },
     {
-      "prompt": "Where should a required collaborator be supplied?",
+      "prompt": "Why must StandardHoursPolicy.GetVariance use the override keyword?",
       "options": [
-        "At an explicit construction or method boundary",
-        "Through hidden global state",
-        "By searching unrelated objects"
+        "HoursPolicyBase declares GetVariance as abstract, which requires every concrete derived class to supply an implementation marked override -- the compiler checks the signature matches exactly",
+        "override is optional stylistic decoration",
+        "override is required by IHoursPolicy, not HoursPolicyBase"
       ],
       "correct": 0,
-      "explanation": "Explicit boundaries make dependencies visible and testable."
+      "explanation": "abstract members create a contract just as binding as an interface member -- override is how C# confirms a derived class is fulfilling that specific abstract declaration, not just adding an unrelated method with the same name."
     },
     {
-      "prompt": "What makes a prediction useful?",
+      "prompt": "Why will PayrollDbContext (Session 30) be forced to use inheritance, when nothing else in this codebase has needed it?",
       "options": [
-        "It names the expected cause and effect",
-        "It avoids executing tests",
-        "It depends on implementation trivia"
+        "EF Core's design requires your context class to literally BE a DbContext (public class PayrollDbContext : DbContext), inheriting its real infrastructure (change tracking, SaveChangesAsync) -- there is no interface-based alternative for that specific framework requirement",
+        "It isn't forced to -- it's a stylistic choice",
+        "DbContext is an interface, not a base class"
       ],
       "correct": 0,
-      "explanation": "A causal prediction can be compared with output and corrected."
+      "explanation": "This is a genuine, external constraint from the EF Core framework itself, not a design preference this course is choosing -- worth previewing now so Session 30's inheritance doesn't feel unmotivated."
     }
   ],
   "concept": [
     {
-      "title": "Name the contract",
+      "title": "HoursPolicyBase: abstract plus concrete, in one class",
       "paragraphs": [
-        "The governing rule is that an abstract base can share a stable algorithm while overrides supply one intentional variation.",
-        "Start with what callers need to know, then keep incidental implementation details behind the boundary."
+        "public abstract class HoursPolicyBase : IHoursPolicy declares GetVariance as abstract decimal GetVariance(decimal recordedHours) -- no body, forcing every non-abstract derived class to supply one.",
+        "The same class also declares protected static decimal Round(decimal hours) with a real, complete body -- every derived class inherits this exact implementation; none of them re-declare it."
       ],
-      "code": "TimeAdjustment adjustment = new PercentageAdjustment(10m);\ndecimal result = adjustment.Apply(8m);"
+      "code": "public abstract class HoursPolicyBase : IHoursPolicy\n{\n    public abstract decimal GetVariance(decimal recordedHours);\n\n    protected static decimal Round(decimal hours) =>\n        Math.Round(hours, 2, MidpointRounding.AwayFromZero);\n}"
     },
     {
-      "title": "Trace dependencies and control",
+      "title": "Two derived classes, one required override, one free inheritance",
       "paragraphs": [
-        "Follow calls from the public operation through each collaborator or transformation.",
-        "A clear direction reduces branching, duplication, and accidental coupling."
+        "StandardHoursPolicy and FlexibleHoursPolicy both extend HoursPolicyBase now, instead of implementing IHoursPolicy directly. Each provides its own override decimal GetVariance(...) -- required, because GetVariance is abstract.",
+        "Neither class writes its own Round method -- both simply call the inherited one, exactly as HoursPolicyBase defined it, with zero duplication."
       ],
-      "code": "// Read the pipeline from caller to result.\nTimeAdjustment adjustment = new PercentageAdjustment(10m);"
+      "code": "public sealed class StandardHoursPolicy(decimal scheduledHours) : HoursPolicyBase\n{\n    public override decimal GetVariance(decimal recordedHours) => Round(recordedHours - scheduledHours);\n}\n\npublic sealed class FlexibleHoursPolicy : HoursPolicyBase\n{\n    public override decimal GetVariance(decimal recordedHours) => 0m;\n}"
     },
     {
-      "title": "Make behavior executable",
+      "title": "A preview: PayrollDbContext's real, necessary inheritance",
       "paragraphs": [
-        "Focused tests demonstrate the new rule with small deterministic values.",
-        "The complete suite then confirms the cumulative application still honors earlier contracts."
+        "Session 30 introduces PayrollDbContext : DbContext -- EF Core's own design requires your context type to literally be a DbContext, gaining its real change-tracking and SaveChangesAsync machinery through inheritance.",
+        "This is different from HoursPolicyBase's inheritance, which this course chose deliberately to demonstrate the concept -- PayrollDbContext's inheritance is externally required by the EF Core framework itself, the first genuinely necessary use of inheritance in this codebase."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "// Coming in Session 30 -- EF Core requires this shape, not just an interface\n// public sealed class PayrollDbContext(DbContextOptions<PayrollDbContext> options) : DbContext(options)"
     }
   ],
   "lab": {
-    "objective": "Add a compact TimeClock example for abstract classes, inheritance, and overrides.",
-    "startingCondition": "Sessions 01–17 are complete and all existing tests pass.",
+    "objective": "Confirm HoursPolicyBase's split between abstract and concrete members, and that both derived policies inherit Round unchanged.",
+    "startingCondition": "HoursPolicyBase, StandardHoursPolicy, and FlexibleHoursPolicy already exist with the real abstract/concrete split.",
     "steps": [
-      "Predict the successful path and one boundary or failure case.",
-      "Add src/TimeClock.Domain/TimeAdjustment.cs with a narrow public contract.",
-      "Add tests/TimeClock.Domain.Tests/TimeAdjustmentTests.cs for the prediction and boundary case.",
-      "Run the focused tests and inspect the observed values or control flow.",
-      "Run the full Release build and test suite."
+      "Attempt to instantiate HoursPolicyBase directly (new HoursPolicyBase()) and confirm the compiler rejects it -- abstract classes cannot be constructed.",
+      "Remove the override keyword from StandardHoursPolicy.GetVariance and confirm the compiler rejects the resulting method as an unrelated overload, not a valid override.",
+      "Confirm neither StandardHoursPolicy nor FlexibleHoursPolicy declares its own Round method, and that GetVariance's rounded results still work correctly through the inherited one.",
+      "Run the existing HoursPolicyTests.cs and confirm both policies still pass with their real, unchanged expected values."
     ],
-    "expectedBehavior": "The new tests establish that an abstract base can share a stable algorithm while overrides supply one intentional variation; prior behavior remains unchanged.",
+    "expectedBehavior": "HoursPolicyBase cannot be constructed directly; removing override causes a compile error; both policies correctly use the inherited Round method with no duplication; existing tests pass unchanged.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/TimeAdjustment.cs",
-      "action": "Add",
-      "why": "Provide the canonical shared implementation example."
+      "path": "src/TimeClock.Domain/IHoursPolicy.cs",
+      "action": "Verify",
+      "why": "Confirm HoursPolicyBase's real abstract/concrete member split and both derived classes."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/TimeAdjustmentTests.cs",
-      "action": "Add",
-      "why": "Verify the contract and its boundary case."
+      "path": "tests/TimeClock.Domain.Tests/HoursPolicyTests.cs",
+      "action": "Verify",
+      "why": "Confirm existing coverage still passes against the now-inherited implementation."
     },
     {
       "path": "site/data/sessions/session-18.json",
@@ -121,50 +120,48 @@
   ],
   "commit": "session-18: teach abstract classes inheritance and overrides",
   "review": [
-    "The public API states one coherent responsibility.",
-    "Dependencies and state changes are explicit.",
-    "The example remains deterministic and compact.",
-    "Tests cover success and a meaningful boundary.",
-    "No nullable warnings are introduced.",
-    "The complete suite passes."
+    "HoursPolicyBase is explicitly introduced as new, since no real inheritance exists in the source app.",
+    "The abstract/concrete split (GetVariance vs Round) is demonstrated by actually attempting to instantiate the base class and remove the override keyword.",
+    "PayrollDbContext's future, genuinely-required inheritance is previewed honestly as a different motivation than this session's deliberate teaching example.",
+    "The full test suite passes with both policies working correctly through the new inheritance chain."
   ],
   "postQuiz": [
     {
-      "prompt": "What did the implementation prove about abstract classes, inheritance, and overrides?",
+      "prompt": "Why can't HoursPolicyBase be instantiated directly with new HoursPolicyBase()?",
       "options": [
-        "an abstract base can share a stable algorithm while overrides supply one intentional variation",
-        "Design contracts cannot be tested",
-        "Every caller needs concrete implementation details"
+        "It is declared abstract, and abstract classes can never be constructed directly -- only concrete (non-abstract) derived classes like StandardHoursPolicy and FlexibleHoursPolicy can be instantiated",
+        "It has no constructor",
+        "IHoursPolicy prevents it"
       ],
       "correct": 0,
-      "explanation": "The passing tests make the stated rule observable."
+      "explanation": "abstract on a class is exactly this: a promise that the class is incomplete on its own and exists only to be extended."
     },
     {
-      "prompt": "Why keep the public contract narrow?",
+      "prompt": "If HoursPolicyBase's Round method were declared virtual instead of a plain (non-virtual) method, what new capability would that add?",
       "options": [
-        "To reduce coupling and preserve implementation freedom",
-        "To prevent tests",
-        "To make all operations mutable"
+        "Derived classes could optionally override Round with their own rounding behavior, using the override keyword -- today, neither StandardHoursPolicy nor FlexibleHoursPolicy can customize it at all",
+        "Nothing would change",
+        "Round would become abstract automatically"
       ],
       "correct": 0,
-      "explanation": "A narrow contract communicates capability without leaking unrelated details."
+      "explanation": "virtual is what opens a concrete method up to being overridden; a plain method (like Round today) is fixed for every derived class, which is exactly why neither policy can (or needs to) customize rounding."
     },
     {
-      "prompt": "Why run regression tests?",
+      "prompt": "What is genuinely different about PayrollDbContext's future inheritance from DbContext, compared to StandardHoursPolicy's inheritance from HoursPolicyBase?",
       "options": [
-        "The application grows cumulatively",
-        "Only the newest file can compile",
-        "Test count changes runtime behavior"
+        "PayrollDbContext's inheritance is required by the EF Core framework's own design; HoursPolicyBase's inheritance was a deliberate choice this course made specifically to have a real example to teach from",
+        "There is no real difference between the two",
+        "PayrollDbContext will not actually use inheritance"
       ],
       "correct": 0,
-      "explanation": "Earlier instructional guarantees must remain true after each session."
+      "explanation": "This distinction matters for judgment: not every inheritance relationship is equally motivated -- some are genuinely required by a framework, others are a design choice worth justifying on their own merits."
     }
   ],
   "reflections": [
-    "Which boundary in this session carries the most design responsibility?",
-    "How does the test reveal cause and effect rather than just a final value?",
-    "What implementation detail can change without affecting callers?"
+    "Why did this course choose to add a new abstract class (HoursPolicyBase) rather than leave Session 18 without any real inheritance example at all?",
+    "What would you lose if HoursPolicyBase's Round method were duplicated separately inside StandardHoursPolicy and FlexibleHoursPolicy instead of shared?",
+    "Now that you've seen both an interface-only design (Session 17's original IHoursPolicy) and an abstract-class design (this session's HoursPolicyBase), when would you reach for each?"
   ],
-  "whatBreaks": "Removing TimeAdjustment.cs removes the executable model for shared implementation. Removing its tests permits contract regressions. If the boundary leaks its implementation details, callers become harder to change and isolated testing loses value.",
-  "summary": "This session established that an abstract base can share a stable algorithm while overrides supply one intentional variation. The application change and tests preserve that model as executable documentation."
+  "whatBreaks": "Attempting new HoursPolicyBase() directly fails to compile, because abstract classes exist only to be extended, never instantiated on their own. Removing StandardHoursPolicy's override keyword from GetVariance produces a compile error, because the compiler can no longer connect that method to HoursPolicyBase's abstract declaration. Duplicating Round's logic separately inside each derived policy (instead of inheriting it) would reintroduce the exact kind of duplication generics (Session 13) and interfaces (Session 17) already exist to avoid.",
+  "summary": "HoursPolicyBase is a new, clearly-labeled abstract class -- nothing in the real source uses inheritance, so this session builds one specifically to demonstrate what an abstract class adds beyond an interface: a required abstract member (GetVariance) alongside a shared, concrete, inherited one (Round). Session 30's PayrollDbContext will be this codebase's first genuinely framework-required use of inheritance, previewed here so it does not feel unmotivated when it arrives."
 }

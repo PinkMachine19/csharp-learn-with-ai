@@ -1,117 +1,121 @@
 {
   "number": 16,
-  "category": "object boundaries",
+  "category": "Object-oriented design",
   "estimatedTime": "40 minutes",
-  "connection": "Session 15 provides the prerequisite vocabulary. This session develops object boundaries through a focused TimeClock change.",
+  "connection": "Session 10 named ClockEntryRepository's public _clockEntries field as a real, unfixed encapsulation gap and promised to revisit it here. This session fixes it, and studies Timesheet -- a new extension composing Employee and List<ClockEntry> -- as a contrast in deliberate composition.",
   "objectives": [
-    "Explain why encapsulation protects state transitions while composition builds behavior from collaborating objects.",
-    "Trace control and data across the new API boundary.",
-    "Implement encapsulation and composition in the canonical application.",
-    "Prove the contract with focused and regression tests."
+    "Fix ClockEntryRepository's real public _clockEntries field: make it private, and confirm every existing caller still compiles using only SaveClockEntry/GetClockEntry/GetEmployeeClockEntries.",
+    "Contrast that fix with ClockEntry's own ClockOut property, which was already correctly encapsulated (get with a private set) from the very first session.",
+    "Read Timesheet as composition: it owns an Employee and a List<ClockEntry>, and enforces (via Add) that every ClockEntry actually belongs to its Employee.",
+    "Explain why Timesheet.Add throws rather than silently ignoring a mismatched EmployeeId."
   ],
   "visuals": [
     {
       "diagram": "invariant",
-      "title": "Identify the boundary",
-      "explanation": "Locate the state and behavior owned by the object boundaries example."
-    },
-    {
-      "diagram": "blueprint",
-      "title": "Follow the dependency",
-      "explanation": "Arrows show which component knows about or calls the next component."
-    },
-    {
-      "diagram": "instances",
-      "title": "Observe the behavior",
-      "explanation": "Trace one concrete input to its output before generalizing the rule."
+      "title": "Before: any caller could bypass SaveClockEntry",
+      "explanation": "public readonly List<ClockEntry> _clockEntries let external code call repository._clockEntries.Clear() directly -- a real gap identified in Session 10."
     },
     {
       "diagram": "call",
-      "title": "Protect the contract",
-      "explanation": "The public contract should preserve valid state and expose only required capability."
+      "title": "After: only the repository's own methods can touch storage",
+      "explanation": "Making _clockEntries private forces every interaction through SaveClockEntry, GetClockEntry, and GetEmployeeClockEntries -- exactly the surface IClockEntryRepository already promises."
+    },
+    {
+      "diagram": "blueprint",
+      "title": "ClockEntry.ClockOut was already encapsulated correctly",
+      "explanation": "public DateTime? ClockOut { get; private set; } has been this way since Session 5 -- only ClockOutEmployee can change it, which is why Session 16 is a repository fix, not a ClockEntry fix."
+    },
+    {
+      "diagram": "instances",
+      "title": "Timesheet composes an Employee and a List<ClockEntry>",
+      "explanation": "Timesheet does not inherit from either type -- it owns one Employee and a private list of that employee's ClockEntry objects, exposed only as IReadOnlyList<ClockEntry>."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Which statement accurately frames encapsulation and composition?",
+      "prompt": "What real, external capability does making ClockEntryRepository's _clockEntries field private remove?",
       "options": [
-        "encapsulation protects state transitions while composition builds behavior from collaborating objects",
-        "Every implementation must expose all internal details",
-        "The runtime ignores declared contracts"
+        "Direct access to _clockEntries.Clear(), .Add(...), or indexing from any code outside ClockEntryRepository -- the exact bypass Session 10 identified as a real, unfixed gap",
+        "The ability to call GetEmployeeClockEntries",
+        "Nothing observable changes"
       ],
       "correct": 0,
-      "explanation": "The session rule connects the language feature to an observable design consequence."
+      "explanation": "This is precisely the fix Session 10 promised: private forces every interaction through the repository's own three methods, closing the bypass without changing any of IClockEntryRepository's public contract."
     },
     {
-      "prompt": "Where should a required collaborator be supplied?",
+      "prompt": "Why was ClockEntry.ClockOut never a similar problem, even though it is also a mutable piece of state?",
       "options": [
-        "At an explicit construction or method boundary",
-        "Through hidden global state",
-        "By searching unrelated objects"
+        "ClockOut has always had a private setter (public DateTime? ClockOut { get; private set; }) -- only ClockOutEmployee, a method on ClockEntry itself, can ever change it; there was never a public-field-style bypass to begin with",
+        "ClockOut is a value type and therefore automatically safe",
+        "ClockOut is read-only and can never change"
       ],
       "correct": 0,
-      "explanation": "Explicit boundaries make dependencies visible and testable."
+      "explanation": "This is a genuinely different situation from _clockEntries -- ClockEntry got its encapsulation right from Session 5; the repository's field is what needed the fix."
     },
     {
-      "prompt": "What makes a prediction useful?",
+      "prompt": "Why does Timesheet.Add throw ArgumentException when given a ClockEntry whose EmployeeId doesn't match the Timesheet's own Employee?",
       "options": [
-        "It names the expected cause and effect",
-        "It avoids executing tests",
-        "It depends on implementation trivia"
+        "A Timesheet's whole reason for existing is grouping one employee's entries together -- silently accepting a mismatched entry would corrupt that invariant without any visible sign of the mistake",
+        "ArgumentException is required by every Add method in C#",
+        "It has no real reason -- it is arbitrary"
       ],
       "correct": 0,
-      "explanation": "A causal prediction can be compared with output and corrected."
+      "explanation": "This mirrors Session 23's throw-vs-return rule: adding another employee's entry to this Timesheet is a broken caller expectation, not an expected everyday outcome, so it throws rather than silently ignoring the mismatch."
     }
   ],
   "concept": [
     {
-      "title": "Name the contract",
+      "title": "Fixing the real encapsulation gap",
       "paragraphs": [
-        "The governing rule is that encapsulation protects state transitions while composition builds behavior from collaborating objects.",
-        "Start with what callers need to know, then keep incidental implementation details behind the boundary."
+        "The fix is one word: public readonly List<ClockEntry> _clockEntries becomes private readonly List<ClockEntry> _clockEntries. Every existing real method (SaveClockEntry, GetClockEntry, GetEmployeeClockEntries) is a member of the same class, so none of them need to change.",
+        "Every caller outside ClockEntryRepository -- ClockEntryService, PayrollService, every test -- was already going through the interface's three methods, never the field directly, so this fix is observable only in that the old bypass (repository._clockEntries.Clear()) now fails to compile."
       ],
-      "code": "Timesheet sheet = new(worker);\nsheet.Add(entry);"
+      "code": "// Before -- Session 10's real, verified gap\npublic readonly List<ClockEntry> _clockEntries = new();\n\n// After -- the fix\nprivate readonly List<ClockEntry> _clockEntries = new();"
     },
     {
-      "title": "Trace dependencies and control",
+      "title": "Contrast: ClockEntry.ClockOut was correct from the start",
       "paragraphs": [
-        "Follow calls from the public operation through each collaborator or transformation.",
-        "A clear direction reduces branching, duplication, and accidental coupling."
+        "ClockEntry's constructor and ClockOutEmployee have not changed since Session 5 -- ClockOut's private setter already prevented exactly the kind of external bypass _clockEntries just had.",
+        "Seeing both the correct original design (ClockEntry) and the real gap that needed fixing (ClockEntryRepository) side by side is what makes 'encapsulation' concrete instead of abstract."
       ],
-      "code": "// Read the pipeline from caller to result.\nTimesheet sheet = new(worker);"
+      "code": "public DateTime? ClockOut { get; private set; }   // correct since Session 5 -- never needed fixing"
     },
     {
-      "title": "Make behavior executable",
+      "title": "Timesheet: composition with an enforced invariant",
       "paragraphs": [
-        "Focused tests demonstrate the new rule with small deterministic values.",
-        "The complete suite then confirms the cumulative application still honors earlier contracts."
+        "Timesheet owns an Employee (assigned once, in its constructor) and a private List<ClockEntry> exposed only as IReadOnlyList<ClockEntry> -- callers can read Entries but cannot Add to it directly; they must go through Timesheet.Add.",
+        "Add's real check -- entry.EmployeeId != Employee.EmployeeId -- is what keeps every entry in Entries genuinely belonging to this Timesheet's Employee, for the lifetime of the object."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "public sealed class Timesheet\n{\n    private readonly List<ClockEntry> entries = [];\n    public Timesheet(Employee employee) => Employee = employee ?? throw new ArgumentNullException(nameof(employee));\n    public Employee Employee { get; }\n    public IReadOnlyList<ClockEntry> Entries => entries;\n\n    public void Add(ClockEntry entry)\n    {\n        ArgumentNullException.ThrowIfNull(entry);\n        if (entry.EmployeeId != Employee.EmployeeId)\n            throw new ArgumentException(\"The entry belongs to another employee.\", nameof(entry));\n        entries.Add(entry);\n    }\n}"
     }
   ],
   "lab": {
-    "objective": "Add a compact TimeClock example for encapsulation and composition.",
-    "startingCondition": "Sessions 01–15 are complete and all existing tests pass.",
+    "objective": "Make ClockEntryRepository's _clockEntries field private, confirm the whole solution still builds, and exercise Timesheet's composition invariant.",
+    "startingCondition": "ClockEntryRepository's _clockEntries field is still public, as in the real source repository; Timesheet already exists with its real composition and Add invariant.",
     "steps": [
-      "Predict the successful path and one boundary or failure case.",
-      "Add src/TimeClock.Domain/Timesheet.cs with a narrow public contract.",
-      "Add tests/TimeClock.Domain.Tests/TimesheetTests.cs for the prediction and boundary case.",
-      "Run the focused tests and inspect the observed values or control flow.",
-      "Run the full Release build and test suite."
+      "Change _clockEntries from public to private in ClockEntryRepository.cs.",
+      "Build the whole solution and confirm nothing outside ClockEntryRepository referenced the field directly (it should not have).",
+      "Write a Timesheet, add one matching ClockEntry successfully, then attempt to add a ClockEntry with a different EmployeeId and confirm ArgumentException is thrown.",
+      "Confirm Timesheet.Entries is read-only from the outside -- Entries.Add(...) should not compile."
     ],
-    "expectedBehavior": "The new tests establish that encapsulation protects state transitions while composition builds behavior from collaborating objects; prior behavior remains unchanged.",
+    "expectedBehavior": "The solution builds and all tests pass after the private-field fix; Timesheet.Add succeeds for a matching entry and throws for a mismatched one; Entries cannot be mutated directly from outside Timesheet.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
+      "path": "src/TimeClock.Domain/ClockEntryRepository.cs",
+      "action": "Modify",
+      "why": "Change _clockEntries from public to private, closing the real encapsulation gap named in Session 10."
+    },
+    {
       "path": "src/TimeClock.Domain/Timesheet.cs",
-      "action": "Add",
-      "why": "Provide the canonical object boundaries example."
+      "action": "Verify",
+      "why": "Confirm the real composition and EmployeeId-matching invariant."
     },
     {
       "path": "tests/TimeClock.Domain.Tests/TimesheetTests.cs",
-      "action": "Add",
-      "why": "Verify the contract and its boundary case."
+      "action": "Verify",
+      "why": "Confirm both the successful-add and mismatched-employee-throws cases."
     },
     {
       "path": "site/data/sessions/session-16.json",
@@ -121,50 +125,49 @@
   ],
   "commit": "session-16: teach encapsulation and composition",
   "review": [
-    "The public API states one coherent responsibility.",
-    "Dependencies and state changes are explicit.",
-    "The example remains deterministic and compact.",
-    "Tests cover success and a meaningful boundary.",
-    "No nullable warnings are introduced.",
-    "The complete suite passes."
+    "The _clockEntries field is private, and every existing real method still compiles unchanged.",
+    "No caller outside ClockEntryRepository referenced the field directly before or after the fix.",
+    "ClockEntry.ClockOut's already-correct encapsulation is used as a contrast, not silently ignored.",
+    "Timesheet's Add invariant is demonstrated with both a passing and a throwing case.",
+    "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "What did the implementation prove about encapsulation and composition?",
+      "prompt": "Why did fixing _clockEntries's visibility require no changes to IClockEntryRepository or any of its three method signatures?",
       "options": [
-        "encapsulation protects state transitions while composition builds behavior from collaborating objects",
-        "Design contracts cannot be tested",
-        "Every caller needs concrete implementation details"
+        "The interface never exposed the field in the first place -- SaveClockEntry, GetClockEntry, and GetEmployeeClockEntries were always the intended public surface; only the field's accidental public visibility needed correcting",
+        "IClockEntryRepository was also changed as part of the fix",
+        "It required changes to every class implementing IClockEntryRepository"
       ],
       "correct": 0,
-      "explanation": "The passing tests make the stated rule observable."
+      "explanation": "This is exactly why the fix is small and safe -- the intended contract (the interface) was already correct; only an implementation detail (the field's visibility) needed to catch up to it."
     },
     {
-      "prompt": "Why keep the public contract narrow?",
+      "prompt": "Could Timesheet have used inheritance (Timesheet : Employee) instead of composition (Timesheet owning an Employee) to associate an employee with their entries?",
       "options": [
-        "To reduce coupling and preserve implementation freedom",
-        "To prevent tests",
-        "To make all operations mutable"
+        "No -- a Timesheet is not a kind of Employee (inheritance's 'is-a' relationship doesn't hold); it HAS an Employee, which is exactly what composition ('has-a') models",
+        "Yes -- inheritance and composition are interchangeable here",
+        "Only if Employee were declared abstract"
       ],
       "correct": 0,
-      "explanation": "A narrow contract communicates capability without leaking unrelated details."
+      "explanation": "This is the classic is-a versus has-a distinction: Timesheet has an Employee and a list of that employee's entries -- it is not itself a more specific kind of Employee."
     },
     {
-      "prompt": "Why run regression tests?",
+      "prompt": "What would happen if Timesheet.Entries returned List<ClockEntry> instead of IReadOnlyList<ClockEntry>?",
       "options": [
-        "The application grows cumulatively",
-        "Only the newest file can compile",
-        "Test count changes runtime behavior"
+        "Callers could call Entries.Add(...) or Entries.Clear() directly, bypassing Timesheet.Add's EmployeeId-matching check entirely -- reintroducing the exact kind of bypass Session 16 just fixed in ClockEntryRepository",
+        "Nothing would change -- List<T> and IReadOnlyList<T> expose identical members",
+        "The code would fail to compile"
       ],
       "correct": 0,
-      "explanation": "Earlier instructional guarantees must remain true after each session."
+      "explanation": "IReadOnlyList<T> deliberately omits Add/Remove/Clear -- returning the narrower interface is what protects Timesheet's own invariant, the same principle Session 12 covered for GetEmployeeClockEntries."
     }
   ],
   "reflections": [
-    "Which boundary in this session carries the most design responsibility?",
-    "How does the test reveal cause and effect rather than just a final value?",
-    "What implementation detail can change without affecting callers?"
+    "Why did this exact same kind of bug (a public field bypassing intended validation) not exist anywhere in ClockEntry itself?",
+    "What would you check for, in a code review, to catch a class exposing a mutable field the way ClockEntryRepository originally did?",
+    "How does Timesheet's IReadOnlyList<ClockEntry> return type connect back to Session 12's discussion of interface-level promises?"
   ],
-  "whatBreaks": "Removing Timesheet.cs removes the executable model for object boundaries. Removing its tests permits contract regressions. If the boundary leaks its implementation details, callers become harder to change and isolated testing loses value.",
-  "summary": "This session established that encapsulation protects state transitions while composition builds behavior from collaborating objects. The application change and tests preserve that model as executable documentation."
+  "whatBreaks": "Leaving _clockEntries public keeps the real bypass Session 10 identified: any code with a ClockEntryRepository reference can clear or directly mutate stored entries, invalidating anything SaveClockEntry might someday enforce. Changing Timesheet.Entries to return the mutable List<ClockEntry> directly would let callers add entries without EmployeeId validation, reintroducing the same class of bug in a different class.",
+  "summary": "ClockEntryRepository's real public _clockEntries field -- named as a gap in Session 10 -- is fixed here by making it private, with no change required to IClockEntryRepository or any of its three real methods. ClockEntry.ClockOut's private setter shows what correct encapsulation looked like from the start. Timesheet demonstrates composition: it owns an Employee and a list of that employee's entries, and Add enforces that every entry actually belongs to it."
 }

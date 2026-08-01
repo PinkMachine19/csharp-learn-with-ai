@@ -1,117 +1,121 @@
 {
   "number": 17,
-  "category": "substitutable contracts",
+  "category": "Object-oriented design",
   "estimatedTime": "40 minutes",
-  "connection": "Session 16 provides the prerequisite vocabulary. This session develops substitutable contracts through a focused TimeClock change.",
+  "connection": "Session 16 fixed a real encapsulation gap. This session studies the real interfaces already driving this codebase's polymorphism -- IClockEntryRepository, IClockEntryService, IEmployeeRepository, IEmployeeService -- plus IHoursPolicy's two swappable implementations, StandardHoursPolicy and FlexibleHoursPolicy.",
   "objectives": [
-    "Explain why an interface defines a callable contract and polymorphism lets callers use different implementations without branching on concrete types.",
-    "Trace control and data across the new API boundary.",
-    "Implement interfaces and polymorphism in the canonical application.",
-    "Prove the contract with focused and regression tests."
+    "List all four real interfaces in TimeClock.Domain and their real implementing classes, including the real EmployeeRepositor typo.",
+    "Explain what 'polymorphism' means concretely for ClockEntryService: it depends on IClockEntryRepository, and works correctly regardless of which implementation Program.cs registers.",
+    "Swap StandardHoursPolicy for FlexibleHoursPolicy in a call site and confirm the caller's code does not change, only its behavior.",
+    "Explain why EmployeeRepositor's real class-name typo does not affect polymorphism at all -- the interface name is what callers depend on, not the class name."
   ],
   "visuals": [
     {
-      "diagram": "signature",
-      "title": "Identify the boundary",
-      "explanation": "Locate the state and behavior owned by the substitutable contracts example."
-    },
-    {
       "diagram": "branch",
-      "title": "Follow the dependency",
-      "explanation": "Arrows show which component knows about or calls the next component."
+      "title": "Four real interfaces, four real implementations",
+      "explanation": "IClockEntryRepository -> ClockEntryRepository, IClockEntryService -> ClockEntryService, IEmployeeRepository -> EmployeeRepositor (typo, real), IEmployeeService -> EmployeeService."
     },
     {
       "diagram": "call",
-      "title": "Observe the behavior",
-      "explanation": "Trace one concrete input to its output before generalizing the rule."
+      "title": "Callers depend on the interface, never the class name",
+      "explanation": "ClockEntryService's constructor parameter is IClockEntryRepository -- it would compile and run identically no matter what the concrete class implementing it is named, typo or not."
     },
     {
-      "diagram": "return",
-      "title": "Protect the contract",
-      "explanation": "The public contract should preserve valid state and expose only required capability."
+      "diagram": "instances",
+      "title": "Two IHoursPolicy implementations, one call site",
+      "explanation": "IHoursPolicy policy = flexible ? new FlexibleHoursPolicy() : new StandardHoursPolicy(8m); -- the line that calls policy.GetVariance(...) never changes."
+    },
+    {
+      "diagram": "type",
+      "title": "Polymorphism is resolved at the call, not the declaration",
+      "explanation": "The actual GetVariance implementation that runs depends on which concrete object policy refers to at runtime, not on the declared IHoursPolicy type."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Which statement accurately frames interfaces and polymorphism?",
+      "prompt": "Does EmployeeRepositor's real class-name typo (missing the 'y' in Repository) affect how IEmployeeRepository consumers behave?",
       "options": [
-        "an interface defines a callable contract and polymorphism lets callers use different implementations without branching on concrete types",
-        "Every implementation must expose all internal details",
-        "The runtime ignores declared contracts"
+        "No -- consumers depend on the IEmployeeRepository interface and its GetEmployeeById method, never on the concrete class's name; the typo is cosmetic to anyone using the interface",
+        "Yes -- it would cause a runtime error every time GetEmployeeById is called",
+        "Yes -- the interface itself must share the same name as its implementation"
       ],
       "correct": 0,
-      "explanation": "The session rule connects the language feature to an observable design consequence."
+      "explanation": "This is a real, verified fact about the source: EmployeeRepositor's typo has shipped in production-adjacent code without breaking anything, precisely because C# does not require implementation class names to relate to their interface names at all."
     },
     {
-      "prompt": "Where should a required collaborator be supplied?",
+      "prompt": "What single line changes when swapping StandardHoursPolicy for FlexibleHoursPolicy at a call site that only ever calls policy.GetVariance(...)?",
       "options": [
-        "At an explicit construction or method boundary",
-        "Through hidden global state",
-        "By searching unrelated objects"
+        "Only the line that constructs the policy object (new StandardHoursPolicy(8m) becomes new FlexibleHoursPolicy()) -- every line that calls policy.GetVariance(...) afterward is unchanged",
+        "Every line in the calling method needs to change",
+        "GetVariance's method signature must change"
       ],
       "correct": 0,
-      "explanation": "Explicit boundaries make dependencies visible and testable."
+      "explanation": "This is the entire value of programming against IHoursPolicy: the construction site is the only place that names a concrete type; every subsequent use goes through the interface."
     },
     {
-      "prompt": "What makes a prediction useful?",
+      "prompt": "How many real, distinct interfaces in TimeClock.Domain have exactly one concrete implementing class each?",
       "options": [
-        "It names the expected cause and effect",
-        "It avoids executing tests",
-        "It depends on implementation trivia"
+        "Four -- IClockEntryRepository, IClockEntryService, IEmployeeRepository, IEmployeeService each have exactly one real implementation, confirmed by reading the source directly",
+        "Zero -- none of these are actually interfaces",
+        "Eight -- each has two implementations"
       ],
       "correct": 0,
-      "explanation": "A causal prediction can be compared with output and corrected."
+      "explanation": "Even with only one implementation each today, all four are still real interfaces, giving Session 19's dependency injection and Session 29's test doubles a seam to substitute against."
     }
   ],
   "concept": [
     {
-      "title": "Name the contract",
+      "title": "Four real interfaces, verified against source",
       "paragraphs": [
-        "The governing rule is that an interface defines a callable contract and polymorphism lets callers use different implementations without branching on concrete types.",
-        "Start with what callers need to know, then keep incidental implementation details behind the boundary."
+        "IClockEntryRepository (implemented by ClockEntryRepository), IClockEntryService (implemented by ClockEntryService), IEmployeeRepository (implemented by EmployeeRepositor -- the real typo), and IEmployeeService (implemented by EmployeeService) are the complete list of interfaces in this codebase, confirmed directly against the source files.",
+        "Every one of ClockEntryService, PayrollService, and Program.cs depends on these interfaces, never on the concrete class names -- this is why EmployeeRepositor's typo never had to be fixed for the application to work correctly."
       ],
-      "code": "IHoursPolicy policy = new StandardHoursPolicy(8m);\ndecimal variance = policy.GetVariance(7.5m);"
+      "code": "public interface IEmployeeRepository { Employee GetEmployeeById(int employeeId); }\n\n// Real typo, real class name -- callers never notice, because they depend on IEmployeeRepository\npublic sealed class EmployeeRepositor : IEmployeeRepository\n{\n    public Employee GetEmployeeById(int employeeId) => new Employee(1, \"Parm\", new Address());\n}"
     },
     {
-      "title": "Trace dependencies and control",
+      "title": "Polymorphism at a real call site: IHoursPolicy",
       "paragraphs": [
-        "Follow calls from the public operation through each collaborator or transformation.",
-        "A clear direction reduces branching, duplication, and accidental coupling."
+        "IHoursPolicy has two real implementations: StandardHoursPolicy(decimal scheduledHours), which computes recordedHours - scheduledHours, and FlexibleHoursPolicy, which always returns 0m.",
+        "A caller holding an IHoursPolicy variable calls .GetVariance(recordedHours) without knowing or caring which implementation it actually is -- the correct GetVariance runs based on the object's real runtime type, not the variable's declared type."
       ],
-      "code": "// Read the pipeline from caller to result.\nIHoursPolicy policy = new StandardHoursPolicy(8m);"
+      "code": "IHoursPolicy policy = flexible ? new FlexibleHoursPolicy() : new StandardHoursPolicy(8m);\ndecimal variance = policy.GetVariance(7.5m);   // -0.5m or 0m, depending on which object policy actually is"
     },
     {
-      "title": "Make behavior executable",
+      "title": "What would actually break polymorphism here",
       "paragraphs": [
-        "Focused tests demonstrate the new rule with small deterministic values.",
-        "The complete suite then confirms the cumulative application still honors earlier contracts."
+        "If ClockEntryService's constructor took the concrete ClockEntryRepository class instead of IClockEntryRepository, Session 29's test doubles (a fake repository implementing the same interface) would have nowhere to substitute in -- polymorphism is what makes substitution possible at all.",
+        "The four real interfaces exist specifically so Program.cs's DI registrations (Session 19) can choose which concrete class to wire up, and so tests can wire up a different one entirely."
       ],
       "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
-    "objective": "Add a compact TimeClock example for interfaces and polymorphism.",
-    "startingCondition": "Sessions 01–16 are complete and all existing tests pass.",
+    "objective": "Trace all four real interface/implementation pairs, and swap IHoursPolicy implementations at a call site to observe polymorphism directly.",
+    "startingCondition": "IClockEntryRepository, IClockEntryService, IEmployeeRepository, IEmployeeService, IHoursPolicy, and their real implementations already exist.",
     "steps": [
-      "Predict the successful path and one boundary or failure case.",
-      "Add src/TimeClock.Domain/IHoursPolicy.cs with a narrow public contract.",
-      "Add tests/TimeClock.Domain.Tests/HoursPolicyTests.cs for the prediction and boundary case.",
-      "Run the focused tests and inspect the observed values or control flow.",
-      "Run the full Release build and test suite."
+      "List all four repository/service interface pairs and confirm each implementing class's real name, including EmployeeRepositor's typo.",
+      "Write a small test that resolves an IEmployeeRepository as EmployeeRepositor and confirm GetEmployeeById works despite the class-name typo.",
+      "Call HoursPolicyTests.Caller_uses_policies_polymorphically with both flexible=true and flexible=false and confirm the SAME calling code produces two different GetVariance results.",
+      "Write down what would need to change in ClockEntryService if it depended on ClockEntryRepository (the concrete class) instead of IClockEntryRepository."
     ],
-    "expectedBehavior": "The new tests establish that an interface defines a callable contract and polymorphism lets callers use different implementations without branching on concrete types; prior behavior remains unchanged.",
+    "expectedBehavior": "All four interfaces resolve to their real implementations correctly; the IHoursPolicy test demonstrates two different behaviors from one call site depending only on which object is passed in.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
+      "path": "src/TimeClock.Domain/IEmployeeRepository.cs",
+      "action": "Verify",
+      "why": "Confirm the real interface and EmployeeRepositor's real typo'd implementing class."
+    },
+    {
       "path": "src/TimeClock.Domain/IHoursPolicy.cs",
-      "action": "Add",
-      "why": "Provide the canonical substitutable contracts example."
+      "action": "Verify",
+      "why": "Confirm both real IHoursPolicy implementations and their differing GetVariance behavior."
     },
     {
       "path": "tests/TimeClock.Domain.Tests/HoursPolicyTests.cs",
-      "action": "Add",
-      "why": "Verify the contract and its boundary case."
+      "action": "Verify",
+      "why": "Confirm the existing polymorphic-call test."
     },
     {
       "path": "site/data/sessions/session-17.json",
@@ -121,50 +125,48 @@
   ],
   "commit": "session-17: teach interfaces and polymorphism",
   "review": [
-    "The public API states one coherent responsibility.",
-    "Dependencies and state changes are explicit.",
-    "The example remains deterministic and compact.",
-    "Tests cover success and a meaningful boundary.",
-    "No nullable warnings are introduced.",
-    "The complete suite passes."
+    "All four real interface/implementation pairs are verified against source, including the real EmployeeRepositor typo.",
+    "IHoursPolicy's two implementations are demonstrated producing different results from identical calling code.",
+    "The connection between 'depend on the interface' and 'the typo never mattered' is made explicit, not left implicit.",
+    "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "What did the implementation prove about interfaces and polymorphism?",
+      "prompt": "If a third IHoursPolicy implementation were added tomorrow (say, OvertimeHoursPolicy), how many existing call sites that call policy.GetVariance(...) would need to change?",
       "options": [
-        "an interface defines a callable contract and polymorphism lets callers use different implementations without branching on concrete types",
-        "Design contracts cannot be tested",
-        "Every caller needs concrete implementation details"
+        "Zero -- any code written against the IHoursPolicy interface accepts any implementation without modification; only the code that decides WHICH implementation to construct would need updating",
+        "All of them -- every call site would need a new branch",
+        "Exactly one -- the interface declaration itself"
       ],
       "correct": 0,
-      "explanation": "The passing tests make the stated rule observable."
+      "explanation": "This is the practical payoff of polymorphism: adding a new implementation is additive, not a breaking change to existing interface-typed code."
     },
     {
-      "prompt": "Why keep the public contract narrow?",
+      "prompt": "Why does EmployeeRepositor's typo matter for a code reviewer, even though it doesn't matter for runtime behavior?",
       "options": [
-        "To reduce coupling and preserve implementation freedom",
-        "To prevent tests",
-        "To make all operations mutable"
+        "It is a real, minor maintainability smell -- future readers searching for 'EmployeeRepository' by exact name will not find it, even though the code works correctly",
+        "It causes GetEmployeeById to return null",
+        "It prevents the class from implementing IEmployeeRepository"
       ],
       "correct": 0,
-      "explanation": "A narrow contract communicates capability without leaking unrelated details."
+      "explanation": "The lesson distinguishes correctness (unaffected) from maintainability (mildly affected) -- both are real, separate concerns worth naming honestly."
     },
     {
-      "prompt": "Why run regression tests?",
+      "prompt": "What would ClockEntryService lose if its constructor took ClockEntryRepository directly instead of IClockEntryRepository?",
       "options": [
-        "The application grows cumulatively",
-        "Only the newest file can compile",
-        "Test count changes runtime behavior"
+        "The ability for Session 29's test doubles (a fake repository) to substitute in during testing, and the ability for a future EF Core-backed repository (Session 30) to substitute in during production",
+        "Nothing -- ClockEntryRepository already implements every member ClockEntryService needs",
+        "The ability to call SaveClockEntry"
       ],
       "correct": 0,
-      "explanation": "Earlier instructional guarantees must remain true after each session."
+      "explanation": "Depending on the concrete class still compiles and runs today, but permanently forecloses substitution -- exactly the cost Session 19 discusses for dependency direction."
     }
   ],
   "reflections": [
-    "Which boundary in this session carries the most design responsibility?",
-    "How does the test reveal cause and effect rather than just a final value?",
-    "What implementation detail can change without affecting callers?"
+    "Why does 'the interface name matters, the class name doesn't' feel counterintuitive at first, given how often class names are chosen carefully?",
+    "Where else in this codebase besides IHoursPolicy could a second, alternative implementation plausibly be added without touching any existing call site?",
+    "What would you look for in a code review to confirm a new class is genuinely programmed against an interface, not accidentally coupled to one concrete implementation?"
   ],
-  "whatBreaks": "Removing IHoursPolicy.cs removes the executable model for substitutable contracts. Removing its tests permits contract regressions. If the boundary leaks its implementation details, callers become harder to change and isolated testing loses value.",
-  "summary": "This session established that an interface defines a callable contract and polymorphism lets callers use different implementations without branching on concrete types. The application change and tests preserve that model as executable documentation."
+  "whatBreaks": "Changing ClockEntryService's constructor to depend on the concrete ClockEntryRepository class instead of IClockEntryRepository would still compile today, but it would permanently prevent Session 29's test doubles and Session 30's EF Core-backed repository from ever substituting in without changing ClockEntryService itself. Renaming EmployeeRepositor to fix its typo would require no changes anywhere else in the codebase precisely because nothing depends on that class name directly -- proof, by omission, that the typo was always harmless to behavior.",
+  "summary": "TimeClock.Domain has four real interfaces, each with one real implementation, verified directly against source -- including EmployeeRepositor's real class-name typo, which never mattered because nothing depends on implementation class names. IHoursPolicy's two implementations, StandardHoursPolicy and FlexibleHoursPolicy, demonstrate polymorphism concretely: one call site, policy.GetVariance(...), produces different results depending only on which object policy actually refers to at runtime."
 }
