@@ -85,7 +85,7 @@ for (const file of htmlFiles) {
 
 const quizPage = await readFile(path.join(dist, "quizzes", "index.html"), "utf8");
 const homePage = await readFile(path.join(dist, "index.html"), "utf8");
-if (!homePage.includes("<title>C#/.NET Learn with AI</title>")) errors.push("Home page title is not canonical");
+if (!homePage.includes("Syllabus | C#/.NET Learn with AI")) errors.push("Home page no longer serves the syllabus as the site root");
 if (!quizPage.includes("data-check-answer") || !quizPage.includes('role="status"')) errors.push("Quiz interaction contract is incomplete");
 if (!quizPage.includes("reveal-card") || !quizPage.includes('aria-expanded="false"')) errors.push("Reveal interaction contract is incomplete");
 const script = await readFile(path.join(dist, "assets", "app.js"), "utf8");
