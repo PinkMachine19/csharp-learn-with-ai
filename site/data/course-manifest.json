@@ -20,7 +20,7 @@
     { "id": "integration", "number": 9, "title": "Data Access and Application Integration", "range": "30–34" }
   ],
   "sessions": [
-    [1,"the-dotnet-solution-and-feedback-loop","The .NET Solution and Feedback Loop","foundations",null,"001–006"],
+    [1,"scaffolding-the-solution-src-tests-and-sln","Scaffolding the Solution: src, tests, and the .sln","foundations",null,"001–006"],
     [2,"variables-expressions-and-numeric-types","Variables, Expressions, and Numeric Types","foundations",1,"007, 013"],
     [3,"control-flow-and-pattern-based-decisions","Control Flow and Pattern-Based Decisions","foundations",2,"007–013"],
     [4,"methods-parameters-scope-and-return-values","Methods, Parameters, Scope, and Return Values","foundations",3,"008–010"],

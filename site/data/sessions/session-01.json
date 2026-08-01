@@ -2,65 +2,63 @@
   "number": 1,
   "category": "Tooling and project structure",
   "estimatedTime": "40 minutes",
-  "connection": "This opening session establishes the feedback loop every later lesson relies on: find the project, make one change, build it, run it, and verify the result.",
+  "connection": "Every later session assumes you already understand how TimeClock.sln, src/, and tests/ came to exist. This session scaffolds that layout yourself with the dotnet CLI, so the structure is something you built, not something you found.",
   "objectives": [
-    "Explain the different jobs performed by a solution and a project file.",
-    "Trace source code through build output to observable application behavior.",
-    "Use restore, build, run, and test as separate feedback steps.",
-    "Interpret a successful command as evidence, not as proof of every possible behavior."
+    "Use dotnet new to generate a solution, a class library, a console app, and an xUnit test project.",
+    "Explain why source projects live under src/ and test projects live under tests/.",
+    "Use dotnet sln add and dotnet add reference to wire projects into a solution and into each other.",
+    "Explain why TimeClock.App references TimeClock.Domain but TimeClock.Domain does not reference TimeClock.App."
   ],
   "visuals": [
-    {"diagram":"solution","title":"A solution organizes projects","explanation":"TimeClock.sln groups the application, domain library, and test project. Each project still owns its target framework, references, and build output."},
-    {"diagram":"pipeline","title":"Source becomes runnable output","explanation":"The compiler checks C# source and produces assemblies. A successful build means compilation succeeded; running the app is a separate observation."},
-    {"diagram":"feedback","title":"Short loops expose mistakes early","explanation":"Edit one thing, build, observe the result, and adjust. Small loops make cause and effect easier to identify than a large batch of changes."},
-    {"diagram":"tests","title":"Tests check stated behavior","explanation":"Tests supply inputs and compare actual behavior with expectations. They complement the build because compiling successfully does not prove a business rule."}
+    {"diagram":"solution","title":"A solution is a list of projects, not a project itself","explanation":"TimeClock.sln does not contain code. It is a manifest that names which .csproj files belong together so one command can build or test all of them."},
+    {"diagram":"pipeline","title":"dotnet new turns a template name into a folder","explanation":"dotnet new classlib -o src/TimeClock.Domain creates a folder containing TimeClock.Domain.csproj and a starter .cs file. The -o path is also where the project will live."},
+    {"diagram":"feedback","title":"Scaffold, wire, build — in that order","explanation":"Generate the project, add it to the solution, add any project references it needs, then build. Doing these out of order produces confusing errors that look like missing code."},
+    {"diagram":"tests","title":"A test project is a project, with one extra reference","explanation":"TimeClock.Domain.Tests is an ordinary class library plus the xUnit package and a ProjectReference to the code it tests. Nothing about it is structurally special."}
   ],
   "preQuiz": [
-    {"prompt":"If TimeClock.sln is removed but the three project files remain, what is most directly lost?","options":["All C# source code","The grouping used to build and test the projects together","The .NET runtime"],"correct":1,"explanation":"Projects still contain source and build configuration, but the solution-level grouping is gone."},
-    {"prompt":"A Release build succeeds. What can you safely conclude?","options":["Every business rule is correct","The included projects compiled without build errors","The console output was inspected"],"correct":1,"explanation":"Build success proves compilation, not every runtime path or business expectation."},
-    {"prompt":"Why run tests after a successful build?","options":["Tests replace compilation","Tests check selected behavior the compiler cannot judge","Tests create the solution file"],"correct":1,"explanation":"The compiler checks language and type rules; tests check examples of intended behavior."}
+    {"prompt":"What does TimeClock.sln actually contain?","options":["Compiled C# code for the whole application","A list of project paths and build configurations, no source code","The xUnit test runner"],"correct":1,"explanation":"A .sln file is a manifest. The code lives entirely inside the .csproj-owning folders it lists."},
+    {"prompt":"Why does TimeClock.App's .csproj have a ProjectReference to TimeClock.Domain, but TimeClock.Domain's .csproj has no reference back to TimeClock.App?","options":["Class libraries cannot reference executables","References are alphabetical","Domain is a reusable library; App is one consumer of it, and a library should not depend on any particular consumer"],"correct":2,"explanation":"If Domain referenced App, you could never reuse Domain in a second consumer (like a future TimeClock.Web) without dragging App along. The dependency points from the specific thing toward the general thing, never the reverse."},
+    {"prompt":"You create a project with dotnet new classlib but never run dotnet sln add. What happens when you run dotnet build TimeClock.sln?","options":["The new project builds along with the others automatically","The new project is silently skipped — the solution only builds what it's told to include","dotnet build fails immediately"],"correct":1,"explanation":"Folder presence is not membership. A project only participates in solution-wide build/test/restore once it's listed inside the .sln file."}
   ],
   "concept": [
-    {"title":"Solution versus project","paragraphs":["A solution is an organizing boundary. It lets one command address several related projects. A project is a build boundary: it declares its target framework, references, and output type.","TimeClock.App is executable, TimeClock.Domain is a reusable library, and TimeClock.Domain.Tests is a test project. Their names communicate responsibility before you open a source file."],"code":"dotnet build TimeClock.sln --configuration Release"},
-    {"title":"Four commands, four questions","paragraphs":["Restore asks whether required packages can be resolved. Build asks whether source compiles. Run asks what the executable does. Test asks whether selected behavior matches explicit expectations.","Keeping those questions separate makes failures easier to locate. A restore failure is not diagnosed like a failing assertion, and a compiler error is not investigated like surprising console output."],"code":"dotnet restore TimeClock.sln\ndotnet build TimeClock.sln --configuration Release\ndotnet run --project src/TimeClock.App/TimeClock.App.csproj\ndotnet test TimeClock.sln --configuration Release"},
-    {"title":"Read output as evidence","paragraphs":["A zero exit code and a clean build are concrete signals. They are deliberately narrower than 'the application is correct.' Good engineering names what was checked and what remains unobserved.","This course records validation commands in the manifest so lesson claims stay tied to repeatable evidence."]}
+    {"title":"dotnet new generates a project, not an app","paragraphs":["Every dotnet new <template> command does the same two things: it creates a folder (or uses -o to name one), and it drops a .csproj file plus a minimal starter source file into it. classlib gives you a library with no entry point. console gives you an executable with a Main. xunit gives you a test project pre-wired with the xUnit and test-SDK package references.","Nothing about running dotnet new touches a solution file. The project exists as a standalone, buildable unit the moment it's created — dotnet build src/TimeClock.Domain/TimeClock.Domain.csproj would already work. A solution is a separate, later step that groups projects together."],"code":"dotnet new classlib -o src/TimeClock.Domain\ndotnet new console -o src/TimeClock.App\ndotnet new xunit -o tests/TimeClock.Domain.Tests"},
+    {"title":"src/ and tests/ are convention, not a compiler rule","paragraphs":["Nothing in the .NET toolchain requires a src/ or tests/ folder. TimeClock.sln groups its projects under a src solution folder and a tests solution folder purely so dotnet sln list and any IDE's solution explorer show the same two-way split a human would draw by hand: things that ship, and things that check the things that ship.","The real payoff of the convention shows up at scale. tests/TimeClock.Domain.Tests.csproj references ..\\..\\src\\TimeClock.Domain\\TimeClock.Domain.csproj — a relative path that only stays short and stable because both sides of the split are always exactly one folder deep."],"code":"dotnet new sln -n TimeClock\ndotnet sln TimeClock.sln add src/TimeClock.Domain/TimeClock.Domain.csproj\ndotnet sln TimeClock.sln add src/TimeClock.App/TimeClock.App.csproj\ndotnet sln TimeClock.sln add tests/TimeClock.Domain.Tests/TimeClock.Domain.Tests.csproj"},
+    {"title":"Project references encode dependency direction","paragraphs":["dotnet add <project> reference <other-project> edits the first project's .csproj to add a <ProjectReference> pointing at the second. That's the entire mechanism — no magic, just an XML element the compiler uses to find the other assembly's public types.","The direction you choose is a design decision. TimeClock.App references TimeClock.Domain because the console app is one specific consumer of the domain's types (ClockEntry, PayrollService). TimeClock.Domain never references TimeClock.App back — a reusable library that reached into its own consumer's code would only be reusable by that one consumer. Later sessions add TimeClock.Infrastructure and TimeClock.Web; both will point at Domain for the same reason, and neither will point at App."],"code":"dotnet add src/TimeClock.App/TimeClock.App.csproj reference src/TimeClock.Domain/TimeClock.Domain.csproj\ndotnet add tests/TimeClock.Domain.Tests/TimeClock.Domain.Tests.csproj reference src/TimeClock.Domain/TimeClock.Domain.csproj"}
   ],
   "lab": {
-    "objective": "Change one observable application label and prove that the edited project is the one being executed.",
-    "startingCondition": "The solution builds, seven domain tests pass, and the console begins with TimeClock sample.",
+    "objective": "Reproduce TimeClock's actual project layout from scratch using the dotnet CLI, then confirm your scratch solution matches the real one.",
+    "startingCondition": "The repository already contains a working TimeClock.sln with TimeClock.Domain, TimeClock.App, and TimeClock.Domain.Tests (plus TimeClock.Infrastructure and TimeClock.Web, introduced in later sessions). You will rebuild the first three from nothing in a separate scratch folder — you will not modify the repository's own solution in this lab.",
     "steps": [
-      "Open src/TimeClock.App/Program.cs and predict which output line will change.",
-      "Change the first heading to TimeClock course application.",
-      "Build TimeClock.sln in Release configuration and distinguish build output from application output.",
-      "Run TimeClock.App and confirm only the predicted heading changed.",
-      "Run the full test suite and confirm the domain tests still pass."
+      "In a new empty scratch folder outside this repository, run: dotnet new sln -n TimeClock",
+      "Run: dotnet new classlib -o src/TimeClock.Domain, then dotnet new console -o src/TimeClock.App, then dotnet new xunit -o tests/TimeClock.Domain.Tests",
+      "Add all three to the solution with dotnet sln TimeClock.sln add for each .csproj path",
+      "Wire references: dotnet add src/TimeClock.App reference src/TimeClock.Domain, and dotnet add tests/TimeClock.Domain.Tests reference src/TimeClock.Domain",
+      "Run dotnet build TimeClock.sln in your scratch folder and confirm all three projects build",
+      "From the real repository root, run dotnet sln TimeClock.sln list and compare its project list and paths against what you just built — the App/Domain/Tests portion should match exactly; Infrastructure and Web are covered later"
     ],
-    "expectedBehavior": "The first line is TimeClock course application; worker and duration output remain unchanged; all tests pass.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet run --project src/TimeClock.App/TimeClock.App.csproj --configuration Release && dotnet test TimeClock.sln --configuration Release --no-build"
+    "expectedBehavior": "Your scratch solution builds three projects with zero errors. dotnet sln TimeClock.sln list against the real repository shows src\\TimeClock.Domain\\TimeClock.Domain.csproj, src\\TimeClock.App\\TimeClock.App.csproj, and tests\\TimeClock.Domain.Tests\\TimeClock.Domain.Tests.csproj at the same relative paths and depth you just recreated.",
+    "validation": "dotnet build TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
-    {"path":"src/TimeClock.App/Program.cs","action":"Modify","why":"Make one observable application change."},
-    {"path":"site/data/sessions/session-01.json","action":"Add","why":"Publish the synchronized lesson, lab, and quizzes."}
+    {"path":"site/data/sessions/session-01.json","action":"Modify","why":"Publish the scaffolding lesson, lab, and quizzes."}
   ],
-  "commit": "session-01: teach the dotnet solution feedback loop",
+  "commit": "session-01: scaffold the solution with dotnet new, dotnet sln add, and dotnet add reference",
   "review": [
-    "The application change is limited to the intended output label.",
-    "The documented commands use repository-relative paths.",
-    "The Release build completes without warnings or errors.",
-    "The console output matches the documented expectation.",
-    "All existing tests still pass."
+    "The scratch solution builds all three projects without errors.",
+    "TimeClock.App's .csproj contains a ProjectReference to TimeClock.Domain; TimeClock.Domain's .csproj contains none.",
+    "The scratch project list matches the real repository's App/Domain/Tests projects at the same relative paths.",
+    "Every command was run against explicit project or solution paths, not relied on ambient defaults."
   ],
   "postQuiz": [
-    {"prompt":"The heading changes after dotnet run, while tests remain green. What does that combination show?","options":["The app project changed and the tested domain behavior remained intact","Tests did not execute","The solution file contains the heading"],"correct":0,"explanation":"The run observes the app change; the tests independently protect selected domain behavior."},
-    {"prompt":"What would most likely happen if the App project reference to Domain were removed?","options":["Program.cs could no longer resolve ClockEntry","The solution would disappear","xUnit would become part of the app"],"correct":0,"explanation":"TimeClock.App uses ClockEntry from the referenced domain assembly."},
-    {"prompt":"Why keep the lab change small?","options":["Small changes need no validation","It isolates the likely cause of the observed output change","It prevents the compiler from running"],"correct":1,"explanation":"A small change makes the connection between edit and behavior easier to reason about."}
+    {"prompt":"You run dotnet new console -o src/TimeClock.App but never run dotnet sln add. Later, dotnet build TimeClock.sln succeeds with no mention of TimeClock.App. Why?","options":["Console apps build automatically once created","TimeClock.App was never added to the solution, so the solution build has no reason to know it exists","dotnet build always finds every .csproj under the current directory"],"correct":1,"explanation":"A folder on disk and a solution member are two different things. Only dotnet sln add creates the membership dotnet build TimeClock.sln relies on."},
+    {"prompt":"If you accidentally added a ProjectReference from TimeClock.Domain to TimeClock.App, what would break first?","options":["Nothing — references are symmetric","A future second consumer of Domain (like TimeClock.Web) would compile Domain, and transitively compile all of App's code too, even though it never asked for App","The solution file would fail to parse"],"correct":1,"explanation":"A reference pulls in everything the referenced project needs to compile. A library referencing its own consumer forces every future consumer to drag that first consumer along."},
+    {"prompt":"Why does tests/TimeClock.Domain.Tests reference src/TimeClock.Domain directly, rather than going through TimeClock.App?","options":["Test projects can only reference libraries, never executables","The tests exist to verify Domain's behavior specifically, so they should depend on exactly the code under test and nothing extra","App and Domain are actually the same project"],"correct":1,"explanation":"Referencing only what you're testing keeps the dependency graph honest — the tests would still compile even if App were deleted entirely."}
   ],
   "reflections": [
-    "Which command gave evidence about compilation, and which gave evidence about behavior?",
-    "How would you tell whether a failure belongs to restore, build, run, or test?",
-    "What does a successful test run still not prove?"
+    "Which command created files on disk, and which command changed what dotnet build TimeClock.sln considers in scope?",
+    "Why does the reference arrow point from App to Domain and never the reverse?",
+    "What would you have to do differently if you wanted a second console app to also use TimeClock.Domain?"
   ],
-  "whatBreaks": "Removing the solution loses the convenient all-project build and test boundary. Removing the App-to-Domain project reference breaks compilation because Program.cs uses ClockEntry. Removing the output line does not affect domain rules, but it removes the visible signal the lab intentionally changed.",
-  "summary": "A .NET solution organizes projects; each project defines a build boundary. Restore, build, run, and test answer different questions, and a short feedback loop turns their output into specific evidence."
+  "whatBreaks": "Skipping dotnet sln add leaves a project that builds standalone but is invisible to solution-wide build/test/restore commands. Skipping dotnet add reference leaves TimeClock.App unable to resolve ClockEntry or any other Domain type, and the compiler reports it as a missing type rather than a missing reference — a genuinely confusing error if you don't already know references are the fix. Reversing the reference direction (Domain referencing App) would compile today but would block every future project, like TimeClock.Infrastructure or TimeClock.Web, from depending on Domain without also depending on App.",
+  "summary": "A solution is a manifest naming which projects build and test together; it is created and populated with dotnet new, dotnet sln add, and dotnet add reference, three separate, ordinary CLI commands with no hidden magic. The src/ and tests/ split and the one-way App-to-Domain reference are both deliberate choices, not defaults the tooling forces on you."
 }
-
