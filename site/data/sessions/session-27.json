@@ -2,7 +2,7 @@
   "number": 27,
   "category": "cooperative cancellation",
   "estimatedTime": "40 minutes",
-  "connection": "Session 26 supplies the required foundation. This session extends TimeLedger with cooperative cancellation while keeping execution observable and deterministic.",
+  "connection": "Session 26 supplies the required foundation. This session extends TimeClock with cooperative cancellation while keeping execution observable and deterministic.",
   "objectives": [
     "Explain why cancellation is a cooperative request carried by a token, and awaited tasks rethrow their failures at the await boundary.",
     "Trace the operation across its execution or application boundary.",
@@ -86,7 +86,7 @@
         "Focused tests control inputs and collaborators so timing and failure assertions stay stable.",
         "The full suite checks that new infrastructure has not weakened the domain model."
       ],
-      "code": "dotnet test TimeLedger.sln --configuration Release"
+      "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
@@ -100,16 +100,16 @@
       "Run the full Release build, test suite, and site validator."
     ],
     "expectedBehavior": "The checks establish that cancellation is a cooperative request carried by a token, and awaited tasks rethrow their failures at the await boundary; all earlier tests continue to pass.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeLedger.Domain/CancellableEntrySource.cs",
+      "path": "src/TimeClock.Domain/CancellableEntrySource.cs",
       "action": "Add or integrate",
       "why": "Provide the canonical cooperative cancellation implementation; infrastructure sessions place the equivalent file in their project."
     },
     {
-      "path": "tests/TimeLedger.Domain.Tests/CancellableEntrySourceTests.cs",
+      "path": "tests/TimeClock.Domain.Tests/CancellableEntrySourceTests.cs",
       "action": "Add or integrate",
       "why": "Verify the new contract with controlled inputs."
     },

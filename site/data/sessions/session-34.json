@@ -4,9 +4,9 @@
   "estimatedTime": "45 minutes",
   "connection": "Session 33 completed the HTTP failure boundary. This final session follows one operation across domain validation, asynchronous EF Core persistence, query execution, and automated verification.",
   "objectives": [
-    "Trace a TimeLedger operation across domain and persistence boundaries.",
-    "Keep validation ahead of state-changing work.",
-    "Propagate cancellation through asynchronous database operations.",
+    "Fix the real, long-standing CS4014 bug in TimeClock.App/Program.cs: clockEntryService.Clockout(1) called with no await.",
+    "Explain why fixing that bug changes CalculateTotalHours's printed total from near-zero to a real, non-trivial number.",
+    "Trace a TimeClock operation across domain and persistence boundaries.",
     "Verify both successful persistence and failure atomicity with an integration test."
   ],
   "visuals": [
@@ -21,27 +21,30 @@
     {"prompt":"Where should the cancellation token travel?","options":["Into the asynchronous persistence operation","Only into synchronous constructors","Nowhere once validation succeeds"],"correct":0,"explanation":"Passing the token lets the database operation cooperate with cancellation."}
   ],
   "concept": [
+    {"title":"Fix the bug Session 25 only diagnosed", "paragraphs":["Session 25 located, but deliberately did not fix, the real CS4014 warning: clockEntryService.Clockout(1) in Program.cs is called with no await. This session fixes it.", "Once Program.cs's top-level statements await Clockout(1) before calling CalculateTotalHours, ClockIn and the completed Clockout are guaranteed to finish in order -- so CalculateTotalHours reliably finds a completed entry instead of racing an open one, and the printed total changes from a near-zero accident to a real, small-but-nonzero number of hours."], "code":"// TimeClock.App/Program.cs -- the fix\nclockEntryService.ClockIn(1);\nawait clockEntryService.Clockout(1);   // was: clockEntryService.Clockout(1);\nvar result = payrollService.CalculateTotalHours(1, DateTime.Today.AddHours(-4), DateTime.Now.AddHours(4));"},
     {"title":"Compose previously learned boundaries","paragraphs":["The workflow does not invent a second validation rule. It creates the domain object and delegates completion to EntryCompletion.","Only a successful Result permits mapping to a persistence entity."],"code":"Result<TimeSpan> completion = EntryCompletion.TryComplete(entry, clockedOutAt);\nif (!completion.IsSuccess) return Result<WorkSummary>.Failure(completion.Error!);"},
-    {"title":"Persist after the invariant holds","paragraphs":["The EF Core entity represents storage shape, while TimeEntry remains responsible for domain behavior.","SaveChangesAsync receives the caller's cancellation token, keeping asynchronous control explicit."],"code":"db.TimeEntries.Add(entity);\nawait db.SaveChangesAsync(cancellationToken);"},
-    {"title":"Verify outcome and atomicity","paragraphs":["The success test queries through the provider and checks the stored clock-out value.","The failure test confirms an invalid completion produces a failure result and leaves the table empty."],"code":"Assert.False(result.IsSuccess);\nAssert.Empty(await db.TimeEntries.ToListAsync());"}
+    {"title":"Persist after the invariant holds","paragraphs":["The EF Core entity represents storage shape, while ClockEntry remains responsible for domain behavior.","SaveChangesAsync receives the caller's cancellation token, keeping asynchronous control explicit."],"code":"db.ClockEntries.Add(entity);\nawait db.SaveChangesAsync(cancellationToken);"},
+    {"title":"Verify outcome and atomicity","paragraphs":["The success test queries through the provider and checks the stored clock-out value.","The failure test confirms an invalid completion produces a failure result and leaves the table empty."],"code":"Assert.False(result.IsSuccess);\nAssert.Empty(await db.ClockEntries.ToListAsync());"}
   ],
   "lab": {
     "objective": "Build and verify the integrated record-completed-entry workflow.",
     "startingCondition": "Sessions 01–33 are complete; domain validation, result values, async methods, EF Core, SQLite queries, and tests are available.",
     "steps": [
+      "Add await to TimeClock.App/Program.cs's clockEntryService.Clockout(1) call and remove the CS4014 pragma suppression, confirming the build is warning-free without it.",
+      "Run the console app before and after the fix and compare the printed 'Total hours worked' line.",
       "Predict which stages execute for valid and invalid clock-out times.",
-      "Add TimeEntryWorkflow with TimeLedgerDbContext supplied by constructor injection.",
+      "Add ClockEntryWorkflow with PayrollDbContext supplied by constructor injection.",
       "Delegate completion to EntryCompletion and return early on failure.",
-      "Map successful domain state to TimeEntryEntity and save asynchronously with cancellation.",
+      "Map successful domain state to ClockEntryEntity and save asynchronously with cancellation.",
       "Add SQLite integration tests for successful persistence and failure atomicity.",
       "Run the complete Release build, test suite, application, and site validator."
     ],
-    "expectedBehavior": "A valid eight-hour entry is persisted and returned as WorkSummary; an invalid clock-out returns failure and persists nothing; 64 tests pass.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release && npm test"
+    "expectedBehavior": "A valid eight-hour entry is persisted and returned as WorkSummary; an invalid clock-out returns failure and persists nothing; the full test suite passes (57 tests as of Session 19; later sessions add more).",
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release && npm test"
   },
   "expectedFiles": [
-    {"path":"src/TimeLedger.Infrastructure/TimeEntryWorkflow.cs","action":"Add","why":"Compose domain validation and EF Core persistence."},
-    {"path":"tests/TimeLedger.Domain.Tests/TimeEntryWorkflowTests.cs","action":"Add","why":"Verify the integrated success and failure paths with SQLite."},
+    {"path":"src/TimeClock.Infrastructure/ClockEntryWorkflow.cs","action":"Add","why":"Compose domain validation and EF Core persistence."},
+    {"path":"tests/TimeClock.Domain.Tests/ClockEntryWorkflowTests.cs","action":"Add","why":"Verify the integrated success and failure paths with SQLite."},
     {"path":"site/data/sessions/session-34.json","action":"Add","why":"Publish the final lesson, lab, and quiz."}
   ],
   "commit": "session-34: integrate and verify the time entry workflow",

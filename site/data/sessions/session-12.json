@@ -2,7 +2,7 @@
   "number": 12,
   "category": "collection abstractions",
   "estimatedTime": "40 minutes",
-  "connection": "Session 11 established the prerequisite model. This session applies it to collection abstractions with observable TimeLedger examples.",
+  "connection": "Session 11 established the prerequisite model. This session applies it to collection abstractions with observable TimeClock examples.",
   "objectives": [
     "Explain IEnumerable<T> promises traversal, ICollection<T> adds size and mutation, and IList<T> adds positional access.",
     "Predict behavior before running a focused collection abstractions example.",
@@ -70,7 +70,7 @@
         "The central rule is that IEnumerable<T> promises traversal, ICollection<T> adds size and mutation, and IList<T> adds positional access.",
         "Names and syntax matter because they communicate whether code copies, aliases, enumerates, compares, or constrains a value."
       ],
-      "code": "public static decimal TotalHours(IEnumerable<TimeEntry> entries)"
+      "code": "public static decimal TotalHours(IEnumerable<ClockEntry> entries)"
     },
     {
       "title": "Program to the required capability",
@@ -78,7 +78,7 @@
         "A caller should not need to provide more capability than the operation consumes.",
         "Concrete implementations remain useful at construction boundaries; interfaces and generic contracts keep consuming code focused."
       ],
-      "code": "// Prefer the smallest contract that supports the operation.\npublic static decimal TotalHours(IEnumerable<TimeEntry> entries)"
+      "code": "// Prefer the smallest contract that supports the operation.\npublic static decimal TotalHours(IEnumerable<ClockEntry> entries)"
     },
     {
       "title": "Verify cause and effect",
@@ -86,30 +86,30 @@
         "The lab changes one behavior at a time and uses tests to preserve the observation.",
         "If the prediction differs from the result, explain the language rule before continuing."
       ],
-      "code": "dotnet test TimeLedger.sln --configuration Release"
+      "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
-    "objective": "Add a focused TimeLedger example that demonstrates collection interfaces and ienumerable<t>.",
+    "objective": "Add a focused TimeClock example that demonstrates collection interfaces and ienumerable<t>.",
     "startingCondition": "Sessions 01–11 are complete and the solution builds with all existing tests passing.",
     "steps": [
       "Read the starting test and predict the result using the session mental model.",
-      "Add src/TimeLedger.Domain/TimeEntryReport.cs with the smallest API needed for the example.",
-      "Add tests/TimeLedger.Domain.Tests/TimeEntryReportTests.cs to check the important before-and-after behavior.",
+      "Add src/TimeClock.Domain/ClockEntryReport.cs with the smallest API needed for the example.",
+      "Add tests/TimeClock.Domain.Tests/ClockEntryReportTests.cs to check the important before-and-after behavior.",
       "Run the focused tests, then run the complete Release test suite.",
       "Review whether each parameter and return type exposes only the capability it needs."
     ],
     "expectedBehavior": "The new tests demonstrate IEnumerable<T> promises traversal, ICollection<T> adds size and mutation, and IList<T> adds positional access; all existing behavior remains green.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeLedger.Domain/TimeEntryReport.cs",
+      "path": "src/TimeClock.Domain/ClockEntryReport.cs",
       "action": "Add",
       "why": "Provide the canonical collection abstractions example."
     },
     {
-      "path": "tests/TimeLedger.Domain.Tests/TimeEntryReportTests.cs",
+      "path": "tests/TimeClock.Domain.Tests/ClockEntryReportTests.cs",
       "action": "Add",
       "why": "Lock the observed language behavior into executable checks."
     },
@@ -166,5 +166,5 @@
     "Where could an unnecessarily concrete type make future change harder?"
   ],
   "whatBreaks": "Removing the new domain example removes the executable model for collection abstractions. Removing its tests allows subtle changes to assignment, equality, enumeration, or generic contracts to pass unnoticed. Widening the API unnecessarily gives callers capabilities the operation does not need.",
-  "summary": "This session established that IEnumerable<T> promises traversal, ICollection<T> adds size and mutation, and IList<T> adds positional access. The TimeLedger example, tests, and API review turn that rule into durable engineering practice."
+  "summary": "This session established that IEnumerable<T> promises traversal, ICollection<T> adds size and mutation, and IList<T> adds positional access. The TimeClock example, tests, and API review turn that rule into durable engineering practice."
 }

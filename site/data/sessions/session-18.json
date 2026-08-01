@@ -2,7 +2,7 @@
   "number": 18,
   "category": "shared implementation",
   "estimatedTime": "40 minutes",
-  "connection": "Session 17 provides the prerequisite vocabulary. This session develops shared implementation through a focused TimeLedger change.",
+  "connection": "Session 17 provides the prerequisite vocabulary. This session develops shared implementation through a focused TimeClock change.",
   "objectives": [
     "Explain why an abstract base can share a stable algorithm while overrides supply one intentional variation.",
     "Trace control and data across the new API boundary.",
@@ -86,30 +86,30 @@
         "Focused tests demonstrate the new rule with small deterministic values.",
         "The complete suite then confirms the cumulative application still honors earlier contracts."
       ],
-      "code": "dotnet test TimeLedger.sln --configuration Release"
+      "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
-    "objective": "Add a compact TimeLedger example for abstract classes, inheritance, and overrides.",
+    "objective": "Add a compact TimeClock example for abstract classes, inheritance, and overrides.",
     "startingCondition": "Sessions 01–17 are complete and all existing tests pass.",
     "steps": [
       "Predict the successful path and one boundary or failure case.",
-      "Add src/TimeLedger.Domain/TimeAdjustment.cs with a narrow public contract.",
-      "Add tests/TimeLedger.Domain.Tests/TimeAdjustmentTests.cs for the prediction and boundary case.",
+      "Add src/TimeClock.Domain/TimeAdjustment.cs with a narrow public contract.",
+      "Add tests/TimeClock.Domain.Tests/TimeAdjustmentTests.cs for the prediction and boundary case.",
       "Run the focused tests and inspect the observed values or control flow.",
       "Run the full Release build and test suite."
     ],
     "expectedBehavior": "The new tests establish that an abstract base can share a stable algorithm while overrides supply one intentional variation; prior behavior remains unchanged.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeLedger.Domain/TimeAdjustment.cs",
+      "path": "src/TimeClock.Domain/TimeAdjustment.cs",
       "action": "Add",
       "why": "Provide the canonical shared implementation example."
     },
     {
-      "path": "tests/TimeLedger.Domain.Tests/TimeAdjustmentTests.cs",
+      "path": "tests/TimeClock.Domain.Tests/TimeAdjustmentTests.cs",
       "action": "Add",
       "why": "Verify the contract and its boundary case."
     },

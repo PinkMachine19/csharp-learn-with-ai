@@ -2,169 +2,87 @@
   "number": 19,
   "category": "dependency boundaries",
   "estimatedTime": "40 minutes",
-  "connection": "Session 18 provides the prerequisite vocabulary. This session develops dependency boundaries through a focused TimeLedger change.",
+  "connection": "Session 18 covered abstract classes and inheritance. This session shows constructor injection as it is actually used across the real application: ClockEntryService depends on IClockEntryRepository, and PayrollService depends on both IEmployeeService and IClockEntryRepository -- one of which it never calls.",
   "objectives": [
-    "Explain why constructor injection makes required collaborators explicit and points high-level workflow code toward abstractions.",
-    "Trace control and data across the new API boundary.",
-    "Implement dependency direction and constructor injection in the canonical application.",
-    "Prove the contract with focused and regression tests."
+    "Explain why a class should depend on an interface, not a concrete implementation, when another class constructs it for it.",
+    "Trace how Program.cs's ServiceCollection registrations connect an interface to a concrete class at resolution time.",
+    "Read PayrollService's constructor as a real example of a declared-but-unused dependency, and explain why that is a legitimate (if incomplete) design rather than a bug.",
+    "Explain the real Transient/Singleton mix in Program.cs and what would change if every registration were Singleton."
   ],
   "visuals": [
-    {
-      "diagram": "constructor",
-      "title": "Identify the boundary",
-      "explanation": "Locate the state and behavior owned by the dependency boundaries example."
-    },
-    {
-      "diagram": "signature",
-      "title": "Follow the dependency",
-      "explanation": "Arrows show which component knows about or calls the next component."
-    },
-    {
-      "diagram": "pipeline",
-      "title": "Observe the behavior",
-      "explanation": "Trace one concrete input to its output before generalizing the rule."
-    },
-    {
-      "diagram": "invariant",
-      "title": "Protect the contract",
-      "explanation": "The public contract should preserve valid state and expose only required capability."
-    }
+    {"diagram":"constructor","title":"The constructor states the contract","explanation":"PayrollService's constructor lists IEmployeeService and IClockEntryRepository -- both required to construct the object, whether or not every method uses both."},
+    {"diagram":"signature","title":"DI resolves interfaces to concrete types","explanation":"services.AddTransient<IClockEntryService, ClockEntryService>() is what lets the container hand back a working ClockEntryService whenever code asks for IClockEntryService."},
+    {"diagram":"pipeline","title":"Follow one resolution","explanation":"provider.GetRequiredService<PayrollService>() walks the registration graph: PayrollService needs IEmployeeService and IClockEntryRepository, so the container builds those first."},
+    {"diagram":"invariant","title":"Lifetime changes identity, not correctness","explanation":"IClockEntryRepository is Singleton so every resolution shares the same in-memory list; IClockEntryService is Transient so each resolution is a new instance -- both work here because ClockEntryService itself holds no per-instance state."}
   ],
   "preQuiz": [
-    {
-      "prompt": "Which statement accurately frames dependency direction and constructor injection?",
-      "options": [
-        "constructor injection makes required collaborators explicit and points high-level workflow code toward abstractions",
-        "Every implementation must expose all internal details",
-        "The runtime ignores declared contracts"
-      ],
-      "correct": 0,
-      "explanation": "The session rule connects the language feature to an observable design consequence."
-    },
-    {
-      "prompt": "Where should a required collaborator be supplied?",
-      "options": [
-        "At an explicit construction or method boundary",
-        "Through hidden global state",
-        "By searching unrelated objects"
-      ],
-      "correct": 0,
-      "explanation": "Explicit boundaries make dependencies visible and testable."
-    },
-    {
-      "prompt": "What makes a prediction useful?",
-      "options": [
-        "It names the expected cause and effect",
-        "It avoids executing tests",
-        "It depends on implementation trivia"
-      ],
-      "correct": 0,
-      "explanation": "A causal prediction can be compared with output and corrected."
-    }
+    {"prompt":"Why does PayrollService's constructor take IEmployeeService even though CalculateTotalHours never calls it?","options":["It is a real, documented dead dependency in the source app -- wired in for a future employee-lookup feature, not a mistake to silently delete","Every service in the app is required to take at least two dependencies","IEmployeeService is required by the C# compiler for constructor injection to work"],"correct":0,"explanation":"decision-0006 in the source project's decision log confirms this was verified against the real constructor, not assumed -- the dependency is real and currently unused."},
+    {"prompt":"What does services.AddSingleton<IClockEntryRepository, ClockEntryRepository>() mean for two different classes that both request IClockEntryRepository?","options":["They receive two independent repositories with separate in-memory lists","They receive the same repository instance, so entries saved through one are visible through the other","The registration is invalid because two classes cannot share one type"],"correct":1,"explanation":"Singleton means one instance for the lifetime of the container -- this is why ClockIn and Clockout, resolved separately, still see the same _clockEntries list."},
+    {"prompt":"If IClockEntryService were registered AddSingleton instead of AddTransient, what would change in this app?","options":["Nothing observable, since ClockEntryService holds no per-instance state of its own -- it only forwards to the (already-Singleton) repository","The app would fail to build","ClockIn would stop working"],"correct":0,"explanation":"Lifetime only matters when a class holds state across calls; ClockEntryService is stateless itself, so Transient vs Singleton is a real but currently inert design choice -- exactly what decision-0005 documents and what Session 29 explores in depth."}
   ],
   "concept": [
     {
-      "title": "Name the contract",
+      "title": "Depend on the interface, not the class",
       "paragraphs": [
-        "The governing rule is that constructor injection makes required collaborators explicit and points high-level workflow code toward abstractions.",
-        "Start with what callers need to know, then keep incidental implementation details behind the boundary."
+        "ClockEntryService's constructor takes IClockEntryRepository, not ClockEntryRepository. That one-word difference is what lets ClockEntryService be tested with a fake repository (Session 29) without ever touching the real one.",
+        "The same shape appears in PayrollService, which depends on IEmployeeService and IClockEntryRepository -- two interfaces, zero concrete types, even though CalculateTotalHours only actually calls one of them."
       ],
-      "code": "TimeLedgerService service = new(repository, policy);\nResult<decimal> result = service.Record(entry);"
+      "code": "// Services/PayrollService.cs -- the real constructor\npublic PayrollService(IEmployeeService employeeService, IClockEntryRepository clockEntryRepository)\n{\n    _employeeService = employeeService;\n    _clockEntryRepository = clockEntryRepository;\n}"
     },
     {
-      "title": "Trace dependencies and control",
+      "title": "Registration is where the interface meets its implementation",
       "paragraphs": [
-        "Follow calls from the public operation through each collaborator or transformation.",
-        "A clear direction reduces branching, duplication, and accidental coupling."
+        "Nothing in ClockEntryService.cs or PayrollService.cs says which concrete class satisfies IClockEntryRepository. Program.cs's ServiceCollection is the one place that decision is made.",
+        "The real registrations mix lifetimes: IClockEntryRepository is Singleton, while IClockEntryService, PayrollService, and IEmployeeService are all Transient -- verified directly against the source Program.cs, not assumed."
       ],
-      "code": "// Read the pipeline from caller to result.\nTimeLedgerService service = new(repository, policy);"
+      "code": "// Program.cs -- the real, mixed-lifetime registrations\nvar services = new ServiceCollection();\nservices.AddTransient<IClockEntryService, ClockEntryService>();\nservices.AddSingleton<IClockEntryRepository, ClockEntryRepository>();\nservices.AddTransient<PayrollService>();\nservices.AddTransient<IEmployeeService, EmployeeService>();"
     },
     {
-      "title": "Make behavior executable",
+      "title": "A declared dependency does not have to be used yet",
       "paragraphs": [
-        "Focused tests demonstrate the new rule with small deterministic values.",
-        "The complete suite then confirms the cumulative application still honors earlier contracts."
+        "PayrollService constructor-injects IEmployeeService but CalculateTotalHours never calls it. That is not dead code to delete reflexively -- it is a real, documented design point (decision-0006): the dependency was likely added in anticipation of an employee-lookup feature that has not been built yet.",
+        "The real xUnit test for PayrollService (Session 28) mocks IEmployeeService with Mock<IEmployeeService>() and never configures it -- proof, in the test itself, that the dependency is currently inert."
       ],
-      "code": "dotnet test TimeLedger.sln --configuration Release"
+      "code": "// tests/.../PayrollServiceTests.cs -- the real test\nvar employeeService = new Mock<IEmployeeService>();   // never configured, never verified\nvar payrollService = new PayrollService(employeeService.Object, repository.Object);"
     }
   ],
   "lab": {
-    "objective": "Add a compact TimeLedger example for dependency direction and constructor injection.",
-    "startingCondition": "Sessions 01–18 are complete and all existing tests pass.",
+    "objective": "Trace dependency direction through the real Program.cs registrations and confirm PayrollService's dead IEmployeeService dependency by reading, not guessing.",
+    "startingCondition": "ClockEntryService, PayrollService, EmployeeService, and their interfaces already exist with the real constructors from Sessions 5-18.",
     "steps": [
-      "Predict the successful path and one boundary or failure case.",
-      "Add src/TimeLedger.Domain/TimeLedgerService.cs with a narrow public contract.",
-      "Add tests/TimeLedger.Domain.Tests/TimeLedgerServiceTests.cs for the prediction and boundary case.",
-      "Run the focused tests and inspect the observed values or control flow.",
-      "Run the full Release build and test suite."
+      "List every constructor parameter type across ClockEntryService, PayrollService, and EmployeeService, and confirm each one is an interface.",
+      "In Program.cs, match each AddTransient/AddSingleton call to the interface it satisfies.",
+      "Search PayrollService.cs for every use of _employeeService and confirm CalculateTotalHours never calls it.",
+      "Run the existing PayrollServiceTests.cs and confirm it passes with an unconfigured Mock<IEmployeeService>.",
+      "Change IClockEntryRepository's registration from Singleton to Transient, rerun the app, and observe that ClockIn and Clockout now operate on two different empty lists -- explaining in writing why Singleton was the correct choice here."
     ],
-    "expectedBehavior": "The new tests establish that constructor injection makes required collaborators explicit and points high-level workflow code toward abstractions; prior behavior remains unchanged.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "expectedBehavior": "All constructor parameters are interfaces; the registration graph in Program.cs resolves PayrollService without error; PayrollServiceTests.cs passes; switching IClockEntryRepository to Transient breaks the app's total-hours calculation because ClockIn and Clockout no longer share state.",
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
-    {
-      "path": "src/TimeLedger.Domain/TimeLedgerService.cs",
-      "action": "Add",
-      "why": "Provide the canonical dependency boundaries example."
-    },
-    {
-      "path": "tests/TimeLedger.Domain.Tests/TimeLedgerServiceTests.cs",
-      "action": "Add",
-      "why": "Verify the contract and its boundary case."
-    },
-    {
-      "path": "site/data/sessions/session-19.json",
-      "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
-    }
+    {"path":"src/TimeClock.Domain/TimeClockService.cs","action":"Verify","why":"Confirm PayrollService's real two-interface constructor and the unused _employeeService field."},
+    {"path":"src/TimeClock.App/Program.cs","action":"Verify","why":"Confirm the real mixed Transient/Singleton registrations."},
+    {"path":"tests/TimeClock.Domain.Tests/PayrollServiceTests.cs","action":"Verify","why":"Confirm the unconfigured Mock<IEmployeeService> proves the dependency is currently inert."},
+    {"path":"site/data/sessions/session-19.json","action":"Add","why":"Publish synchronized lesson, lab, and quiz material."}
   ],
   "commit": "session-19: teach dependency direction and constructor injection",
   "review": [
-    "The public API states one coherent responsibility.",
-    "Dependencies and state changes are explicit.",
-    "The example remains deterministic and compact.",
-    "Tests cover success and a meaningful boundary.",
-    "No nullable warnings are introduced.",
-    "The complete suite passes."
+    "Every constructor in the domain layer depends on an interface, never a concrete class.",
+    "Program.cs is the only file that names a concrete implementation for each interface.",
+    "PayrollService's unused IEmployeeService dependency is explained, not silently removed.",
+    "The Singleton/Transient mix is explained by what state each class holds, not applied uniformly.",
+    "The full test suite passes."
   ],
   "postQuiz": [
-    {
-      "prompt": "What did the implementation prove about dependency direction and constructor injection?",
-      "options": [
-        "constructor injection makes required collaborators explicit and points high-level workflow code toward abstractions",
-        "Design contracts cannot be tested",
-        "Every caller needs concrete implementation details"
-      ],
-      "correct": 0,
-      "explanation": "The passing tests make the stated rule observable."
-    },
-    {
-      "prompt": "Why keep the public contract narrow?",
-      "options": [
-        "To reduce coupling and preserve implementation freedom",
-        "To prevent tests",
-        "To make all operations mutable"
-      ],
-      "correct": 0,
-      "explanation": "A narrow contract communicates capability without leaking unrelated details."
-    },
-    {
-      "prompt": "Why run regression tests?",
-      "options": [
-        "The application grows cumulatively",
-        "Only the newest file can compile",
-        "Test count changes runtime behavior"
-      ],
-      "correct": 0,
-      "explanation": "Earlier instructional guarantees must remain true after each session."
-    }
+    {"prompt":"What would break if ClockEntryService's constructor took ClockEntryRepository instead of IClockEntryRepository?","options":["Nothing at runtime, but Session 29's fake-repository tests could no longer substitute a test double","The app would fail to build immediately","ClockIn would stop persisting entries"],"correct":0,"explanation":"Depending on the concrete type still compiles and runs -- the cost shows up later, when nothing but the real repository can be substituted in a test."},
+    {"prompt":"Where in this codebase is the only place that names ClockEntryRepository as the implementation of IClockEntryRepository?","options":["Program.cs's ServiceCollection registration","ClockEntryService.cs","IClockEntryRepository.cs"],"correct":0,"explanation":"Every other file references the interface; only the composition root wires the interface to its concrete implementation."},
+    {"prompt":"Why is PayrollService's unused IEmployeeService dependency a legitimate design point rather than something to fix in this session?","options":["decision-0006 documents it was verified against the real constructor and left in place deliberately for a not-yet-built feature","IEmployeeService cannot be removed from any constructor in C#","Unused dependencies always indicate a compiler bug"],"correct":0,"explanation":"The source project's own decision log treats this as a resolved, intentional state -- not an open question to silently patch."}
   ],
   "reflections": [
-    "Which boundary in this session carries the most design responsibility?",
-    "How does the test reveal cause and effect rather than just a final value?",
-    "What implementation detail can change without affecting callers?"
+    "Which of PayrollService's two dependencies does CalculateTotalHours actually use, and what would have to change for it to use the other?",
+    "Why does IClockEntryRepository need to be Singleton for this console app's ClockIn/Clockout sequence to work at all?",
+    "What would you need to change if IEmployeeService's RenameService were later called from inside PayrollService?"
   ],
-  "whatBreaks": "Removing TimeLedgerService.cs removes the executable model for dependency boundaries. Removing its tests permits contract regressions. If the boundary leaks its implementation details, callers become harder to change and isolated testing loses value.",
-  "summary": "This session established that constructor injection makes required collaborators explicit and points high-level workflow code toward abstractions. The application change and tests preserve that model as executable documentation."
+  "whatBreaks": "Changing ClockEntryService or PayrollService's constructors to depend on concrete classes removes the seam Session 29's test doubles rely on. Registering IClockEntryRepository as Transient breaks ClockIn/Clockout's shared state, since each resolution would get its own empty list. Removing IEmployeeService from PayrollService's constructor would break the real, existing xUnit test, which constructs PayrollService with two arguments.",
+  "summary": "Constructor injection in this app means every domain class depends on interfaces, and Program.cs is the single place those interfaces are wired to concrete types. PayrollService's real, unused IEmployeeService dependency shows that a declared dependency does not have to be exercised yet to be a legitimate part of the constructor's contract."
 }

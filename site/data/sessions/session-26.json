@@ -2,7 +2,7 @@
   "number": 26,
   "category": "async composition",
   "estimatedTime": "40 minutes",
-  "connection": "Session 25 supplies the required foundation. This session extends TimeLedger with async composition while keeping execution observable and deterministic.",
+  "connection": "Session 25 supplies the required foundation. This session extends TimeClock with async composition while keeping execution observable and deterministic.",
   "objectives": [
     "Explain why awaiting in sequence preserves ordering while Task.WhenAll allows independent operations to make progress together.",
     "Trace the operation across its execution or application boundary.",
@@ -70,7 +70,7 @@
         "The governing rule is that awaiting in sequence preserves ordering while Task.WhenAll allows independent operations to make progress together.",
         "Avoid equating an abstraction with one possible implementation detail; reason from its documented contract."
       ],
-      "code": "TimeEntry[] entries = await Task.WhenAll(loads);"
+      "code": "ClockEntry[] entries = await Task.WhenAll(loads);"
     },
     {
       "title": "Keep boundaries explicit",
@@ -78,7 +78,7 @@
         "Dependencies, cancellation, persistence, and transport values should cross named boundaries.",
         "This makes ownership clear and supplies seams for deterministic tests."
       ],
-      "code": "// The boundary exposes intent.\nTimeEntry[] entries = await Task.WhenAll(loads);"
+      "code": "// The boundary exposes intent.\nClockEntry[] entries = await Task.WhenAll(loads);"
     },
     {
       "title": "Verify observable outcomes",
@@ -86,7 +86,7 @@
         "Focused tests control inputs and collaborators so timing and failure assertions stay stable.",
         "The full suite checks that new infrastructure has not weakened the domain model."
       ],
-      "code": "dotnet test TimeLedger.sln --configuration Release"
+      "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
@@ -100,16 +100,16 @@
       "Run the full Release build, test suite, and site validator."
     ],
     "expectedBehavior": "The checks establish that awaiting in sequence preserves ordering while Task.WhenAll allows independent operations to make progress together; all earlier tests continue to pass.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeLedger.Domain/EntryBatchLoader.cs",
+      "path": "src/TimeClock.Domain/EntryBatchLoader.cs",
       "action": "Add or integrate",
       "why": "Provide the canonical async composition implementation; infrastructure sessions place the equivalent file in their project."
     },
     {
-      "path": "tests/TimeLedger.Domain.Tests/EntryBatchLoaderTests.cs",
+      "path": "tests/TimeClock.Domain.Tests/EntryBatchLoaderTests.cs",
       "action": "Add or integrate",
       "why": "Verify the new contract with controlled inputs."
     },

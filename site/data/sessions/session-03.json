@@ -37,10 +37,10 @@
       "Restore scheduledHours to 7.5m, then build and run all tests."
     ],
     "expectedBehavior": "The stable application reports over schedule for +0.50 variance. Temporary 0.00 and -0.50 experiments report on schedule and under schedule respectively.",
-    "validation": "dotnet run --project src/TimeLedger.App/TimeLedger.App.csproj --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "validation": "dotnet run --project src/TimeClock.App/TimeClock.App.csproj --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
-    {"path":"src/TimeLedger.App/Program.cs","action":"Modify","why":"Map numeric variance to one observable status using relational patterns."},
+    {"path":"src/TimeClock.App/Program.cs","action":"Modify","why":"Map numeric variance to one observable status using relational patterns."},
     {"path":"site/data/sessions/session-03.json","action":"Add","why":"Publish the synchronized lesson, lab, and quizzes."}
   ],
   "commit": "session-03: teach control flow and pattern decisions",

@@ -2,12 +2,12 @@
   "number": 22,
   "category": "query execution timing",
   "estimatedTime": "40 minutes",
-  "connection": "Session 21 provides the prerequisite vocabulary. This session develops query execution timing through a focused TimeLedger change.",
+  "connection": "Session 21 grouped and joined ClockEntry data. This session asks when a LINQ query actually runs, using GetEmployeeClockEntries's return type (IEnumerable<ClockEntry>, deferred) and Session 30-31's future EF Core queries (IQueryable<T>, deferred until a provider translates them) as the two real shapes this course uses.",
   "objectives": [
-    "Explain why IEnumerable queries normally execute when enumerated, ToList materializes a snapshot, and IQueryable records an expression for a provider.",
-    "Trace control and data across the new API boundary.",
-    "Implement deferred execution, materialization, and query sources in the canonical application.",
-    "Prove the contract with focused and regression tests."
+    "Explain that GetEmployeeClockEntries returns an unevaluated query, not a materialized list -- the Where clause only runs when something enumerates the result.",
+    "Predict what happens if _clockEntries changes between calling GetEmployeeClockEntries and enumerating its result.",
+    "Use .ToList() to force immediate evaluation and capture a stable snapshot.",
+    "Distinguish IEnumerable<T> (executes locally, in-process) from IQueryable<T> (translated by a provider, as EF Core will do starting in Session 30)."
   ],
   "visuals": [
     {
@@ -33,83 +33,83 @@
   ],
   "preQuiz": [
     {
-      "prompt": "Which statement accurately frames deferred execution, materialization, and query sources?",
+      "prompt": "When does GetEmployeeClockEntries's Where clause actually run?",
       "options": [
-        "IEnumerable queries normally execute when enumerated, ToList materializes a snapshot, and IQueryable records an expression for a provider",
-        "Every implementation must expose all internal details",
-        "The runtime ignores declared contracts"
+        "When the returned IEnumerable<ClockEntry> is enumerated (a foreach, ToList, or Sum) -- not when GetEmployeeClockEntries itself is called",
+        "Immediately, inside the GetEmployeeClockEntries call",
+        "Never -- Where is evaluated at compile time"
       ],
       "correct": 0,
-      "explanation": "The session rule connects the language feature to an observable design consequence."
+      "explanation": "IEnumerable's Where is deferred: calling GetEmployeeClockEntries builds a query description, and CalculateTotalHours's .Sum() is what actually walks _clockEntries and applies the filter."
     },
     {
-      "prompt": "Where should a required collaborator be supplied?",
+      "prompt": "If a new ClockEntry is added to _clockEntries after GetEmployeeClockEntries returns but before .Sum() enumerates it, what happens?",
       "options": [
-        "At an explicit construction or method boundary",
-        "Through hidden global state",
-        "By searching unrelated objects"
+        "The new entry can be included in the sum, since the query re-reads the live list at enumeration time",
+        "The new entry is guaranteed to be excluded",
+        "An exception is thrown"
       ],
       "correct": 0,
-      "explanation": "Explicit boundaries make dependencies visible and testable."
+      "explanation": "Deferred execution means the query is a live view over _clockEntries at the moment it is enumerated, not a snapshot taken when GetEmployeeClockEntries was called."
     },
     {
-      "prompt": "What makes a prediction useful?",
+      "prompt": "What does .ToList() do differently from just holding an IEnumerable<ClockEntry> reference?",
       "options": [
-        "It names the expected cause and effect",
-        "It avoids executing tests",
-        "It depends on implementation trivia"
+        "It forces immediate enumeration and copies matching elements into a new List, fixed at that moment",
+        "It changes the Where clause's filtering logic",
+        "It converts the query into an IQueryable"
       ],
       "correct": 0,
-      "explanation": "A causal prediction can be compared with output and corrected."
+      "explanation": "ToList materializes: it runs the deferred query right now and returns a stable snapshot that later changes to the source will not affect."
     }
   ],
   "concept": [
     {
-      "title": "Name the contract",
+      "title": "GetEmployeeClockEntries returns a query, not a list",
       "paragraphs": [
-        "The governing rule is that IEnumerable queries normally execute when enumerated, ToList materializes a snapshot, and IQueryable records an expression for a provider.",
-        "Start with what callers need to know, then keep incidental implementation details behind the boundary."
+        "The real method's return type is IEnumerable<ClockEntry> -- a promise of a sequence, not the sequence itself. The .Where() call inside it builds that promise but does not walk _clockEntries yet.",
+        "CalculateTotalHours is what actually triggers execution, because .Sum() has to enumerate every element to add it up."
       ],
-      "code": "IEnumerable<TimeEntry> query = entries.Where(e => !e.IsOpen);\nList<TimeEntry> snapshot = query.ToList();"
+      "code": "// Repositories/ClockEntryRepository.cs -- returns an unevaluated query\npublic IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate)\n{\n    return _clockEntries.Where(entry => /* ...three conditions... */ true);\n}\n\n// Services/PayrollService.cs -- .Sum() is what forces evaluation\nreturn clockEntries.Sum(x => x.GetDuartion().TotalHours);"
     },
     {
-      "title": "Trace dependencies and control",
+      "title": "ToList forces evaluation now",
       "paragraphs": [
-        "Follow calls from the public operation through each collaborator or transformation.",
-        "A clear direction reduces branching, duplication, and accidental coupling."
+        "DeferredEntryQuery.Completed returns an IEnumerable<ClockEntry> that has not run yet. Calling .ToList() on it walks _clockEntries immediately and returns a fixed List<ClockEntry> snapshot.",
+        "The difference is observable: if the source list changes after the deferred query was built but before it is enumerated, an un-materialized IEnumerable can see the change; a .ToList() snapshot cannot."
       ],
-      "code": "// Read the pipeline from caller to result.\nIEnumerable<TimeEntry> query = entries.Where(e => !e.IsOpen);"
+      "code": "public static IEnumerable<ClockEntry> Completed(IEnumerable<ClockEntry> entries) =>\n    entries.Where(entry => entry.ClockOut is not null);\n\n// Caller decides when (or whether) to materialize:\nList<ClockEntry> snapshot = DeferredEntryQuery.Completed(entries).ToList();"
     },
     {
-      "title": "Make behavior executable",
+      "title": "IQueryable defers differently: to a provider, not just to enumeration",
       "paragraphs": [
-        "Focused tests demonstrate the new rule with small deterministic values.",
-        "The complete suite then confirms the cumulative application still honors earlier contracts."
+        "GetEmployeeClockEntries's IEnumerable<ClockEntry> runs entirely in this process, in plain C#. Session 30-31's EF Core queries return IQueryable<ClockEntryEntity> instead: LINQ builds an expression tree that a database provider translates into SQL only when enumerated.",
+        "Same deferred-until-enumerated principle, different execution target -- in-process C# versus a translated database query."
       ],
-      "code": "dotnet test TimeLedger.sln --configuration Release"
+      "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
-    "objective": "Add a compact TimeLedger example for deferred execution, materialization, and query sources.",
+    "objective": "Add a compact TimeClock example for deferred execution, materialization, and query sources.",
     "startingCondition": "Sessions 01–21 are complete and all existing tests pass.",
     "steps": [
       "Predict the successful path and one boundary or failure case.",
-      "Add src/TimeLedger.Domain/DeferredEntryQuery.cs with a narrow public contract.",
-      "Add tests/TimeLedger.Domain.Tests/DeferredEntryQueryTests.cs for the prediction and boundary case.",
+      "Add src/TimeClock.Domain/DeferredEntryQuery.cs with a narrow public contract.",
+      "Add tests/TimeClock.Domain.Tests/DeferredEntryQueryTests.cs for the prediction and boundary case.",
       "Run the focused tests and inspect the observed values or control flow.",
       "Run the full Release build and test suite."
     ],
     "expectedBehavior": "The new tests establish that IEnumerable queries normally execute when enumerated, ToList materializes a snapshot, and IQueryable records an expression for a provider; prior behavior remains unchanged.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeLedger.Domain/DeferredEntryQuery.cs",
+      "path": "src/TimeClock.Domain/DeferredEntryQuery.cs",
       "action": "Add",
       "why": "Provide the canonical query execution timing example."
     },
     {
-      "path": "tests/TimeLedger.Domain.Tests/DeferredEntryQueryTests.cs",
+      "path": "tests/TimeClock.Domain.Tests/DeferredEntryQueryTests.cs",
       "action": "Add",
       "why": "Verify the contract and its boundary case."
     },
@@ -130,41 +130,41 @@
   ],
   "postQuiz": [
     {
-      "prompt": "What did the implementation prove about deferred execution, materialization, and query sources?",
+      "prompt": "Why does CalculateTotalHours never need to call .ToList() on the result of GetEmployeeClockEntries?",
       "options": [
-        "IEnumerable queries normally execute when enumerated, ToList materializes a snapshot, and IQueryable records an expression for a provider",
-        "Design contracts cannot be tested",
-        "Every caller needs concrete implementation details"
+        "It only enumerates the sequence once (inside .Sum()), so there is no benefit to materializing a separate snapshot first",
+        "IEnumerable<ClockEntry> cannot support .ToList()",
+        "GetEmployeeClockEntries already returns a List"
       ],
       "correct": 0,
-      "explanation": "The passing tests make the stated rule observable."
+      "explanation": "Materializing is worth the extra allocation when a sequence will be enumerated more than once, or when you need a stable snapshot -- CalculateTotalHours does neither."
     },
     {
-      "prompt": "Why keep the public contract narrow?",
+      "prompt": "What is the risk of enumerating the same un-materialized deferred query twice in a row (e.g. once to count, once to sum)?",
       "options": [
-        "To reduce coupling and preserve implementation freedom",
-        "To prevent tests",
-        "To make all operations mutable"
+        "The underlying Where/filter logic re-runs both times, which is wasted work and, for a database-backed IQueryable, a second round trip",
+        "The second enumeration always throws an exception",
+        "There is no risk; deferred queries are cached automatically after the first enumeration"
       ],
       "correct": 0,
-      "explanation": "A narrow contract communicates capability without leaking unrelated details."
+      "explanation": "Deferred execution means every enumeration re-runs the query from scratch -- exactly why Session 30-31's EF Core queries call .ToListAsync() once and reuse the materialized result."
     },
     {
-      "prompt": "Why run regression tests?",
+      "prompt": "Once Session 30 introduces IQueryable<ClockEntryEntity>, what changes about where the Where clause actually executes?",
       "options": [
-        "The application grows cumulatively",
-        "Only the newest file can compile",
-        "Test count changes runtime behavior"
+        "The database provider translates the Where clause into SQL and executes it in the database, not in this process",
+        "Nothing changes -- IQueryable behaves identically to IEnumerable",
+        "The Where clause runs at compile time instead of runtime"
       ],
       "correct": 0,
-      "explanation": "Earlier instructional guarantees must remain true after each session."
+      "explanation": "This is the concrete difference Session 31 explores: IEnumerable filters in-process C# objects; IQueryable's expression tree is translated and executed by the database provider."
     }
   ],
   "reflections": [
-    "Which boundary in this session carries the most design responsibility?",
-    "How does the test reveal cause and effect rather than just a final value?",
-    "What implementation detail can change without affecting callers?"
+    "Why does GetEmployeeClockEntries's deferred IEnumerable<ClockEntry> behave differently from a materialized List<ClockEntry> if _clockEntries changes between the call and the enumeration?",
+    "When would you deliberately call .ToList() on GetEmployeeClockEntries's result, even though CalculateTotalHours does not?",
+    "What concrete difference will Session 31 show between this session's in-process IEnumerable queries and EF Core's IQueryable queries?"
   ],
-  "whatBreaks": "Removing DeferredEntryQuery.cs removes the executable model for query execution timing. Removing its tests permits contract regressions. If the boundary leaks its implementation details, callers become harder to change and isolated testing loses value.",
-  "summary": "This session established that IEnumerable queries normally execute when enumerated, ToList materializes a snapshot, and IQueryable records an expression for a provider. The application change and tests preserve that model as executable documentation."
+  "whatBreaks": "Calling .ToList() unnecessarily inside GetEmployeeClockEntries would force evaluation before the caller decides what to do with the result, silently changing its behavior from a live view to a fixed snapshot. Enumerating a deferred query multiple times when the underlying provider is a database (Session 31) means multiple round trips, not one. Confusing IEnumerable's in-process execution with IQueryable's provider-translated execution leads to assuming SQL-level operations (like case-insensitive collation) that only IQueryable's translation actually provides.",
+  "summary": "GetEmployeeClockEntries returns an unevaluated IEnumerable<ClockEntry>; CalculateTotalHours's .Sum() is what actually triggers the Where clause. .ToList() forces immediate evaluation into a fixed snapshot. Session 30-31's EF Core IQueryable<T> defers the same way, but to a database provider instead of in-process enumeration."
 }

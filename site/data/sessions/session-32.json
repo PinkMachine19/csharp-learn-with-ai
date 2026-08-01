@@ -2,7 +2,7 @@
   "number": 32,
   "category": "HTTP request boundary",
   "estimatedTime": "40 minutes",
-  "connection": "Session 31 supplies the required foundation. This session extends TimeLedger with HTTP request boundary while keeping execution observable and deterministic.",
+  "connection": "Session 31 supplies the required foundation. This session extends TimeClock with HTTP request boundary while keeping execution observable and deterministic.",
   "objectives": [
     "Explain why routing selects an endpoint, DTOs describe transport data, and mapping keeps HTTP concerns outside the domain model.",
     "Trace the operation across its execution or application boundary.",
@@ -70,7 +70,7 @@
         "The governing rule is that routing selects an endpoint, DTOs describe transport data, and mapping keeps HTTP concerns outside the domain model.",
         "Avoid equating an abstraction with one possible implementation detail; reason from its documented contract."
       ],
-      "code": "app.MapPost(\"/entries\", TimeEntryEndpoints.Create);"
+      "code": "app.MapPost(\"/entries\", ClockEntryEndpoints.Create);"
     },
     {
       "title": "Keep boundaries explicit",
@@ -78,7 +78,7 @@
         "Dependencies, cancellation, persistence, and transport values should cross named boundaries.",
         "This makes ownership clear and supplies seams for deterministic tests."
       ],
-      "code": "// The boundary exposes intent.\napp.MapPost(\"/entries\", TimeEntryEndpoints.Create);"
+      "code": "// The boundary exposes intent.\napp.MapPost(\"/entries\", ClockEntryEndpoints.Create);"
     },
     {
       "title": "Verify observable outcomes",
@@ -86,7 +86,7 @@
         "Focused tests control inputs and collaborators so timing and failure assertions stay stable.",
         "The full suite checks that new infrastructure has not weakened the domain model."
       ],
-      "code": "dotnet test TimeLedger.sln --configuration Release"
+      "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
@@ -94,22 +94,22 @@
     "startingCondition": "Sessions 01–31 are complete and the solution is green.",
     "steps": [
       "Predict one success outcome and one failure, cancellation, or boundary outcome.",
-      "Add the implementation centered on TimeEntryEndpoints.cs.",
-      "Add TimeEntryEndpointTests.cs with deterministic Arrange–Act–Assert checks.",
+      "Add the implementation centered on ClockEntryEndpoints.cs.",
+      "Add ClockEntryEndpointTests.cs with deterministic Arrange–Act–Assert checks.",
       "Run the focused checks and inspect the relevant returned value or state.",
       "Run the full Release build, test suite, and site validator."
     ],
     "expectedBehavior": "The checks establish that routing selects an endpoint, DTOs describe transport data, and mapping keeps HTTP concerns outside the domain model; all earlier tests continue to pass.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeLedger.Web/TimeEntryEndpoints.cs",
+      "path": "src/TimeClock.Web/ClockEntryEndpoints.cs",
       "action": "Add or integrate",
       "why": "Provide the canonical HTTP request boundary implementation; infrastructure sessions place the equivalent file in their project."
     },
     {
-      "path": "tests/TimeLedger.Domain.Tests/TimeEntryEndpointTests.cs",
+      "path": "tests/TimeClock.Domain.Tests/ClockEntryEndpointTests.cs",
       "action": "Add or integrate",
       "why": "Verify the new contract with controlled inputs."
     },
@@ -165,6 +165,6 @@
     "Where does failure cross the boundary, and who should handle it?",
     "Which dependency can a test replace with a controlled implementation?"
   ],
-  "whatBreaks": "Removing TimeEntryEndpoints.cs removes the canonical example for HTTP request boundary. Removing its tests makes timing, failure, persistence, or HTTP behavior easier to regress. Hiding the boundary behind global state would also make the behavior harder to observe and control.",
+  "whatBreaks": "Removing ClockEntryEndpoints.cs removes the canonical example for HTTP request boundary. Removing its tests makes timing, failure, persistence, or HTTP behavior easier to regress. Hiding the boundary behind global state would also make the behavior harder to observe and control.",
   "summary": "This session established that routing selects an endpoint, DTOs describe transport data, and mapping keeps HTTP concerns outside the domain model. Explicit boundaries and deterministic checks make the application behavior dependable."
 }

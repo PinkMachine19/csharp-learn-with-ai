@@ -2,12 +2,12 @@
   "number": 20,
   "category": "query pipelines",
   "estimatedTime": "40 minutes",
-  "connection": "Session 19 provides the prerequisite vocabulary. This session develops query pipelines through a focused TimeLedger change.",
+  "connection": "Session 19 covered dependency injection. This session reads the real PayrollService.CalculateTotalHours line by line: a Where-shaped filter inside GetEmployeeClockEntries, feeding a Sum with an inline projection -- one LINQ pipeline split across two real methods.",
   "objectives": [
-    "Explain why Where filters, Select transforms, and OrderBy sequences elements while preserving a readable left-to-right pipeline.",
-    "Trace control and data across the new API boundary.",
-    "Implement linq pipelines with where, select, and ordering in the canonical application.",
-    "Prove the contract with focused and regression tests."
+    "Read GetEmployeeClockEntries as a Where pipeline: employeeId match, ClockOut not null, and a date range, all in one lambda.",
+    "Read CalculateTotalHours's .Sum(x => x.GetDuartion().TotalHours) as a projection and aggregation combined into a single call, not a separate Select stage.",
+    "Explain decision-0007: why the real code chose one combined LINQ call over three separate named pipeline stages.",
+    "Write a new query using the same Where-then-Sum-with-projection shape against ClockEntryQueries.cs."
   ],
   "visuals": [
     {
@@ -33,83 +33,83 @@
   ],
   "preQuiz": [
     {
-      "prompt": "Which statement accurately frames linq pipelines with where, select, and ordering?",
+      "prompt": "In the real GetEmployeeClockEntries, what does the .Where() lambda filter on?",
       "options": [
-        "Where filters, Select transforms, and OrderBy sequences elements while preserving a readable left-to-right pipeline",
-        "Every implementation must expose all internal details",
-        "The runtime ignores declared contracts"
+        "employeeId match, ClockOut not null, and ClockIn within the given date range -- all three conditions in one lambda",
+        "Only employeeId",
+        "Only whether ClockOut is null"
       ],
       "correct": 0,
-      "explanation": "The session rule connects the language feature to an observable design consequence."
+      "explanation": "The real method combines three AND-ed conditions in a single Where call, confirmed against Repositories/ClockEntryRepository.cs."
     },
     {
-      "prompt": "Where should a required collaborator be supplied?",
+      "prompt": "Why does CalculateTotalHours use .Sum(x => x.GetDuartion().TotalHours) instead of a separate .Select(...).Sum() pipeline?",
       "options": [
-        "At an explicit construction or method boundary",
-        "Through hidden global state",
-        "By searching unrelated objects"
+        "Both forms are valid LINQ; the real code chose the inline one-liner and never had a separate Select stage or GetCompletedDurations method (decision-0007)",
+        "C# does not allow chaining Select before Sum",
+        "GetDuartion cannot be called inside a Select"
       ],
       "correct": 0,
-      "explanation": "Explicit boundaries make dependencies visible and testable."
+      "explanation": "decision-0007 documents that the originally planned three-stage pipeline was never built -- the real code combines projection and aggregation in one Sum call."
     },
     {
-      "prompt": "What makes a prediction useful?",
+      "prompt": "Why does TotalHours matter more than Hours in this Sum call?",
       "options": [
-        "It names the expected cause and effect",
-        "It avoids executing tests",
-        "It depends on implementation trivia"
+        "TimeSpan.Hours truncates to whole hours within a day, so a 26-hour shift would report 2, not 26; TotalHours reports the true total",
+        "TotalHours is required syntax for Sum",
+        "Hours and TotalHours are identical for this domain"
       ],
       "correct": 0,
-      "explanation": "A causal prediction can be compared with output and corrected."
+      "explanation": "TimeSpan.Hours is the hours component (0-23) of the span, not the full duration -- using it here would silently corrupt payroll totals for any shift over 24 hours."
     }
   ],
   "concept": [
     {
-      "title": "Name the contract",
+      "title": "Where filters with a compound condition",
       "paragraphs": [
-        "The governing rule is that Where filters, Select transforms, and OrderBy sequences elements while preserving a readable left-to-right pipeline.",
-        "Start with what callers need to know, then keep incidental implementation details behind the boundary."
+        "GetEmployeeClockEntries filters _clockEntries with one Where call carrying three AND-ed conditions: the right employee, a completed entry, and inside the date range.",
+        "Reading it left to right: entries -> keep matching employeeId -> keep completed -> keep in range. No loop, no accumulator variable -- the pipeline is the whole method body."
       ],
-      "code": "entries.Where(IsLong).OrderBy(e => e.ClockedInAt).Select(ToSummary)"
+      "code": "// Repositories/ClockEntryRepository.cs -- the real implementation\npublic IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate)\n{\n    return _clockEntries.Where(entry =>\n        entry.EmployeeId == employeeId &&\n        entry.ClockOut != null &&\n        entry.ClockIn >= startDate &&\n        entry.ClockIn <= endDate);\n}"
     },
     {
-      "title": "Trace dependencies and control",
+      "title": "Sum can project and aggregate in one call",
       "paragraphs": [
-        "Follow calls from the public operation through each collaborator or transformation.",
-        "A clear direction reduces branching, duplication, and accidental coupling."
+        "CalculateTotalHours does not call .Select() at all. The lambda passed to .Sum() -- x => x.GetDuartion().TotalHours -- both transforms each ClockEntry into a number of hours AND feeds it straight into the running total.",
+        "This is decision-0007 in the source project's decision log: the original plan was three separate methods (GetCompletedEntries, GetCompletedDurations, then Sum); the delivered code is two methods, with projection folded into the aggregation."
       ],
-      "code": "// Read the pipeline from caller to result.\nentries.Where(IsLong).OrderBy(e => e.ClockedInAt).Select(ToSummary)"
+      "code": "// Services/PayrollService.cs -- the real implementation\npublic double CalculateTotalHours(int employeeId, DateTime startDate, DateTime endDate)\n{\n    var clockEntries = _clockEntryRepository.GetEmployeeClockEntries(employeeId, startDate, endDate);\n    return clockEntries.Sum(x => x.GetDuartion().TotalHours);\n}"
     },
     {
-      "title": "Make behavior executable",
+      "title": "Verify with the real, existing test",
       "paragraphs": [
-        "Focused tests demonstrate the new rule with small deterministic values.",
-        "The complete suite then confirms the cumulative application still honors earlier contracts."
+        "PayrollServiceTests.cs already proves this pipeline: two mocked shifts of 2 and 3 hours sum to exactly 5.0 through GetEmployeeClockEntries and CalculateTotalHours together.",
+        "This session's lab writes a second, independent query (ClockEntryQueries.LongestFirst) using the same Where-then-project-and-aggregate shape, but ordered and filtered by a minimum-hours threshold instead."
       ],
-      "code": "dotnet test TimeLedger.sln --configuration Release"
+      "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
-    "objective": "Add a compact TimeLedger example for linq pipelines with where, select, and ordering.",
+    "objective": "Add a compact TimeClock example for linq pipelines with where, select, and ordering.",
     "startingCondition": "Sessions 01–19 are complete and all existing tests pass.",
     "steps": [
       "Predict the successful path and one boundary or failure case.",
-      "Add src/TimeLedger.Domain/TimeEntryQueries.cs with a narrow public contract.",
-      "Add tests/TimeLedger.Domain.Tests/TimeEntryQueriesTests.cs for the prediction and boundary case.",
+      "Add src/TimeClock.Domain/ClockEntryQueries.cs with a narrow public contract.",
+      "Add tests/TimeClock.Domain.Tests/ClockEntryQueriesTests.cs for the prediction and boundary case.",
       "Run the focused tests and inspect the observed values or control flow.",
       "Run the full Release build and test suite."
     ],
     "expectedBehavior": "The new tests establish that Where filters, Select transforms, and OrderBy sequences elements while preserving a readable left-to-right pipeline; prior behavior remains unchanged.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeLedger.Domain/TimeEntryQueries.cs",
+      "path": "src/TimeClock.Domain/ClockEntryQueries.cs",
       "action": "Add",
       "why": "Provide the canonical query pipelines example."
     },
     {
-      "path": "tests/TimeLedger.Domain.Tests/TimeEntryQueriesTests.cs",
+      "path": "tests/TimeClock.Domain.Tests/ClockEntryQueriesTests.cs",
       "action": "Add",
       "why": "Verify the contract and its boundary case."
     },
@@ -130,41 +130,41 @@
   ],
   "postQuiz": [
     {
-      "prompt": "What did the implementation prove about linq pipelines with where, select, and ordering?",
+      "prompt": "If you needed the list of raw hour values before summing them (for a histogram, say), what would you add to CalculateTotalHours's pipeline?",
       "options": [
-        "Where filters, Select transforms, and OrderBy sequences elements while preserving a readable left-to-right pipeline",
-        "Design contracts cannot be tested",
-        "Every caller needs concrete implementation details"
+        "A .Select(x => x.GetDuartion().TotalHours) stage before .Sum(), separating projection from aggregation",
+        "Nothing -- Sum already exposes the intermediate values",
+        "A foreach loop, since LINQ cannot expose intermediate values"
       ],
       "correct": 0,
-      "explanation": "The passing tests make the stated rule observable."
+      "explanation": "This is exactly the three-stage pipeline decision-0007 says was originally planned but not needed for the single CalculateTotalHours caller -- it becomes worth adding once a second caller needs the intermediate values."
     },
     {
-      "prompt": "Why keep the public contract narrow?",
+      "prompt": "Why does GetEmployeeClockEntries filter on ClockOut != null?",
       "options": [
-        "To reduce coupling and preserve implementation freedom",
-        "To prevent tests",
-        "To make all operations mutable"
+        "An open (still-clocked-in) entry has no valid duration -- GetDuartion would throw if summed before completion",
+        "ClockOut is required by the LINQ Where method's signature",
+        "It has no effect; every entry always has ClockOut set"
       ],
       "correct": 0,
-      "explanation": "A narrow contract communicates capability without leaking unrelated details."
+      "explanation": "GetDuartion throws InvalidOperationException on an open entry; filtering ClockOut != null before the Sum call is what prevents that exception during payroll calculation."
     },
     {
-      "prompt": "Why run regression tests?",
+      "prompt": "What would happen if GetEmployeeClockEntries's Where predicate dropped the date-range conditions?",
       "options": [
-        "The application grows cumulatively",
-        "Only the newest file can compile",
-        "Test count changes runtime behavior"
+        "CalculateTotalHours would sum every completed shift the employee ever worked, not just the requested period",
+        "The method would fail to compile",
+        "Nothing -- the date parameters are unused"
       ],
       "correct": 0,
-      "explanation": "Earlier instructional guarantees must remain true after each session."
+      "explanation": "The date-range conditions are real, load-bearing parts of the compound Where -- removing them silently changes what CalculateTotalHours reports."
     }
   ],
   "reflections": [
-    "Which boundary in this session carries the most design responsibility?",
-    "How does the test reveal cause and effect rather than just a final value?",
-    "What implementation detail can change without affecting callers?"
+    "Why is a compound Where condition (three ANDs in one lambda) easier to reason about here than three separate filtering methods?",
+    "What would ClockEntryQueries.LongestFirst look like if it needed the intermediate hour values for something other than filtering?",
+    "Where else in this codebase could a Select-then-Sum split make a future second caller's job easier?"
   ],
-  "whatBreaks": "Removing TimeEntryQueries.cs removes the executable model for query pipelines. Removing its tests permits contract regressions. If the boundary leaks its implementation details, callers become harder to change and isolated testing loses value.",
-  "summary": "This session established that Where filters, Select transforms, and OrderBy sequences elements while preserving a readable left-to-right pipeline. The application change and tests preserve that model as executable documentation."
+  "whatBreaks": "Removing the ClockOut != null condition from GetEmployeeClockEntries reintroduces GetDuartion's InvalidOperationException into CalculateTotalHours. Removing the date-range conditions makes CalculateTotalHours silently ignore its own startDate/endDate parameters. Splitting Sum's inline projection into a separate Select adds an intermediate allocation with no current caller that needs it -- a real but currently unnecessary refactor.",
+  "summary": "The real PayrollService.CalculateTotalHours is one Where-shaped filter (in GetEmployeeClockEntries) feeding one Sum call with an inline projection -- decision-0007 documents that this two-method, no-separate-Select shape was the delivered design, not the three-stage pipeline originally planned."
 }

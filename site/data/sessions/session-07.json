@@ -2,7 +2,7 @@
   "number": 7,
   "category": "value and reference assignment",
   "estimatedTime": "40 minutes",
-  "connection": "Session 6 established the prerequisite model. This session applies it to value and reference assignment with observable TimeLedger examples.",
+  "connection": "Session 6 established the prerequisite model. This session applies it to value and reference assignment with observable TimeClock examples.",
   "objectives": [
     "Explain copying a value produces independent data while copying a reference preserves shared identity.",
     "Predict behavior before running a focused value and reference assignment example.",
@@ -70,7 +70,7 @@
         "The central rule is that copying a value produces independent data while copying a reference preserves shared identity.",
         "Names and syntax matter because they communicate whether code copies, aliases, enumerates, compares, or constrains a value."
       ],
-      "code": "int first = 8; int second = first;\nWorker primary = worker; Worker alias = primary;"
+      "code": "int first = 8; int second = first;\nEmployee primary = worker; Employee alias = primary;"
     },
     {
       "title": "Program to the required capability",
@@ -86,30 +86,30 @@
         "The lab changes one behavior at a time and uses tests to preserve the observation.",
         "If the prediction differs from the result, explain the language rule before continuing."
       ],
-      "code": "dotnet test TimeLedger.sln --configuration Release"
+      "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
-    "objective": "Add a focused TimeLedger example that demonstrates value and reference assignment.",
+    "objective": "Add a focused TimeClock example that demonstrates value and reference assignment.",
     "startingCondition": "Sessions 01–06 are complete and the solution builds with all existing tests passing.",
     "steps": [
       "Read the starting test and predict the result using the session mental model.",
-      "Add src/TimeLedger.Domain/AssignmentExamples.cs with the smallest API needed for the example.",
-      "Add tests/TimeLedger.Domain.Tests/AssignmentExamplesTests.cs to check the important before-and-after behavior.",
+      "Add src/TimeClock.Domain/AssignmentExamples.cs with the smallest API needed for the example.",
+      "Add tests/TimeClock.Domain.Tests/AssignmentExamplesTests.cs to check the important before-and-after behavior.",
       "Run the focused tests, then run the complete Release test suite.",
       "Review whether each parameter and return type exposes only the capability it needs."
     ],
     "expectedBehavior": "The new tests demonstrate copying a value produces independent data while copying a reference preserves shared identity; all existing behavior remains green.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeLedger.Domain/AssignmentExamples.cs",
+      "path": "src/TimeClock.Domain/AssignmentExamples.cs",
       "action": "Add",
       "why": "Provide the canonical value and reference assignment example."
     },
     {
-      "path": "tests/TimeLedger.Domain.Tests/AssignmentExamplesTests.cs",
+      "path": "tests/TimeClock.Domain.Tests/AssignmentExamplesTests.cs",
       "action": "Add",
       "why": "Lock the observed language behavior into executable checks."
     },
@@ -166,5 +166,5 @@
     "Where could an unnecessarily concrete type make future change harder?"
   ],
   "whatBreaks": "Removing the new domain example removes the executable model for value and reference assignment. Removing its tests allows subtle changes to assignment, equality, enumeration, or generic contracts to pass unnoticed. Widening the API unnecessarily gives callers capabilities the operation does not need.",
-  "summary": "This session established that copying a value produces independent data while copying a reference preserves shared identity. The TimeLedger example, tests, and API review turn that rule into durable engineering practice."
+  "summary": "This session established that copying a value produces independent data while copying a reference preserves shared identity. The TimeClock example, tests, and API review turn that rule into durable engineering practice."
 }

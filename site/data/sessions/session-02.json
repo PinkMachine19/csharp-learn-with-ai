@@ -23,7 +23,7 @@
   "concept": [
     {"title":"Declarations create typed names","paragraphs":["A declaration connects a type, a name, and usually an initial value. The type is a compile-time contract: it determines which values can be assigned and which operations are available.","Names should explain the role a value plays. scheduledHours communicates more than x even when both have the same type."],"code":"decimal scheduledHours = 7.5m;"},
     {"title":"Expressions are evaluated","paragraphs":["An expression is code that produces a value. A literal such as 7.5m is an expression; so are a property access, a method call, and subtraction.","Evaluation happens before assignment. In varianceHours = recordedHours - scheduledHours, the subtraction produces a value and that result is assigned to varianceHours."],"code":"decimal varianceHours = recordedHours - scheduledHours;"},
-    {"title":"Conversions should be visible when meaning changes","paragraphs":["TimeSpan.TotalHours returns double. TimeLedger converts that value to decimal because the example compares it with an explicitly base-10 schedule value.","The cast is not a promise of extra accuracy. It is an explicit change of numeric representation, so the code should make it easy to see and discuss."],"code":"decimal recordedHours = (decimal)entry.GetDuration().TotalHours;"}
+    {"title":"Conversions should be visible when meaning changes","paragraphs":["TimeSpan.TotalHours returns double. TimeClock converts that value to decimal because the example compares it with an explicitly base-10 schedule value.","The cast is not a promise of extra accuracy. It is an explicit change of numeric representation, so the code should make it easy to see and discuss."],"code":"decimal recordedHours = (decimal)entry.GetDuartion().TotalHours;"}
   ],
   "lab": {
     "objective": "Calculate and display the difference between scheduled and recorded hours using typed numeric variables.",
@@ -31,15 +31,15 @@
     "steps": [
       "Predict the values of scheduledHours, recordedHours, and varianceHours before editing.",
       "Declare scheduledHours as decimal with a value of 7.5m.",
-      "Convert entry.GetDuration().TotalHours to decimal and assign it to recordedHours.",
+      "Convert entry.GetDuartion().TotalHours to decimal and assign it to recordedHours.",
       "Subtract scheduledHours from recordedHours and assign the result to varianceHours.",
       "Display all three values with two decimal places, then run the application and tests."
     ],
     "expectedBehavior": "The console reports 7.50 scheduled hours, 8.00 recorded hours, and a +0.50 variance; all tests pass.",
-    "validation": "dotnet run --project src/TimeLedger.App/TimeLedger.App.csproj --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "validation": "dotnet run --project src/TimeClock.App/TimeClock.App.csproj --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
-    {"path":"src/TimeLedger.App/Program.cs","action":"Modify","why":"Add typed numeric values, an explicit conversion, and observable expressions."},
+    {"path":"src/TimeClock.App/Program.cs","action":"Modify","why":"Add typed numeric values, an explicit conversion, and observable expressions."},
     {"path":"site/data/sessions/session-02.json","action":"Add","why":"Publish the synchronized lesson, lab, and quizzes."}
   ],
   "commit": "session-02: teach variables expressions and numeric types",

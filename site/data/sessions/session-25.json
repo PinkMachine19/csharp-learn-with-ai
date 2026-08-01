@@ -2,116 +2,120 @@
   "number": 25,
   "category": "task-based work",
   "estimatedTime": "40 minutes",
-  "connection": "Session 24 supplies the required foundation. This session extends TimeLedger with task-based work while keeping execution observable and deterministic.",
+  "connection": "Session 24 covered exception propagation. This session reads the real, correct async/await example in the source app -- ClockEntryService.Clockout -- and previews the real bug in Program.cs that Session 27 fixes: Clockout(1) called with no await.",
   "objectives": [
-    "Explain why a Task represents an operation that may complete later; it is not a promise that a dedicated thread exists.",
-    "Trace the operation across its execution or application boundary.",
-    "Implement the focused tasks, threads, and awaitable work lab.",
-    "Verify success and failure behavior with automated checks."
+    "Explain why Task<ClockEntry?> represents an operation that may complete later, and why 'async' alone does not guarantee a new thread is used.",
+    "Read ClockEntryService.Clockout as a correct await example: it awaits GetClockEntry before branching on the result.",
+    "Read ClockEntryRepository.GetClockEntry as a 'fake async' anti-pattern: an async method whose body is entirely synchronous, wrapped in Task.FromResult.",
+    "Identify, without yet fixing, the real CS4014 warning in Program.cs: clockEntryService.Clockout(1) called with no await."
   ],
   "visuals": [
     {
       "diagram": "pipeline",
-      "title": "Start at the caller",
-      "explanation": "Identify the input, owned state, and caller expectation for task-based work."
+      "title": "await suspends, it does not block",
+      "explanation": "Clockout awaits GetClockEntry and only continues once the Task completes -- the calling thread is not blocked while waiting."
     },
     {
       "diagram": "call",
-      "title": "Cross the boundary",
-      "explanation": "Follow the explicit contract rather than assuming hidden runtime behavior."
+      "title": "async does not promise a thread",
+      "explanation": "GetClockEntry is declared async but its body -- a debug loop, an empty foreach, then Task.FromResult(...) -- never actually leaves the calling thread."
     },
     {
       "diagram": "return",
-      "title": "Observe execution",
-      "explanation": "Execution timing and collaborator behavior become visible through controlled examples."
+      "title": "A Task can represent already-completed work",
+      "explanation": "Task.FromResult wraps a value that is already known, producing a completed Task -- there is no real asynchronous operation underneath it."
     },
     {
       "diagram": "feedback",
-      "title": "Return a stable outcome",
-      "explanation": "The caller receives a documented value, exception, cancellation, or HTTP result."
+      "title": "An un-awaited Task keeps running unobserved",
+      "explanation": "Program.cs calls Clockout(1) without await -- the method starts, but Program.cs moves on to CalculateTotalHours before Clockout necessarily finishes."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Which statement best describes tasks, threads, and awaitable work?",
+      "prompt": "Does ClockEntryRepository.GetClockEntry's async keyword mean it runs on a background thread?",
       "options": [
-        "a Task represents an operation that may complete later; it is not a promise that a dedicated thread exists",
-        "The runtime always creates a new operating-system thread",
-        "Implementation details should be exposed to every caller"
+        "No -- its body executes synchronously (a debug loop, an empty foreach, then a lookup) and Task.FromResult wraps an already-computed result; no real asynchronous work happens",
+        "Yes -- async always schedules work on the thread pool",
+        "It depends on the CancellationToken passed in"
       ],
       "correct": 0,
-      "explanation": "The session rule separates the public contract from a common implementation shortcut."
+      "explanation": "This is the real 'fake async' pattern in ClockEntryRepository.cs -- async and Task.FromResult do not by themselves create concurrency."
     },
     {
-      "prompt": "What should an integration boundary make explicit?",
+      "prompt": "What does ClockEntryService.Clockout do with the Task returned by GetClockEntry?",
       "options": [
-        "Inputs, dependencies, execution, and outcomes",
-        "Only private field names",
-        "Unrelated infrastructure details"
+        "It awaits it before checking whether the result is null",
+        "It ignores it and checks a different variable",
+        "It calls .Result on it synchronously"
       ],
       "correct": 0,
-      "explanation": "Explicit boundaries are easier to reason about, test, and change."
+      "explanation": "await ClockEntryRepository.GetClockEntry(employeeId) is the real, correct usage this session studies before Session 27 studies the broken one."
     },
     {
-      "prompt": "Why test a failure path?",
+      "prompt": "What is different about clockEntryService.Clockout(1) in Program.cs, compared to the await inside Clockout itself?",
       "options": [
-        "Failure behavior is part of the contract",
-        "It prevents successful code from compiling",
-        "Only failure tests are valuable"
+        "Program.cs calls Clockout(1) with no await at all -- a real, uncorrected CS4014 warning",
+        "Program.cs awaits it exactly like Clockout does internally",
+        "Clockout cannot be called from Program.cs"
       ],
       "correct": 0,
-      "explanation": "A dependable API specifies both successful and unsuccessful outcomes."
+      "explanation": "This is the real bug: the method itself awaits correctly internally, but its caller in Program.cs does not await the call."
     }
   ],
   "concept": [
     {
-      "title": "Use the accurate execution model",
+      "title": "A correct await, inside Clockout",
       "paragraphs": [
-        "The governing rule is that a Task represents an operation that may complete later; it is not a promise that a dedicated thread exists.",
-        "Avoid equating an abstraction with one possible implementation detail; reason from its documented contract."
+        "ClockEntryService.Clockout is async Task, and its first line awaits _clockEntryRepository.GetClockEntry(employeeId) before doing anything else with the result.",
+        "This is the shape this session wants you to recognize: await suspends Clockout's own execution until the Task completes, then the method resumes with a real ClockEntry? value to branch on."
       ],
-      "code": "Task<TimeEntry> pending = source.LoadAsync(id);\nTimeEntry entry = await pending;"
+      "code": "// Services/ClockEntryService.cs -- the real, correct implementation\npublic async Task Clockout(int employeeId)\n{\n    ClockEntry? clockEntry = await _clockEntryRepository.GetClockEntry(employeeId);\n    if (clockEntry == null)\n    {\n        throw new InvalidOperationException(\"Employee is not currently clocked in \");\n    }\n    clockEntry.ClockOutEmployee(DateTime.Now);\n    _clockEntryRepository.SaveClockEntry(clockEntry);\n}"
     },
     {
-      "title": "Keep boundaries explicit",
+      "title": "A 'fake async' method, one layer down",
       "paragraphs": [
-        "Dependencies, cancellation, persistence, and transport values should cross named boundaries.",
-        "This makes ownership clear and supplies seams for deterministic tests."
+        "GetClockEntry is declared async Task<ClockEntry?>, but nothing inside it actually awaits an I/O operation or yields control. It runs a leftover debug loop, an empty foreach, then wraps a synchronous FirstOrDefault lookup in Task.FromResult.",
+        "This is real, uncorrected code -- kept intentionally as a 'spot the smell' artifact. A caller awaiting this method does get suspended-and-resumed semantics from await's perspective, but there is no actual asynchronous work happening underneath."
       ],
-      "code": "// The boundary exposes intent.\nTask<TimeEntry> pending = source.LoadAsync(id);"
+      "code": "// Repositories/ClockEntryRepository.cs -- the real implementation\npublic async Task<ClockEntry?> GetClockEntry(int employeeId, CancellationToken cancellationToken = default)\n{\n    for (int i = 0; i < 10; i++) { Console.WriteLine(i); }   // leftover debug loop, real\n    foreach (var clockEntry in _clockEntries) { }              // empty foreach, real\n\n    return await Task.FromResult(\n        _clockEntries.FirstOrDefault(entry =>\n            entry.EmployeeId == employeeId && entry.ClockOut is null));\n}"
     },
     {
-      "title": "Verify observable outcomes",
+      "title": "Program.cs previews the bug Session 27 fixes",
       "paragraphs": [
-        "Focused tests control inputs and collaborators so timing and failure assertions stay stable.",
-        "The full suite checks that new infrastructure has not weakened the domain model."
+        "clockEntryService.Clockout(1) in Program.cs is called with no await, despite Clockout being async Task -- a real CS4014 warning ('because this call is not awaited, execution of the current method continues before the call is completed').",
+        "This session only asks you to find and explain the warning, not fix it -- Session 27 (Cancellation and Asynchronous Exceptions) is where the fix and its consequences for CalculateTotalHours's near-zero output are worked through."
       ],
-      "code": "dotnet test TimeLedger.sln --configuration Release"
+      "code": "// Program.cs -- the real, uncorrected bug\nclockEntryService.ClockIn(1);\nclockEntryService.Clockout(1);   // CS4014: not awaited\nvar result = payrollService.CalculateTotalHours(1, DateTime.Today.AddHours(-4), DateTime.Now.AddHours(4));"
     }
   ],
   "lab": {
-    "objective": "Implement one production-sized slice demonstrating tasks, threads, and awaitable work.",
-    "startingCondition": "Sessions 01–24 are complete and the solution is green.",
+    "objective": "Trace await through Clockout and GetClockEntry, and locate (without fixing) the real CS4014 warning in Program.cs.",
+    "startingCondition": "ClockEntryService.Clockout, ClockEntryRepository.GetClockEntry, and Program.cs already exist with their real, uncorrected implementations.",
     "steps": [
-      "Predict one success outcome and one failure, cancellation, or boundary outcome.",
-      "Add the implementation centered on AsyncEntrySource.cs.",
-      "Add AsyncEntrySourceTests.cs with deterministic Arrange–Act–Assert checks.",
-      "Run the focused checks and inspect the relevant returned value or state.",
-      "Run the full Release build, test suite, and site validator."
+      "Add a Console.WriteLine immediately before and after the await inside Clockout, and observe the order of output relative to GetClockEntry's own debug loop.",
+      "Read GetClockEntry line by line and identify which parts are genuinely asynchronous (none) versus synchronous work wrapped in Task.FromResult.",
+      "Build the solution and read the real CS4014 compiler warning text for clockEntryService.Clockout(1) in Program.cs.",
+      "Write, in your own words, what execution order the missing await allows: does ClockIn, then Clockout's body, then CalculateTotalHours definitely happen in that order, or not?"
     ],
-    "expectedBehavior": "The checks establish that a Task represents an operation that may complete later; it is not a promise that a dedicated thread exists; all earlier tests continue to pass.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "expectedBehavior": "The build produces a real CS4014 warning naming Program.cs's unawaited Clockout(1) call; your written explanation correctly identifies that the missing await means CalculateTotalHours can run before Clockout's body finishes.",
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeLedger.Domain/AsyncEntrySource.cs",
-      "action": "Add or integrate",
-      "why": "Provide the canonical task-based work implementation; infrastructure sessions place the equivalent file in their project."
+      "path": "src/TimeClock.Domain/ClockEntryService.cs",
+      "action": "Verify",
+      "why": "Confirm the real, correct await usage inside Clockout."
     },
     {
-      "path": "tests/TimeLedger.Domain.Tests/AsyncEntrySourceTests.cs",
-      "action": "Add or integrate",
-      "why": "Verify the new contract with controlled inputs."
+      "path": "src/TimeClock.Domain/ClockEntryRepository.cs",
+      "action": "Verify",
+      "why": "Confirm GetClockEntry's fake-async shape: async keyword, no real asynchronous work."
+    },
+    {
+      "path": "src/TimeClock.App/Program.cs",
+      "action": "Verify",
+      "why": "Confirm the real, uncorrected CS4014 warning on the unawaited Clockout(1) call."
     },
     {
       "path": "site/data/sessions/session-25.json",
@@ -121,50 +125,49 @@
   ],
   "commit": "session-25: teach tasks threads and awaitable work",
   "review": [
-    "The abstraction is not confused with one runtime implementation.",
-    "Inputs and dependencies cross explicit boundaries.",
-    "Async methods return Task and accept cancellation where relevant.",
-    "Persistence and HTTP models remain separate from domain objects.",
-    "Tests are deterministic and cover a meaningful failure path.",
-    "The complete solution builds without warnings."
+    "Clockout's internal await is read correctly as suspend-and-resume, not as thread creation.",
+    "GetClockEntry's async keyword is not mistaken for guaranteed concurrency.",
+    "The real CS4014 warning is located and explained, not silently fixed in this session.",
+    "The debug-loop and empty-foreach cruft in GetClockEntry are identified, not silently removed.",
+    "The full test suite still passes -- no code was changed yet."
   ],
   "postQuiz": [
     {
-      "prompt": "What did this session establish about tasks, threads, and awaitable work?",
+      "prompt": "If GetClockEntry's Task.FromResult call were replaced with a real database call (Session 30's EF Core work), what would change about Clockout's own code?",
       "options": [
-        "a Task represents an operation that may complete later; it is not a promise that a dedicated thread exists",
-        "The compiler removes all failure cases",
-        "Every boundary should use the same concrete type"
+        "Nothing in Clockout itself -- it already awaits GetClockEntry correctly, so a genuinely asynchronous implementation underneath is a drop-in replacement",
+        "Clockout would need to add its own await keyword for the first time",
+        "Clockout would need to become synchronous"
       ],
       "correct": 0,
-      "explanation": "The implementation and tests demonstrate the stated contract."
+      "explanation": "This is exactly why Clockout's correct await matters: the caller-side contract does not change when the callee becomes genuinely asynchronous instead of fake-asynchronous."
     },
     {
-      "prompt": "Where is an asynchronous exception observed?",
+      "prompt": "Why does this session stop short of fixing Program.cs's missing await on Clockout(1)?",
       "options": [
-        "When its faulted task is awaited",
-        "Only when a thread is manually created",
-        "Before the operation starts"
+        "Session 27 (Cancellation and Asynchronous Exceptions) is where the fix and its effect on CalculateTotalHours's output are worked through in depth",
+        "The bug cannot be fixed in C#",
+        "Program.cs does not actually contain this bug"
       ],
       "correct": 0,
-      "explanation": "Await unwraps and rethrows the task failure at the awaiting boundary."
+      "explanation": "This session is about recognizing await's real behavior first; Session 27 and Session 34 are where the bug is actually corrected."
     },
     {
-      "prompt": "Why separate transport or persistence models from domain behavior?",
+      "prompt": "What is the real, observable evidence that GetClockEntry does no genuine asynchronous work?",
       "options": [
-        "Each boundary can evolve without distorting domain invariants",
-        "To duplicate every rule",
-        "To disable validation"
+        "Its entire body -- the debug loop, the empty foreach, and the FirstOrDefault lookup -- runs synchronously before Task.FromResult wraps an already-known value",
+        "It returns void instead of Task",
+        "It has no CancellationToken parameter"
       ],
       "correct": 0,
-      "explanation": "Mapping keeps responsibilities and change reasons distinct."
+      "explanation": "Task.FromResult wraps a value that is already computed -- there is no I/O or yield point anywhere in the method for real concurrency to occur."
     }
   ],
   "reflections": [
-    "Which assumption about task-based work did the executable example confirm or correct?",
-    "Where does failure cross the boundary, and who should handle it?",
-    "Which dependency can a test replace with a controlled implementation?"
+    "Why does await in Clockout still work correctly even though GetClockEntry never truly runs asynchronously underneath it?",
+    "What does the real CS4014 warning tell you that a successful, warning-free build would not?",
+    "Which of GetClockEntry's real code smells (the debug loop, the empty foreach, the fake async) would you flag first in a code review, and why?"
   ],
-  "whatBreaks": "Removing AsyncEntrySource.cs removes the canonical example for task-based work. Removing its tests makes timing, failure, persistence, or HTTP behavior easier to regress. Hiding the boundary behind global state would also make the behavior harder to observe and control.",
-  "summary": "This session established that a Task represents an operation that may complete later; it is not a promise that a dedicated thread exists. Explicit boundaries and deterministic checks make the application behavior dependable."
+  "whatBreaks": "Removing the await inside Clockout would make it return a Task immediately, before GetClockEntry's result is known -- clockEntry would never be checked for null correctly. Leaving GetClockEntry's fake-async pattern in place is harmless today only because nothing is genuinely asynchronous yet; it becomes a real bug the moment Session 30 swaps in a genuinely async EF Core call and callers still assume synchronous-speed completion. Ignoring the real CS4014 warning in Program.cs is exactly what lets ClockIn and Clockout race against CalculateTotalHours, producing the near-zero total-hours output Session 34 investigates.",
+  "summary": "ClockEntryService.Clockout is the app's one correct async/await example: it awaits GetClockEntry before branching. GetClockEntry itself is real 'fake async' -- an async signature over entirely synchronous work. Program.cs's real, unawaited Clockout(1) call previews the bug Session 27 and Session 34 fix."
 }

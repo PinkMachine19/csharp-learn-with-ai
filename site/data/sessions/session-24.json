@@ -2,7 +2,7 @@
   "number": 24,
   "category": "resource lifetime",
   "estimatedTime": "40 minutes",
-  "connection": "Session 23 provides the prerequisite vocabulary. This session develops resource lifetime through a focused TimeLedger change.",
+  "connection": "Session 23 provides the prerequisite vocabulary. This session develops resource lifetime through a focused TimeClock change.",
   "objectives": [
     "Explain why exceptions propagate until handled, and using guarantees Dispose runs when control leaves a scope through success or failure.",
     "Trace control and data across the new API boundary.",
@@ -86,30 +86,30 @@
         "Focused tests demonstrate the new rule with small deterministic values.",
         "The complete suite then confirms the cumulative application still honors earlier contracts."
       ],
-      "code": "dotnet test TimeLedger.sln --configuration Release"
+      "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
-    "objective": "Add a compact TimeLedger example for exception propagation, idisposable, and using.",
+    "objective": "Add a compact TimeClock example for exception propagation, idisposable, and using.",
     "startingCondition": "Sessions 01–23 are complete and all existing tests pass.",
     "steps": [
       "Predict the successful path and one boundary or failure case.",
-      "Add src/TimeLedger.Domain/OperationScope.cs with a narrow public contract.",
-      "Add tests/TimeLedger.Domain.Tests/OperationScopeTests.cs for the prediction and boundary case.",
+      "Add src/TimeClock.Domain/OperationScope.cs with a narrow public contract.",
+      "Add tests/TimeClock.Domain.Tests/OperationScopeTests.cs for the prediction and boundary case.",
       "Run the focused tests and inspect the observed values or control flow.",
       "Run the full Release build and test suite."
     ],
     "expectedBehavior": "The new tests establish that exceptions propagate until handled, and using guarantees Dispose runs when control leaves a scope through success or failure; prior behavior remains unchanged.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeLedger.Domain/OperationScope.cs",
+      "path": "src/TimeClock.Domain/OperationScope.cs",
       "action": "Add",
       "why": "Provide the canonical resource lifetime example."
     },
     {
-      "path": "tests/TimeLedger.Domain.Tests/OperationScopeTests.cs",
+      "path": "tests/TimeClock.Domain.Tests/OperationScopeTests.cs",
       "action": "Add",
       "why": "Verify the contract and its boundary case."
     },

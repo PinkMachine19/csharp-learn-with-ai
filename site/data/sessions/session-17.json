@@ -2,7 +2,7 @@
   "number": 17,
   "category": "substitutable contracts",
   "estimatedTime": "40 minutes",
-  "connection": "Session 16 provides the prerequisite vocabulary. This session develops substitutable contracts through a focused TimeLedger change.",
+  "connection": "Session 16 provides the prerequisite vocabulary. This session develops substitutable contracts through a focused TimeClock change.",
   "objectives": [
     "Explain why an interface defines a callable contract and polymorphism lets callers use different implementations without branching on concrete types.",
     "Trace control and data across the new API boundary.",
@@ -86,30 +86,30 @@
         "Focused tests demonstrate the new rule with small deterministic values.",
         "The complete suite then confirms the cumulative application still honors earlier contracts."
       ],
-      "code": "dotnet test TimeLedger.sln --configuration Release"
+      "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
-    "objective": "Add a compact TimeLedger example for interfaces and polymorphism.",
+    "objective": "Add a compact TimeClock example for interfaces and polymorphism.",
     "startingCondition": "Sessions 01–16 are complete and all existing tests pass.",
     "steps": [
       "Predict the successful path and one boundary or failure case.",
-      "Add src/TimeLedger.Domain/IHoursPolicy.cs with a narrow public contract.",
-      "Add tests/TimeLedger.Domain.Tests/HoursPolicyTests.cs for the prediction and boundary case.",
+      "Add src/TimeClock.Domain/IHoursPolicy.cs with a narrow public contract.",
+      "Add tests/TimeClock.Domain.Tests/HoursPolicyTests.cs for the prediction and boundary case.",
       "Run the focused tests and inspect the observed values or control flow.",
       "Run the full Release build and test suite."
     ],
     "expectedBehavior": "The new tests establish that an interface defines a callable contract and polymorphism lets callers use different implementations without branching on concrete types; prior behavior remains unchanged.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeLedger.Domain/IHoursPolicy.cs",
+      "path": "src/TimeClock.Domain/IHoursPolicy.cs",
       "action": "Add",
       "why": "Provide the canonical substitutable contracts example."
     },
     {
-      "path": "tests/TimeLedger.Domain.Tests/HoursPolicyTests.cs",
+      "path": "tests/TimeClock.Domain.Tests/HoursPolicyTests.cs",
       "action": "Add",
       "why": "Verify the contract and its boundary case."
     },

@@ -2,116 +2,121 @@
   "number": 23,
   "category": "failure contracts",
   "estimatedTime": "40 minutes",
-  "connection": "Session 22 provides the prerequisite vocabulary. This session develops failure contracts through a focused TimeLedger change.",
+  "connection": "Session 22 covered when LINQ queries execute. This session reads the real ClockEntryService.Clockout method as the app's live example of the throw-vs-return-null rule that decisions and step-046 of the source syllabus write down explicitly, even though the code itself predates the written rule.",
   "objectives": [
-    "Explain why validation rejects invalid input, result values model expected outcomes, and exceptions signal operations that cannot honor their contract.",
-    "Trace control and data across the new API boundary.",
-    "Implement validation, return values, and exceptions in the canonical application.",
-    "Prove the contract with focused and regression tests."
+    "State the project's real throw-vs-return rule: exceptions signal a broken invariant (double clock-out); nullable/return values signal an expected, everyday outcome (not currently clocked in).",
+    "Read GetClockEntry's ClockEntry? return type as the 'expected absence' half of the rule, and ClockOutEmployee's InvalidOperationException as the 'broken invariant' half.",
+    "Audit ClockEntryService.Clockout against the rule and confirm it already follows it, even though the rule itself was written down only after the code existed.",
+    "Improve an exception message to name the specific employee and violated invariant, per Step 46 substep 3."
   ],
   "visuals": [
     {
       "diagram": "invariant",
-      "title": "Identify the boundary",
-      "explanation": "Locate the state and behavior owned by the failure contracts example."
+      "title": "Two failure shapes, one rule",
+      "explanation": "GetClockEntry returns null for an expected 'not clocked in' case; ClockOutEmployee throws for a broken 'already clocked out' invariant."
     },
     {
       "diagram": "branch",
-      "title": "Follow the dependency",
-      "explanation": "Arrows show which component knows about or calls the next component."
+      "title": "Clockout branches on the nullable result",
+      "explanation": "ClockEntryService.Clockout checks clockEntry == null before calling ClockOutEmployee -- the nullable return forces this check to exist."
     },
     {
       "diagram": "return",
-      "title": "Observe the behavior",
-      "explanation": "Trace one concrete input to its output before generalizing the rule."
+      "title": "A caught exception should name what broke",
+      "explanation": "Step 46 asks for exception messages that identify the employee and the invariant, not just a generic failure."
     },
     {
       "diagram": "call",
-      "title": "Protect the contract",
-      "explanation": "The public contract should preserve valid state and expose only required capability."
+      "title": "The rule predates ASP.NET Core, on purpose",
+      "explanation": "Deciding throw-vs-return now means Session 32's HTTP status codes have an existing convention to align with instead of inventing one under pressure."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Which statement accurately frames validation, return values, and exceptions?",
+      "prompt": "Why does GetClockEntry return ClockEntry? instead of throwing when an employee has no open entry?",
       "options": [
-        "validation rejects invalid input, result values model expected outcomes, and exceptions signal operations that cannot honor their contract",
-        "Every implementation must expose all internal details",
-        "The runtime ignores declared contracts"
+        "Not being clocked in is an expected, everyday outcome -- not a broken invariant, so it does not deserve an exception",
+        "ClockEntry cannot be constructed without an open entry existing first",
+        "Nullable return types are required by every repository method"
       ],
       "correct": 0,
-      "explanation": "The session rule connects the language feature to an observable design consequence."
+      "explanation": "This is the rule step-046 writes down: exceptions are for 'this should not be possible given the contract'; nullable returns are for expected outcomes."
     },
     {
-      "prompt": "Where should a required collaborator be supplied?",
+      "prompt": "Why does ClockOutEmployee throw InvalidOperationException instead of returning false when ClockOut is already set?",
       "options": [
-        "At an explicit construction or method boundary",
-        "Through hidden global state",
-        "By searching unrelated objects"
+        "Clocking out an already-closed entry violates ClockEntry's own invariant -- it should not be possible given the contract, so it throws",
+        "Exceptions are always preferred over return values in C#",
+        "ClockOutEmployee never fails"
       ],
       "correct": 0,
-      "explanation": "Explicit boundaries make dependencies visible and testable."
+      "explanation": "A double clock-out is exactly the 'broken invariant' half of the rule -- the entry's own contract says ClockOut can only be set once."
     },
     {
-      "prompt": "What makes a prediction useful?",
+      "prompt": "Was ClockEntryService.Clockout's real code written to match a pre-existing throw-vs-return rule, or the other way around?",
       "options": [
-        "It names the expected cause and effect",
-        "It avoids executing tests",
-        "It depends on implementation trivia"
+        "The code came first; step-046 confirms the code already matches the rule and simply writes the rule down explicitly for the first time",
+        "The rule was written first and the code was generated from it",
+        "Neither -- the rule and the code are unrelated"
       ],
       "correct": 0,
-      "explanation": "A causal prediction can be compared with output and corrected."
+      "explanation": "Step 46's own notes say the code already follows the pattern -- what was missing was the written-down rule, not a code fix."
     }
   ],
   "concept": [
     {
-      "title": "Name the contract",
+      "title": "The rule, stated once",
       "paragraphs": [
-        "The governing rule is that validation rejects invalid input, result values model expected outcomes, and exceptions signal operations that cannot honor their contract.",
-        "Start with what callers need to know, then keep incidental implementation details behind the boundary."
+        "Exceptions are for 'this should not be possible given the contract' -- a double clock-out. Nullable or return values are for 'this is an expected, everyday outcome' -- no open entry to clock out of.",
+        "GetClockEntry already chose the nullable-return pattern; ClockOutEmployee already chose the exception pattern. Step 46's real contribution was writing that distinction down, not changing any code."
       ],
-      "code": "Result<TimeSpan> result = EntryCompletion.TryComplete(entry, clockedOutAt);"
+      "code": "// Interfaces/IClockEntryRepository.cs\nTask<ClockEntry?> GetClockEntry(int employeeId, CancellationToken cancellationToken = default);\n\n// Models/ClockEntry.cs\npublic void ClockOutEmployee(DateTime clockOut)\n{\n    if (ClockOut != null)\n    {\n        throw new InvalidOperationException(\"Employee can only clock out once\");\n    }\n    ClockOut = clockOut;\n}"
     },
     {
-      "title": "Trace dependencies and control",
+      "title": "Clockout is the audited example",
       "paragraphs": [
-        "Follow calls from the public operation through each collaborator or transformation.",
-        "A clear direction reduces branching, duplication, and accidental coupling."
+        "ClockEntryService.Clockout checks the nullable result of GetClockEntry and throws its own InvalidOperationException if it is null -- the expected-absence case at the repository boundary becomes a broken-invariant-at-the-service-boundary the moment someone tries to clock out an employee who never clocked in.",
+        "This double layer is deliberate: 'no open entry' is a normal database-style lookup miss at the repository, but 'you asked to clock out someone who is not clocked in' is a caller error at the service boundary."
       ],
-      "code": "// Read the pipeline from caller to result.\nResult<TimeSpan> result = EntryCompletion.TryComplete(entry, clockedOutAt);"
+      "code": "// Services/ClockEntryService.cs -- the real implementation\npublic async Task Clockout(int employeeId)\n{\n    ClockEntry? clockEntry = await _clockEntryRepository.GetClockEntry(employeeId);\n\n    if (clockEntry == null)\n    {\n        throw new InvalidOperationException(\"Employee is not currently clocked in \");\n    }\n\n    clockEntry.ClockOutEmployee(DateTime.Now);\n    _clockEntryRepository.SaveClockEntry(clockEntry);\n}"
     },
     {
-      "title": "Make behavior executable",
+      "title": "A message should name what broke",
       "paragraphs": [
-        "Focused tests demonstrate the new rule with small deterministic values.",
-        "The complete suite then confirms the cumulative application still honors earlier contracts."
+        "The real exception messages ('Employee can only clock out once', 'Employee is not currently clocked in ') name the rule but not the employee. Step 46 substep 3 proposes improving them to include the EmployeeId -- framed explicitly as a lab this course performs, since this exact improved message has not been applied to the real repository.",
+        "This is the one piece of this session's content that step-046 itself marks as goal/why prose without executed code -- treat it as inspiration for the lab, not as a claim about what the real source currently does."
       ],
-      "code": "dotnet test TimeLedger.sln --configuration Release"
+      "code": "// Lab improvement -- NOT yet in the real source repository\nthrow new InvalidOperationException(\n    $\"Employee {EmployeeId} is already clocked out. A single entry cannot be closed twice.\");"
     }
   ],
   "lab": {
-    "objective": "Add a compact TimeLedger example for validation, return values, and exceptions.",
-    "startingCondition": "Sessions 01–22 are complete and all existing tests pass.",
+    "objective": "Audit ClockEntryService.Clockout and ClockEntry.ClockOutEmployee against the throw-vs-return rule, then improve the real exception messages to name the employee, as a clearly-labeled lab extension.",
+    "startingCondition": "ClockEntry, IClockEntryRepository, and ClockEntryService already carry the real throw-vs-return behavior from Sessions 5-19.",
     "steps": [
-      "Predict the successful path and one boundary or failure case.",
-      "Add src/TimeLedger.Domain/EntryCompletion.cs with a narrow public contract.",
-      "Add tests/TimeLedger.Domain.Tests/EntryCompletionTests.cs for the prediction and boundary case.",
-      "Run the focused tests and inspect the observed values or control flow.",
-      "Run the full Release build and test suite."
+      "Write the throw-vs-return rule down in one sentence, before touching any code.",
+      "Check every branch in ClockIn and Clockout against that sentence and confirm both already comply.",
+      "Change ClockOutEmployee's exception message to include EmployeeId and the existing ClockOut timestamp.",
+      "Change Clockout's 'not currently clocked in' message to include the employeeId argument.",
+      "Update the ClockEntry tests to assert on the new, more specific messages."
     ],
-    "expectedBehavior": "The new tests establish that validation rejects invalid input, result values model expected outcomes, and exceptions signal operations that cannot honor their contract; prior behavior remains unchanged.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "expectedBehavior": "Both exception messages now name the specific employee; all existing tests are updated to match and the full suite still passes.",
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeLedger.Domain/EntryCompletion.cs",
-      "action": "Add",
-      "why": "Provide the canonical failure contracts example."
+      "path": "src/TimeClock.Domain/ClockEntry.cs",
+      "action": "Modify",
+      "why": "Add the employee id to ClockOutEmployee's exception message, per Step 46's proposed (not-yet-applied) improvement."
     },
     {
-      "path": "tests/TimeLedger.Domain.Tests/EntryCompletionTests.cs",
-      "action": "Add",
-      "why": "Verify the contract and its boundary case."
+      "path": "src/TimeClock.Domain/ClockEntryService.cs",
+      "action": "Modify",
+      "why": "Add the employee id to Clockout's exception message."
+    },
+    {
+      "path": "tests/TimeClock.Domain.Tests/ClockEntryTests.cs",
+      "action": "Modify",
+      "why": "Assert on the new, more specific exception messages."
     },
     {
       "path": "site/data/sessions/session-23.json",
@@ -121,50 +126,49 @@
   ],
   "commit": "session-23: teach validation results and exceptions",
   "review": [
-    "The public API states one coherent responsibility.",
-    "Dependencies and state changes are explicit.",
-    "The example remains deterministic and compact.",
-    "Tests cover success and a meaningful boundary.",
-    "No nullable warnings are introduced.",
-    "The complete suite passes."
+    "The throw-vs-return rule is written down in one sentence before any code changes.",
+    "GetClockEntry's nullable return type is preserved, not converted to an exception.",
+    "ClockOutEmployee still throws for a double clock-out, with a message naming the employee.",
+    "Clockout's null check against GetClockEntry is unchanged in structure, only in message detail.",
+    "The full test suite passes with updated message assertions."
   ],
   "postQuiz": [
     {
-      "prompt": "What did the implementation prove about validation, return values, and exceptions?",
+      "prompt": "Why is 'employee not currently clocked in' modeled as an exception at the service layer but a null return at the repository layer?",
       "options": [
-        "validation rejects invalid input, result values model expected outcomes, and exceptions signal operations that cannot honor their contract",
-        "Design contracts cannot be tested",
-        "Every caller needs concrete implementation details"
+        "A repository miss is a normal lookup outcome; a service-level attempt to clock out someone who is not clocked in is a caller error against the service's contract",
+        "The two layers use different versions of C#",
+        "Exceptions are only allowed in service classes"
       ],
       "correct": 0,
-      "explanation": "The passing tests make the stated rule observable."
+      "explanation": "The same 'no open entry' fact is expected at the data layer and a contract violation at the point someone tries to act on it."
     },
     {
-      "prompt": "Why keep the public contract narrow?",
+      "prompt": "What would change if ClockOutEmployee returned false instead of throwing on a double clock-out?",
       "options": [
-        "To reduce coupling and preserve implementation freedom",
-        "To prevent tests",
-        "To make all operations mutable"
+        "Callers could silently ignore the failure, since C# does not force you to check a bool return value the way it forces you to handle a thrown exception",
+        "Nothing -- both approaches are functionally identical here",
+        "The method would no longer compile"
       ],
       "correct": 0,
-      "explanation": "A narrow contract communicates capability without leaking unrelated details."
+      "explanation": "This is exactly why the rule favors exceptions for broken invariants -- a silently-ignored bool return would let a double clock-out pass unnoticed."
     },
     {
-      "prompt": "Why run regression tests?",
+      "prompt": "Does step-046's proposed 'name the employee in the message' change already exist in the real source repository?",
       "options": [
-        "The application grows cumulatively",
-        "Only the newest file can compile",
-        "Test count changes runtime behavior"
+        "No -- step-046 documents it as unexecuted goal/why prose; this session's lab is what actually applies it",
+        "Yes, it was applied and verified on 2026-07-27",
+        "It cannot be determined from the source material"
       ],
       "correct": 0,
-      "explanation": "Earlier instructional guarantees must remain true after each session."
+      "explanation": "The task brief is explicit that Step 46's proposed code has not been applied to the real repo -- this session's lab, not the real source, is where it happens."
     }
   ],
   "reflections": [
-    "Which boundary in this session carries the most design responsibility?",
-    "How does the test reveal cause and effect rather than just a final value?",
-    "What implementation detail can change without affecting callers?"
+    "Why did the real Clockout code already follow the throw-vs-return rule before that rule was ever written down?",
+    "What would you lose if every failure in ClockEntryService threw an exception, including 'not currently clocked in'?",
+    "How does naming the employee id in an exception message change what a caller can do with a caught exception?"
   ],
-  "whatBreaks": "Removing EntryCompletion.cs removes the executable model for failure contracts. Removing its tests permits contract regressions. If the boundary leaks its implementation details, callers become harder to change and isolated testing loses value.",
-  "summary": "This session established that validation rejects invalid input, result values model expected outcomes, and exceptions signal operations that cannot honor their contract. The application change and tests preserve that model as executable documentation."
+  "whatBreaks": "Converting GetClockEntry's nullable return into an exception would force every normal 'employee not clocked in yet' check to use a try/catch instead of a null check, for an outcome that is not actually exceptional. Removing ClockOutEmployee's exception entirely would let a double clock-out silently overwrite ClockOut, corrupting the recorded duration. Leaving exception messages generic (no employee id) makes a caught exception in a multi-employee batch operation useless for diagnosing which employee failed.",
+  "summary": "The real ClockEntryService.Clockout already follows the rule step-046 writes down explicitly: GetClockEntry's nullable return models an expected 'not clocked in' outcome, while ClockOutEmployee's exception models a broken 'already clocked out' invariant. This session's lab applies step-046's one unexecuted proposal -- naming the employee in both messages -- directly to the real files."
 }

@@ -2,7 +2,7 @@
   "number": 9,
   "category": "type and equality semantics",
   "estimatedTime": "40 minutes",
-  "connection": "Session 8 established the prerequisite model. This session applies it to type and equality semantics with observable TimeLedger examples.",
+  "connection": "Session 8 established the prerequisite model. This session applies it to type and equality semantics with observable TimeClock examples.",
   "objectives": [
     "Explain strings are immutable references, records provide value-oriented equality, and readonly record structs combine value storage with generated equality.",
     "Predict behavior before running a focused type and equality semantics example.",
@@ -86,30 +86,30 @@
         "The lab changes one behavior at a time and uses tests to preserve the observation.",
         "If the prediction differs from the result, explain the language rule before continuing."
       ],
-      "code": "dotnet test TimeLedger.sln --configuration Release"
+      "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
-    "objective": "Add a focused TimeLedger example that demonstrates strings, records, structs, and equality.",
+    "objective": "Add a focused TimeClock example that demonstrates strings, records, structs, and equality.",
     "startingCondition": "Sessions 01–08 are complete and the solution builds with all existing tests passing.",
     "steps": [
       "Read the starting test and predict the result using the session mental model.",
-      "Add src/TimeLedger.Domain/WorkSummary.cs with the smallest API needed for the example.",
-      "Add tests/TimeLedger.Domain.Tests/WorkSummaryTests.cs to check the important before-and-after behavior.",
+      "Add src/TimeClock.Domain/WorkSummary.cs with the smallest API needed for the example.",
+      "Add tests/TimeClock.Domain.Tests/WorkSummaryTests.cs to check the important before-and-after behavior.",
       "Run the focused tests, then run the complete Release test suite.",
       "Review whether each parameter and return type exposes only the capability it needs."
     ],
     "expectedBehavior": "The new tests demonstrate strings are immutable references, records provide value-oriented equality, and readonly record structs combine value storage with generated equality; all existing behavior remains green.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeLedger.Domain/WorkSummary.cs",
+      "path": "src/TimeClock.Domain/WorkSummary.cs",
       "action": "Add",
       "why": "Provide the canonical type and equality semantics example."
     },
     {
-      "path": "tests/TimeLedger.Domain.Tests/WorkSummaryTests.cs",
+      "path": "tests/TimeClock.Domain.Tests/WorkSummaryTests.cs",
       "action": "Add",
       "why": "Lock the observed language behavior into executable checks."
     },
@@ -166,5 +166,5 @@
     "Where could an unnecessarily concrete type make future change harder?"
   ],
   "whatBreaks": "Removing the new domain example removes the executable model for type and equality semantics. Removing its tests allows subtle changes to assignment, equality, enumeration, or generic contracts to pass unnoticed. Widening the API unnecessarily gives callers capabilities the operation does not need.",
-  "summary": "This session established that strings are immutable references, records provide value-oriented equality, and readonly record structs combine value storage with generated equality. The TimeLedger example, tests, and API review turn that rule into durable engineering practice."
+  "summary": "This session established that strings are immutable references, records provide value-oriented equality, and readonly record structs combine value storage with generated equality. The TimeClock example, tests, and API review turn that rule into durable engineering practice."
 }

@@ -2,12 +2,12 @@
   "number": 21,
   "category": "relational transformations",
   "estimatedTime": "40 minutes",
-  "connection": "Session 20 provides the prerequisite vocabulary. This session develops relational transformations through a focused TimeLedger change.",
+  "connection": "Session 20 read PayrollService's single-employee Where-then-Sum pipeline. This session extends the same domain to many employees at once with GroupBy, and correlates the grouped totals back to employee names with Join -- a natural next step the real PayrollService does not (yet) need, since it only ever asks about one employeeId at a time.",
   "objectives": [
-    "Explain why grouping partitions elements by key, joining correlates sources, and aggregation reduces many values into a result.",
-    "Trace control and data across the new API boundary.",
-    "Implement grouping, joining, and aggregation in the canonical application.",
-    "Prove the contract with focused and regression tests."
+    "Use GroupBy to partition a mixed list of ClockEntry objects by EmployeeId, the same key CalculateTotalHours filters on for a single employee.",
+    "Reuse GetDuartion().TotalHours as the per-group Sum projection, exactly as PayrollService does for one employee.",
+    "Use Join to correlate a list of Employee objects with a list of computed WorkSummary totals by matching EmployeeId.",
+    "Explain why grouping many employees is a genuine extension beyond what the real PayrollService class currently does."
   ],
   "visuals": [
     {
@@ -33,83 +33,83 @@
   ],
   "preQuiz": [
     {
-      "prompt": "Which statement accurately frames grouping, joining, and aggregation?",
+      "prompt": "What does entries.GroupBy(e => e.EmployeeId) produce?",
       "options": [
-        "grouping partitions elements by key, joining correlates sources, and aggregation reduces many values into a result",
-        "Every implementation must expose all internal details",
-        "The runtime ignores declared contracts"
+        "One group per distinct EmployeeId, each group holding that employee's entries",
+        "A single flat list with duplicates removed",
+        "A dictionary keyed by ClockIn timestamp"
       ],
       "correct": 0,
-      "explanation": "The session rule connects the language feature to an observable design consequence."
+      "explanation": "GroupBy partitions the sequence by the key selector -- every entry with the same EmployeeId lands in the same group."
     },
     {
-      "prompt": "Where should a required collaborator be supplied?",
+      "prompt": "How does HoursByEmployee turn each group into a total?",
       "options": [
-        "At an explicit construction or method boundary",
-        "Through hidden global state",
-        "By searching unrelated objects"
+        "group.Sum(entry => (decimal)entry.GetDuartion().TotalHours) -- the exact same GetDuartion().TotalHours projection PayrollService uses for one employee",
+        "By calling PayrollService.CalculateTotalHours directly on the group",
+        "By counting the entries in the group"
       ],
       "correct": 0,
-      "explanation": "Explicit boundaries make dependencies visible and testable."
+      "explanation": "The per-group Sum reuses the identical projection PayrollService.CalculateTotalHours already uses -- grouping just applies it to every employee's entries at once instead of one filtered subset."
     },
     {
-      "prompt": "What makes a prediction useful?",
+      "prompt": "What does employees.Join(summaries, e => e.EmployeeId, s => s.EmployeeId, ...) require of its two key selectors?",
       "options": [
-        "It names the expected cause and effect",
-        "It avoids executing tests",
-        "It depends on implementation trivia"
+        "Both keys must be the same type (int, here) so the join can match employees to summaries by EmployeeId",
+        "The two sequences must already be sorted",
+        "Join can only correlate sequences of the same element type"
       ],
       "correct": 0,
-      "explanation": "A causal prediction can be compared with output and corrected."
+      "explanation": "Join matches elements from two different sequences by comparing keys of the same type -- Employee.EmployeeId against WorkSummary.EmployeeId."
     }
   ],
   "concept": [
     {
-      "title": "Name the contract",
+      "title": "GroupBy generalizes PayrollService's single-employee filter",
       "paragraphs": [
-        "The governing rule is that grouping partitions elements by key, joining correlates sources, and aggregation reduces many values into a result.",
-        "Start with what callers need to know, then keep incidental implementation details behind the boundary."
+        "PayrollService.CalculateTotalHours only ever handles one employeeId per call, because GetEmployeeClockEntries filters to one employeeId before anything is summed.",
+        "ClockEntryAnalytics.HoursByEmployee answers a question PayrollService cannot: totals for every employee at once. GroupBy(entry => entry.EmployeeId) is the key that makes that possible without changing PayrollService itself."
       ],
-      "code": "entries.GroupBy(e => e.WorkerId).Select(group => new WorkSummary(group.Key, ...))"
+      "code": "// A new, clearly-labeled extension -- not present in the real PayrollService\npublic static IReadOnlyList<WorkSummary> HoursByEmployee(IEnumerable<ClockEntry> entries) => entries\n    .Where(entry => entry.ClockOut is not null)\n    .GroupBy(entry => entry.EmployeeId)\n    .Select(group => new WorkSummary(group.Key, group.Sum(entry => (decimal)entry.GetDuartion().TotalHours)))\n    .OrderBy(summary => summary.EmployeeId)\n    .ToList();"
     },
     {
-      "title": "Trace dependencies and control",
+      "title": "Join correlates two independent sequences by key",
       "paragraphs": [
-        "Follow calls from the public operation through each collaborator or transformation.",
-        "A clear direction reduces branching, duplication, and accidental coupling."
+        "EmployeeLabels takes a list of Employee objects and a list of WorkSummary totals -- two sequences with no direct reference to each other -- and correlates them by matching EmployeeId to EmployeeId.",
+        "This is the LINQ equivalent of a SQL inner join: only employees that appear in both sequences produce a result."
       ],
-      "code": "// Read the pipeline from caller to result.\nentries.GroupBy(e => e.WorkerId).Select(group => new WorkSummary(group.Key, ...))"
+      "code": "public static IEnumerable<string> EmployeeLabels(IEnumerable<Employee> employees, IEnumerable<WorkSummary> summaries) =>\n    employees.Join(summaries, employee => employee.EmployeeId, summary => summary.EmployeeId,\n        (employee, summary) => $\"{employee.Name}: {summary.Hours:F1}\");"
     },
     {
-      "title": "Make behavior executable",
+      "title": "Verify with deterministic, small totals",
       "paragraphs": [
-        "Focused tests demonstrate the new rule with small deterministic values.",
-        "The complete suite then confirms the cumulative application still honors earlier contracts."
+        "The tests use exact hour counts (3 + 4 = 7) so a wrong GroupBy key or a wrong Sum projection produces an immediately obvious wrong total, not a hard-to-spot rounding difference.",
+        "This mirrors PayrollServiceTests.cs's own style: small, exact, easy-to-verify-by-hand shift lengths."
       ],
-      "code": "dotnet test TimeLedger.sln --configuration Release"
+      "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
-    "objective": "Add a compact TimeLedger example for grouping, joining, and aggregation.",
+    "objective": "Add a compact TimeClock example for grouping, joining, and aggregation.",
     "startingCondition": "Sessions 01–20 are complete and all existing tests pass.",
     "steps": [
       "Predict the successful path and one boundary or failure case.",
-      "Add src/TimeLedger.Domain/TimeEntryAnalytics.cs with a narrow public contract.",
-      "Add tests/TimeLedger.Domain.Tests/TimeEntryAnalyticsTests.cs for the prediction and boundary case.",
+      "Add src/TimeClock.Domain/ClockEntryAnalytics.cs with a narrow public contract.",
+      "Add tests/TimeClock.Domain.Tests/ClockEntryAnalyticsTests.cs for the prediction and boundary case.",
       "Run the focused tests and inspect the observed values or control flow.",
       "Run the full Release build and test suite."
     ],
     "expectedBehavior": "The new tests establish that grouping partitions elements by key, joining correlates sources, and aggregation reduces many values into a result; prior behavior remains unchanged.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeLedger.Domain/TimeEntryAnalytics.cs",
+      "path": "src/TimeClock.Domain/ClockEntryAnalytics.cs",
       "action": "Add",
       "why": "Provide the canonical relational transformations example."
     },
     {
-      "path": "tests/TimeLedger.Domain.Tests/TimeEntryAnalyticsTests.cs",
+      "path": "tests/TimeClock.Domain.Tests/ClockEntryAnalyticsTests.cs",
       "action": "Add",
       "why": "Verify the contract and its boundary case."
     },
@@ -130,41 +130,41 @@
   ],
   "postQuiz": [
     {
-      "prompt": "What did the implementation prove about grouping, joining, and aggregation?",
+      "prompt": "Why does HoursByEmployee filter entry.ClockOut is not null before grouping, the same way GetEmployeeClockEntries does?",
       "options": [
-        "grouping partitions elements by key, joining correlates sources, and aggregation reduces many values into a result",
-        "Design contracts cannot be tested",
-        "Every caller needs concrete implementation details"
+        "Grouping an open entry would still work, but summing it with GetDuartion() would throw -- the filter has to run before the Sum either way",
+        "GroupBy requires every entry to be completed",
+        "It has no effect on the result"
       ],
       "correct": 0,
-      "explanation": "The passing tests make the stated rule observable."
+      "explanation": "The same reasoning from Session 20 applies here: GetDuartion throws on an open entry, so filtering happens before, not after, aggregation."
     },
     {
-      "prompt": "Why keep the public contract narrow?",
+      "prompt": "If an Employee has no matching WorkSummary (no completed entries yet), what does Join produce for them?",
       "options": [
-        "To reduce coupling and preserve implementation freedom",
-        "To prevent tests",
-        "To make all operations mutable"
+        "Nothing -- Join is an inner join, so an employee with no summary is silently excluded from the result",
+        "A summary with zero hours is created automatically",
+        "An exception is thrown"
       ],
       "correct": 0,
-      "explanation": "A narrow contract communicates capability without leaking unrelated details."
+      "explanation": "LINQ's Join has inner-join semantics: only keys present in both sequences appear in the output. An employee with zero completed shifts never appears in summaries, so they are dropped, not zero-filled."
     },
     {
-      "prompt": "Why run regression tests?",
+      "prompt": "Is HoursByEmployee something the real PayrollService class currently needs?",
       "options": [
-        "The application grows cumulatively",
-        "Only the newest file can compile",
-        "Test count changes runtime behavior"
+        "No -- PayrollService.CalculateTotalHours only ever handles one employeeId; this is a genuine, clearly-labeled extension for a multi-employee report",
+        "Yes, it replaces CalculateTotalHours",
+        "Yes, it is required by IClockEntryRepository"
       ],
       "correct": 0,
-      "explanation": "Earlier instructional guarantees must remain true after each session."
+      "explanation": "This session builds on the real domain but adds new capability -- a payroll-summary-for-everyone report -- that the real, narrower PayrollService does not provide."
     }
   ],
   "reflections": [
-    "Which boundary in this session carries the most design responsibility?",
-    "How does the test reveal cause and effect rather than just a final value?",
-    "What implementation detail can change without affecting callers?"
+    "Why does grouping by EmployeeId reuse the exact same GetDuartion().TotalHours projection PayrollService already uses for one employee?",
+    "What would change about EmployeeLabels if two employees shared the same EmployeeId (a data integrity problem Join alone cannot catch)?",
+    "Where would a multi-employee report like this plug into the real application -- Program.cs, or a new WebApi endpoint from Session 32?"
   ],
-  "whatBreaks": "Removing TimeEntryAnalytics.cs removes the executable model for relational transformations. Removing its tests permits contract regressions. If the boundary leaks its implementation details, callers become harder to change and isolated testing loses value.",
-  "summary": "This session established that grouping partitions elements by key, joining correlates sources, and aggregation reduces many values into a result. The application change and tests preserve that model as executable documentation."
+  "whatBreaks": "Removing the ClockOut is not null filter reintroduces GetDuartion's InvalidOperationException into the Sum call. Removing OrderBy makes the grouped totals order non-deterministic across runs, which would make the tests flaky. Using a plain foreach loop instead of Join to correlate employees and summaries would require a manual dictionary lookup -- reintroducing exactly the accidental complexity Join and GroupBy remove.",
+  "summary": "GroupBy and Join extend PayrollService's real single-employee Sum pipeline to a multi-employee report: GroupBy partitions by EmployeeId using the same GetDuartion().TotalHours projection, and Join correlates the resulting totals back to employee names by matching EmployeeId across two independent sequences."
 }

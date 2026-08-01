@@ -2,7 +2,7 @@
   "number": 33,
   "category": "API failure boundary",
   "estimatedTime": "40 minutes",
-  "connection": "Session 32 supplies the required foundation. This session extends TimeLedger with API failure boundary while keeping execution observable and deterministic.",
+  "connection": "Session 32 supplies the required foundation. This session extends TimeClock with API failure boundary while keeping execution observable and deterministic.",
   "objectives": [
     "Explain why boundary validation rejects malformed requests, structured logging preserves context, and Problem Details gives clients a stable error shape.",
     "Trace the operation across its execution or application boundary.",
@@ -86,7 +86,7 @@
         "Focused tests control inputs and collaborators so timing and failure assertions stay stable.",
         "The full suite checks that new infrastructure has not weakened the domain model."
       ],
-      "code": "dotnet test TimeLedger.sln --configuration Release"
+      "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
@@ -94,22 +94,22 @@
     "startingCondition": "Sessions 01–32 are complete and the solution is green.",
     "steps": [
       "Predict one success outcome and one failure, cancellation, or boundary outcome.",
-      "Add the implementation centered on TimeEntryRequest.cs.",
-      "Add TimeEntryRequestTests.cs with deterministic Arrange–Act–Assert checks.",
+      "Add the implementation centered on ClockEntryRequest.cs.",
+      "Add ClockEntryRequestTests.cs with deterministic Arrange–Act–Assert checks.",
       "Run the focused checks and inspect the relevant returned value or state.",
       "Run the full Release build, test suite, and site validator."
     ],
     "expectedBehavior": "The checks establish that boundary validation rejects malformed requests, structured logging preserves context, and Problem Details gives clients a stable error shape; all earlier tests continue to pass.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeLedger.Web/TimeEntryRequest.cs",
+      "path": "src/TimeClock.Web/ClockEntryRequest.cs",
       "action": "Add or integrate",
       "why": "Provide the canonical API failure boundary implementation; infrastructure sessions place the equivalent file in their project."
     },
     {
-      "path": "tests/TimeLedger.Domain.Tests/TimeEntryRequestTests.cs",
+      "path": "tests/TimeClock.Domain.Tests/ClockEntryRequestTests.cs",
       "action": "Add or integrate",
       "why": "Verify the new contract with controlled inputs."
     },
@@ -165,6 +165,6 @@
     "Where does failure cross the boundary, and who should handle it?",
     "Which dependency can a test replace with a controlled implementation?"
   ],
-  "whatBreaks": "Removing TimeEntryRequest.cs removes the canonical example for API failure boundary. Removing its tests makes timing, failure, persistence, or HTTP behavior easier to regress. Hiding the boundary behind global state would also make the behavior harder to observe and control.",
+  "whatBreaks": "Removing ClockEntryRequest.cs removes the canonical example for API failure boundary. Removing its tests makes timing, failure, persistence, or HTTP behavior easier to regress. Hiding the boundary behind global state would also make the behavior harder to observe and control.",
   "summary": "This session established that boundary validation rejects malformed requests, structured logging preserves context, and Problem Details gives clients a stable error shape. Explicit boundaries and deterministic checks make the application behavior dependable."
 }

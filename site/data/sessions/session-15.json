@@ -2,7 +2,7 @@
   "number": 15,
   "category": "generic variance",
   "estimatedTime": "40 minutes",
-  "connection": "Session 14 established the prerequisite model. This session applies it to generic variance with observable TimeLedger examples.",
+  "connection": "Session 14 established the prerequisite model. This session applies it to generic variance with observable TimeClock examples.",
   "objectives": [
     "Explain covariance safely widens output-only interfaces and contravariance safely narrows input-only interfaces.",
     "Predict behavior before running a focused generic variance example.",
@@ -70,7 +70,7 @@
         "The central rule is that covariance safely widens output-only interfaces and contravariance safely narrows input-only interfaces.",
         "Names and syntax matter because they communicate whether code copies, aliases, enumerates, compares, or constrains a value."
       ],
-      "code": "IEnumerable<Worker> workers = source;\nIEnumerable<object> objects = workers;"
+      "code": "IEnumerable<Employee> workers = source;\nIEnumerable<object> objects = workers;"
     },
     {
       "title": "Program to the required capability",
@@ -78,7 +78,7 @@
         "A caller should not need to provide more capability than the operation consumes.",
         "Concrete implementations remain useful at construction boundaries; interfaces and generic contracts keep consuming code focused."
       ],
-      "code": "// Prefer the smallest contract that supports the operation.\nIEnumerable<Worker> workers = source;"
+      "code": "// Prefer the smallest contract that supports the operation.\nIEnumerable<Employee> workers = source;"
     },
     {
       "title": "Verify cause and effect",
@@ -86,30 +86,30 @@
         "The lab changes one behavior at a time and uses tests to preserve the observation.",
         "If the prediction differs from the result, explain the language rule before continuing."
       ],
-      "code": "dotnet test TimeLedger.sln --configuration Release"
+      "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
-    "objective": "Add a focused TimeLedger example that demonstrates variance at api boundaries.",
+    "objective": "Add a focused TimeClock example that demonstrates variance at api boundaries.",
     "startingCondition": "Sessions 01–14 are complete and the solution builds with all existing tests passing.",
     "steps": [
       "Read the starting test and predict the result using the session mental model.",
-      "Add src/TimeLedger.Domain/VarianceExamples.cs with the smallest API needed for the example.",
-      "Add tests/TimeLedger.Domain.Tests/VarianceExamplesTests.cs to check the important before-and-after behavior.",
+      "Add src/TimeClock.Domain/VarianceExamples.cs with the smallest API needed for the example.",
+      "Add tests/TimeClock.Domain.Tests/VarianceExamplesTests.cs to check the important before-and-after behavior.",
       "Run the focused tests, then run the complete Release test suite.",
       "Review whether each parameter and return type exposes only the capability it needs."
     ],
     "expectedBehavior": "The new tests demonstrate covariance safely widens output-only interfaces and contravariance safely narrows input-only interfaces; all existing behavior remains green.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeLedger.Domain/VarianceExamples.cs",
+      "path": "src/TimeClock.Domain/VarianceExamples.cs",
       "action": "Add",
       "why": "Provide the canonical generic variance example."
     },
     {
-      "path": "tests/TimeLedger.Domain.Tests/VarianceExamplesTests.cs",
+      "path": "tests/TimeClock.Domain.Tests/VarianceExamplesTests.cs",
       "action": "Add",
       "why": "Lock the observed language behavior into executable checks."
     },
@@ -166,5 +166,5 @@
     "Where could an unnecessarily concrete type make future change harder?"
   ],
   "whatBreaks": "Removing the new domain example removes the executable model for generic variance. Removing its tests allows subtle changes to assignment, equality, enumeration, or generic contracts to pass unnoticed. Widening the API unnecessarily gives callers capabilities the operation does not need.",
-  "summary": "This session established that covariance safely widens output-only interfaces and contravariance safely narrows input-only interfaces. The TimeLedger example, tests, and API review turn that rule into durable engineering practice."
+  "summary": "This session established that covariance safely widens output-only interfaces and contravariance safely narrows input-only interfaces. The TimeClock example, tests, and API review turn that rule into durable engineering practice."
 }

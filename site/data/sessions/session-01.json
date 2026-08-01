@@ -10,36 +10,36 @@
     "Interpret a successful command as evidence, not as proof of every possible behavior."
   ],
   "visuals": [
-    {"diagram":"solution","title":"A solution organizes projects","explanation":"TimeLedger.sln groups the application, domain library, and test project. Each project still owns its target framework, references, and build output."},
+    {"diagram":"solution","title":"A solution organizes projects","explanation":"TimeClock.sln groups the application, domain library, and test project. Each project still owns its target framework, references, and build output."},
     {"diagram":"pipeline","title":"Source becomes runnable output","explanation":"The compiler checks C# source and produces assemblies. A successful build means compilation succeeded; running the app is a separate observation."},
     {"diagram":"feedback","title":"Short loops expose mistakes early","explanation":"Edit one thing, build, observe the result, and adjust. Small loops make cause and effect easier to identify than a large batch of changes."},
     {"diagram":"tests","title":"Tests check stated behavior","explanation":"Tests supply inputs and compare actual behavior with expectations. They complement the build because compiling successfully does not prove a business rule."}
   ],
   "preQuiz": [
-    {"prompt":"If TimeLedger.sln is removed but the three project files remain, what is most directly lost?","options":["All C# source code","The grouping used to build and test the projects together","The .NET runtime"],"correct":1,"explanation":"Projects still contain source and build configuration, but the solution-level grouping is gone."},
+    {"prompt":"If TimeClock.sln is removed but the three project files remain, what is most directly lost?","options":["All C# source code","The grouping used to build and test the projects together","The .NET runtime"],"correct":1,"explanation":"Projects still contain source and build configuration, but the solution-level grouping is gone."},
     {"prompt":"A Release build succeeds. What can you safely conclude?","options":["Every business rule is correct","The included projects compiled without build errors","The console output was inspected"],"correct":1,"explanation":"Build success proves compilation, not every runtime path or business expectation."},
     {"prompt":"Why run tests after a successful build?","options":["Tests replace compilation","Tests check selected behavior the compiler cannot judge","Tests create the solution file"],"correct":1,"explanation":"The compiler checks language and type rules; tests check examples of intended behavior."}
   ],
   "concept": [
-    {"title":"Solution versus project","paragraphs":["A solution is an organizing boundary. It lets one command address several related projects. A project is a build boundary: it declares its target framework, references, and output type.","TimeLedger.App is executable, TimeLedger.Domain is a reusable library, and TimeLedger.Domain.Tests is a test project. Their names communicate responsibility before you open a source file."],"code":"dotnet build TimeLedger.sln --configuration Release"},
-    {"title":"Four commands, four questions","paragraphs":["Restore asks whether required packages can be resolved. Build asks whether source compiles. Run asks what the executable does. Test asks whether selected behavior matches explicit expectations.","Keeping those questions separate makes failures easier to locate. A restore failure is not diagnosed like a failing assertion, and a compiler error is not investigated like surprising console output."],"code":"dotnet restore TimeLedger.sln\ndotnet build TimeLedger.sln --configuration Release\ndotnet run --project src/TimeLedger.App/TimeLedger.App.csproj\ndotnet test TimeLedger.sln --configuration Release"},
+    {"title":"Solution versus project","paragraphs":["A solution is an organizing boundary. It lets one command address several related projects. A project is a build boundary: it declares its target framework, references, and output type.","TimeClock.App is executable, TimeClock.Domain is a reusable library, and TimeClock.Domain.Tests is a test project. Their names communicate responsibility before you open a source file."],"code":"dotnet build TimeClock.sln --configuration Release"},
+    {"title":"Four commands, four questions","paragraphs":["Restore asks whether required packages can be resolved. Build asks whether source compiles. Run asks what the executable does. Test asks whether selected behavior matches explicit expectations.","Keeping those questions separate makes failures easier to locate. A restore failure is not diagnosed like a failing assertion, and a compiler error is not investigated like surprising console output."],"code":"dotnet restore TimeClock.sln\ndotnet build TimeClock.sln --configuration Release\ndotnet run --project src/TimeClock.App/TimeClock.App.csproj\ndotnet test TimeClock.sln --configuration Release"},
     {"title":"Read output as evidence","paragraphs":["A zero exit code and a clean build are concrete signals. They are deliberately narrower than 'the application is correct.' Good engineering names what was checked and what remains unobserved.","This course records validation commands in the manifest so lesson claims stay tied to repeatable evidence."]}
   ],
   "lab": {
     "objective": "Change one observable application label and prove that the edited project is the one being executed.",
-    "startingCondition": "The solution builds, seven domain tests pass, and the console begins with TimeLedger sample.",
+    "startingCondition": "The solution builds, seven domain tests pass, and the console begins with TimeClock sample.",
     "steps": [
-      "Open src/TimeLedger.App/Program.cs and predict which output line will change.",
-      "Change the first heading to TimeLedger course application.",
-      "Build TimeLedger.sln in Release configuration and distinguish build output from application output.",
-      "Run TimeLedger.App and confirm only the predicted heading changed.",
+      "Open src/TimeClock.App/Program.cs and predict which output line will change.",
+      "Change the first heading to TimeClock course application.",
+      "Build TimeClock.sln in Release configuration and distinguish build output from application output.",
+      "Run TimeClock.App and confirm only the predicted heading changed.",
       "Run the full test suite and confirm the domain tests still pass."
     ],
-    "expectedBehavior": "The first line is TimeLedger course application; worker and duration output remain unchanged; all tests pass.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet run --project src/TimeLedger.App/TimeLedger.App.csproj --configuration Release && dotnet test TimeLedger.sln --configuration Release --no-build"
+    "expectedBehavior": "The first line is TimeClock course application; worker and duration output remain unchanged; all tests pass.",
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet run --project src/TimeClock.App/TimeClock.App.csproj --configuration Release && dotnet test TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
-    {"path":"src/TimeLedger.App/Program.cs","action":"Modify","why":"Make one observable application change."},
+    {"path":"src/TimeClock.App/Program.cs","action":"Modify","why":"Make one observable application change."},
     {"path":"site/data/sessions/session-01.json","action":"Add","why":"Publish the synchronized lesson, lab, and quizzes."}
   ],
   "commit": "session-01: teach the dotnet solution feedback loop",
@@ -52,7 +52,7 @@
   ],
   "postQuiz": [
     {"prompt":"The heading changes after dotnet run, while tests remain green. What does that combination show?","options":["The app project changed and the tested domain behavior remained intact","Tests did not execute","The solution file contains the heading"],"correct":0,"explanation":"The run observes the app change; the tests independently protect selected domain behavior."},
-    {"prompt":"What would most likely happen if the App project reference to Domain were removed?","options":["Program.cs could no longer resolve TimeEntry","The solution would disappear","xUnit would become part of the app"],"correct":0,"explanation":"TimeLedger.App uses TimeEntry from the referenced domain assembly."},
+    {"prompt":"What would most likely happen if the App project reference to Domain were removed?","options":["Program.cs could no longer resolve ClockEntry","The solution would disappear","xUnit would become part of the app"],"correct":0,"explanation":"TimeClock.App uses ClockEntry from the referenced domain assembly."},
     {"prompt":"Why keep the lab change small?","options":["Small changes need no validation","It isolates the likely cause of the observed output change","It prevents the compiler from running"],"correct":1,"explanation":"A small change makes the connection between edit and behavior easier to reason about."}
   ],
   "reflections": [
@@ -60,7 +60,7 @@
     "How would you tell whether a failure belongs to restore, build, run, or test?",
     "What does a successful test run still not prove?"
   ],
-  "whatBreaks": "Removing the solution loses the convenient all-project build and test boundary. Removing the App-to-Domain project reference breaks compilation because Program.cs uses TimeEntry. Removing the output line does not affect domain rules, but it removes the visible signal the lab intentionally changed.",
+  "whatBreaks": "Removing the solution loses the convenient all-project build and test boundary. Removing the App-to-Domain project reference breaks compilation because Program.cs uses ClockEntry. Removing the output line does not affect domain rules, but it removes the visible signal the lab intentionally changed.",
   "summary": "A .NET solution organizes projects; each project defines a build boundary. Restore, build, run, and test answer different questions, and a short feedback loop turns their output into specific evidence."
 }
 

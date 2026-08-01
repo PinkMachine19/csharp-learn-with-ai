@@ -2,7 +2,7 @@
   "number": 31,
   "category": "query translation",
   "estimatedTime": "40 minutes",
-  "connection": "Session 30 supplies the required foundation. This session extends TimeLedger with query translation while keeping execution observable and deterministic.",
+  "connection": "Session 30 supplies the required foundation. This session extends TimeClock with query translation while keeping execution observable and deterministic.",
   "objectives": [
     "Explain why IQueryable builds an expression a provider may translate, while materialization executes it and moves later work into memory.",
     "Trace the operation across its execution or application boundary.",
@@ -70,7 +70,7 @@
         "The governing rule is that IQueryable builds an expression a provider may translate, while materialization executes it and moves later work into memory.",
         "Avoid equating an abstraction with one possible implementation detail; reason from its documented contract."
       ],
-      "code": "IQueryable<TimeEntryEntity> query = db.TimeEntries.Where(...);\nList<TimeEntryEntity> rows = await query.ToListAsync();"
+      "code": "IQueryable<ClockEntryEntity> query = db.ClockEntries.Where(...);\nList<ClockEntryEntity> rows = await query.ToListAsync();"
     },
     {
       "title": "Keep boundaries explicit",
@@ -78,7 +78,7 @@
         "Dependencies, cancellation, persistence, and transport values should cross named boundaries.",
         "This makes ownership clear and supplies seams for deterministic tests."
       ],
-      "code": "// The boundary exposes intent.\nIQueryable<TimeEntryEntity> query = db.TimeEntries.Where(...);"
+      "code": "// The boundary exposes intent.\nIQueryable<ClockEntryEntity> query = db.ClockEntries.Where(...);"
     },
     {
       "title": "Verify observable outcomes",
@@ -86,7 +86,7 @@
         "Focused tests control inputs and collaborators so timing and failure assertions stay stable.",
         "The full suite checks that new infrastructure has not weakened the domain model."
       ],
-      "code": "dotnet test TimeLedger.sln --configuration Release"
+      "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
@@ -94,22 +94,22 @@
     "startingCondition": "Sessions 01–30 are complete and the solution is green.",
     "steps": [
       "Predict one success outcome and one failure, cancellation, or boundary outcome.",
-      "Add the implementation centered on TimeEntryDataQueries.cs.",
-      "Add TimeEntryDataQueriesTests.cs with deterministic Arrange–Act–Assert checks.",
+      "Add the implementation centered on ClockEntryDataQueries.cs.",
+      "Add ClockEntryDataQueriesTests.cs with deterministic Arrange–Act–Assert checks.",
       "Run the focused checks and inspect the relevant returned value or state.",
       "Run the full Release build, test suite, and site validator."
     ],
     "expectedBehavior": "The checks establish that IQueryable builds an expression a provider may translate, while materialization executes it and moves later work into memory; all earlier tests continue to pass.",
-    "validation": "dotnet build TimeLedger.sln --configuration Release && dotnet test TimeLedger.sln --configuration Release"
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeLedger.Infrastructure/TimeEntryDataQueries.cs",
+      "path": "src/TimeClock.Infrastructure/ClockEntryDataQueries.cs",
       "action": "Add or integrate",
       "why": "Provide the canonical query translation implementation; infrastructure sessions place the equivalent file in their project."
     },
     {
-      "path": "tests/TimeLedger.Domain.Tests/TimeEntryDataQueriesTests.cs",
+      "path": "tests/TimeClock.Domain.Tests/ClockEntryDataQueriesTests.cs",
       "action": "Add or integrate",
       "why": "Verify the new contract with controlled inputs."
     },
@@ -165,6 +165,6 @@
     "Where does failure cross the boundary, and who should handle it?",
     "Which dependency can a test replace with a controlled implementation?"
   ],
-  "whatBreaks": "Removing TimeEntryDataQueries.cs removes the canonical example for query translation. Removing its tests makes timing, failure, persistence, or HTTP behavior easier to regress. Hiding the boundary behind global state would also make the behavior harder to observe and control.",
+  "whatBreaks": "Removing ClockEntryDataQueries.cs removes the canonical example for query translation. Removing its tests makes timing, failure, persistence, or HTTP behavior easier to regress. Hiding the boundary behind global state would also make the behavior harder to observe and control.",
   "summary": "This session established that IQueryable builds an expression a provider may translate, while materialization executes it and moves later work into memory. Explicit boundaries and deterministic checks make the application behavior dependable."
 }
