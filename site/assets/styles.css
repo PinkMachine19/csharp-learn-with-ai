@@ -169,3 +169,35 @@ footer a { color: var(--lime); }
   footer .shell { align-items: flex-start; flex-direction: column; }
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+/* Academy alignment: React Learn with AI is the canonical design system. */
+:root { --ink:#c9d1d9; --muted:#8b949e; --paper:#0d1117; --white:#161b22; --surface-2:#21262d; --line:#30363d; --violet:#58a6ff; --violet-dark:#58a6ff; --cyan:#58a6ff; --lime:#3fb950; --amber:#d29922; --radius:6px; --shadow:none; }
+body { font-size:16px; line-height:1.65; }
+.shell { width:100%; max-width:920px; padding-inline:24px; }
+.site-header { background:var(--white); border-color:var(--line); backdrop-filter:none; }
+.nav-wrap { min-height:0; padding-block:14px; justify-content:flex-start; gap:8px; }
+.brand { gap:0; margin-right:16px; color:var(--violet); }
+.brand span { display:inline; width:auto; margin-right:.35rem; color:inherit; background:none; font-size:15px; }
+.brand strong { font-size:15px; }
+nav { gap:0; }
+nav a { padding:4px 8px; border-radius:var(--radius); font-size:13px; font-weight:400; }
+nav a:hover, nav a:focus-visible, nav a[aria-current="page"] { color:var(--violet); background:rgba(88,166,255,.1); }
+.hero { min-height:auto; display:block; padding-block:40px 80px; }
+.hero > * { max-width:920px; }
+.hero-model { margin-top:32px; border-radius:var(--radius); background:#111; }
+.hero h1, .page-intro h1, .lesson-header h1 { max-width:none; font-size:26px; line-height:1.2; letter-spacing:0; margin-bottom:6px; }
+.eyebrow, .model-kicker, .quiz-label { color:var(--violet); font-size:12px; }
+.lede { font-size:14px; }
+.section, .page-intro, .lesson-header { padding-block:40px; }
+.section-heading h2, .technology h2, .lesson-section > h2 { color:var(--violet); font-size:18px; letter-spacing:0; border-bottom:1px solid var(--line); padding-bottom:8px; }
+.feature, .layer-grid li, .session-card, .quiz-card, .reveal-card, .lab-contract, .table-wrap, .visual-card { border-radius:var(--radius); box-shadow:none; }
+.feature-grid, .layer-grid, .session-grid { grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:14px; }
+.feature { min-height:0; padding:20px 24px; }
+.feature h3 { margin:12px 0 6px; }
+.visual-deck { grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); }
+.visual-art { background:#111; }
+.visual-art svg rect, .visual-art svg circle, .visual-art svg path { stroke:#ff4fa3; }
+pre { border-radius:var(--radius); color:var(--ink); background:#0d1117; }
+.checkpoint, .concept-summary { border-left-color:var(--violet); background:rgba(88,166,255,.1); }
+footer { background:var(--paper); color:var(--muted); }
+footer a { color:var(--violet); }
