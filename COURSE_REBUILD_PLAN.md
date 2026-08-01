@@ -1,5 +1,13 @@
 # Course Reconstruction Plan
 
+> **Superseded.** This plan's claims about content quality, its "no real payroll/timekeeping
+> application exists" conclusion (section 6), and its choice of the invented "TimeLedger"
+> domain (section 19) were wrong: a real Employee/ClockEntry/PayrollService application
+> exists at `practice-07092026`. See `SOURCE_MAPPING.md` at the repository root for the
+> authoritative, current mapping and `REBUILD_STATUS.md` for honest current status. The site
+> architecture, generator, and validation tooling this plan describes (sections 21-22) were
+> reused as-is and remain accurate. Retained below for historical context only.
+
 ## 1. Source repository assessment
 
 The source is a local-first course dashboard and planning system rather than a coherent learner-facing C# course. Its useful technical ideas are embedded in 80 planned steps and 163 substeps, but much of the material is coupled to private preparation context, generated handoff data, and application paths that do not exist in the repository. The source working tree was already dirty before this audit and remains read-only.
@@ -177,7 +185,7 @@ Session 15 and Sessions 32–34 may be marked advanced or application milestones
 
 ## 19. Proposed canonical course application
 
-Use **TimeLedger**, a compact time-entry application. It naturally supports value objects, nullable completion state, collections, validation, duration calculations, LINQ summaries, exceptions, async persistence, cancellation, services, interfaces, DI, EF Core, API DTOs, and tests. It will begin as a deterministic console workflow and grow only when a taught concept needs it.
+Use **TimeClock**, a compact time-entry application. It naturally supports value objects, nullable completion state, collections, validation, duration calculations, LINQ summaries, exceptions, async persistence, cancellation, services, interfaces, DI, EF Core, API DTOs, and tests. It will begin as a deterministic console workflow and grow only when a taught concept needs it.
 
 ## 20. Application synchronization strategy
 
@@ -206,7 +214,7 @@ Reference-course observations: five primary navigation areas; clear curriculum c
 - [x] Inspect reference course home and Session 19.
 - [x] Assess source build/test baseline from a disposable copy.
 - [x] Select a 34-session dependency-ordered curriculum.
-- [x] Select the TimeLedger canonical domain.
+- [x] Select the TimeClock canonical domain.
 - [x] Create and commit the destination foundation.
 - [x] Create the source audit and reconstruction plan.
 - [x] Phase 2: implement site foundation, manifest, generation, and validation.

@@ -6,16 +6,16 @@ This repository contains a professional, documentation-first course for developi
 
 ## Course status
 
-All 34 dependency-ordered sessions are complete. The generated course contains lessons, labs, quizzes, accessible inline diagrams, and a cumulative TimeLedger application spanning C# foundations through ASP.NET Core and EF Core integration.
+All 34 dependency-ordered sessions build, validate, and publish. The generated course contains lessons, labs, quizzes, accessible inline diagrams, and a cumulative TimeClock application -- a renamed, byte-faithful port of the real `practice-07092026` Employee/ClockEntry/PayrollService app, not an invented domain -- spanning C# foundations through ASP.NET Core and EF Core integration. 11 of 34 sessions are deep-rewritten against verified real source; the remaining 23 currently carry a verified mechanical rename onto the real domain's vocabulary without session-specific real-code grounding yet. See `SOURCE_MAPPING.md` and `REBUILD_STATUS.md` for the exact, honest per-session status.
 
 ## Repository areas
 
 - `site/` — GitHub Pages course site
-- `src/TimeLedger.Domain/` — domain model and business rules
-- `src/TimeLedger.App/` — deterministic console application
-- `src/TimeLedger.Infrastructure/` — EF Core persistence and integrated workflows
-- `src/TimeLedger.Web/` — ASP.NET Core API boundary
-- `tests/TimeLedger.Domain.Tests/` — xUnit domain and integration tests
+- `src/TimeClock.Domain/` — domain model and business rules
+- `src/TimeClock.App/` — deterministic console application
+- `src/TimeClock.Infrastructure/` — EF Core persistence and integrated workflows
+- `src/TimeClock.Web/` — ASP.NET Core API boundary
+- `tests/TimeClock.Domain.Tests/` — xUnit domain and integration tests
 - `tools/` — course and site validation
 
 The repository has an independent history and intentionally reconstructed course material.
@@ -32,14 +32,14 @@ GitHub Pages: <https://pinkmachine19.github.io/csharp-learn-with-ai/>
 ## Run the application
 
 ```powershell
-dotnet run --project src/TimeLedger.App/TimeLedger.App.csproj
+dotnet run --project src/TimeClock.App/TimeClock.App.csproj
 ```
 
 ## Build and test the solution
 
 ```powershell
-dotnet build TimeLedger.sln --configuration Release
-dotnet test TimeLedger.sln --configuration Release --no-build
+dotnet build TimeClock.sln --configuration Release
+dotnet test TimeClock.sln --configuration Release --no-build
 ```
 
 ## Build and validate the course site
