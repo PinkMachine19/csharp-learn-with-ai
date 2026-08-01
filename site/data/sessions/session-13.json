@@ -1,170 +1,167 @@
 {
   "number": 13,
-  "category": "reusable type parameters",
+  "category": "Collections and generics",
   "estimatedTime": "40 minutes",
-  "connection": "Session 12 established the prerequisite model. This session applies it to reusable type parameters with observable TimeClock examples.",
+  "connection": "Session 12 studied IEnumerable<ClockEntry>, itself a generic interface. This session steps back to name what T actually means, using generic types already at work throughout the real codebase -- List<ClockEntry>, Dictionary<int, Employee>, Task<ClockEntry?> -- plus one new generic method, GenericRules.Later<T>.",
   "objectives": [
-    "Explain a type parameter lets one checked design preserve compile-time type information for many payload types.",
-    "Predict behavior before running a focused reusable type parameters example.",
-    "Apply generic types and methods without weakening existing domain invariants.",
-    "Verify the behavior with automated tests."
+    "Identify at least three generic types already in real, everyday use across this codebase, and state what concrete type argument each is instantiated with.",
+    "Explain why IClockEntryRepository.GetClockEntry returns Task<ClockEntry?> specifically, not just Task -- what the type argument communicates.",
+    "Read GenericRules.Later<T>(T left, T right) and explain why it can compare 'left' and 'right' generically without knowing T is DateTime or int in advance.",
+    "Call Later<T> with both DateTime (ClockIn timestamps) and int (EmployeeId values) and confirm one method definition serves both."
   ],
   "visuals": [
     {
       "diagram": "blueprint",
-      "title": "State before the operation",
-      "explanation": "Start by identifying the values, identities, and capabilities involved in reusable type parameters."
-    },
-    {
-      "diagram": "type",
-      "title": "The operation boundary",
-      "explanation": "Follow what crosses the boundary; C# syntax makes the permitted operation explicit."
+      "title": "Generic types are filled in at each use site",
+      "explanation": "List<ClockEntry>, Dictionary<int, Employee>, and Task<ClockEntry?> are the same three generic type definitions (List<T>, Dictionary<TKey,TValue>, Task<TResult>) each instantiated differently."
     },
     {
       "diagram": "call",
-      "title": "State after the operation",
-      "explanation": "Compare the resulting state with the prediction instead of relying on surface syntax."
+      "title": "A generic method infers T from its arguments",
+      "explanation": "GenericRules.Later(entryA.ClockIn, entryB.ClockIn) infers T as DateTime from the arguments' actual type -- no explicit Later<DateTime> is required."
     },
     {
       "diagram": "return",
-      "title": "Contract at the API edge",
-      "explanation": "Choose the narrowest contract that communicates what callers may safely do."
+      "title": "Task<ClockEntry?> says exactly what eventually arrives",
+      "explanation": "The T in Task<T> is the type of value the asynchronous operation eventually produces -- here, possibly-null ClockEntry, matching GetClockEntry's real nullable contract."
+    },
+    {
+      "diagram": "instances",
+      "title": "One method definition, many closed types",
+      "explanation": "Later<DateTime> and Later<int> are two different closed generic methods generated from the one open Later<T> definition, at compile time."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Which approach best explains generic types and methods?",
+      "prompt": "What are List<T>, Dictionary<TKey,TValue>, and Task<TResult> called before a concrete type is supplied?",
       "options": [
-        "a type parameter lets one checked design preserve compile-time type information for many payload types",
-        "All types behave identically",
-        "Runtime behavior is unrelated to the declared contract"
+        "Open generic types -- they define a shape with placeholder type parameters that must be filled in (with ClockEntry, or int and Employee, or ClockEntry?) at the point of use",
+        "Interfaces",
+        "Abstract classes"
       ],
       "correct": 0,
-      "explanation": "The accurate model distinguishes identity, value, and API capability."
+      "explanation": "A generic type definition like List<T> is not usable on its own -- List<ClockEntry> is the closed, concrete type actually declared and used."
     },
     {
-      "prompt": "Why predict before running the example?",
+      "prompt": "Why does IClockEntryRepository.GetClockEntry return Task<ClockEntry?> instead of plain Task?",
       "options": [
-        "To make the mental model testable",
-        "To avoid writing tests",
-        "To disable compiler checks"
+        "Task<T> carries a result value once the asynchronous operation completes; plain Task represents an operation with no result at all -- GetClockEntry needs to eventually hand back a ClockEntry? value, so it needs the generic form",
+        "Task<ClockEntry?> and Task are interchangeable",
+        "Task<T> is required for every async method regardless of return value"
       ],
       "correct": 0,
-      "explanation": "A prediction exposes assumptions that output and tests can confirm or correct."
+      "explanation": "ClockIn's IClockEntryService.ClockIn method, by contrast, is synchronous void -- and Clockout returns plain Task because it produces no result value, only completion. GetClockEntry needs Task<ClockEntry?> specifically because it DOES produce a result."
     },
     {
-      "prompt": "What should guide the public parameter type?",
+      "prompt": "Can GenericRules.Later<T> be called with both DateTime and int arguments, using the same method definition?",
       "options": [
-        "The minimum capability the method needs",
-        "The most concrete type available",
-        "The longest type name"
+        "Yes -- as long as the argument type implements IComparable<T> (both DateTime and int do), the compiler generates a specific closed version of Later<T> for each type used",
+        "No -- a separate Later method must be written for each type",
+        "Only with int, since DateTime cannot be compared"
       ],
       "correct": 0,
-      "explanation": "A narrow contract reduces coupling while retaining required operations."
+      "explanation": "This is the entire value of generics: one definition, reused across every type that satisfies its constraint -- Session 14 studies that constraint directly."
     }
   ],
   "concept": [
     {
-      "title": "Build the behavioral model",
+      "title": "Generic types already everywhere in this codebase",
       "paragraphs": [
-        "The central rule is that a type parameter lets one checked design preserve compile-time type information for many payload types.",
-        "Names and syntax matter because they communicate whether code copies, aliases, enumerates, compares, or constrains a value."
+        "ClockEntryRepository._clockEntries is List<ClockEntry> -- List<T> with T filled in as ClockEntry. EmployeeDirectory's employees field is Dictionary<int, Employee> -- Dictionary<TKey,TValue> with two type arguments supplied. IClockEntryRepository.GetClockEntry returns Task<ClockEntry?> -- Task<TResult> with TResult filled in as the nullable ClockEntry type.",
+        "None of these are new concepts introduced by this session -- they are the same generic types Sessions 5-12 already used, named explicitly here for the first time."
       ],
-      "code": "Result<decimal> result = Result<decimal>.Success(8m);"
+      "code": "List<ClockEntry> _clockEntries;              // List<T> with T = ClockEntry\nDictionary<int, Employee> employees;         // Dictionary<TKey,TValue> with TKey=int, TValue=Employee\nTask<ClockEntry?> GetClockEntry(int employeeId, ...);  // Task<TResult> with TResult = ClockEntry?"
     },
     {
-      "title": "Program to the required capability",
+      "title": "A generic method: one definition, many closed forms",
       "paragraphs": [
-        "A caller should not need to provide more capability than the operation consumes.",
-        "Concrete implementations remain useful at construction boundaries; interfaces and generic contracts keep consuming code focused."
+        "GenericRules.Later<T>(T left, T right) where T : IComparable<T> works for any type T that can compare itself to another T -- DateTime and int both implement IComparable<T> in the .NET base class library.",
+        "Calling Later(entryA.ClockIn, entryB.ClockIn) lets the compiler infer T as DateTime from the argument types; calling Later(employeeA.EmployeeId, employeeB.EmployeeId) infers T as int. No explicit type argument is required at either call site."
       ],
-      "code": "// Prefer the smallest contract that supports the operation.\nResult<decimal> result = Result<decimal>.Success(8m);"
+      "code": "// src/TimeClock.Domain/GenericRules.cs\npublic static T Later<T>(T left, T right) where T : IComparable<T> =>\n    left.CompareTo(right) >= 0 ? left : right;\n\n// Two closed forms generated from one open definition\nDateTime latest = GenericRules.Later(entryA.ClockIn, entryB.ClockIn);\nint higherId = GenericRules.Later(employeeA.EmployeeId, employeeB.EmployeeId);"
     },
     {
-      "title": "Verify cause and effect",
+      "title": "Why not just write two separate methods?",
       "paragraphs": [
-        "The lab changes one behavior at a time and uses tests to preserve the observation.",
-        "If the prediction differs from the result, explain the language rule before continuing."
+        "A non-generic LaterDate(DateTime, DateTime) and LaterId(int, int) would duplicate the exact same >= 0 comparison logic twice, with only the type name different.",
+        "Later<T> expresses that duplication as one piece of logic, parameterized over any comparable type -- this is the same motivation as IEnumerable<T> in Session 12: write the capability once, apply it to many concrete types."
       ],
       "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
-    "objective": "Add a focused TimeClock example that demonstrates generic types and methods.",
-    "startingCondition": "Sessions 01–12 are complete and the solution builds with all existing tests passing.",
+    "objective": "Call GenericRules.Later<T> with both DateTime and int arguments from the real domain, and confirm one method definition serves both without modification.",
+    "startingCondition": "GenericRules.Later<T> already exists with the real where T : IComparable<T> constraint.",
     "steps": [
-      "Read the starting test and predict the result using the session mental model.",
-      "Add src/TimeClock.Domain/Result.cs with the smallest API needed for the example.",
-      "Add tests/TimeClock.Domain.Tests/ResultTests.cs to check the important before-and-after behavior.",
-      "Run the focused tests, then run the complete Release test suite.",
-      "Review whether each parameter and return type exposes only the capability it needs."
+      "Call Later with two ClockEntry.ClockIn values and confirm the later of the two DateTimes is returned.",
+      "Call Later with two Employee.EmployeeId values and confirm the greater int is returned.",
+      "Attempt to call Later with two Employee objects directly (not their EmployeeId), and observe the compile error -- Employee does not implement IComparable<Employee>.",
+      "Explain, in writing, why that compile error is the constraint working as intended, not a bug."
     ],
-    "expectedBehavior": "The new tests demonstrate a type parameter lets one checked design preserve compile-time type information for many payload types; all existing behavior remains green.",
+    "expectedBehavior": "Later(DateTime, DateTime) and Later(int, int) both compile and return the correct result; Later(Employee, Employee) fails to compile with a constraint-violation error.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/Result.cs",
-      "action": "Add",
-      "why": "Provide the canonical reusable type parameters example."
+      "path": "src/TimeClock.Domain/GenericRules.cs",
+      "action": "Verify",
+      "why": "Confirm the real generic method and its IComparable<T> constraint."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/ResultTests.cs",
-      "action": "Add",
-      "why": "Lock the observed language behavior into executable checks."
+      "path": "tests/TimeClock.Domain.Tests/GenericRulesTests.cs",
+      "action": "Verify",
+      "why": "Confirm coverage across at least two different closed generic types."
     },
     {
       "path": "site/data/sessions/session-13.json",
       "action": "Add",
-      "why": "Publish the synchronized lesson, lab, and quiz."
+      "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
   "commit": "session-13: teach generic types and methods",
   "review": [
-    "The example isolates one primary concept.",
-    "Public types express the minimum required capability.",
-    "Names describe behavior rather than implementation trivia.",
-    "Tests cover the important cause-and-effect relationship.",
-    "Nullable analysis remains enabled with no warnings.",
-    "The entire solution builds and all tests pass."
+    "Every generic type cited is quoted from real, already-existing code, not invented for this session.",
+    "Later<T> is demonstrated with two genuinely different closed type arguments, not just described abstractly.",
+    "The Employee compile-error case is used to make the constraint's purpose concrete, not skipped.",
+    "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "What did the lab establish about generic types and methods?",
+      "prompt": "Why can List<ClockEntry> and Dictionary<int, Employee> both exist in the same codebase using the same underlying generic collection library?",
       "options": [
-        "a type parameter lets one checked design preserve compile-time type information for many payload types",
-        "The compiler cannot describe the behavior",
-        "Tests replace the need for a mental model"
+        "List<T> and Dictionary<TKey,TValue> are separate generic type definitions in .NET's base class library, each independently instantiated with whatever type arguments the codebase needs",
+        "They are the same generic type used two different ways",
+        "Dictionary is built from List internally in every case"
       ],
       "correct": 0,
-      "explanation": "The test makes the language rule observable and repeatable."
+      "explanation": "List<T> and Dictionary<TKey,TValue> are distinct generic types -- the shared idea is only that both defer their element/key/value types to a type parameter, filled in at each declaration."
     },
     {
-      "prompt": "Why run the entire suite after the focused test?",
+      "prompt": "What would happen if GenericRules.Later<T> had no constraint at all (just Later<T>(T left, T right))?",
       "options": [
-        "To detect regressions across cumulative code",
-        "To change test ordering",
-        "To avoid building"
+        "left.CompareTo(right) would fail to compile -- without a constraint, the compiler only knows T could be any type, including one with no CompareTo method at all",
+        "It would work exactly the same for every type",
+        "T would default to object automatically"
       ],
       "correct": 0,
-      "explanation": "The course application grows cumulatively, so earlier guarantees must remain intact."
+      "explanation": "This is exactly what Session 14 studies next -- without the where T : IComparable<T> constraint, the compiler cannot assume CompareTo exists on an arbitrary T."
     },
     {
-      "prompt": "When should a concrete collection or implementation leak into an API?",
+      "prompt": "Does calling Later(entryA.ClockIn, entryB.ClockIn) require writing Later<DateTime>(...) explicitly?",
       "options": [
-        "Only when its specific capability is part of the contract",
-        "Whenever it is convenient",
-        "For every read-only operation"
+        "No -- the compiler infers T as DateTime from the argument types automatically; explicit type arguments are only needed when inference is ambiguous or impossible",
+        "Yes -- generic methods always require an explicit type argument",
+        "No -- but only because DateTime is a built-in type"
       ],
       "correct": 0,
-      "explanation": "Expose concrete capability only when callers genuinely need it."
+      "explanation": "Type inference from arguments is standard for generic methods in C# -- explicit type arguments (Later<DateTime>(...)) are optional here and rarely needed."
     }
   ],
   "reflections": [
-    "How would you explain generic types and methods without using a memory-location shortcut?",
-    "Which compiler error or test most clearly reveals the contract?",
-    "Where could an unnecessarily concrete type make future change harder?"
+    "Why does writing Later<T> once, instead of LaterDate and LaterId separately, matter beyond saving a few lines of code?",
+    "What other places in this codebase might benefit from a generic helper like Later<T>, once you start looking for duplicated type-specific logic?",
+    "How does Task<ClockEntry?> communicate more to a reader than plain Task would, at the exact call site where GetClockEntry is awaited?"
   ],
-  "whatBreaks": "Removing the new domain example removes the executable model for reusable type parameters. Removing its tests allows subtle changes to assignment, equality, enumeration, or generic contracts to pass unnoticed. Widening the API unnecessarily gives callers capabilities the operation does not need.",
-  "summary": "This session established that a type parameter lets one checked design preserve compile-time type information for many payload types. The TimeClock example, tests, and API review turn that rule into durable engineering practice."
+  "whatBreaks": "Calling GenericRules.Later with two Employee arguments (instead of their EmployeeId or another IComparable value) fails to compile, because Employee implements no comparison logic -- this is the constraint doing its job, not a limitation to work around. Removing the where T : IComparable<T> constraint would let Later<T> compile against any T, but left.CompareTo(right) inside the method body would then fail to compile, since the compiler could no longer assume CompareTo exists.",
+  "summary": "Generic types are not a new concept this session invents -- List<ClockEntry>, Dictionary<int, Employee>, and Task<ClockEntry?> were already doing real work throughout Sessions 5-12. GenericRules.Later<T> demonstrates the other half of generics: one method definition, reused unmodified across every type (DateTime, int, and any future IComparable<T>) that satisfies its constraint."
 }

@@ -1,170 +1,167 @@
 {
   "number": 15,
-  "category": "generic variance",
-  "estimatedTime": "40 minutes",
-  "connection": "Session 14 established the prerequisite model. This session applies it to generic variance with observable TimeClock examples.",
+  "category": "Collections and generics",
+  "estimatedTime": "35 minutes",
+  "connection": "Session 14 studied a type constraint on a generic method. This session studies a different kind of generic type parameter behavior -- variance -- using ISource<out T> and ISink<in T>, two new, small interfaces built specifically to make covariance and contravariance observable, since nothing in the real domain's own interfaces uses either.",
   "objectives": [
-    "Explain covariance safely widens output-only interfaces and contravariance safely narrows input-only interfaces.",
-    "Predict behavior before running a focused generic variance example.",
-    "Apply variance at api boundaries without weakening existing domain invariants.",
-    "Verify the behavior with automated tests."
+    "Explain what out on ISource<out T> permits: treating an ISource<Employee> as an ISource<object> safely.",
+    "Explain what in on ISink<in T> permits: treating an ISink<object> as an ISink<Employee> safely.",
+    "Predict, and confirm, which of the two assignments (ISource<Employee> to ISource<object>, or the reverse) compiles.",
+    "Explain why neither IClockEntryRepository nor IClockEntryService uses variance annotations -- their type parameters, where they exist, don't create a supertype/subtype relationship that variance would apply to."
   ],
   "visuals": [
     {
-      "diagram": "pipeline",
-      "title": "State before the operation",
-      "explanation": "Start by identifying the values, identities, and capabilities involved in generic variance."
+      "diagram": "call",
+      "title": "out permits widening the output type",
+      "explanation": "ISource<Employee> source = ...; ISource<object> widened = source; -- legal because ISource<out T> only ever produces (returns) a T, never accepts one."
+    },
+    {
+      "diagram": "branch",
+      "title": "in permits narrowing the input type",
+      "explanation": "ISink<object> sink = ...; ISink<Employee> narrowed = sink; -- legal because ISink<in T> only ever accepts (consumes) a T as a parameter, never returns one."
+    },
+    {
+      "diagram": "invariant",
+      "title": "The direction of data flow decides which variance is safe",
+      "explanation": "A type that only produces T can safely be treated as producing something less specific (object); a type that only consumes T can safely be treated as consuming something more specific."
     },
     {
       "diagram": "type",
-      "title": "The operation boundary",
-      "explanation": "Follow what crosses the boundary; C# syntax makes the permitted operation explicit."
-    },
-    {
-      "diagram": "call",
-      "title": "State after the operation",
-      "explanation": "Compare the resulting state with the prediction instead of relying on surface syntax."
-    },
-    {
-      "diagram": "path",
-      "title": "Contract at the API edge",
-      "explanation": "Choose the narrowest contract that communicates what callers may safely do."
+      "title": "Real repository interfaces have no supertype/subtype relationship to vary over",
+      "explanation": "IClockEntryRepository is not generic over Employee/object the way ISource<T> is -- there is no ClockEntry-vs-object substitution question for variance to answer there."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Which approach best explains variance at api boundaries?",
+      "prompt": "Given ISource<Employee> employeeSource = new SingleSource<Employee>(someEmployee);, does ISource<object> objectSource = employeeSource; compile?",
       "options": [
-        "covariance safely widens output-only interfaces and contravariance safely narrows input-only interfaces",
-        "All types behave identically",
-        "Runtime behavior is unrelated to the declared contract"
+        "Yes -- ISource<out T> is covariant: because it only ever returns a T (via Get()), an ISource<Employee> can safely stand in anywhere an ISource<object> is expected",
+        "No -- generic interfaces never allow this kind of assignment",
+        "Only if Employee is sealed"
       ],
       "correct": 0,
-      "explanation": "The accurate model distinguishes identity, value, and API capability."
+      "explanation": "out T marks ISource as covariant in T specifically because Get() only produces a T -- there is no method that could misuse the wider object type to insert something Employee-incompatible."
     },
     {
-      "prompt": "Why predict before running the example?",
+      "prompt": "Given ISink<object> objectSink = new CountingSink<object>();, does ISink<Employee> employeeSink = objectSink; compile?",
       "options": [
-        "To make the mental model testable",
-        "To avoid writing tests",
-        "To disable compiler checks"
+        "Yes -- ISink<in T> is contravariant: because it only ever accepts a T (via Add(T)), an ISink<object> can safely stand in anywhere an ISink<Employee> is expected, since it can accept an Employee (an object) just fine",
+        "No -- this direction never compiles",
+        "Only if Employee overrides Equals"
       ],
       "correct": 0,
-      "explanation": "A prediction exposes assumptions that output and tests can confirm or correct."
+      "explanation": "in T marks ISink as contravariant specifically because Add only consumes a T -- an ISink<object> is willing to accept anything, including an Employee, so it satisfies an ISink<Employee> contract."
     },
     {
-      "prompt": "What should guide the public parameter type?",
+      "prompt": "Why doesn't IClockEntryRepository use out or in anywhere?",
       "options": [
-        "The minimum capability the method needs",
-        "The most concrete type available",
-        "The longest type name"
+        "Its members mix production and consumption of ClockEntry (SaveClockEntry takes one in; GetClockEntry/GetEmployeeClockEntries return them) -- a type that both produces and consumes T cannot safely be marked variant in either direction",
+        "IClockEntryRepository is not a generic interface",
+        "Variance only applies to interfaces with exactly one method"
       ],
-      "correct": 0,
-      "explanation": "A narrow contract reduces coupling while retaining required operations."
+      "correct": 1,
+      "explanation": "IClockEntryRepository is a plain, non-generic interface -- ClockEntry is a concrete parameter/return type throughout, not a type parameter T. There is nothing to mark out or in."
     }
   ],
   "concept": [
     {
-      "title": "Build the behavioral model",
+      "title": "out T: safe when a type only produces T",
       "paragraphs": [
-        "The central rule is that covariance safely widens output-only interfaces and contravariance safely narrows input-only interfaces.",
-        "Names and syntax matter because they communicate whether code copies, aliases, enumerates, compares, or constrains a value."
+        "ISource<out T> { T Get(); } has exactly one member, and it only returns a T -- it never accepts a T as an argument anywhere.",
+        "Because of that one-directional shape, the compiler allows ISource<Employee> to be used wherever ISource<object> is expected: anything you could do with an ISource<object> (call Get() and get back some object) still works when the object happens to be an Employee."
       ],
-      "code": "IEnumerable<Employee> workers = source;\nIEnumerable<object> objects = workers;"
+      "code": "// src/TimeClock.Domain/VarianceExamples.cs\npublic interface ISource<out T> { T Get(); }\n\nISource<Employee> employeeSource = new SingleSource<Employee>(someEmployee);\nISource<object> widened = employeeSource;   // legal: covariance\nobject value = widened.Get();               // still just reads an Employee, typed as object"
     },
     {
-      "title": "Program to the required capability",
+      "title": "in T: safe when a type only consumes T",
       "paragraphs": [
-        "A caller should not need to provide more capability than the operation consumes.",
-        "Concrete implementations remain useful at construction boundaries; interfaces and generic contracts keep consuming code focused."
+        "ISink<in T> { void Add(T item); } has exactly one member, and it only accepts a T -- it never returns one.",
+        "Because it never hands a T back out, an ISink<object> (which can Add any object at all) can stand in for an ISink<Employee> (which only ever needs to Add Employee objects) -- accepting a wider type is always safe when nothing depends on getting a narrower type back."
       ],
-      "code": "// Prefer the smallest contract that supports the operation.\nIEnumerable<Employee> workers = source;"
+      "code": "public interface ISink<in T> { void Add(T item); }\n\nISink<object> objectSink = new CountingSink<object>();\nISink<Employee> narrowed = objectSink;      // legal: contravariance\nnarrowed.Add(someEmployee);                 // objectSink.Add ultimately runs, accepting the Employee fine"
     },
     {
-      "title": "Verify cause and effect",
+      "title": "Real repository interfaces are neither -- and that's expected",
       "paragraphs": [
-        "The lab changes one behavior at a time and uses tests to preserve the observation.",
-        "If the prediction differs from the result, explain the language rule before continuing."
+        "IClockEntryRepository's SaveClockEntry(ClockEntry) consumes a ClockEntry; GetClockEntry and GetEmployeeClockEntries produce ClockEntry values. A single interface mixing both directions over the same type parameter cannot be safely marked out or in -- the compiler would reject either annotation if attempted.",
+        "This is not a gap in the real code -- IClockEntryRepository is not even generic over ClockEntry (ClockEntry is a fixed, concrete type in its signatures, not a type parameter). Variance only becomes a question once a type is generic and used consistently in one direction."
       ],
       "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
-    "objective": "Add a focused TimeClock example that demonstrates variance at api boundaries.",
-    "startingCondition": "Sessions 01–14 are complete and the solution builds with all existing tests passing.",
+    "objective": "Confirm ISource<out T>'s covariant assignment and ISink<in T>'s contravariant assignment compile, and confirm the reverse direction of each does not.",
+    "startingCondition": "ISource<T>, ISink<T>, SingleSource<T>, and CountingSink<T> already exist with their real variance annotations.",
     "steps": [
-      "Read the starting test and predict the result using the session mental model.",
-      "Add src/TimeClock.Domain/VarianceExamples.cs with the smallest API needed for the example.",
-      "Add tests/TimeClock.Domain.Tests/VarianceExamplesTests.cs to check the important before-and-after behavior.",
-      "Run the focused tests, then run the complete Release test suite.",
-      "Review whether each parameter and return type exposes only the capability it needs."
+      "Assign an ISource<Employee> to an ISource<object> variable and confirm it compiles.",
+      "Attempt to assign an ISource<object> to an ISource<Employee> variable and confirm the compiler rejects it.",
+      "Assign an ISink<object> to an ISink<Employee> variable and confirm it compiles.",
+      "Attempt to assign an ISink<Employee> to an ISink<object> variable and confirm the compiler rejects it."
     ],
-    "expectedBehavior": "The new tests demonstrate covariance safely widens output-only interfaces and contravariance safely narrows input-only interfaces; all existing behavior remains green.",
+    "expectedBehavior": "ISource<Employee> -> ISource<object> and ISink<object> -> ISink<Employee> both compile; the reverse of each does not.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
       "path": "src/TimeClock.Domain/VarianceExamples.cs",
-      "action": "Add",
-      "why": "Provide the canonical generic variance example."
+      "action": "Verify",
+      "why": "Confirm the real ISource<out T>/ISink<in T> declarations and their implementations."
     },
     {
       "path": "tests/TimeClock.Domain.Tests/VarianceExamplesTests.cs",
-      "action": "Add",
-      "why": "Lock the observed language behavior into executable checks."
+      "action": "Verify",
+      "why": "Confirm both variance directions are covered."
     },
     {
       "path": "site/data/sessions/session-15.json",
       "action": "Add",
-      "why": "Publish the synchronized lesson, lab, and quiz."
+      "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
   "commit": "session-15: teach variance at api boundaries",
   "review": [
-    "The example isolates one primary concept.",
-    "Public types express the minimum required capability.",
-    "Names describe behavior rather than implementation trivia.",
-    "Tests cover the important cause-and-effect relationship.",
-    "Nullable analysis remains enabled with no warnings.",
-    "The entire solution builds and all tests pass."
+    "Both variance directions are demonstrated with actual assignments, not just described in prose.",
+    "The reverse (invalid) direction of each is confirmed to genuinely fail to compile, not merely asserted.",
+    "IClockEntryRepository's lack of variance annotations is explained honestly, connecting back to its real, mixed-direction, non-generic signature shape.",
+    "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "What did the lab establish about variance at api boundaries?",
+      "prompt": "Could IEnumerable<T> (Session 12) be marked out T, the way ISource<T> is?",
       "options": [
-        "covariance safely widens output-only interfaces and contravariance safely narrows input-only interfaces",
-        "The compiler cannot describe the behavior",
-        "Tests replace the need for a mental model"
+        "Yes -- IEnumerable<T> is actually declared IEnumerable<out T> in .NET, for the same reason as ISource<T>: it only ever produces T values (via GetEnumerator/Current), never accepts them",
+        "No -- IEnumerable<T> cannot be variant",
+        "Only for value types"
       ],
       "correct": 0,
-      "explanation": "The test makes the language rule observable and repeatable."
+      "explanation": "This is a real fact about the .NET base class library, not just this course's example -- IEnumerable<out T>'s real covariance is exactly why IEnumerable<ClockEntry> could be assigned to an IEnumerable<object> variable if needed."
     },
     {
-      "prompt": "Why run the entire suite after the focused test?",
+      "prompt": "Why would attempting to add an out T marker to ISink<T> (making it ISink<out T>) fail to compile?",
       "options": [
-        "To detect regressions across cumulative code",
-        "To change test ordering",
-        "To avoid building"
+        "Add(T item) takes T as an input parameter -- out (covariance) requires T to appear only in output positions, and a parameter is an input position",
+        "out T is only valid on interfaces with more than one member",
+        "It would compile, but behave unpredictably at runtime"
       ],
       "correct": 0,
-      "explanation": "The course application grows cumulatively, so earlier guarantees must remain intact."
+      "explanation": "C# actually enforces this at compile time: an out type parameter cannot appear in an input (parameter) position anywhere in the interface -- the compiler catches the mismatch between the requested variance and the interface's real shape."
     },
     {
-      "prompt": "When should a concrete collection or implementation leak into an API?",
+      "prompt": "If IClockEntryRepository someday became generic (say, IRepository<T> shared across ClockEntry and Employee), could it be marked out T?",
       "options": [
-        "Only when its specific capability is part of the contract",
-        "Whenever it is convenient",
-        "For every read-only operation"
+        "No -- as long as it has a method like Save(T item) that accepts a T as a parameter, it cannot be covariant; consuming and producing the same type parameter in one interface rules out both variance directions",
+        "Yes, automatically, once it becomes generic",
+        "Only if T is a value type"
       ],
       "correct": 0,
-      "explanation": "Expose concrete capability only when callers genuinely need it."
+      "explanation": "This is the same structural reason IClockEntryRepository has no variance today -- any interface that both takes T in and hands T back out cannot be safely marked variant in either direction."
     }
   ],
   "reflections": [
-    "How would you explain variance at api boundaries without using a memory-location shortcut?",
-    "Which compiler error or test most clearly reveals the contract?",
-    "Where could an unnecessarily concrete type make future change harder?"
+    "Why did this session need a new, purpose-built pair of interfaces (ISource<T>/ISink<T>) instead of finding variance already at work in the real domain?",
+    "Where in the .NET base class library (beyond IEnumerable<out T>) have you seen a variance-annotated generic interface, now that you know what to look for?",
+    "If Employee eventually implemented some IEmployeeLike interface, what would need to be true about ISource<Employee> for it to also be usable as an ISource<IEmployeeLike>?"
   ],
-  "whatBreaks": "Removing the new domain example removes the executable model for generic variance. Removing its tests allows subtle changes to assignment, equality, enumeration, or generic contracts to pass unnoticed. Widening the API unnecessarily gives callers capabilities the operation does not need.",
-  "summary": "This session established that covariance safely widens output-only interfaces and contravariance safely narrows input-only interfaces. The TimeClock example, tests, and API review turn that rule into durable engineering practice."
+  "whatBreaks": "Attempting to declare ISource<T> as out T while also giving it a method that accepts a T parameter would fail to compile -- the compiler enforces that out type parameters appear only in output positions. Assigning an ISource<object> to an ISource<Employee> variable (the unsafe direction) correctly fails to compile, because nothing guarantees every object produced by that source is actually an Employee.",
+  "summary": "ISource<out T> is safely covariant because its one member only produces T; ISource<Employee> can stand in for ISource<object> as a result. ISink<in T> is safely contravariant because its one member only consumes T; ISink<object> can stand in for ISink<Employee>. IClockEntryRepository has no variance annotations because its real methods both consume ClockEntry (SaveClockEntry) and produce it (GetClockEntry, GetEmployeeClockEntries) -- a shape variance cannot safely apply to, and (more fundamentally) because it isn't generic over ClockEntry at all."
 }

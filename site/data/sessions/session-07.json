@@ -1,170 +1,163 @@
 {
   "number": 7,
-  "category": "value and reference assignment",
+  "category": "Memory and type behavior",
   "estimatedTime": "40 minutes",
-  "connection": "Session 6 established the prerequisite model. This session applies it to value and reference assignment with observable TimeClock examples.",
+  "connection": "Session 6 covered ClockOut's nullability. This session asks what actually gets copied when a ClockEntry or an Employee is assigned to a second variable -- and shows why Employee.Rename mutating through an alias is a real, observable consequence of Employee being a reference type.",
   "objectives": [
-    "Explain copying a value produces independent data while copying a reference preserves shared identity.",
-    "Predict behavior before running a focused value and reference assignment example.",
-    "Apply value and reference assignment without weakening existing domain invariants.",
-    "Verify the behavior with automated tests."
+    "Predict, before running any code, whether assigning one Employee variable to another copies the object or shares it.",
+    "Use Employee.Rename to observe that two variables referring to the same Employee see the same mutation.",
+    "Explain why ClockEntry.EmployeeId (an int) and ClockIn (a DateTime) are copied by value when a ClockEntry itself is passed around, even though ClockEntry is a class.",
+    "Distinguish 'the ClockEntry reference was copied' from 'the ClockEntry's field values were copied' -- they are not the same claim."
   ],
   "visuals": [
     {
       "diagram": "variable",
-      "title": "State before the operation",
-      "explanation": "Start by identifying the values, identities, and capabilities involved in value and reference assignment."
+      "title": "Two names, one Employee",
+      "explanation": "Employee employee = new(1, \"Avery\", address); Employee alias = employee; -- both variables hold the same reference, not two separate objects."
     },
     {
       "diagram": "instances",
-      "title": "The operation boundary",
-      "explanation": "Follow what crosses the boundary; C# syntax makes the permitted operation explicit."
+      "title": "A mutation through one name is visible through the other",
+      "explanation": "alias.Rename(\"Nguyen\") changes the object both variables point to -- employee.Name reads the new value too."
     },
     {
       "diagram": "call",
-      "title": "State after the operation",
-      "explanation": "Compare the resulting state with the prediction instead of relying on surface syntax."
+      "title": "int and DateTime are copied, always",
+      "explanation": "ClockEntry.EmployeeId and ClockIn are value types -- assigning them to a new variable, or passing them as arguments, copies the number/date itself."
     },
     {
       "diagram": "invariant",
-      "title": "Contract at the API edge",
-      "explanation": "Choose the narrowest contract that communicates what callers may safely do."
+      "title": "The object vs. its fields are separate questions",
+      "explanation": "ClockEntry itself is a reference type (its identity can be shared); its EmployeeId and ClockIn fields are value types (their contents are always copied)."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Which approach best explains value and reference assignment?",
+      "prompt": "After Employee alias = employee; alias.Rename(\"Nguyen\");, what does employee.Name return?",
       "options": [
-        "copying a value produces independent data while copying a reference preserves shared identity",
-        "All types behave identically",
-        "Runtime behavior is unrelated to the declared contract"
+        "\"Nguyen\" -- employee and alias refer to the same Employee object",
+        "The original name -- alias is an independent copy",
+        "A compile error -- Rename cannot be called through an alias"
       ],
       "correct": 0,
-      "explanation": "The accurate model distinguishes identity, value, and API capability."
+      "explanation": "Assigning employee to alias copies the reference, not the object -- both variables point at one Employee, so Rename's mutation is visible through either name."
     },
     {
-      "prompt": "Why predict before running the example?",
+      "prompt": "If you pass a ClockEntry to a method and that method reads entry.EmployeeId into a local int, then changes the local int, does the original ClockEntry.EmployeeId change?",
       "options": [
-        "To make the mental model testable",
-        "To avoid writing tests",
-        "To disable compiler checks"
+        "No -- EmployeeId is an int (value type); reading it into a local variable copies the number, and EmployeeId itself has no public setter anyway",
+        "Yes -- ClockEntry is a class, so everything about it is shared",
+        "It depends on whether the method is static"
       ],
       "correct": 0,
-      "explanation": "A prediction exposes assumptions that output and tests can confirm or correct."
+      "explanation": "EmployeeId's value is copied into the local int the moment it is read; the two are independent from that point on, and ClockEntry.EmployeeId is get-only regardless."
     },
     {
-      "prompt": "What should guide the public parameter type?",
+      "prompt": "Is ClockEntry a reference type or a value type?",
       "options": [
-        "The minimum capability the method needs",
-        "The most concrete type available",
-        "The longest type name"
+        "Reference type -- it is declared with class, so assigning a ClockEntry variable copies the reference, not a new object",
+        "Value type -- it holds only an int and two DateTimes",
+        "Both, depending on how it is constructed"
       ],
       "correct": 0,
-      "explanation": "A narrow contract reduces coupling while retaining required operations."
+      "explanation": "class always means reference type in C#, regardless of what value-type fields the class happens to contain."
     }
   ],
   "concept": [
     {
-      "title": "Build the behavioral model",
+      "title": "Assigning a class variable copies the reference",
       "paragraphs": [
-        "The central rule is that copying a value produces independent data while copying a reference preserves shared identity.",
-        "Names and syntax matter because they communicate whether code copies, aliases, enumerates, compares, or constrains a value."
+        "Employee alias = employee copies the reference stored in employee -- a pointer to one Employee object in memory -- into alias. It does not create a second Employee.",
+        "Employee.Rename is a real, existing method that mutates Name in place. Calling it through alias changes the same object employee refers to, because there was only ever one object."
       ],
-      "code": "int first = 8; int second = first;\nEmployee primary = worker; Employee alias = primary;"
+      "code": "Employee employee = new(1, \"Avery Chen\", new Address());\nEmployee alias = employee;\n\nalias.Rename(\"Avery Nguyen\");\n\nConsole.WriteLine(employee.Name); // \"Avery Nguyen\" -- same object, either name"
     },
     {
-      "title": "Program to the required capability",
+      "title": "Assigning a value-type field copies the value",
       "paragraphs": [
-        "A caller should not need to provide more capability than the operation consumes.",
-        "Concrete implementations remain useful at construction boundaries; interfaces and generic contracts keep consuming code focused."
+        "ClockEntry.EmployeeId and ClockIn are int and DateTime -- value types. Reading either one into a local variable copies the number or date; the local variable has no ongoing connection to the ClockEntry it came from.",
+        "This is true even though ClockEntry the class is a reference type -- the type of the whole object and the type of each of its members are separate questions."
       ],
-      "code": "// Prefer the smallest contract that supports the operation.\nint first = 8; int second = first;"
+      "code": "ClockEntry entry = new(1, DateTime.Now);\nint copiedId = entry.EmployeeId;   // copies the int value 1\n// copiedId has no connection back to entry -- EmployeeId has no setter anyway"
     },
     {
-      "title": "Verify cause and effect",
+      "title": "Passing an object as a method argument passes its reference",
       "paragraphs": [
-        "The lab changes one behavior at a time and uses tests to preserve the observation.",
-        "If the prediction differs from the result, explain the language rule before continuing."
+        "ClockEntryService.ClockIn constructs a ClockEntry and passes it directly to SaveClockEntry -- the repository receives the same object, not a copy, and adds that exact reference to _clockEntries.",
+        "This is why ClockEntryService.Clockout can retrieve that same ClockEntry later via GetClockEntry and call ClockOutEmployee on it -- it is mutating the one object that has existed since ClockIn, not a disconnected copy."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "// Services/ClockEntryService.cs -- ClockIn passes the reference straight through\npublic void ClockIn(int employeeId)\n{\n    var entry = new ClockEntry(employeeId, DateTime.Now);\n    _clockEntryRepository.SaveClockEntry(entry);   // repository now shares this exact object\n}"
     }
   ],
   "lab": {
-    "objective": "Add a focused TimeClock example that demonstrates value and reference assignment.",
-    "startingCondition": "Sessions 01–06 are complete and the solution builds with all existing tests passing.",
+    "objective": "Observe reference sharing through Employee.Rename and value copying through ClockEntry's int/DateTime fields, using the real domain types.",
+    "startingCondition": "Employee, Address, and ClockEntry already exist with their real constructors and members.",
     "steps": [
-      "Read the starting test and predict the result using the session mental model.",
-      "Add src/TimeClock.Domain/AssignmentExamples.cs with the smallest API needed for the example.",
-      "Add tests/TimeClock.Domain.Tests/AssignmentExamplesTests.cs to check the important before-and-after behavior.",
-      "Run the focused tests, then run the complete Release test suite.",
-      "Review whether each parameter and return type exposes only the capability it needs."
+      "Construct one Employee, assign it to a second variable, and predict what employee.Name will be after calling Rename through the second variable.",
+      "Run the prediction and confirm both variables observe the renamed value.",
+      "Construct a ClockEntry, copy EmployeeId into a local int, and confirm changing the local variable has no effect on entry.EmployeeId (also confirm EmployeeId has no setter to change anyway).",
+      "Trace ClockEntryService.ClockIn and SaveClockEntry to confirm the exact same ClockEntry reference flows from construction into the repository's _clockEntries list."
     ],
-    "expectedBehavior": "The new tests demonstrate copying a value produces independent data while copying a reference preserves shared identity; all existing behavior remains green.",
+    "expectedBehavior": "Renaming through an alias changes the name visible through the original variable; copying EmployeeId into a local int produces an independent value; SaveClockEntry stores the identical reference ClockIn constructed.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
       "path": "src/TimeClock.Domain/AssignmentExamples.cs",
-      "action": "Add",
-      "why": "Provide the canonical value and reference assignment example."
-    },
-    {
-      "path": "tests/TimeClock.Domain.Tests/AssignmentExamplesTests.cs",
-      "action": "Add",
-      "why": "Lock the observed language behavior into executable checks."
+      "action": "Verify",
+      "why": "Confirm the reference-sharing example matches Employee's real mutable Name/Rename shape."
     },
     {
       "path": "site/data/sessions/session-07.json",
       "action": "Add",
-      "why": "Publish the synchronized lesson, lab, and quiz."
+      "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
   "commit": "session-07: teach value and reference assignment",
   "review": [
-    "The example isolates one primary concept.",
-    "Public types express the minimum required capability.",
-    "Names describe behavior rather than implementation trivia.",
-    "Tests cover the important cause-and-effect relationship.",
-    "Nullable analysis remains enabled with no warnings.",
-    "The entire solution builds and all tests pass."
+    "Employee assignment is described as reference copying, never as object duplication.",
+    "The example uses Employee.Rename, a real existing method, rather than an invented mutator.",
+    "ClockEntry.EmployeeId's value-type copying is demonstrated independently of ClockEntry's own reference-type status.",
+    "SaveClockEntry's identical-reference behavior is traced back to real ClockEntryService code.",
+    "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "What did the lab establish about value and reference assignment?",
+      "prompt": "Why can ClockEntryService.Clockout mutate the same ClockEntry that ClockIn created, days apart in the method call sequence?",
       "options": [
-        "copying a value produces independent data while copying a reference preserves shared identity",
-        "The compiler cannot describe the behavior",
-        "Tests replace the need for a mental model"
+        "ClockIn passed the object's reference to SaveClockEntry, so the repository has held the one real object the whole time -- GetClockEntry hands that same reference back out",
+        "ClockEntry overrides Equals to look up entries by value",
+        "ClockOutEmployee creates a brand new ClockEntry internally"
       ],
       "correct": 0,
-      "explanation": "The test makes the language rule observable and repeatable."
+      "explanation": "There is exactly one ClockEntry object per clock-in; every method that touches it afterward is operating on that same shared reference."
     },
     {
-      "prompt": "Why run the entire suite after the focused test?",
+      "prompt": "If Employee.Address were reassigned (employee.Address = new Address {...}) through one alias, what would a second alias see?",
       "options": [
-        "To detect regressions across cumulative code",
-        "To change test ordering",
-        "To avoid building"
+        "The new Address -- Address itself is also a reference-type property being reassigned on the one shared Employee object",
+        "The old Address -- Address is a value type",
+        "A compile error"
       ],
       "correct": 0,
-      "explanation": "The course application grows cumulatively, so earlier guarantees must remain intact."
+      "explanation": "Address is assigned to Employee's Address property, and Employee itself is shared -- so any alias reading employee.Address afterward sees the newly assigned reference."
     },
     {
-      "prompt": "When should a concrete collection or implementation leak into an API?",
+      "prompt": "Does calling entry.GetDuartion() copy the ClockEntry?",
       "options": [
-        "Only when its specific capability is part of the contract",
-        "Whenever it is convenient",
-        "For every read-only operation"
+        "No -- entry is passed implicitly as the reference this method call operates on; no copy of the object occurs",
+        "Yes -- every method call copies its receiver",
+        "Only if ClockOut is null"
       ],
       "correct": 0,
-      "explanation": "Expose concrete capability only when callers genuinely need it."
+      "explanation": "Method calls on a reference-type instance operate on the shared object directly, not on a copy."
     }
   ],
   "reflections": [
-    "How would you explain value and reference assignment without using a memory-location shortcut?",
-    "Which compiler error or test most clearly reveals the contract?",
-    "Where could an unnecessarily concrete type make future change harder?"
+    "Why does Employee.Rename mutating in place matter for anything other than this one lesson -- where else in the app does that behavior get relied on?",
+    "What would you have to change about ClockEntry for two separately-constructed ClockEntry objects with the same EmployeeId and ClockIn to be considered 'equal'?",
+    "How does knowing SaveClockEntry stores a live reference (not a copy) change how you would reason about a bug where an entry's ClockOut value seems to change unexpectedly?"
   ],
-  "whatBreaks": "Removing the new domain example removes the executable model for value and reference assignment. Removing its tests allows subtle changes to assignment, equality, enumeration, or generic contracts to pass unnoticed. Widening the API unnecessarily gives callers capabilities the operation does not need.",
-  "summary": "This session established that copying a value produces independent data while copying a reference preserves shared identity. The TimeClock example, tests, and API review turn that rule into durable engineering practice."
+  "whatBreaks": "Assuming Employee assignment copies the object would lead you to expect alias.Rename(...) to leave employee.Name unchanged -- it does not, and code relying on that wrong assumption would silently read stale names. Assuming ClockEntry.EmployeeId is somehow 'live' after being copied into a local variable would lead to bugs trying to use that local as if it still tracked the entry. Forgetting that SaveClockEntry holds a live reference (not a defensive copy) means any code that later mutates a ClockEntry object directly is also mutating what the repository has stored.",
+  "summary": "Employee is a reference type: assigning it copies the reference, so Employee.Rename's mutation through one alias is visible through every other alias. ClockEntry's EmployeeId and ClockIn are value types: copying them copies the number or date itself, independent of ClockEntry's own reference-type identity. SaveClockEntry stores the exact reference ClockIn constructs -- the mechanism that lets Clockout later mutate the same object."
 }

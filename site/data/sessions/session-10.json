@@ -1,170 +1,168 @@
 {
   "number": 10,
-  "category": "ordered collections",
+  "category": "Collections and generics",
   "estimatedTime": "40 minutes",
-  "connection": "Session 9 established the prerequisite model. This session applies it to ordered collections with observable TimeClock examples.",
+  "connection": "Session 9 covered equality. This session studies the real, public List<ClockEntry> _clockEntries field in ClockEntryRepository -- both how List<T> supports the repository's real operations, and why exposing that field publicly is a real, unfixed encapsulation smell worth naming now and revisiting in Session 16.",
   "objectives": [
-    "Explain arrays have fixed length, lists grow, and foreach consumes each element in sequence without exposing indexing mechanics.",
-    "Predict behavior before running a focused ordered collections example.",
-    "Apply arrays, lists, and enumeration without weakening existing domain invariants.",
-    "Verify the behavior with automated tests."
+    "Identify ClockEntryRepository's real, public _clockEntries field and explain what capability that exposes to any caller, not just the repository's own methods.",
+    "Trace how SaveClockEntry (Add) and GetEmployeeClockEntries (Where, a LINQ extension method on IEnumerable<T>) both operate on the same underlying List<ClockEntry>.",
+    "Explain why List<T> was chosen here over an array: the repository does not know how many entries it will ever hold.",
+    "Enumerate _clockEntries with foreach and explain what a foreach loop actually calls behind the syntax."
   ],
   "visuals": [
     {
-      "diagram": "pipeline",
-      "title": "State before the operation",
-      "explanation": "Start by identifying the values, identities, and capabilities involved in ordered collections."
+      "diagram": "blueprint",
+      "title": "List<ClockEntry> grows as ClockIn is called",
+      "explanation": "Every ClockIn call adds one more ClockEntry to _clockEntries -- the list's size is never fixed in advance."
     },
     {
-      "diagram": "path",
-      "title": "The operation boundary",
-      "explanation": "Follow what crosses the boundary; C# syntax makes the permitted operation explicit."
+      "diagram": "pipeline",
+      "title": "Add appends; Where filters without removing",
+      "explanation": "SaveClockEntry calls _clockEntries.Add(entry); GetEmployeeClockEntries calls _clockEntries.Where(...), which reads the list without changing it."
+    },
+    {
+      "diagram": "invariant",
+      "title": "public means any caller can bypass the repository's methods",
+      "explanation": "Because _clockEntries is a public field, code outside ClockEntryRepository could call _clockEntries.Clear() or .Add(...) directly, skipping SaveClockEntry entirely -- a real, unfixed encapsulation gap."
     },
     {
       "diagram": "instances",
-      "title": "State after the operation",
-      "explanation": "Compare the resulting state with the prediction instead of relying on surface syntax."
-    },
-    {
-      "diagram": "feedback",
-      "title": "Contract at the API edge",
-      "explanation": "Choose the narrowest contract that communicates what callers may safely do."
+      "title": "foreach is syntax over an enumerator",
+      "explanation": "The real leftover foreach(var clockentry in _clockEntries) { } in GetClockEntry compiles to repeated calls to an enumerator's MoveNext/Current, even though this particular loop body does nothing with each element."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Which approach best explains arrays, lists, and enumeration?",
+      "prompt": "Why does ClockEntryRepository use List<ClockEntry> instead of ClockEntry[]?",
       "options": [
-        "arrays have fixed length, lists grow, and foreach consumes each element in sequence without exposing indexing mechanics",
-        "All types behave identically",
-        "Runtime behavior is unrelated to the declared contract"
+        "The repository has no way to know how many entries it will ever hold -- List<T> grows as SaveClockEntry adds more, which a fixed-size array cannot do without manual resizing",
+        "List<T> is required by the IClockEntryRepository interface",
+        "Arrays cannot hold reference types"
       ],
       "correct": 0,
-      "explanation": "The accurate model distinguishes identity, value, and API capability."
+      "explanation": "An array's length is fixed at creation; a growing collection of unknown final size is exactly what List<T> is for."
     },
     {
-      "prompt": "Why predict before running the example?",
+      "prompt": "What does _clockEntries being a public field (not private) actually expose to code outside ClockEntryRepository?",
       "options": [
-        "To make the mental model testable",
-        "To avoid writing tests",
-        "To disable compiler checks"
+        "Direct access to Add, Remove, Clear, and every other List<ClockEntry> member -- completely bypassing SaveClockEntry and any future validation it might contain",
+        "Nothing extra -- public fields behave identically to private ones",
+        "Only read access, never write access"
       ],
       "correct": 0,
-      "explanation": "A prediction exposes assumptions that output and tests can confirm or correct."
+      "explanation": "A public field grants full read/write access to the underlying list's entire API, not just the repository's intended SaveClockEntry/GetEmployeeClockEntries/GetClockEntry surface."
     },
     {
-      "prompt": "What should guide the public parameter type?",
+      "prompt": "What does the real, leftover foreach(var clockentry in _clockEntries) { } inside GetClockEntry actually do?",
       "options": [
-        "The minimum capability the method needs",
-        "The most concrete type available",
-        "The longest type name"
+        "It enumerates every entry and does nothing with each one -- a genuine, harmless-but-pointless leftover in the real source, kept intentionally as a 'spot the smell' artifact",
+        "It searches for the requested employeeId",
+        "It deletes completed entries"
       ],
       "correct": 0,
-      "explanation": "A narrow contract reduces coupling while retaining required operations."
+      "explanation": "The loop body is empty in the real repository -- confirmed by reading Repositories/ClockEntryRepository.cs directly. It has no effect on the method's behavior."
     }
   ],
   "concept": [
     {
-      "title": "Build the behavioral model",
+      "title": "List<ClockEntry> is the repository's only storage",
       "paragraphs": [
-        "The central rule is that arrays have fixed length, lists grow, and foreach consumes each element in sequence without exposing indexing mechanics.",
-        "Names and syntax matter because they communicate whether code copies, aliases, enumerates, compares, or constrains a value."
+        "_clockEntries is declared public readonly List<ClockEntry> _clockEntries = new(); -- readonly means the field itself can never be reassigned to point at a different list, but the list's contents remain fully mutable through Add, Remove, Clear, and indexing.",
+        "Every real method on ClockEntryRepository -- SaveClockEntry, GetClockEntry, GetEmployeeClockEntries -- reads or writes this one list. There is no other storage anywhere in the class."
       ],
-      "code": "List<ClockEntry> entries = new();\nentries.Add(first);\nforeach (ClockEntry entry in entries) { /* observe */ }"
+      "code": "// Repositories/ClockEntryRepository.cs -- the real, complete storage\npublic readonly List<ClockEntry> _clockEntries = new();"
     },
     {
-      "title": "Program to the required capability",
+      "title": "Add and Where operate on the same list, for different purposes",
       "paragraphs": [
-        "A caller should not need to provide more capability than the operation consumes.",
-        "Concrete implementations remain useful at construction boundaries; interfaces and generic contracts keep consuming code focused."
+        "SaveClockEntry's _clockEntries.Add(clockEntry) is List<T>'s own instance method -- it mutates the list in place, growing its Count by one.",
+        "GetEmployeeClockEntries's _clockEntries.Where(...) is a LINQ extension method available on any IEnumerable<T>, including List<T> -- it does not mutate anything; it returns a new, deferred query over the existing elements (Session 22)."
       ],
-      "code": "// Prefer the smallest contract that supports the operation.\nList<ClockEntry> entries = new();"
+      "code": "// Real Add: mutates the list\npublic void SaveClockEntry(ClockEntry clockEntry) => _clockEntries.Add(clockEntry);\n\n// Real Where: reads the list, returns a query, does not mutate\npublic IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate) =>\n    _clockEntries.Where(entry => entry.EmployeeId == employeeId && entry.ClockOut != null\n        && entry.ClockIn >= startDate && entry.ClockIn <= endDate);"
     },
     {
-      "title": "Verify cause and effect",
+      "title": "A public field is a real, named smell, not a rewrite target today",
       "paragraphs": [
-        "The lab changes one behavior at a time and uses tests to preserve the observation.",
-        "If the prediction differs from the result, explain the language rule before continuing."
+        "This session names the problem without fixing it: nothing stops calling code from writing repository._clockEntries.Clear() directly, deleting every clock entry without going through any method at all.",
+        "Session 16 (Encapsulation and Composition) is where this gets revisited as an explicit before/after -- this session's job is only to make sure you can see the gap clearly first."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "// Legal today, and a real problem -- nothing in ClockEntryRepository prevents this\nrepository._clockEntries.Clear();"
     }
   ],
   "lab": {
-    "objective": "Add a focused TimeClock example that demonstrates arrays, lists, and enumeration.",
-    "startingCondition": "Sessions 01–09 are complete and the solution builds with all existing tests passing.",
+    "objective": "Trace every real operation ClockEntryRepository performs on _clockEntries, and write a test that demonstrates the public field's real encapsulation gap.",
+    "startingCondition": "ClockEntryRepository already exists with its real public _clockEntries field and three real methods.",
     "steps": [
-      "Read the starting test and predict the result using the session mental model.",
-      "Add src/TimeClock.Domain/ClockEntryCollection.cs with the smallest API needed for the example.",
-      "Add tests/TimeClock.Domain.Tests/ClockEntryCollectionTests.cs to check the important before-and-after behavior.",
-      "Run the focused tests, then run the complete Release test suite.",
-      "Review whether each parameter and return type exposes only the capability it needs."
+      "List every method in ClockEntryRepository and identify which List<T> operation (Add, Where, FirstOrDefault, foreach) each one uses.",
+      "Write a test that directly manipulates repository._clockEntries (e.g. .Clear() or .Add(...)) from outside the class, and confirm it compiles and runs -- proving the field is genuinely public, not just documentation.",
+      "Predict what SaveClockEntry followed immediately by a direct _clockEntries.Clear() call does to a subsequent GetClockEntry lookup, then confirm it.",
+      "Write down, without changing any code yet, what a private field plus explicit methods would have prevented."
     ],
-    "expectedBehavior": "The new tests demonstrate arrays have fixed length, lists grow, and foreach consumes each element in sequence without exposing indexing mechanics; all existing behavior remains green.",
+    "expectedBehavior": "The direct-manipulation test compiles and passes, demonstrating the field really is publicly writable; the prediction about Clear() erasing a just-saved entry is confirmed.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/ClockEntryCollection.cs",
-      "action": "Add",
-      "why": "Provide the canonical ordered collections example."
+      "path": "src/TimeClock.Domain/ClockEntryRepository.cs",
+      "action": "Verify",
+      "why": "Confirm the real public _clockEntries field and its three real consuming methods."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/ClockEntryCollectionTests.cs",
-      "action": "Add",
-      "why": "Lock the observed language behavior into executable checks."
+      "path": "tests/TimeClock.Domain.Tests/ClockEntryTests.cs",
+      "action": "Modify",
+      "why": "Add a test demonstrating direct external access to the public _clockEntries field."
     },
     {
       "path": "site/data/sessions/session-10.json",
       "action": "Add",
-      "why": "Publish the synchronized lesson, lab, and quiz."
+      "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
   "commit": "session-10: teach arrays lists and enumeration",
   "review": [
-    "The example isolates one primary concept.",
-    "Public types express the minimum required capability.",
-    "Names describe behavior rather than implementation trivia.",
-    "Tests cover the important cause-and-effect relationship.",
-    "Nullable analysis remains enabled with no warnings.",
-    "The entire solution builds and all tests pass."
+    "The real public _clockEntries field is read directly from source, not assumed.",
+    "Add and Where are correctly distinguished as mutating versus non-mutating list operations.",
+    "The encapsulation gap is named honestly as a real, currently-unfixed issue, not silently patched in this session.",
+    "The new test demonstrates the gap is real and reproducible, not hypothetical.",
+    "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "What did the lab establish about arrays, lists, and enumeration?",
+      "prompt": "If _clockEntries were changed from List<ClockEntry> to ClockEntry[], what would break first?",
       "options": [
-        "arrays have fixed length, lists grow, and foreach consumes each element in sequence without exposing indexing mechanics",
-        "The compiler cannot describe the behavior",
-        "Tests replace the need for a mental model"
+        "SaveClockEntry's _clockEntries.Add(...) call -- arrays have no Add method; a fixed-size array cannot grow to accept new entries",
+        "GetEmployeeClockEntries's Where call -- arrays do not support LINQ",
+        "Nothing -- arrays and List<T> are interchangeable everywhere"
       ],
       "correct": 0,
-      "explanation": "The test makes the language rule observable and repeatable."
+      "explanation": "Arrays support LINQ's Where perfectly well (they implement IEnumerable<T>), but they have no Add method -- List<T>'s growable capacity is specifically what SaveClockEntry depends on."
     },
     {
-      "prompt": "Why run the entire suite after the focused test?",
+      "prompt": "What is the real, concrete risk of _clockEntries being public, beyond 'it looks untidy'?",
       "options": [
-        "To detect regressions across cumulative code",
-        "To change test ordering",
-        "To avoid building"
+        "Any code anywhere in the same process that has a ClockEntryRepository reference can mutate its stored entries directly, bypassing whatever business rules SaveClockEntry might someday enforce",
+        "Public fields cause a measurable performance penalty",
+        "It prevents the repository from implementing IClockEntryRepository"
       ],
       "correct": 0,
-      "explanation": "The course application grows cumulatively, so earlier guarantees must remain intact."
+      "explanation": "The real risk is behavioral: any future validation added to SaveClockEntry can be silently bypassed by code that mutates _clockEntries directly instead."
     },
     {
-      "prompt": "When should a concrete collection or implementation leak into an API?",
+      "prompt": "Does GetEmployeeClockEntries's Where call remove non-matching entries from _clockEntries?",
       "options": [
-        "Only when its specific capability is part of the contract",
-        "Whenever it is convenient",
-        "For every read-only operation"
+        "No -- Where returns a new filtered view without modifying the underlying list at all; _clockEntries still contains every entry afterward",
+        "Yes -- Where permanently removes entries that do not match",
+        "Only entries where ClockOut is null are removed"
       ],
       "correct": 0,
-      "explanation": "Expose concrete capability only when callers genuinely need it."
+      "explanation": "LINQ's Where is non-destructive by design -- this is part of why Session 22's deferred-execution discussion matters: querying never mutates the source."
     }
   ],
   "reflections": [
-    "How would you explain arrays, lists, and enumeration without using a memory-location shortcut?",
-    "Which compiler error or test most clearly reveals the contract?",
-    "Where could an unnecessarily concrete type make future change harder?"
+    "Why does this session deliberately not fix the public-field problem it identifies -- what would you lose by fixing it here instead of in Session 16?",
+    "What would you need to add to ClockEntryRepository to make _clockEntries.Add(...) impossible from outside the class, while keeping SaveClockEntry's own behavior unchanged?",
+    "Where else in this codebase might a similarly 'too-permissive' field or property be hiding?"
   ],
-  "whatBreaks": "Removing the new domain example removes the executable model for ordered collections. Removing its tests allows subtle changes to assignment, equality, enumeration, or generic contracts to pass unnoticed. Widening the API unnecessarily gives callers capabilities the operation does not need.",
-  "summary": "This session established that arrays have fixed length, lists grow, and foreach consumes each element in sequence without exposing indexing mechanics. The TimeClock example, tests, and API review turn that rule into durable engineering practice."
+  "whatBreaks": "Directly clearing or mutating _clockEntries from outside ClockEntryRepository bypasses SaveClockEntry entirely, and would silently corrupt GetClockEntry/GetEmployeeClockEntries's results for any code that assumed only SaveClockEntry could add entries. Replacing List<ClockEntry> with a fixed-size array would break SaveClockEntry's Add call the moment more entries are saved than the array's original length allows.",
+  "summary": "List<ClockEntry> is ClockEntryRepository's entire storage: SaveClockEntry mutates it with Add, while GetEmployeeClockEntries and GetClockEntry read it with LINQ's Where and FirstOrDefault without changing it. The field's real public accessibility is a genuine, currently-unfixed encapsulation gap -- named honestly here, and revisited as an explicit fix in Session 16."
 }

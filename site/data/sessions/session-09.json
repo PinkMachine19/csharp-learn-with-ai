@@ -1,170 +1,177 @@
 {
   "number": 9,
-  "category": "type and equality semantics",
+  "category": "Memory and type behavior",
   "estimatedTime": "40 minutes",
-  "connection": "Session 8 established the prerequisite model. This session applies it to type and equality semantics with observable TimeClock examples.",
+  "connection": "Session 8 covered ref/out/in. This session contrasts ClockEntry and Employee's default reference equality with WorkSummary's real record value equality (introduced in Session 21), and looks at where string comparison rules actually matter in this codebase.",
   "objectives": [
-    "Explain strings are immutable references, records provide value-oriented equality, and readonly record structs combine value storage with generated equality.",
-    "Predict behavior before running a focused type and equality semantics example.",
-    "Apply strings, records, structs, and equality without weakening existing domain invariants.",
-    "Verify the behavior with automated tests."
+    "Predict, and then confirm, that two separately-constructed ClockEntry objects with identical EmployeeId/ClockIn/ClockOut are NOT equal by default -- neither ClockEntry nor Employee overrides Equals.",
+    "Confirm that two WorkSummary records with the same EmployeeId and Hours ARE equal, because record types generate value-based equality automatically.",
+    "Explain why EmployeeDirectory's city-uniqueness check uses StringComparer.OrdinalIgnoreCase rather than default string equality.",
+    "Distinguish struct value-copy semantics (WorkCode, a record struct) from class reference semantics (ClockEntry, Employee)."
   ],
   "visuals": [
     {
-      "diagram": "type",
-      "title": "State before the operation",
-      "explanation": "Start by identifying the values, identities, and capabilities involved in type and equality semantics."
-    },
-    {
       "diagram": "comparison",
-      "title": "The operation boundary",
-      "explanation": "Follow what crosses the boundary; C# syntax makes the permitted operation explicit."
+      "title": "class gives you reference equality unless you opt out",
+      "explanation": "new ClockEntry(1, t) != new ClockEntry(1, t) is true (they are unequal) -- ClockEntry never overrode Equals, so two separately-constructed objects are never equal, even with identical field values."
     },
     {
       "diagram": "instances",
-      "title": "State after the operation",
-      "explanation": "Compare the resulting state with the prediction instead of relying on surface syntax."
+      "title": "record gives you value equality automatically",
+      "explanation": "new WorkSummary(1, 8m) == new WorkSummary(1, 8m) is true -- the compiler generates Equals/GetHashCode from WorkSummary's declared members."
     },
     {
-      "diagram": "invariant",
-      "title": "Contract at the API edge",
-      "explanation": "Choose the narrowest contract that communicates what callers may safely do."
+      "diagram": "type",
+      "title": "Case sensitivity is a choice, not a default",
+      "explanation": "\"Springfield\" == \"springfield\" is false under ordinal string comparison; EmployeeDirectory explicitly opts into StringComparer.OrdinalIgnoreCase to treat them as the same city."
+    },
+    {
+      "diagram": "decimal",
+      "title": "record struct copies by value, like int or DateTime",
+      "explanation": "WorkCode is declared readonly record struct -- assigning one WorkCode variable to another copies its Year and Sequence, the same as any other value type."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Which approach best explains strings, records, structs, and equality?",
+      "prompt": "Does ClockEntry override Equals?",
       "options": [
-        "strings are immutable references, records provide value-oriented equality, and readonly record structs combine value storage with generated equality",
-        "All types behave identically",
-        "Runtime behavior is unrelated to the declared contract"
+        "No -- it uses the default reference equality inherited from object, so two ClockEntry objects with identical EmployeeId/ClockIn/ClockOut are still considered unequal",
+        "Yes -- it compares EmployeeId, ClockIn, and ClockOut",
+        "Yes, but only ClockOut is compared"
       ],
       "correct": 0,
-      "explanation": "The accurate model distinguishes identity, value, and API capability."
+      "explanation": "Nothing in the real ClockEntry.cs overrides Equals or GetHashCode -- confirmed by reading the actual file; it relies entirely on object identity."
     },
     {
-      "prompt": "Why predict before running the example?",
+      "prompt": "Why does new WorkSummary(1, 8m).Equals(new WorkSummary(1, 8m)) return true without any code written for it?",
       "options": [
-        "To make the mental model testable",
-        "To avoid writing tests",
-        "To disable compiler checks"
+        "WorkSummary is declared as a record, and the compiler automatically generates member-wise Equals/GetHashCode/== for records",
+        "decimal always compares by value across all types",
+        "WorkSummary happens to be a singleton"
       ],
       "correct": 0,
-      "explanation": "A prediction exposes assumptions that output and tests can confirm or correct."
+      "explanation": "record is a C# feature specifically for value-equality-by-default types -- WorkSummary gets this for free from its declaration, unlike the plain class ClockEntry."
     },
     {
-      "prompt": "What should guide the public parameter type?",
+      "prompt": "What would \"Springfield\" == \"springfield\" evaluate to using C#'s default string equality?",
       "options": [
-        "The minimum capability the method needs",
-        "The most concrete type available",
-        "The longest type name"
+        "false -- default string comparison is ordinal (case-sensitive) unless you explicitly choose a case-insensitive comparer",
+        "true -- strings always compare case-insensitively",
+        "A compile error"
       ],
       "correct": 0,
-      "explanation": "A narrow contract reduces coupling while retaining required operations."
+      "explanation": "C#'s default == for string is ordinal and case-sensitive; EmployeeDirectory has to opt into StringComparer.OrdinalIgnoreCase specifically to treat differently-cased city names as duplicates."
     }
   ],
   "concept": [
     {
-      "title": "Build the behavioral model",
+      "title": "ClockEntry and Employee: reference equality, by default and by choice",
       "paragraphs": [
-        "The central rule is that strings are immutable references, records provide value-oriented equality, and readonly record structs combine value storage with generated equality.",
-        "Names and syntax matter because they communicate whether code copies, aliases, enumerates, compares, or constrains a value."
+        "ClockEntry and Employee are both plain class declarations with no Equals override anywhere in the real source. That means == and .Equals() compare object identity: are these two variables pointing at the very same object?",
+        "This is a real, verified fact about the actual repository, not an assumption -- reading Models/ClockEntry.cs and Models/Employee.cs directly confirms neither type overrides equality members."
       ],
-      "code": "WorkSummary a = new(\"worker-001\", 8m);\nWorkSummary b = new(\"worker-001\", 8m);\nbool sameValue = a == b;"
+      "code": "ClockEntry first = new(1, DateTime.Today);\nClockEntry second = new(1, DateTime.Today);\n\nConsole.WriteLine(first.Equals(second)); // false -- two different objects, same field values"
     },
     {
-      "title": "Program to the required capability",
+      "title": "WorkSummary: a record gets value equality automatically",
       "paragraphs": [
-        "A caller should not need to provide more capability than the operation consumes.",
-        "Concrete implementations remain useful at construction boundaries; interfaces and generic contracts keep consuming code focused."
+        "public sealed record WorkSummary(int EmployeeId, decimal Hours) is a positional record. Declaring it with record instead of class is what generates member-wise Equals, GetHashCode, and == overloads -- no extra code required.",
+        "This is the real, meaningful contrast this session teaches: the same 'compare these two objects' question gets a different default answer depending on whether the type is declared class or record."
       ],
-      "code": "// Prefer the smallest contract that supports the operation.\nWorkSummary a = new(\"worker-001\", 8m);"
+      "code": "public sealed record WorkSummary(int EmployeeId, decimal Hours);\n\nWorkSummary a = new(1, 8m);\nWorkSummary b = new(1, 8m);\nConsole.WriteLine(a == b); // true -- record-generated value equality"
     },
     {
-      "title": "Verify cause and effect",
+      "title": "String comparison is a choice you make explicitly",
       "paragraphs": [
-        "The lab changes one behavior at a time and uses tests to preserve the observation.",
-        "If the prediction differs from the result, explain the language rule before continuing."
+        "EmployeeDirectory's Cities set is constructed with new HashSet<string>(StringComparer.OrdinalIgnoreCase) specifically so \"Springfield\" and \"springfield\" collapse into one entry.",
+        "Without that explicit comparer, HashSet<string>'s default ordinal comparison would treat them as two different cities -- exactly the kind of silent data-quality bug case-insensitive matching exists to prevent."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "// src/TimeClock.Domain/EmployeeDirectory.cs\nprivate readonly HashSet<string> cities = new(StringComparer.OrdinalIgnoreCase);"
     }
   ],
   "lab": {
-    "objective": "Add a focused TimeClock example that demonstrates strings, records, structs, and equality.",
-    "startingCondition": "Sessions 01–08 are complete and the solution builds with all existing tests passing.",
+    "objective": "Confirm ClockEntry's reference equality and WorkSummary's record value equality with executable tests, and explain EmployeeDirectory's explicit string comparer choice.",
+    "startingCondition": "ClockEntry, WorkSummary, and EmployeeDirectory already exist with their real declarations.",
     "steps": [
-      "Read the starting test and predict the result using the session mental model.",
-      "Add src/TimeClock.Domain/WorkSummary.cs with the smallest API needed for the example.",
-      "Add tests/TimeClock.Domain.Tests/WorkSummaryTests.cs to check the important before-and-after behavior.",
-      "Run the focused tests, then run the complete Release test suite.",
-      "Review whether each parameter and return type exposes only the capability it needs."
+      "Write a test constructing two ClockEntry objects with identical arguments and assert they are NOT equal.",
+      "Write a test constructing two WorkSummary records with identical arguments and assert they ARE equal.",
+      "Temporarily remove StringComparer.OrdinalIgnoreCase from EmployeeDirectory's cities field and observe a previously-passing uniqueness test start to fail.",
+      "Restore the comparer and confirm the test passes again."
     ],
-    "expectedBehavior": "The new tests demonstrate strings are immutable references, records provide value-oriented equality, and readonly record structs combine value storage with generated equality; all existing behavior remains green.",
+    "expectedBehavior": "Two ClockEntry objects with equal field values are unequal by default; two equal-valued WorkSummary records are equal; removing OrdinalIgnoreCase breaks the case-insensitive city-uniqueness test.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
+      "path": "src/TimeClock.Domain/ClockEntry.cs",
+      "action": "Verify",
+      "why": "Confirm no Equals override exists -- reference equality is the real, current behavior."
+    },
+    {
       "path": "src/TimeClock.Domain/WorkSummary.cs",
-      "action": "Add",
-      "why": "Provide the canonical type and equality semantics example."
+      "action": "Verify",
+      "why": "Confirm the real record declaration and its generated value equality."
+    },
+    {
+      "path": "tests/TimeClock.Domain.Tests/ClockEntryTests.cs",
+      "action": "Modify",
+      "why": "Add a test asserting two field-identical ClockEntry objects are unequal."
     },
     {
       "path": "tests/TimeClock.Domain.Tests/WorkSummaryTests.cs",
-      "action": "Add",
-      "why": "Lock the observed language behavior into executable checks."
+      "action": "Verify",
+      "why": "Confirm the existing record-equality test."
     },
     {
       "path": "site/data/sessions/session-09.json",
       "action": "Add",
-      "why": "Publish the synchronized lesson, lab, and quiz."
+      "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
   "commit": "session-09: teach strings records structs and equality",
   "review": [
-    "The example isolates one primary concept.",
-    "Public types express the minimum required capability.",
-    "Names describe behavior rather than implementation trivia.",
-    "Tests cover the important cause-and-effect relationship.",
-    "Nullable analysis remains enabled with no warnings.",
-    "The entire solution builds and all tests pass."
+    "ClockEntry's lack of an Equals override is confirmed by reading the real file, not assumed.",
+    "WorkSummary's record-generated equality is demonstrated with a real, passing test.",
+    "EmployeeDirectory's explicit StringComparer.OrdinalIgnoreCase choice is explained as deliberate, not default behavior.",
+    "The full test suite passes, including the new ClockEntry inequality test."
   ],
   "postQuiz": [
     {
-      "prompt": "What did the lab establish about strings, records, structs, and equality?",
+      "prompt": "If ClockEntry were changed to a record instead of a class, what would change about existing code that stores ClockEntry objects in a List and looks them up by reference?",
       "options": [
-        "strings are immutable references, records provide value-oriented equality, and readonly record structs combine value storage with generated equality",
-        "The compiler cannot describe the behavior",
-        "Tests replace the need for a mental model"
+        "Value equality would mean two field-identical ClockEntry objects become interchangeable for Equals-based lookups, which could silently change behavior anywhere identity currently mattered (like GetClockEntry's FirstOrDefault)",
+        "Nothing would change -- record and class behave identically",
+        "The code would fail to compile"
       ],
       "correct": 0,
-      "explanation": "The test makes the language rule observable and repeatable."
+      "explanation": "Switching class to record is not a purely cosmetic change -- it changes the equality semantics every consumer of that type relies on, which is exactly why this session treats it as a real design decision, not a syntax preference."
     },
     {
-      "prompt": "Why run the entire suite after the focused test?",
+      "prompt": "Why is WorkCode declared as a readonly record struct instead of a record (class)?",
       "options": [
-        "To detect regressions across cumulative code",
-        "To change test ordering",
-        "To avoid building"
+        "record struct combines record's generated value equality with struct's copy-by-value semantics -- appropriate for a small, immutable value like a year+sequence pair",
+        "record struct is required syntax for any type with two properties",
+        "There is no difference between record and record struct"
       ],
       "correct": 0,
-      "explanation": "The course application grows cumulatively, so earlier guarantees must remain intact."
+      "explanation": "record struct is specifically for small, copyable, value-equality types -- exactly what a WorkCode(Year, Sequence) pair is."
     },
     {
-      "prompt": "When should a concrete collection or implementation leak into an API?",
+      "prompt": "Would GetEmployeeClockEntries's real Where filter (entry.EmployeeId == employeeId) behave any differently if ClockEntry had record value equality instead of reference equality?",
       "options": [
-        "Only when its specific capability is part of the contract",
-        "Whenever it is convenient",
-        "For every read-only operation"
+        "No -- that filter compares an int (EmployeeId) to an int, which already uses value equality regardless of whether ClockEntry itself is a class or record",
+        "Yes -- it would start matching by full object equality instead",
+        "Yes -- it would stop compiling"
       ],
       "correct": 0,
-      "explanation": "Expose concrete capability only when callers genuinely need it."
+      "explanation": "The filter never compares whole ClockEntry objects to each other -- it compares one of their int fields, which is unaffected by ClockEntry's own equality semantics."
     }
   ],
   "reflections": [
-    "How would you explain strings, records, structs, and equality without using a memory-location shortcut?",
-    "Which compiler error or test most clearly reveals the contract?",
-    "Where could an unnecessarily concrete type make future change harder?"
+    "Why might a real codebase deliberately choose reference equality for ClockEntry rather than adding value equality?",
+    "What would you need to add to ClockEntry to make two field-identical instances equal, and what would you risk changing by doing so?",
+    "Where else in this codebase might case-insensitive string comparison matter, beyond EmployeeDirectory's city set?"
   ],
-  "whatBreaks": "Removing the new domain example removes the executable model for type and equality semantics. Removing its tests allows subtle changes to assignment, equality, enumeration, or generic contracts to pass unnoticed. Widening the API unnecessarily gives callers capabilities the operation does not need.",
-  "summary": "This session established that strings are immutable references, records provide value-oriented equality, and readonly record structs combine value storage with generated equality. The TimeClock example, tests, and API review turn that rule into durable engineering practice."
+  "whatBreaks": "Assuming ClockEntry has value equality (because it superficially looks like a simple data holder) would lead to bugs anywhere code tries to deduplicate or compare ClockEntry objects by field value instead of by reference. Removing WorkSummary's record declaration in favor of class would silently break any test or code that currently relies on WorkSummary equality by value, including the real HoursByEmployee grouping test from Session 21. Removing EmployeeDirectory's StringComparer.OrdinalIgnoreCase would let differently-cased city names silently multiply instead of being treated as one city.",
+  "summary": "class gives you reference equality unless you explicitly override it -- confirmed true for both the real ClockEntry and Employee. record gives you value equality automatically, which is exactly why WorkSummary (Session 21's grouping result) compares equal across separately-constructed instances with the same values. String comparison is ordinal and case-sensitive by default; EmployeeDirectory's StringComparer.OrdinalIgnoreCase is a deliberate, visible choice to treat city names case-insensitively."
 }

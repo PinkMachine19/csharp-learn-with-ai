@@ -1,170 +1,162 @@
 {
   "number": 14,
-  "category": "capability constraints",
-  "estimatedTime": "40 minutes",
-  "connection": "Session 13 established the prerequisite model. This session applies it to capability constraints with observable TimeClock examples.",
+  "category": "Collections and generics",
+  "estimatedTime": "35 minutes",
+  "connection": "Session 13 called GenericRules.Later<T> without examining its where T : IComparable<T> constraint closely. This session studies that constraint directly: what it promises the compiler, what breaks without it, and why Employee genuinely cannot be used with Later<T> as written.",
   "objectives": [
-    "Explain constraints state which operations generic code may safely perform without runtime guessing.",
-    "Predict behavior before running a focused capability constraints example.",
-    "Apply generic constraints without weakening existing domain invariants.",
-    "Verify the behavior with automated tests."
+    "Explain what where T : IComparable<T> promises the compiler about any type T used to call Later<T>.",
+    "Remove the constraint experimentally and read the exact compile error left.CompareTo(right) produces without it.",
+    "Explain why Employee cannot be passed to Later<T> today, and what Employee would need to implement to become usable there.",
+    "Distinguish a constraint that restricts which types are allowed (where T : IComparable<T>) from one that guarantees a default constructor (where T : new()) -- neither of which this codebase currently needs the second kind of."
   ],
   "visuals": [
     {
       "diagram": "invariant",
-      "title": "State before the operation",
-      "explanation": "Start by identifying the values, identities, and capabilities involved in capability constraints."
+      "title": "A constraint is a promise the caller must keep",
+      "explanation": "where T : IComparable<T> tells the compiler: whatever T ends up being, it will have a CompareTo method -- Later<T>'s body is only allowed to compile because of that promise."
     },
     {
-      "diagram": "signature",
-      "title": "The operation boundary",
-      "explanation": "Follow what crosses the boundary; C# syntax makes the permitted operation explicit."
+      "diagram": "call",
+      "title": "Without the constraint, CompareTo is not guaranteed to exist",
+      "explanation": "Remove where T : IComparable<T> and left.CompareTo(right) stops compiling -- the compiler no longer knows T has a CompareTo method at all."
     },
     {
-      "diagram": "comparison",
-      "title": "State after the operation",
-      "explanation": "Compare the resulting state with the prediction instead of relying on surface syntax."
+      "diagram": "branch",
+      "title": "DateTime and int qualify; Employee does not",
+      "explanation": "System.DateTime and System.Int32 both implement IComparable<T> in the .NET base class library. Employee implements no such interface."
     },
     {
-      "diagram": "return",
-      "title": "Contract at the API edge",
-      "explanation": "Choose the narrowest contract that communicates what callers may safely do."
+      "diagram": "type",
+      "title": "Constraints select a category of types, not one type",
+      "explanation": "where T : IComparable<T> does not name DateTime or int specifically -- it opens Later<T> to any type, present or future, that satisfies the same promise."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Which approach best explains generic constraints?",
+      "prompt": "What does where T : IComparable<T> actually guarantee inside Later<T>'s method body?",
       "options": [
-        "constraints state which operations generic code may safely perform without runtime guessing",
-        "All types behave identically",
-        "Runtime behavior is unrelated to the declared contract"
+        "That left.CompareTo(right) is a valid call, because every T the method could be instantiated with is guaranteed to implement IComparable<T>",
+        "That T must be a value type",
+        "That T has a public parameterless constructor"
       ],
       "correct": 0,
-      "explanation": "The accurate model distinguishes identity, value, and API capability."
+      "explanation": "A type constraint's entire purpose is unlocking specific members (here, CompareTo) inside the generic method body -- without it, the compiler assumes nothing about T beyond 'it is some type.'"
     },
     {
-      "prompt": "Why predict before running the example?",
+      "prompt": "If you remove where T : IComparable<T> from Later<T>, what specifically fails to compile?",
       "options": [
-        "To make the mental model testable",
-        "To avoid writing tests",
-        "To disable compiler checks"
+        "left.CompareTo(right) -- the compiler no longer knows CompareTo exists on an unconstrained T",
+        "The method signature itself",
+        "Nothing -- the method still compiles and works identically"
       ],
       "correct": 0,
-      "explanation": "A prediction exposes assumptions that output and tests can confirm or correct."
+      "explanation": "The method's own body is what breaks -- this is the direct, observable consequence of removing a constraint the body actually relies on."
     },
     {
-      "prompt": "What should guide the public parameter type?",
+      "prompt": "Why can't Later<Employee> be called with two real Employee objects today?",
       "options": [
-        "The minimum capability the method needs",
-        "The most concrete type available",
-        "The longest type name"
+        "Employee implements no comparison interface (no IComparable<Employee>) -- there is no defined ordering between two employees for CompareTo to express",
+        "Employee has no properties",
+        "Later<T> explicitly excludes reference types"
       ],
       "correct": 0,
-      "explanation": "A narrow contract reduces coupling while retaining required operations."
+      "explanation": "This is not a limitation of generics -- it is a real, honest gap: nobody has defined what it would mean for one Employee to be 'greater than' another, so the language correctly refuses to guess."
     }
   ],
   "concept": [
     {
-      "title": "Build the behavioral model",
+      "title": "The constraint unlocks CompareTo inside the method body",
       "paragraphs": [
-        "The central rule is that constraints state which operations generic code may safely perform without runtime guessing.",
-        "Names and syntax matter because they communicate whether code copies, aliases, enumerates, compares, or constrains a value."
+        "Without where T : IComparable<T>, the compiler treats an unconstrained T as offering nothing beyond object's own members (ToString, Equals, GetHashCode) -- CompareTo is not among them.",
+        "Adding the constraint is what makes left.CompareTo(right) a legal call: the compiler now knows, for certain, that whatever concrete type T turns out to be, it will have that method."
       ],
-      "code": "static T Later<T>(T left, T right) where T : IComparable<T>"
+      "code": "// Removing the constraint breaks the method body, not just its declaration\npublic static T Later<T>(T left, T right) /* where T : IComparable<T> removed */ =>\n    left.CompareTo(right) >= 0 ? left : right;   // CS0117: 'T' does not contain a definition for 'CompareTo'"
     },
     {
-      "title": "Program to the required capability",
+      "title": "DateTime and int qualify; Employee does not -- and that's correct",
       "paragraphs": [
-        "A caller should not need to provide more capability than the operation consumes.",
-        "Concrete implementations remain useful at construction boundaries; interfaces and generic contracts keep consuming code focused."
+        "System.DateTime implements IComparable<DateTime>; System.Int32 (what int aliases) implements IComparable<Int32>. Both were designed with a natural ordering (earlier/later, smaller/larger).",
+        "Employee has no such natural ordering defined anywhere in the real source -- and inventing one (by EmployeeId? by Name alphabetically?) would be a real design decision, not something to guess at inside this session."
       ],
-      "code": "// Prefer the smallest contract that supports the operation.\nstatic T Later<T>(T left, T right) where T : IComparable<T>"
+      "code": "// Compiles: DateTime and int both implement IComparable<T>\nGenericRules.Later(entryA.ClockIn, entryB.ClockIn);\nGenericRules.Later(employeeA.EmployeeId, employeeB.EmployeeId);\n\n// Does not compile: Employee implements no IComparable<Employee>\n// GenericRules.Later(employeeA, employeeB);"
     },
     {
-      "title": "Verify cause and effect",
+      "title": "Other constraint kinds this codebase does not currently need",
       "paragraphs": [
-        "The lab changes one behavior at a time and uses tests to preserve the observation.",
-        "If the prediction differs from the result, explain the language rule before continuing."
+        "where T : class restricts T to reference types; where T : struct restricts to value types; where T : new() requires a public parameterless constructor. None of Later<T>'s callers need any of these -- IComparable<T> is the only constraint this codebase's generic code actually requires.",
+        "Naming these honestly as unused, rather than forcing a contrived example, keeps this session's claims accurate to the real code."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "// Not used anywhere in this codebase -- shown for contrast only\n// static T CreateDefault<T>() where T : new() => new T();"
     }
   ],
   "lab": {
-    "objective": "Add a focused TimeClock example that demonstrates generic constraints.",
-    "startingCondition": "Sessions 01–13 are complete and the solution builds with all existing tests passing.",
+    "objective": "Remove and restore GenericRules.Later<T>'s constraint to observe exactly what it enables, and confirm Employee's real inability to satisfy it.",
+    "startingCondition": "GenericRules.Later<T> already exists with its real where T : IComparable<T> constraint.",
     "steps": [
-      "Read the starting test and predict the result using the session mental model.",
-      "Add src/TimeClock.Domain/GenericRules.cs with the smallest API needed for the example.",
-      "Add tests/TimeClock.Domain.Tests/GenericRulesTests.cs to check the important before-and-after behavior.",
-      "Run the focused tests, then run the complete Release test suite.",
-      "Review whether each parameter and return type exposes only the capability it needs."
+      "Temporarily delete the where T : IComparable<T> clause and attempt to build; read the exact compiler error on left.CompareTo(right).",
+      "Restore the constraint and confirm the build succeeds again.",
+      "Attempt to call Later(employeeA, employeeB) with two real Employee objects and read the resulting compile error.",
+      "Write, in one sentence, what Employee would need to implement for that call to become legal."
     ],
-    "expectedBehavior": "The new tests demonstrate constraints state which operations generic code may safely perform without runtime guessing; all existing behavior remains green.",
+    "expectedBehavior": "Removing the constraint produces a compile error naming CompareTo as missing; calling Later with two Employee arguments produces a constraint-violation compile error; restoring the constraint returns the build to success.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
       "path": "src/TimeClock.Domain/GenericRules.cs",
-      "action": "Add",
-      "why": "Provide the canonical capability constraints example."
-    },
-    {
-      "path": "tests/TimeClock.Domain.Tests/GenericRulesTests.cs",
-      "action": "Add",
-      "why": "Lock the observed language behavior into executable checks."
+      "action": "Verify",
+      "why": "Confirm the real constraint and its role in the method body."
     },
     {
       "path": "site/data/sessions/session-14.json",
       "action": "Add",
-      "why": "Publish the synchronized lesson, lab, and quiz."
+      "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
   "commit": "session-14: teach generic constraints",
   "review": [
-    "The example isolates one primary concept.",
-    "Public types express the minimum required capability.",
-    "Names describe behavior rather than implementation trivia.",
-    "Tests cover the important cause-and-effect relationship.",
-    "Nullable analysis remains enabled with no warnings.",
-    "The entire solution builds and all tests pass."
+    "The constraint's purpose is demonstrated by actually removing it and reading the real compiler error, not just described.",
+    "Employee's real inability to satisfy IComparable<T> is treated as a genuine, honest gap, not silently worked around.",
+    "Unused constraint kinds (class, struct, new()) are named honestly as not needed here, rather than forced into contrived examples.",
+    "The full test suite passes after the constraint is restored."
   ],
   "postQuiz": [
     {
-      "prompt": "What did the lab establish about generic constraints?",
+      "prompt": "If Employee later implemented IComparable<Employee> (say, comparing by EmployeeId), would Later<T> need any code changes to accept Employee arguments?",
       "options": [
-        "constraints state which operations generic code may safely perform without runtime guessing",
-        "The compiler cannot describe the behavior",
-        "Tests replace the need for a mental model"
+        "No -- Later<T>'s existing where T : IComparable<T> constraint would already accept any type that implements that interface, including a newly-comparable Employee",
+        "Yes -- a new LaterEmployee overload would need to be written",
+        "No -- but only after recompiling GenericRules.cs itself"
       ],
       "correct": 0,
-      "explanation": "The test makes the language rule observable and repeatable."
+      "explanation": "This is the real payoff of constraining by interface rather than by concrete type: any future type that satisfies IComparable<T> becomes usable with Later<T> automatically, with zero changes to Later<T> itself."
     },
     {
-      "prompt": "Why run the entire suite after the focused test?",
+      "prompt": "Why does the compiler reject Later(employeeA, employeeB) at compile time instead of, say, throwing an exception at runtime?",
       "options": [
-        "To detect regressions across cumulative code",
-        "To change test ordering",
-        "To avoid building"
+        "Generic constraints are checked at compile time -- the whole point is catching a type that cannot satisfy the constraint before the program ever runs, not after",
+        "It doesn't reject it -- Employee comparisons silently return an arbitrary result",
+        "Constraints are only checked in Debug builds"
       ],
       "correct": 0,
-      "explanation": "The course application grows cumulatively, so earlier guarantees must remain intact."
+      "explanation": "Compile-time constraint checking is exactly why generics with constraints are safer than, say, casting to object and hoping a CompareTo-like method exists at runtime."
     },
     {
-      "prompt": "When should a concrete collection or implementation leak into an API?",
+      "prompt": "What is the practical difference between Later<T>'s IComparable<T> constraint and an unconstrained generic method that just returns object?",
       "options": [
-        "Only when its specific capability is part of the contract",
-        "Whenever it is convenient",
-        "For every read-only operation"
+        "The IComparable<T> constraint lets Later<T> call a real, type-safe CompareTo and return the SAME type T that was passed in; an unconstrained method returning object would lose type information and gain no safe way to compare its arguments",
+        "There is no practical difference",
+        "An unconstrained method would run faster"
       ],
       "correct": 0,
-      "explanation": "Expose concrete capability only when callers genuinely need it."
+      "explanation": "Constraints let generic code both stay safely typed AND access members specific to the constraint -- losing the constraint would cost both capabilities at once."
     }
   ],
   "reflections": [
-    "How would you explain generic constraints without using a memory-location shortcut?",
-    "Which compiler error or test most clearly reveals the contract?",
-    "Where could an unnecessarily concrete type make future change harder?"
+    "Why is 'Employee cannot be compared yet' a more honest lesson outcome than inventing an arbitrary ordering just to make an example work?",
+    "What real-world ordering, if any, would make sense for comparing two Employee objects, and who should decide that -- this session, or a future design decision?",
+    "How does seeing the actual compiler error (not just reading about it) change your confidence in explaining what a constraint does?"
   ],
-  "whatBreaks": "Removing the new domain example removes the executable model for capability constraints. Removing its tests allows subtle changes to assignment, equality, enumeration, or generic contracts to pass unnoticed. Widening the API unnecessarily gives callers capabilities the operation does not need.",
-  "summary": "This session established that constraints state which operations generic code may safely perform without runtime guessing. The TimeClock example, tests, and API review turn that rule into durable engineering practice."
+  "whatBreaks": "Removing where T : IComparable<T> from Later<T> breaks the method's own body at the exact line that calls CompareTo -- not its callers, and not at runtime, but the method definition itself fails to compile. Attempting to call Later with two Employee arguments today fails to compile for a different, equally real reason: Employee genuinely does not implement IComparable<Employee>, and no code in this course invents a fake ordering to work around that honestly.",
+  "summary": "where T : IComparable<T> is not decoration -- removing it breaks Later<T>'s own method body, because the compiler can no longer assume CompareTo exists on an unconstrained T. DateTime and int satisfy the constraint because .NET defines a natural ordering for both; Employee does not, and this session treats that as a real, currently-true fact about the codebase rather than working around it."
 }

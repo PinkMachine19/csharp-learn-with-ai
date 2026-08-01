@@ -1,170 +1,167 @@
 {
   "number": 8,
-  "category": "parameter passing modes",
-  "estimatedTime": "40 minutes",
-  "connection": "Session 7 established the prerequisite model. This session applies it to parameter passing modes with observable TimeClock examples.",
+  "category": "Memory and type behavior",
+  "estimatedTime": "35 minutes",
+  "connection": "Session 7 covered value versus reference assignment. Nothing in the real Parm.Practice.ConsoleApplication uses ref, out, or in -- this session is a clearly-labeled new extension, written as a small TryGetOpenEntry helper next to the real IClockEntryRepository so the parameter-passing keywords have somewhere real-shaped to attach to.",
   "objectives": [
-    "Explain ordinary parameters copy their argument value, while ref, out, and in make aliasing or initialization explicit.",
-    "Predict behavior before running a focused parameter passing modes example.",
-    "Apply parameter passing with ref, out, and in without weakening existing domain invariants.",
-    "Verify the behavior with automated tests."
+    "Explain why out lets a method report a lookup result and success/failure without a nullable return type or a thrown exception.",
+    "Write TryGetOpenEntry(int employeeId, out ClockEntry? entry), a new method modeled on GetClockEntry's real nullable-return shape but demonstrating the out alternative.",
+    "Explain why ref would let a method reassign a caller's ClockEntry? variable entirely, not just mutate the object it currently refers to.",
+    "Explain why in is not needed anywhere in this codebase, since no method here takes a large struct by value."
   ],
   "visuals": [
     {
       "diagram": "call",
-      "title": "State before the operation",
-      "explanation": "Start by identifying the values, identities, and capabilities involved in parameter passing modes."
+      "title": "out reports a second value on the way out",
+      "explanation": "bool TryGetOpenEntry(int employeeId, out ClockEntry? entry) returns whether the lookup succeeded AND assigns entry -- two pieces of information from one call."
     },
     {
-      "diagram": "frame",
-      "title": "The operation boundary",
-      "explanation": "Follow what crosses the boundary; C# syntax makes the permitted operation explicit."
+      "diagram": "branch",
+      "title": "The caller must handle both outcomes",
+      "explanation": "if (repository.TryGetOpenEntry(1, out var entry)) uses entry only inside the branch where TryGetOpenEntry returned true -- the compiler enforces entry is definitely assigned by that point."
     },
     {
-      "diagram": "return",
-      "title": "State after the operation",
-      "explanation": "Compare the resulting state with the prediction instead of relying on surface syntax."
+      "diagram": "variable",
+      "title": "ref lets a method replace what the caller's variable refers to",
+      "explanation": "A ref ClockEntry? parameter could reassign the caller's variable to a completely different object, not just mutate the current one."
     },
     {
-      "diagram": "signature",
-      "title": "Contract at the API edge",
-      "explanation": "Choose the narrowest contract that communicates what callers may safely do."
+      "diagram": "invariant",
+      "title": "in protects a large struct from being copied",
+      "explanation": "None of this codebase's parameters are large structs, so in has no real use here -- it exists for a category of problem this domain does not have."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Which approach best explains parameter passing with ref, out, and in?",
+      "prompt": "What does TryGetOpenEntry(1, out var entry) let you avoid, compared to the real async GetClockEntry(1)?",
       "options": [
-        "ordinary parameters copy their argument value, while ref, out, and in make aliasing or initialization explicit",
-        "All types behave identically",
-        "Runtime behavior is unrelated to the declared contract"
+        "Nothing conceptually different -- it is a synchronous alternative to the same nullable-result idea, useful for comparing the two patterns side by side",
+        "It avoids ever needing a null check",
+        "It makes the lookup run faster"
       ],
       "correct": 0,
-      "explanation": "The accurate model distinguishes identity, value, and API capability."
+      "explanation": "Both patterns communicate 'found or not found' -- out ClockEntry? plus a bool return is one C# idiom for it; a nullable return type (the real GetClockEntry's choice) is another."
     },
     {
-      "prompt": "Why predict before running the example?",
+      "prompt": "Inside if (repository.TryGetOpenEntry(1, out var entry)) { ... }, what does the compiler guarantee about entry?",
       "options": [
-        "To make the mental model testable",
-        "To avoid writing tests",
-        "To disable compiler checks"
+        "entry is definitely assigned to a non-null ClockEntry inside the if block, because out parameters must be assigned before the method returns",
+        "entry might still be null even though TryGetOpenEntry returned true",
+        "entry is only valid outside the if block"
       ],
       "correct": 0,
-      "explanation": "A prediction exposes assumptions that output and tests can confirm or correct."
+      "explanation": "C# requires every out parameter to be assigned before the method returns -- combined with a true return value, this is the whole point of the Try-pattern."
     },
     {
-      "prompt": "What should guide the public parameter type?",
+      "prompt": "Why does this course's real domain have no genuine use for the in modifier?",
       "options": [
-        "The minimum capability the method needs",
-        "The most concrete type available",
-        "The longest type name"
+        "in exists to avoid copying large structs by value; every struct-like value this codebase passes around (int, DateTime) is small enough that copying is already cheap and idiomatic",
+        "in is deprecated in modern C#",
+        "in only works with reference types"
       ],
       "correct": 0,
-      "explanation": "A narrow contract reduces coupling while retaining required operations."
+      "explanation": "in is a performance tool for large structs -- this codebase's value types (int, DateTime) are exactly the small, cheap-to-copy kind in was never meant to optimize."
     }
   ],
   "concept": [
     {
-      "title": "Build the behavioral model",
+      "title": "out: two results from one call",
       "paragraphs": [
-        "The central rule is that ordinary parameters copy their argument value, while ref, out, and in make aliasing or initialization explicit.",
-        "Names and syntax matter because they communicate whether code copies, aliases, enumerates, compares, or constrains a value."
+        "The real GetClockEntry communicates 'found or not' entirely through its return type: Task<ClockEntry?>. The Try-pattern is the other common C# idiom for the same idea -- a bool return for success/failure, and an out parameter for the value.",
+        "This session adds TryGetOpenEntry as a new, clearly-labeled method next to the real GetClockEntry, so both idioms exist side by side for comparison -- not because the real repository needs both."
       ],
-      "code": "ParameterExamples.TryParseHours(\"7.5\", out decimal hours);\nParameterExamples.AddHour(ref hours);"
+      "code": "// New extension, modeled on the real GetClockEntry's nullable contract\npublic bool TryGetOpenEntry(int employeeId, out ClockEntry? entry)\n{\n    entry = _clockEntries.FirstOrDefault(e => e.EmployeeId == employeeId && e.ClockOut is null);\n    return entry is not null;\n}"
     },
     {
-      "title": "Program to the required capability",
+      "title": "ref: replacing what a variable refers to, not just mutating it",
       "paragraphs": [
-        "A caller should not need to provide more capability than the operation consumes.",
-        "Concrete implementations remain useful at construction boundaries; interfaces and generic contracts keep consuming code focused."
+        "Session 7 showed that ClockEntryService.Clockout already mutates a shared ClockEntry object through an ordinary reference -- no ref keyword needed, because mutating an object's members never requires ref.",
+        "ref parameters solve a narrower, different problem: letting a method reassign which object the CALLER's variable points to, not just change the current object's state. Nothing in this domain currently needs that."
       ],
-      "code": "// Prefer the smallest contract that supports the operation.\nParameterExamples.TryParseHours(\"7.5\", out decimal hours);"
+      "code": "// Illustrative only -- not used anywhere in this codebase\nstatic void ReplaceIfClosed(ref ClockEntry entry, ClockEntry replacement)\n{\n    if (entry.ClockOut is not null) entry = replacement;   // reassigns the CALLER's variable\n}"
     },
     {
-      "title": "Verify cause and effect",
+      "title": "in: a tool for a problem this domain doesn't have",
       "paragraphs": [
-        "The lab changes one behavior at a time and uses tests to preserve the observation.",
-        "If the prediction differs from the result, explain the language rule before continuing."
+        "in tells the compiler a parameter is passed by reference but must not be modified -- its value is to avoid copying a large struct on every call.",
+        "Every value type in this codebase (int EmployeeId, DateTime ClockIn/ClockOut) is small; copying them is already effectively free. in would add a keyword with no measurable benefit here."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "// Not used in this codebase -- int and DateTime are already cheap to copy\nstatic double HoursBetween(in DateTime start, in DateTime end) => (end - start).TotalHours;"
     }
   ],
   "lab": {
-    "objective": "Add a focused TimeClock example that demonstrates parameter passing with ref, out, and in.",
-    "startingCondition": "Sessions 01–07 are complete and the solution builds with all existing tests passing.",
+    "objective": "Add TryGetOpenEntry as a new out-parameter alternative to the real GetClockEntry, and write tests comparing both idioms' call sites.",
+    "startingCondition": "IClockEntryRepository and ClockEntryRepository already exist with the real async GetClockEntry method.",
     "steps": [
-      "Read the starting test and predict the result using the session mental model.",
-      "Add src/TimeClock.Domain/ParameterExamples.cs with the smallest API needed for the example.",
-      "Add tests/TimeClock.Domain.Tests/ParameterExamplesTests.cs to check the important before-and-after behavior.",
-      "Run the focused tests, then run the complete Release test suite.",
-      "Review whether each parameter and return type exposes only the capability it needs."
+      "Add bool TryGetOpenEntry(int employeeId, out ClockEntry? entry) to ClockEntryRepository (not the interface -- this is a new, additional method, not a replacement).",
+      "Write a call site using if (repository.TryGetOpenEntry(...)) and confirm the compiler enforces entry's definite assignment inside the branch.",
+      "Write a second call site using the real, existing GetClockEntry and compare how each communicates 'not found.'",
+      "Add tests for TryGetOpenEntry's true and false paths."
     ],
-    "expectedBehavior": "The new tests demonstrate ordinary parameters copy their argument value, while ref, out, and in make aliasing or initialization explicit; all existing behavior remains green.",
+    "expectedBehavior": "TryGetOpenEntry returns true with entry assigned when an open entry exists, and false with entry null when it does not; the real GetClockEntry is unchanged.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/ParameterExamples.cs",
-      "action": "Add",
-      "why": "Provide the canonical parameter passing modes example."
+      "path": "src/TimeClock.Domain/ClockEntryRepository.cs",
+      "action": "Modify",
+      "why": "Add the new TryGetOpenEntry method alongside the real, unmodified GetClockEntry."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/ParameterExamplesTests.cs",
-      "action": "Add",
-      "why": "Lock the observed language behavior into executable checks."
+      "path": "tests/TimeClock.Domain.Tests/ClockEntryTests.cs",
+      "action": "Modify",
+      "why": "Add coverage for TryGetOpenEntry's true and false paths."
     },
     {
       "path": "site/data/sessions/session-08.json",
       "action": "Add",
-      "why": "Publish the synchronized lesson, lab, and quiz."
+      "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-08: teach ref out and in parameters",
+  "commit": "session-08: teach parameter passing with ref, out, and in",
   "review": [
-    "The example isolates one primary concept.",
-    "Public types express the minimum required capability.",
-    "Names describe behavior rather than implementation trivia.",
-    "Tests cover the important cause-and-effect relationship.",
-    "Nullable analysis remains enabled with no warnings.",
-    "The entire solution builds and all tests pass."
+    "TryGetOpenEntry is added as a new method, not a replacement for the real GetClockEntry.",
+    "The out parameter's definite-assignment guarantee is demonstrated at a real call site.",
+    "ref and in are explained honestly as tools this domain does not currently need, not forced into contrived usage.",
+    "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "What did the lab establish about parameter passing with ref, out, and in?",
+      "prompt": "Why does TryGetOpenEntry return bool instead of just returning ClockEntry??",
       "options": [
-        "ordinary parameters copy their argument value, while ref, out, and in make aliasing or initialization explicit",
-        "The compiler cannot describe the behavior",
-        "Tests replace the need for a mental model"
+        "Both are valid designs for the same problem -- the Try-pattern with out is one C# idiom, a nullable return (the real GetClockEntry's choice) is another; this session teaches the out alternative specifically",
+        "ClockEntry? cannot be returned from a synchronous method",
+        "bool is required by the out keyword"
       ],
       "correct": 0,
-      "explanation": "The test makes the language rule observable and repeatable."
+      "explanation": "There is no technical requirement to use bool+out over a nullable return -- it is an idiom choice, and this session's point is recognizing both idioms."
     },
     {
-      "prompt": "Why run the entire suite after the focused test?",
+      "prompt": "What would go wrong if TryGetOpenEntry's implementation had a code path that returned true without assigning entry?",
       "options": [
-        "To detect regressions across cumulative code",
-        "To change test ordering",
-        "To avoid building"
+        "The code would not compile -- C# requires every out parameter to be definitely assigned before the method returns, on every path",
+        "entry would default to a valid open ClockEntry automatically",
+        "Nothing -- out parameters are optional to assign"
       ],
       "correct": 0,
-      "explanation": "The course application grows cumulatively, so earlier guarantees must remain intact."
+      "explanation": "Definite assignment of out parameters is enforced by the compiler, not just a convention -- this is exactly why callers can trust entry after a true return."
     },
     {
-      "prompt": "When should a concrete collection or implementation leak into an API?",
+      "prompt": "Could ref have been used instead of out for TryGetOpenEntry's entry parameter?",
       "options": [
-        "Only when its specific capability is part of the contract",
-        "Whenever it is convenient",
-        "For every read-only operation"
+        "Technically yes, but it would require the caller to initialize entry before the call, for no benefit -- out is the correct, idiomatic choice when the method fully determines the value",
+        "No, ref and out are interchangeable in every situation with no difference",
+        "No, ref only works with value types"
       ],
       "correct": 0,
-      "explanation": "Expose concrete capability only when callers genuinely need it."
+      "explanation": "ref requires the variable to already have a value going in; out does not -- since TryGetOpenEntry's caller has no meaningful value to provide beforehand, out is the right tool."
     }
   ],
   "reflections": [
-    "How would you explain parameter passing with ref, out, and in without using a memory-location shortcut?",
-    "Which compiler error or test most clearly reveals the contract?",
-    "Where could an unnecessarily concrete type make future change harder?"
+    "Now that you have both GetClockEntry (nullable return) and TryGetOpenEntry (out parameter) side by side, which would you choose for a new method, and why?",
+    "Can you think of a genuine (not contrived) use for ref anywhere in this codebase as it might grow?",
+    "Why does 'this domain doesn't need in' feel like a legitimate lesson outcome rather than an incomplete one?"
   ],
-  "whatBreaks": "Removing the new domain example removes the executable model for parameter passing modes. Removing its tests allows subtle changes to assignment, equality, enumeration, or generic contracts to pass unnoticed. Widening the API unnecessarily gives callers capabilities the operation does not need.",
-  "summary": "This session established that ordinary parameters copy their argument value, while ref, out, and in make aliasing or initialization explicit. The TimeClock example, tests, and API review turn that rule into durable engineering practice."
+  "whatBreaks": "Adding a code path in TryGetOpenEntry that returns true without assigning entry would fail to compile -- the definite-assignment rule catches this at compile time rather than allowing a null-reference bug at runtime. Confusing ref with out would lead you to expect a caller-provided initial value for entry that TryGetOpenEntry does not need or use.",
+  "summary": "out lets a method return a second value (here, whether an open entry was found) alongside its normal return type, with the compiler enforcing definite assignment. ref would let a method reassign a caller's variable to an entirely different object -- a capability this codebase's real, ordinary-reference mutation patterns (Session 7) never need. in exists to avoid copying large structs, and this domain's small value types (int, DateTime) never pay that cost in the first place."
 }
