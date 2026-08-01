@@ -203,3 +203,14 @@ footer { background:var(--paper); color:var(--muted); }
 footer a { color:var(--violet); }
 /* Academy-wide publication status watermark. */
 body::after { content: "DRAFT"; position: fixed; left: 50%; top: 50%; z-index: 999; transform: translate(-50%, -50%) rotate(-28deg); color: rgba(255, 92, 168, 0.09); font-size: clamp(88px, 18vw, 240px); font-weight: 900; letter-spacing: 0.08em; line-height: 1; pointer-events: none; user-select: none; white-space: nowrap; }
+
+/* Balanced academy palette. */
+:root { --violet:#a371f7; --violet-dark:#8957e5; --cyan:#39c5cf; --lime:#3fb950; --amber:#d29922; --coral:#ff7b72; --blue:#58a6ff; --academy-pink:#ff5ca8; }
+.brand, .brand span { color:var(--academy-pink); }
+.visual-art svg :is(rect,circle,ellipse,path,line,polyline,polygon):nth-of-type(6n + 1) { stroke:var(--blue) !important; }
+.visual-art svg :is(rect,circle,ellipse,path,line,polyline,polygon):nth-of-type(6n + 2) { stroke:var(--cyan) !important; }
+.visual-art svg :is(rect,circle,ellipse,path,line,polyline,polygon):nth-of-type(6n + 3) { stroke:var(--violet) !important; }
+.visual-art svg :is(rect,circle,ellipse,path,line,polyline,polygon):nth-of-type(6n + 4) { stroke:var(--lime) !important; }
+.visual-art svg :is(rect,circle,ellipse,path,line,polyline,polygon):nth-of-type(6n + 5) { stroke:var(--amber) !important; }
+.visual-art svg :is(rect,circle,ellipse,path,line,polyline,polygon):nth-of-type(6n) { stroke:var(--coral) !important; }
+.visual-art svg marker path { fill:var(--blue) !important; }
