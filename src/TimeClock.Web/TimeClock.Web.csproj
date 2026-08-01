@@ -5,7 +5,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <!-- Mirrors the real Parm.Practice.WebApi.csproj: references only the domain project.
+         EF Core (TimeClock.Infrastructure) is NOT referenced here, matching the real WebApi,
+         which still uses the same in-memory ClockEntryRepository as the console app. -->
     <ProjectReference Include="..\TimeClock.Domain\TimeClock.Domain.csproj" />
-    <ProjectReference Include="..\TimeClock.Infrastructure\TimeClock.Infrastructure.csproj" />
   </ItemGroup>
 </Project>
