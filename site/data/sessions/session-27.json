@@ -1,173 +1,167 @@
 {
   "number": 27,
   "category": "Asynchronous programming",
-  "estimatedTime": "45 minutes",
-  "connection": "Session 25 identified, without fixing, Program.cs's real unawaited clockEntryService.Clockout(1) call and the CS4014 warning it produces. This session fixes it -- the real async/await bug this codebase has carried since Session 5 -- and studies cancellation through IClockEntryRepository.GetClockEntry's real, unused CancellationToken parameter alongside CancellableEntrySource, a new extension that actually uses one.",
+  "estimatedTime": "40 minutes",
+  "connection": "Session 26 identified (but did not fix) Program.cs's real unawaited Clockout(1) call. This session studies EntryBatchLoader's real LoadSequentialAsync versus LoadConcurrentAsync -- a new extension showing what running several async operations one-at-a-time versus all-at-once actually looks like, since the real Clockout is always called for exactly one employee at a time.",
   "objectives": [
-    "Fix the real CS4014 bug: add await to Program.cs's clockEntryService.Clockout(1) call and remove the pragma suppression, confirming the build is warning-free without it.",
-    "Explain why the fix changes CalculateTotalHours's printed total from a near-zero accident to a real, deterministic, non-trivial number of hours.",
-    "Read IClockEntryRepository.GetClockEntry's CancellationToken cancellationToken = default parameter and confirm, by reading ClockEntryRepository's real implementation, that it is never actually checked or passed anywhere.",
-    "Contrast that decorative token with CancellableEntrySource, a new extension whose CancellationToken is genuinely passed to Task.Delay and can actually cancel an in-flight operation."
+    "Trace LoadSequentialAsync's real await load(id) inside a foreach loop, and explain why each iteration waits for the previous one to finish before starting.",
+    "Trace LoadConcurrentAsync's real Task.WhenAll(ids.Select(load)), and explain why every load call starts before any of them necessarily finishes.",
+    "Predict, then confirm with EntryBatchLoaderTests's real active/maximum counters, that LoadSequentialAsync never has more than one operation in flight while LoadConcurrentAsync starts all of them immediately.",
+    "Explain why the real Clockout(int employeeId) has no equivalent choice to make -- it always operates on exactly one employee, so 'sequential vs concurrent' has never been a real question for it."
   ],
   "visuals": [
     {
-      "diagram": "call",
-      "title": "Before the fix: a race with an accidental near-correct answer",
-      "explanation": "clockEntryService.Clockout(1) without await lets Program.cs call CalculateTotalHours before Clockout's body has necessarily finished -- the near-zero total was luck, not correctness."
-    },
-    {
       "diagram": "pipeline",
-      "title": "After the fix: ClockIn, then Clockout, then the total, guaranteed in order",
-      "explanation": "await clockEntryService.Clockout(1); ensures Clockout's entire body -- including SaveClockEntry -- completes before CalculateTotalHours runs."
+      "title": "Sequential: one await, then the next",
+      "explanation": "foreach (int id in ids) results.Add(await load(id)); -- the loop does not call load again until the current await completes."
     },
     {
-      "diagram": "invariant",
-      "title": "A CancellationToken parameter is not automatically functional",
-      "explanation": "IClockEntryRepository.GetClockEntry accepts a CancellationToken but its real implementation never reads it -- passing one has no effect on the real GetClockEntry today."
+      "diagram": "call",
+      "title": "Concurrent: every operation starts immediately",
+      "explanation": "await Task.WhenAll(ids.Select(load)) calls load for every id up front (Select is enumerated eagerly here), then awaits all of them together."
+    },
+    {
+      "diagram": "branch",
+      "title": "The real test proves it with a counter, not just a description",
+      "explanation": "EntryBatchLoaderTests tracks active/maximum concurrent operations: LoadSequentialAsync's maximum never exceeds 1; LoadConcurrentAsync's started count reaches the full batch size before any complete."
     },
     {
       "diagram": "feedback",
-      "title": "CancellableEntrySource shows what a real, functioning token looks like",
-      "explanation": "await Task.Delay(latency, cancellationToken) genuinely observes cancellation -- a real contrast to GetClockEntry's decorative parameter."
+      "title": "Clockout never had this choice to make",
+      "explanation": "ClockEntryService.Clockout(int employeeId) processes one employee per call -- there is no batch of employees to run sequentially or concurrently, which is exactly why this session needed a new example."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Why did Program.cs's unawaited Clockout(1) call produce a near-zero total-hours output rather than a clearly wrong one?",
+      "prompt": "In LoadSequentialAsync's foreach (int id in ids) results.Add(await load(id));, does the loop call load for the second id before the first load call has completed?",
       "options": [
-        "ClockIn and the fire-and-forget Clockout run essentially back-to-back with almost no real elapsed time between them, and if CalculateTotalHours runs before Clockout's SaveClockEntry completes, GetEmployeeClockEntries may find zero completed entries in the requested window -- a near-zero result was the accidental, not guaranteed, outcome",
-        "The total was always correct -- there was never a real bug",
-        "CalculateTotalHours has a rounding bug unrelated to await"
+        "No -- await load(id) suspends the loop until that specific call completes before moving to the next iteration; only one load operation is ever in flight",
+        "Yes -- foreach starts every iteration immediately regardless of await",
+        "It depends on how many ids there are"
       ],
       "correct": 0,
-      "explanation": "This is the real, documented consequence of the CS4014 warning -- Session 25 identified it; this session fixes it and explains exactly why the output changes."
+      "explanation": "This is exactly what the real EntryBatchLoaderTests.cs proves with its active/maximum counter: LoadSequentialAsync's maximum concurrent count never exceeds 1."
     },
     {
-      "prompt": "After adding await to clockEntryService.Clockout(1), what does Program.cs now guarantee about the order of operations?",
+      "prompt": "In LoadConcurrentAsync's Task.WhenAll(ids.Select(load)), when does the second load call happen relative to the first?",
       "options": [
-        "ClockIn completes, then Clockout's entire body (including the real SaveClockEntry call inside it) completes, THEN CalculateTotalHours runs -- removing the race entirely",
-        "Nothing changes -- await has no effect on execution order here",
-        "ClockIn and Clockout now run concurrently instead of the reverse"
+        "Effectively immediately -- ids.Select(load) is enumerated eagerly by WhenAll's argument evaluation, calling load for every id before any of the resulting Tasks are awaited together",
+        "Only after the first load call's Task completes",
+        "Never -- WhenAll only calls load once"
       ],
       "correct": 0,
-      "explanation": "await is precisely what removes the race: the calling code cannot proceed past the awaited call until it has genuinely finished."
+      "explanation": "WhenAll takes a collection of already-started Tasks; Select(load) is what starts them all before WhenAll begins waiting for the whole set to finish."
     },
     {
-      "prompt": "Does passing a real, non-default CancellationToken to the current GetClockEntry implementation actually let you cancel an in-flight lookup?",
+      "prompt": "Why doesn't ClockEntryService.Clockout(int employeeId) ever need to choose between sequential and concurrent execution?",
       "options": [
-        "No -- the real ClockEntryRepository.GetClockEntry implementation never reads or checks its cancellationToken parameter anywhere in its body; passing one has no observable effect today",
-        "Yes -- every async method automatically respects any CancellationToken passed to it",
-        "Only if the lookup takes longer than one second"
+        "It only ever processes one employeeId per call -- 'sequential vs concurrent' is a question about running MULTIPLE independent async operations together, which never applies to a method that handles exactly one",
+        "Clockout is always sequential by definition",
+        "Clockout cannot be called for multiple employees under any circumstances"
       ],
       "correct": 0,
-      "explanation": "This is confirmed by reading the real source directly -- the parameter exists in the signature (the only CancellationToken in the whole codebase) but is unused, decorative."
+      "explanation": "This is precisely why EntryBatchLoader needed to be a new, purpose-built extension -- there was no real multi-item async operation in the source app to study this concept against."
     }
   ],
   "concept": [
     {
-      "title": "The fix: one keyword, and a warning that stops needing suppression",
+      "title": "LoadSequentialAsync: one operation, then the next",
       "paragraphs": [
-        "The real bug is exactly as small as it looks: clockEntryService.Clockout(1); becomes await clockEntryService.Clockout(1);. No other line in Program.cs needs to change.",
-        "The #pragma warning disable CS4014 / restore pair this course added around the real bug (to keep TreatWarningsAsErrors from failing the build while the bug was still being taught) is removed entirely once the fix is in place -- the build is warning-free without needing to suppress anything."
+        "The real implementation is a plain foreach loop that awaits each load call before moving to the next id -- exactly the shape ClockEntryService.Clockout already uses for its single await _clockEntryRepository.GetClockEntry(employeeId) call, just repeated across a collection instead of called once.",
+        "Total time for LoadSequentialAsync is roughly the sum of every individual load call's duration, because none of them overlap."
       ],
-      "code": "// Before -- the real, long-standing bug, kept intentionally through Session 25\n#pragma warning disable CS4014\nclockEntryService.Clockout(1);\n#pragma warning restore CS4014\n\n// After -- the fix\nawait clockEntryService.Clockout(1);"
+      "code": "// src/TimeClock.Domain/EntryBatchLoader.cs -- real implementation\npublic static async Task<IReadOnlyList<ClockEntry>> LoadSequentialAsync(IEnumerable<int> ids, Func<int, Task<ClockEntry>> load)\n{\n    List<ClockEntry> results = [];\n    foreach (int id in ids) results.Add(await load(id));\n    return results;\n}"
     },
     {
-      "title": "Why the printed total changes -- and becomes trustworthy",
+      "title": "LoadConcurrentAsync: every operation starts together",
       "paragraphs": [
-        "Before the fix, CalculateTotalHours's near-zero output only happened to look plausible; it was one possible outcome of an actual race condition, not a guaranteed one.",
-        "After the fix, ClockIn's SaveClockEntry and Clockout's ClockOutEmployee-then-SaveClockEntry are both guaranteed complete before CalculateTotalHours reads GetEmployeeClockEntries -- the printed total now reliably reflects the real (tiny, since ClockIn and Clockout still happen almost instantly) elapsed time between the two calls."
+        "ids.Select(load) calls load once per id, starting every operation before Task.WhenAll begins waiting -- the operations overlap in time instead of running one after another.",
+        "Total time for LoadConcurrentAsync is roughly the duration of the SLOWEST individual load call, not the sum of all of them, because they all run concurrently rather than one at a time."
       ],
-      "code": "clockEntryService.ClockIn(1);\nawait clockEntryService.Clockout(1);\nvar result = payrollService.CalculateTotalHours(1, DateTime.Today.AddHours(-4), DateTime.Now.AddHours(4));\nConsole.WriteLine($\"Total hours worked: {result}\");"
+      "code": "public static async Task<IReadOnlyList<ClockEntry>> LoadConcurrentAsync(IEnumerable<int> ids, Func<int, Task<ClockEntry>> load) =>\n    await Task.WhenAll(ids.Select(load));"
     },
     {
-      "title": "A decorative token versus a real one",
+      "title": "The real test proves the difference with counters, not timing guesses",
       "paragraphs": [
-        "GetClockEntry's CancellationToken cancellationToken = default is the only CancellationToken anywhere in this codebase's real, ported source -- and it is never read inside the method body. Passing CancellationToken.None or a token that is already cancelled produces identical behavior today.",
-        "CancellableEntrySource -- a new extension -- shows what a genuinely functioning token looks like: await Task.Delay(latency, cancellationToken) actually observes cancellation and throws OperationCanceledException if the token fires before the delay completes."
+        "EntryBatchLoaderTests's sequential test tracks an active counter, incrementing before each load call and decrementing after, then asserts the observed maximum never exceeded 1.",
+        "The concurrent test uses a TaskCompletionSource as a gate every load call awaits, then asserts all load calls had already started (incrementing a started counter) before any of them are allowed to complete -- proving concurrency directly, not by guessing at timing."
       ],
-      "code": "// Real, decorative -- confirmed unused inside the method body\nTask<ClockEntry?> GetClockEntry(int employeeId, CancellationToken cancellationToken = default);\n\n// New extension -- a genuinely functioning token\npublic async Task<ClockEntry> LoadAsync(int employeeId, CancellationToken cancellationToken)\n{\n    await Task.Delay(latency, cancellationToken);   // actually observes cancellation\n    ...\n}"
+      "code": "// tests/.../EntryBatchLoaderTests.cs -- real assertions\nawait EntryBatchLoader.LoadSequentialAsync(new[] { 1, 2 }, Load);\nAssert.Equal(1, maximum);   // sequential: never more than one in flight\n\nawait Task.Yield();\nAssert.Equal(2, started);   // concurrent: both started before either completed"
     }
   ],
   "lab": {
-    "objective": "Fix Program.cs's real CS4014 bug, confirm the total-hours output changes, and demonstrate the difference between GetClockEntry's decorative token and CancellableEntrySource's real one.",
-    "startingCondition": "Program.cs still has the real, pragma-suppressed unawaited Clockout(1) call from Sessions 5-25; CancellableEntrySource already exists as a real, functioning-cancellation extension.",
+    "objective": "Run both LoadSequentialAsync and LoadConcurrentAsync against a controlled, artificially-delayed load function and confirm their real timing difference directly.",
+    "startingCondition": "EntryBatchLoader already exists with both real methods; EntryBatchLoaderTests already exists with its real active/maximum and started/gate assertions.",
     "steps": [
-      "Add await to clockEntryService.Clockout(1) in Program.cs and remove the #pragma warning disable/restore CS4014 pair.",
-      "Build the solution and confirm it is warning-free with no suppression needed.",
-      "Run the app before and after the fix (or compare against Session 25's recorded output) and explain the difference in the printed total.",
-      "Write a test that cancels a CancellableEntrySource.LoadAsync call mid-delay and confirms OperationCanceledException is thrown -- then confirm the same cancellation approach has no effect on GetClockEntry."
+      "Write a load function with an artificial Task.Delay, and time how long LoadSequentialAsync takes for three ids.",
+      "Time how long LoadConcurrentAsync takes for the same three ids and the same delayed load function.",
+      "Confirm LoadConcurrentAsync's total time is close to one delay period, while LoadSequentialAsync's is close to three delay periods.",
+      "Run the existing EntryBatchLoaderTests.cs and confirm both counter-based assertions pass."
     ],
-    "expectedBehavior": "The build succeeds with 0 warnings and no pragma suppression; the app's printed total-hours line reflects the now-guaranteed ClockIn-then-Clockout ordering; CancellableEntrySource genuinely responds to cancellation while GetClockEntry does not.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release && dotnet run --project src/TimeClock.App/TimeClock.App.csproj --configuration Release --no-build"
+    "expectedBehavior": "LoadSequentialAsync's total duration scales with the number of items; LoadConcurrentAsync's stays roughly constant regardless of item count, matching a single delay period.",
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.App/Program.cs",
-      "action": "Modify",
-      "why": "Await clockEntryService.Clockout(1) and remove the now-unnecessary CS4014 pragma suppression."
-    },
-    {
-      "path": "src/TimeClock.Domain/IClockEntryRepository.cs",
+      "path": "src/TimeClock.Domain/EntryBatchLoader.cs",
       "action": "Verify",
-      "why": "Confirm the real, decorative CancellationToken parameter on GetClockEntry."
+      "why": "Confirm the real LoadSequentialAsync and LoadConcurrentAsync implementations."
     },
     {
-      "path": "src/TimeClock.Domain/CancellableEntrySource.cs",
+      "path": "tests/TimeClock.Domain.Tests/EntryBatchLoaderTests.cs",
       "action": "Verify",
-      "why": "Confirm the new extension's genuinely functioning cancellation."
+      "why": "Confirm the existing counter-based proof of sequential-vs-concurrent behavior."
     },
     {
-      "path": "site/data/sessions/session-27.json",
+      "path": "site/data/sessions/session-26.json",
       "action": "Add",
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-27: teach cancellation and asynchronous exceptions",
+  "commit": "session-26: teach sequential and concurrent asynchronous flow",
   "review": [
-    "Program.cs's await fix is the exact, minimal change (add await, remove the pragma pair) -- no other lines are touched.",
-    "The build is confirmed warning-free without any suppression after the fix.",
-    "GetClockEntry's CancellationToken is confirmed decorative by reading its real implementation, not assumed.",
-    "CancellableEntrySource's genuinely functioning cancellation is demonstrated with a real test, contrasting directly with GetClockEntry.",
+    "LoadSequentialAsync and LoadConcurrentAsync's real implementations are quoted directly, not paraphrased.",
+    "The real test's counter-based proof (not a timing guess) is used as the primary evidence for the sequential-vs-concurrent claim.",
+    "Clockout's real lack of a sequential-vs-concurrent decision is explained honestly as the reason this session needed a new example.",
     "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "Why was it correct for Sessions 5 through 25 to keep Program.cs's Clockout(1) call unawaited, rather than fixing it immediately when it was first introduced?",
+      "prompt": "If ClockEntryService gained a new method that clocked out an entire list of employees at once, which of EntryBatchLoader's two patterns would it most resemble if implemented naively with a foreach loop and await inside it?",
       "options": [
-        "The bug is real, observable, and pedagogically useful exactly as-is -- fixing it only once async/await (Session 25) and cancellation (this session) have been properly taught lets learners understand WHY it's a bug, not just that it is one",
-        "It was an oversight that should have been fixed in Session 5",
-        "Unawaited async calls are actually correct C# and never need fixing"
+        "LoadSequentialAsync's pattern -- a foreach loop awaiting each Clockout call in turn processes one employee at a time, exactly like LoadSequentialAsync processes one id at a time",
+        "LoadConcurrentAsync's pattern -- foreach loops are always concurrent",
+        "Neither -- foreach cannot contain await"
       ],
       "correct": 0,
-      "explanation": "This mirrors the real source repository's own history: the bug exists in production-adjacent code precisely because understanding why it matters requires the async/await knowledge this course builds up to across Sessions 25-27."
+      "explanation": "A plain foreach with await inside it is definitionally sequential -- this is exactly the shape LoadSequentialAsync demonstrates, and exactly what such a hypothetical batch-Clockout method would need to deliberately change (to Task.WhenAll, LoadConcurrentAsync's pattern) if concurrency were desired instead."
     },
     {
-      "prompt": "If GetClockEntry's CancellationToken parameter started being genuinely checked (e.g. with cancellationToken.ThrowIfCancellationRequested()), what real behavior would change for existing callers?",
+      "prompt": "Why might LoadSequentialAsync sometimes be preferred over LoadConcurrentAsync, even though it is slower in total wall-clock time?",
       "options": [
-        "Existing callers passing the default token would see no change at all, since a default CancellationToken is never in a cancelled state -- only callers who explicitly pass and trigger a real token would newly observe OperationCanceledException",
-        "Every existing call to GetClockEntry would immediately start throwing",
-        "The method's return type would need to change"
+        "When the operations share a resource that cannot safely handle concurrent access (like the real, Singleton-registered ClockEntryRepository's mutable _clockEntries list), running them sequentially avoids race conditions that concurrent execution could introduce",
+        "LoadSequentialAsync is always strictly better in every situation",
+        "There is never a reason to prefer it"
       ],
       "correct": 0,
-      "explanation": "This is exactly why adding real cancellation support to an existing method is usually a safe, additive change -- default(CancellationToken) callers are unaffected."
+      "explanation": "This connects directly back to the real DI lifetime discussion (Session 20/30): a Singleton-registered, mutable repository is exactly the kind of shared resource where uncontrolled concurrent writes could cause real problems."
     },
     {
-      "prompt": "What is the real, functional difference in this codebase between a CancellationToken parameter that exists but is unused, and one that is genuinely checked?",
+      "prompt": "What would happen if LoadConcurrentAsync's ids.Select(load) were changed to ids.Select(load).ToList() before being passed to Task.WhenAll?",
       "options": [
-        "The unused one (GetClockEntry's) has zero effect on the method's behavior no matter what token is passed; the checked one (CancellableEntrySource's) can genuinely stop the operation early via OperationCanceledException",
-        "There is no real difference -- both behave identically",
-        "The checked one always runs faster"
+        "Functionally very little would change here -- .ToList() would force eager enumeration explicitly, but Select(load) passed directly to WhenAll already causes every load call to run before WhenAll starts waiting",
+        "It would make the calls run sequentially instead",
+        "It would prevent the calls from starting until awaited"
       ],
       "correct": 0,
-      "explanation": "This is the entire teaching point of contrasting the two: a CancellationToken parameter's mere presence in a signature proves nothing about whether cancellation actually works."
+      "explanation": "This is a subtle but real point: LINQ's Select is lazy in general, but passing it directly as WhenAll's argument still causes it to be enumerated (and therefore every load call invoked) immediately, before any awaiting happens -- .ToList() here would be redundant, not a behavior change."
     }
   ],
   "reflections": [
-    "Why does fixing Program.cs's real bug in Session 27 (rather than Session 25, where it was first identified) feel like the right pedagogical placement now that you understand cancellation?",
-    "Where else in this codebase might a parameter exist in a signature without being genuinely used, the way GetClockEntry's CancellationToken is?",
-    "What would you need to change about ClockEntryRepository for GetClockEntry's CancellationToken to become genuinely functional?"
+    "Why did teaching sequential-vs-concurrent async flow require a brand-new example (EntryBatchLoader) instead of extending something already real in the source app?",
+    "What real resource in this codebase (think back to Session 20's DI lifetimes) would make LoadConcurrentAsync's approach risky if applied carelessly?",
+    "How does EntryBatchLoaderTests's counter-based proof give you more confidence than simply timing the two methods and comparing durations?"
   ],
-  "whatBreaks": "Reverting Program.cs's await fix reintroduces the real race condition between Clockout's completion and CalculateTotalHours's read of GetEmployeeClockEntries, along with the real CS4014 warning that would then need re-suppressing to keep the build warning-free. Assuming GetClockEntry's CancellationToken parameter provides genuine cancellation support (because the parameter exists) would lead to writing cancellation-dependent code around a method that currently cannot honor it.",
-  "summary": "Program.cs's real, long-standing unawaited Clockout(1) call is fixed here, in the session where async/await and cancellation are both fully in scope: adding await removes the race that made CalculateTotalHours's near-zero output an accident rather than a guarantee, and the CS4014 pragma suppression is removed along with the bug it was protecting. GetClockEntry's CancellationToken parameter is confirmed, by reading its real implementation, to be entirely decorative -- a real contrast to CancellableEntrySource's genuinely functioning one."
+  "whatBreaks": "Changing LoadSequentialAsync's foreach loop to start every load call before awaiting any of them would turn it into a concurrent implementation in disguise, breaking the real active/maximum test's assertion that at most one operation is ever in flight. Changing LoadConcurrentAsync to await each load call individually inside its Select callback (instead of collecting Tasks for WhenAll) would make it behave like LoadSequentialAsync instead, breaking the real started/gate test's assertion that all operations start together.",
+  "summary": "EntryBatchLoader's real LoadSequentialAsync awaits each operation before starting the next, keeping at most one in flight at a time -- proven by the real test's active/maximum counter, not just asserted. LoadConcurrentAsync starts every operation immediately via Task.WhenAll, proven by the real test's started-count/gate assertion. ClockEntryService.Clockout never faced this choice, because it always processes exactly one employee -- which is exactly why this session needed a new, purpose-built example."
 }

@@ -2,166 +2,161 @@
   "number": 15,
   "category": "Collections and generics",
   "estimatedTime": "35 minutes",
-  "connection": "Session 14 studied a type constraint on a generic method. This session studies a different kind of generic type parameter behavior -- variance -- using ISource<out T> and ISink<in T>, two new, small interfaces built specifically to make covariance and contravariance observable, since nothing in the real domain's own interfaces uses either.",
+  "connection": "Session 14 called GenericRules.Later<T> without examining its where T : IComparable<T> constraint closely. This session studies that constraint directly: what it promises the compiler, what breaks without it, and why Employee genuinely cannot be used with Later<T> as written.",
   "objectives": [
-    "Explain what out on ISource<out T> permits: treating an ISource<Employee> as an ISource<object> safely.",
-    "Explain what in on ISink<in T> permits: treating an ISink<object> as an ISink<Employee> safely.",
-    "Predict, and confirm, which of the two assignments (ISource<Employee> to ISource<object>, or the reverse) compiles.",
-    "Explain why neither IClockEntryRepository nor IClockEntryService uses variance annotations -- their type parameters, where they exist, don't create a supertype/subtype relationship that variance would apply to."
+    "Explain what where T : IComparable<T> promises the compiler about any type T used to call Later<T>.",
+    "Remove the constraint experimentally and read the exact compile error left.CompareTo(right) produces without it.",
+    "Explain why Employee cannot be passed to Later<T> today, and what Employee would need to implement to become usable there.",
+    "Distinguish a constraint that restricts which types are allowed (where T : IComparable<T>) from one that guarantees a default constructor (where T : new()) -- neither of which this codebase currently needs the second kind of."
   ],
   "visuals": [
     {
+      "diagram": "invariant",
+      "title": "A constraint is a promise the caller must keep",
+      "explanation": "where T : IComparable<T> tells the compiler: whatever T ends up being, it will have a CompareTo method -- Later<T>'s body is only allowed to compile because of that promise."
+    },
+    {
       "diagram": "call",
-      "title": "out permits widening the output type",
-      "explanation": "ISource<Employee> source = ...; ISource<object> widened = source; -- legal because ISource<out T> only ever produces (returns) a T, never accepts one."
+      "title": "Without the constraint, CompareTo is not guaranteed to exist",
+      "explanation": "Remove where T : IComparable<T> and left.CompareTo(right) stops compiling -- the compiler no longer knows T has a CompareTo method at all."
     },
     {
       "diagram": "branch",
-      "title": "in permits narrowing the input type",
-      "explanation": "ISink<object> sink = ...; ISink<Employee> narrowed = sink; -- legal because ISink<in T> only ever accepts (consumes) a T as a parameter, never returns one."
-    },
-    {
-      "diagram": "invariant",
-      "title": "The direction of data flow decides which variance is safe",
-      "explanation": "A type that only produces T can safely be treated as producing something less specific (object); a type that only consumes T can safely be treated as consuming something more specific."
+      "title": "DateTime and int qualify; Employee does not",
+      "explanation": "System.DateTime and System.Int32 both implement IComparable<T> in the .NET base class library. Employee implements no such interface."
     },
     {
       "diagram": "type",
-      "title": "Real repository interfaces have no supertype/subtype relationship to vary over",
-      "explanation": "IClockEntryRepository is not generic over Employee/object the way ISource<T> is -- there is no ClockEntry-vs-object substitution question for variance to answer there."
+      "title": "Constraints select a category of types, not one type",
+      "explanation": "where T : IComparable<T> does not name DateTime or int specifically -- it opens Later<T> to any type, present or future, that satisfies the same promise."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Given ISource<Employee> employeeSource = new SingleSource<Employee>(someEmployee);, does ISource<object> objectSource = employeeSource; compile?",
+      "prompt": "What does where T : IComparable<T> actually guarantee inside Later<T>'s method body?",
       "options": [
-        "Yes -- ISource<out T> is covariant: because it only ever returns a T (via Get()), an ISource<Employee> can safely stand in anywhere an ISource<object> is expected",
-        "No -- generic interfaces never allow this kind of assignment",
-        "Only if Employee is sealed"
+        "That left.CompareTo(right) is a valid call, because every T the method could be instantiated with is guaranteed to implement IComparable<T>",
+        "That T must be a value type",
+        "That T has a public parameterless constructor"
       ],
       "correct": 0,
-      "explanation": "out T marks ISource as covariant in T specifically because Get() only produces a T -- there is no method that could misuse the wider object type to insert something Employee-incompatible."
+      "explanation": "A type constraint's entire purpose is unlocking specific members (here, CompareTo) inside the generic method body -- without it, the compiler assumes nothing about T beyond 'it is some type.'"
     },
     {
-      "prompt": "Given ISink<object> objectSink = new CountingSink<object>();, does ISink<Employee> employeeSink = objectSink; compile?",
+      "prompt": "If you remove where T : IComparable<T> from Later<T>, what specifically fails to compile?",
       "options": [
-        "Yes -- ISink<in T> is contravariant: because it only ever accepts a T (via Add(T)), an ISink<object> can safely stand in anywhere an ISink<Employee> is expected, since it can accept an Employee (an object) just fine",
-        "No -- this direction never compiles",
-        "Only if Employee overrides Equals"
+        "left.CompareTo(right) -- the compiler no longer knows CompareTo exists on an unconstrained T",
+        "The method signature itself",
+        "Nothing -- the method still compiles and works identically"
       ],
       "correct": 0,
-      "explanation": "in T marks ISink as contravariant specifically because Add only consumes a T -- an ISink<object> is willing to accept anything, including an Employee, so it satisfies an ISink<Employee> contract."
+      "explanation": "The method's own body is what breaks -- this is the direct, observable consequence of removing a constraint the body actually relies on."
     },
     {
-      "prompt": "Why doesn't IClockEntryRepository use out or in anywhere?",
+      "prompt": "Why can't Later<Employee> be called with two real Employee objects today?",
       "options": [
-        "Its members mix production and consumption of ClockEntry (SaveClockEntry takes one in; GetClockEntry/GetEmployeeClockEntries return them) -- a type that both produces and consumes T cannot safely be marked variant in either direction",
-        "IClockEntryRepository is not a generic interface",
-        "Variance only applies to interfaces with exactly one method"
+        "Employee implements no comparison interface (no IComparable<Employee>) -- there is no defined ordering between two employees for CompareTo to express",
+        "Employee has no properties",
+        "Later<T> explicitly excludes reference types"
       ],
-      "correct": 1,
-      "explanation": "IClockEntryRepository is a plain, non-generic interface -- ClockEntry is a concrete parameter/return type throughout, not a type parameter T. There is nothing to mark out or in."
+      "correct": 0,
+      "explanation": "This is not a limitation of generics -- it is a real, honest gap: nobody has defined what it would mean for one Employee to be 'greater than' another, so the language correctly refuses to guess."
     }
   ],
   "concept": [
     {
-      "title": "out T: safe when a type only produces T",
+      "title": "The constraint unlocks CompareTo inside the method body",
       "paragraphs": [
-        "ISource<out T> { T Get(); } has exactly one member, and it only returns a T -- it never accepts a T as an argument anywhere.",
-        "Because of that one-directional shape, the compiler allows ISource<Employee> to be used wherever ISource<object> is expected: anything you could do with an ISource<object> (call Get() and get back some object) still works when the object happens to be an Employee."
+        "Without where T : IComparable<T>, the compiler treats an unconstrained T as offering nothing beyond object's own members (ToString, Equals, GetHashCode) -- CompareTo is not among them.",
+        "Adding the constraint is what makes left.CompareTo(right) a legal call: the compiler now knows, for certain, that whatever concrete type T turns out to be, it will have that method."
       ],
-      "code": "// src/TimeClock.Domain/VarianceExamples.cs\npublic interface ISource<out T> { T Get(); }\n\nISource<Employee> employeeSource = new SingleSource<Employee>(someEmployee);\nISource<object> widened = employeeSource;   // legal: covariance\nobject value = widened.Get();               // still just reads an Employee, typed as object"
+      "code": "// Removing the constraint breaks the method body, not just its declaration\npublic static T Later<T>(T left, T right) /* where T : IComparable<T> removed */ =>\n    left.CompareTo(right) >= 0 ? left : right;   // CS0117: 'T' does not contain a definition for 'CompareTo'"
     },
     {
-      "title": "in T: safe when a type only consumes T",
+      "title": "DateTime and int qualify; Employee does not -- and that's correct",
       "paragraphs": [
-        "ISink<in T> { void Add(T item); } has exactly one member, and it only accepts a T -- it never returns one.",
-        "Because it never hands a T back out, an ISink<object> (which can Add any object at all) can stand in for an ISink<Employee> (which only ever needs to Add Employee objects) -- accepting a wider type is always safe when nothing depends on getting a narrower type back."
+        "System.DateTime implements IComparable<DateTime>; System.Int32 (what int aliases) implements IComparable<Int32>. Both were designed with a natural ordering (earlier/later, smaller/larger).",
+        "Employee has no such natural ordering defined anywhere in the real source -- and inventing one (by EmployeeId? by Name alphabetically?) would be a real design decision, not something to guess at inside this session."
       ],
-      "code": "public interface ISink<in T> { void Add(T item); }\n\nISink<object> objectSink = new CountingSink<object>();\nISink<Employee> narrowed = objectSink;      // legal: contravariance\nnarrowed.Add(someEmployee);                 // objectSink.Add ultimately runs, accepting the Employee fine"
+      "code": "// Compiles: DateTime and int both implement IComparable<T>\nGenericRules.Later(entryA.ClockIn, entryB.ClockIn);\nGenericRules.Later(employeeA.EmployeeId, employeeB.EmployeeId);\n\n// Does not compile: Employee implements no IComparable<Employee>\n// GenericRules.Later(employeeA, employeeB);"
     },
     {
-      "title": "Real repository interfaces are neither -- and that's expected",
+      "title": "Other constraint kinds this codebase does not currently need",
       "paragraphs": [
-        "IClockEntryRepository's SaveClockEntry(ClockEntry) consumes a ClockEntry; GetClockEntry and GetEmployeeClockEntries produce ClockEntry values. A single interface mixing both directions over the same type parameter cannot be safely marked out or in -- the compiler would reject either annotation if attempted.",
-        "This is not a gap in the real code -- IClockEntryRepository is not even generic over ClockEntry (ClockEntry is a fixed, concrete type in its signatures, not a type parameter). Variance only becomes a question once a type is generic and used consistently in one direction."
+        "where T : class restricts T to reference types; where T : struct restricts to value types; where T : new() requires a public parameterless constructor. None of Later<T>'s callers need any of these -- IComparable<T> is the only constraint this codebase's generic code actually requires.",
+        "Naming these honestly as unused, rather than forcing a contrived example, keeps this session's claims accurate to the real code."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "// Not used anywhere in this codebase -- shown for contrast only\n// static T CreateDefault<T>() where T : new() => new T();"
     }
   ],
   "lab": {
-    "objective": "Confirm ISource<out T>'s covariant assignment and ISink<in T>'s contravariant assignment compile, and confirm the reverse direction of each does not.",
-    "startingCondition": "ISource<T>, ISink<T>, SingleSource<T>, and CountingSink<T> already exist with their real variance annotations.",
+    "objective": "Remove and restore GenericRules.Later<T>'s constraint to observe exactly what it enables, and confirm Employee's real inability to satisfy it.",
+    "startingCondition": "GenericRules.Later<T> already exists with its real where T : IComparable<T> constraint.",
     "steps": [
-      "Assign an ISource<Employee> to an ISource<object> variable and confirm it compiles.",
-      "Attempt to assign an ISource<object> to an ISource<Employee> variable and confirm the compiler rejects it.",
-      "Assign an ISink<object> to an ISink<Employee> variable and confirm it compiles.",
-      "Attempt to assign an ISink<Employee> to an ISink<object> variable and confirm the compiler rejects it."
+      "Temporarily delete the where T : IComparable<T> clause and attempt to build; read the exact compiler error on left.CompareTo(right).",
+      "Restore the constraint and confirm the build succeeds again.",
+      "Attempt to call Later(employeeA, employeeB) with two real Employee objects and read the resulting compile error.",
+      "Write, in one sentence, what Employee would need to implement for that call to become legal."
     ],
-    "expectedBehavior": "ISource<Employee> -> ISource<object> and ISink<object> -> ISink<Employee> both compile; the reverse of each does not.",
+    "expectedBehavior": "Removing the constraint produces a compile error naming CompareTo as missing; calling Later with two Employee arguments produces a constraint-violation compile error; restoring the constraint returns the build to success.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/VarianceExamples.cs",
+      "path": "src/TimeClock.Domain/GenericRules.cs",
       "action": "Verify",
-      "why": "Confirm the real ISource<out T>/ISink<in T> declarations and their implementations."
+      "why": "Confirm the real constraint and its role in the method body."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/VarianceExamplesTests.cs",
-      "action": "Verify",
-      "why": "Confirm both variance directions are covered."
-    },
-    {
-      "path": "site/data/sessions/session-15.json",
+      "path": "site/data/sessions/session-14.json",
       "action": "Add",
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-15: teach variance at api boundaries",
+  "commit": "session-14: teach generic constraints",
   "review": [
-    "Both variance directions are demonstrated with actual assignments, not just described in prose.",
-    "The reverse (invalid) direction of each is confirmed to genuinely fail to compile, not merely asserted.",
-    "IClockEntryRepository's lack of variance annotations is explained honestly, connecting back to its real, mixed-direction, non-generic signature shape.",
-    "The full test suite passes."
+    "The constraint's purpose is demonstrated by actually removing it and reading the real compiler error, not just described.",
+    "Employee's real inability to satisfy IComparable<T> is treated as a genuine, honest gap, not silently worked around.",
+    "Unused constraint kinds (class, struct, new()) are named honestly as not needed here, rather than forced into contrived examples.",
+    "The full test suite passes after the constraint is restored."
   ],
   "postQuiz": [
     {
-      "prompt": "Could IEnumerable<T> (Session 12) be marked out T, the way ISource<T> is?",
+      "prompt": "If Employee later implemented IComparable<Employee> (say, comparing by EmployeeId), would Later<T> need any code changes to accept Employee arguments?",
       "options": [
-        "Yes -- IEnumerable<T> is actually declared IEnumerable<out T> in .NET, for the same reason as ISource<T>: it only ever produces T values (via GetEnumerator/Current), never accepts them",
-        "No -- IEnumerable<T> cannot be variant",
-        "Only for value types"
+        "No -- Later<T>'s existing where T : IComparable<T> constraint would already accept any type that implements that interface, including a newly-comparable Employee",
+        "Yes -- a new LaterEmployee overload would need to be written",
+        "No -- but only after recompiling GenericRules.cs itself"
       ],
       "correct": 0,
-      "explanation": "This is a real fact about the .NET base class library, not just this course's example -- IEnumerable<out T>'s real covariance is exactly why IEnumerable<ClockEntry> could be assigned to an IEnumerable<object> variable if needed."
+      "explanation": "This is the real payoff of constraining by interface rather than by concrete type: any future type that satisfies IComparable<T> becomes usable with Later<T> automatically, with zero changes to Later<T> itself."
     },
     {
-      "prompt": "Why would attempting to add an out T marker to ISink<T> (making it ISink<out T>) fail to compile?",
+      "prompt": "Why does the compiler reject Later(employeeA, employeeB) at compile time instead of, say, throwing an exception at runtime?",
       "options": [
-        "Add(T item) takes T as an input parameter -- out (covariance) requires T to appear only in output positions, and a parameter is an input position",
-        "out T is only valid on interfaces with more than one member",
-        "It would compile, but behave unpredictably at runtime"
+        "Generic constraints are checked at compile time -- the whole point is catching a type that cannot satisfy the constraint before the program ever runs, not after",
+        "It doesn't reject it -- Employee comparisons silently return an arbitrary result",
+        "Constraints are only checked in Debug builds"
       ],
       "correct": 0,
-      "explanation": "C# actually enforces this at compile time: an out type parameter cannot appear in an input (parameter) position anywhere in the interface -- the compiler catches the mismatch between the requested variance and the interface's real shape."
+      "explanation": "Compile-time constraint checking is exactly why generics with constraints are safer than, say, casting to object and hoping a CompareTo-like method exists at runtime."
     },
     {
-      "prompt": "If IClockEntryRepository someday became generic (say, IRepository<T> shared across ClockEntry and Employee), could it be marked out T?",
+      "prompt": "What is the practical difference between Later<T>'s IComparable<T> constraint and an unconstrained generic method that just returns object?",
       "options": [
-        "No -- as long as it has a method like Save(T item) that accepts a T as a parameter, it cannot be covariant; consuming and producing the same type parameter in one interface rules out both variance directions",
-        "Yes, automatically, once it becomes generic",
-        "Only if T is a value type"
+        "The IComparable<T> constraint lets Later<T> call a real, type-safe CompareTo and return the SAME type T that was passed in; an unconstrained method returning object would lose type information and gain no safe way to compare its arguments",
+        "There is no practical difference",
+        "An unconstrained method would run faster"
       ],
       "correct": 0,
-      "explanation": "This is the same structural reason IClockEntryRepository has no variance today -- any interface that both takes T in and hands T back out cannot be safely marked variant in either direction."
+      "explanation": "Constraints let generic code both stay safely typed AND access members specific to the constraint -- losing the constraint would cost both capabilities at once."
     }
   ],
   "reflections": [
-    "Why did this session need a new, purpose-built pair of interfaces (ISource<T>/ISink<T>) instead of finding variance already at work in the real domain?",
-    "Where in the .NET base class library (beyond IEnumerable<out T>) have you seen a variance-annotated generic interface, now that you know what to look for?",
-    "If Employee eventually implemented some IEmployeeLike interface, what would need to be true about ISource<Employee> for it to also be usable as an ISource<IEmployeeLike>?"
+    "Why is 'Employee cannot be compared yet' a more honest lesson outcome than inventing an arbitrary ordering just to make an example work?",
+    "What real-world ordering, if any, would make sense for comparing two Employee objects, and who should decide that -- this session, or a future design decision?",
+    "How does seeing the actual compiler error (not just reading about it) change your confidence in explaining what a constraint does?"
   ],
-  "whatBreaks": "Attempting to declare ISource<T> as out T while also giving it a method that accepts a T parameter would fail to compile -- the compiler enforces that out type parameters appear only in output positions. Assigning an ISource<object> to an ISource<Employee> variable (the unsafe direction) correctly fails to compile, because nothing guarantees every object produced by that source is actually an Employee.",
-  "summary": "ISource<out T> is safely covariant because its one member only produces T; ISource<Employee> can stand in for ISource<object> as a result. ISink<in T> is safely contravariant because its one member only consumes T; ISink<object> can stand in for ISink<Employee>. IClockEntryRepository has no variance annotations because its real methods both consume ClockEntry (SaveClockEntry) and produce it (GetClockEntry, GetEmployeeClockEntries) -- a shape variance cannot safely apply to, and (more fundamentally) because it isn't generic over ClockEntry at all."
+  "whatBreaks": "Removing where T : IComparable<T> from Later<T> breaks the method's own body at the exact line that calls CompareTo -- not its callers, and not at runtime, but the method definition itself fails to compile. Attempting to call Later with two Employee arguments today fails to compile for a different, equally real reason: Employee genuinely does not implement IComparable<Employee>, and no code in this course invents a fake ordering to work around that honestly.",
+  "summary": "where T : IComparable<T> is not decoration -- removing it breaks Later<T>'s own method body, because the compiler can no longer assume CompareTo exists on an unconstrained T. DateTime and int satisfy the constraint because .NET defines a natural ordering for both; Employee does not, and this session treats that as a real, currently-true fact about the codebase rather than working around it."
 }

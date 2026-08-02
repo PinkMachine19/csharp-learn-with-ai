@@ -1,167 +1,163 @@
 {
   "number": 8,
   "category": "Memory and type behavior",
-  "estimatedTime": "35 minutes",
-  "connection": "Session 7 covered value versus reference assignment. Nothing in the real Parm.Practice.ConsoleApplication uses ref, out, or in -- this session is a clearly-labeled new extension, written as a small TryGetOpenEntry helper next to the real IClockEntryRepository so the parameter-passing keywords have somewhere real-shaped to attach to.",
+  "estimatedTime": "40 minutes",
+  "connection": "Session 7 covered ClockOut's nullability. This session asks what actually gets copied when a ClockEntry or an Employee is assigned to a second variable -- and shows why Employee.Rename mutating through an alias is a real, observable consequence of Employee being a reference type.",
   "objectives": [
-    "Explain why out lets a method report a lookup result and success/failure without a nullable return type or a thrown exception.",
-    "Write TryGetOpenEntry(int employeeId, out ClockEntry? entry), a new method modeled on GetClockEntry's real nullable-return shape but demonstrating the out alternative.",
-    "Explain why ref would let a method reassign a caller's ClockEntry? variable entirely, not just mutate the object it currently refers to.",
-    "Explain why in is not needed anywhere in this codebase, since no method here takes a large struct by value."
+    "Predict, before running any code, whether assigning one Employee variable to another copies the object or shares it.",
+    "Use Employee.Rename to observe that two variables referring to the same Employee see the same mutation.",
+    "Explain why ClockEntry.EmployeeId (an int) and ClockIn (a DateTime) are copied by value when a ClockEntry itself is passed around, even though ClockEntry is a class.",
+    "Distinguish 'the ClockEntry reference was copied' from 'the ClockEntry's field values were copied' -- they are not the same claim."
   ],
   "visuals": [
     {
-      "diagram": "call",
-      "title": "out reports a second value on the way out",
-      "explanation": "bool TryGetOpenEntry(int employeeId, out ClockEntry? entry) returns whether the lookup succeeded AND assigns entry -- two pieces of information from one call."
-    },
-    {
-      "diagram": "branch",
-      "title": "The caller must handle both outcomes",
-      "explanation": "if (repository.TryGetOpenEntry(1, out var entry)) uses entry only inside the branch where TryGetOpenEntry returned true -- the compiler enforces entry is definitely assigned by that point."
-    },
-    {
       "diagram": "variable",
-      "title": "ref lets a method replace what the caller's variable refers to",
-      "explanation": "A ref ClockEntry? parameter could reassign the caller's variable to a completely different object, not just mutate the current one."
+      "title": "Two names, one Employee",
+      "explanation": "Employee employee = new(1, \"Avery\", address); Employee alias = employee; -- both variables hold the same reference, not two separate objects."
+    },
+    {
+      "diagram": "instances",
+      "title": "A mutation through one name is visible through the other",
+      "explanation": "alias.Rename(\"Nguyen\") changes the object both variables point to -- employee.Name reads the new value too."
+    },
+    {
+      "diagram": "call",
+      "title": "int and DateTime are copied, always",
+      "explanation": "ClockEntry.EmployeeId and ClockIn are value types -- assigning them to a new variable, or passing them as arguments, copies the number/date itself."
     },
     {
       "diagram": "invariant",
-      "title": "in protects a large struct from being copied",
-      "explanation": "None of this codebase's parameters are large structs, so in has no real use here -- it exists for a category of problem this domain does not have."
+      "title": "The object vs. its fields are separate questions",
+      "explanation": "ClockEntry itself is a reference type (its identity can be shared); its EmployeeId and ClockIn fields are value types (their contents are always copied)."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "What does TryGetOpenEntry(1, out var entry) let you avoid, compared to the real async GetClockEntry(1)?",
+      "prompt": "After Employee alias = employee; alias.Rename(\"Nguyen\");, what does employee.Name return?",
       "options": [
-        "Nothing conceptually different -- it is a synchronous alternative to the same nullable-result idea, useful for comparing the two patterns side by side",
-        "It avoids ever needing a null check",
-        "It makes the lookup run faster"
+        "\"Nguyen\" -- employee and alias refer to the same Employee object",
+        "The original name -- alias is an independent copy",
+        "A compile error -- Rename cannot be called through an alias"
       ],
       "correct": 0,
-      "explanation": "Both patterns communicate 'found or not found' -- out ClockEntry? plus a bool return is one C# idiom for it; a nullable return type (the real GetClockEntry's choice) is another."
+      "explanation": "Assigning employee to alias copies the reference, not the object -- both variables point at one Employee, so Rename's mutation is visible through either name."
     },
     {
-      "prompt": "Inside if (repository.TryGetOpenEntry(1, out var entry)) { ... }, what does the compiler guarantee about entry?",
+      "prompt": "If you pass a ClockEntry to a method and that method reads entry.EmployeeId into a local int, then changes the local int, does the original ClockEntry.EmployeeId change?",
       "options": [
-        "entry is definitely assigned to a non-null ClockEntry inside the if block, because out parameters must be assigned before the method returns",
-        "entry might still be null even though TryGetOpenEntry returned true",
-        "entry is only valid outside the if block"
+        "No -- EmployeeId is an int (value type); reading it into a local variable copies the number, and EmployeeId itself has no public setter anyway",
+        "Yes -- ClockEntry is a class, so everything about it is shared",
+        "It depends on whether the method is static"
       ],
       "correct": 0,
-      "explanation": "C# requires every out parameter to be assigned before the method returns -- combined with a true return value, this is the whole point of the Try-pattern."
+      "explanation": "EmployeeId's value is copied into the local int the moment it is read; the two are independent from that point on, and ClockEntry.EmployeeId is get-only regardless."
     },
     {
-      "prompt": "Why does this course's real domain have no genuine use for the in modifier?",
+      "prompt": "Is ClockEntry a reference type or a value type?",
       "options": [
-        "in exists to avoid copying large structs by value; every struct-like value this codebase passes around (int, DateTime) is small enough that copying is already cheap and idiomatic",
-        "in is deprecated in modern C#",
-        "in only works with reference types"
+        "Reference type -- it is declared with class, so assigning a ClockEntry variable copies the reference, not a new object",
+        "Value type -- it holds only an int and two DateTimes",
+        "Both, depending on how it is constructed"
       ],
       "correct": 0,
-      "explanation": "in is a performance tool for large structs -- this codebase's value types (int, DateTime) are exactly the small, cheap-to-copy kind in was never meant to optimize."
+      "explanation": "class always means reference type in C#, regardless of what value-type fields the class happens to contain."
     }
   ],
   "concept": [
     {
-      "title": "out: two results from one call",
+      "title": "Assigning a class variable copies the reference",
       "paragraphs": [
-        "The real GetClockEntry communicates 'found or not' entirely through its return type: Task<ClockEntry?>. The Try-pattern is the other common C# idiom for the same idea -- a bool return for success/failure, and an out parameter for the value.",
-        "This session adds TryGetOpenEntry as a new, clearly-labeled method next to the real GetClockEntry, so both idioms exist side by side for comparison -- not because the real repository needs both."
+        "Employee alias = employee copies the reference stored in employee -- a pointer to one Employee object in memory -- into alias. It does not create a second Employee.",
+        "Employee.Rename is a real, existing method that mutates Name in place. Calling it through alias changes the same object employee refers to, because there was only ever one object."
       ],
-      "code": "// New extension, modeled on the real GetClockEntry's nullable contract\npublic bool TryGetOpenEntry(int employeeId, out ClockEntry? entry)\n{\n    entry = _clockEntries.FirstOrDefault(e => e.EmployeeId == employeeId && e.ClockOut is null);\n    return entry is not null;\n}"
+      "code": "Employee employee = new(1, \"Avery Chen\", new Address());\nEmployee alias = employee;\n\nalias.Rename(\"Avery Nguyen\");\n\nConsole.WriteLine(employee.Name); // \"Avery Nguyen\" -- same object, either name"
     },
     {
-      "title": "ref: replacing what a variable refers to, not just mutating it",
+      "title": "Assigning a value-type field copies the value",
       "paragraphs": [
-        "Session 7 showed that ClockEntryService.Clockout already mutates a shared ClockEntry object through an ordinary reference -- no ref keyword needed, because mutating an object's members never requires ref.",
-        "ref parameters solve a narrower, different problem: letting a method reassign which object the CALLER's variable points to, not just change the current object's state. Nothing in this domain currently needs that."
+        "ClockEntry.EmployeeId and ClockIn are int and DateTime -- value types. Reading either one into a local variable copies the number or date; the local variable has no ongoing connection to the ClockEntry it came from.",
+        "This is true even though ClockEntry the class is a reference type -- the type of the whole object and the type of each of its members are separate questions."
       ],
-      "code": "// Illustrative only -- not used anywhere in this codebase\nstatic void ReplaceIfClosed(ref ClockEntry entry, ClockEntry replacement)\n{\n    if (entry.ClockOut is not null) entry = replacement;   // reassigns the CALLER's variable\n}"
+      "code": "ClockEntry entry = new(1, DateTime.Now);\nint copiedId = entry.EmployeeId;   // copies the int value 1\n// copiedId has no connection back to entry -- EmployeeId has no setter anyway"
     },
     {
-      "title": "in: a tool for a problem this domain doesn't have",
+      "title": "Passing an object as a method argument passes its reference",
       "paragraphs": [
-        "in tells the compiler a parameter is passed by reference but must not be modified -- its value is to avoid copying a large struct on every call.",
-        "Every value type in this codebase (int EmployeeId, DateTime ClockIn/ClockOut) is small; copying them is already effectively free. in would add a keyword with no measurable benefit here."
+        "ClockEntryService.ClockIn constructs a ClockEntry and passes it directly to SaveClockEntry -- the repository receives the same object, not a copy, and adds that exact reference to _clockEntries.",
+        "This is why ClockEntryService.Clockout can retrieve that same ClockEntry later via GetClockEntry and call ClockOutEmployee on it -- it is mutating the one object that has existed since ClockIn, not a disconnected copy."
       ],
-      "code": "// Not used in this codebase -- int and DateTime are already cheap to copy\nstatic double HoursBetween(in DateTime start, in DateTime end) => (end - start).TotalHours;"
+      "code": "// Services/ClockEntryService.cs -- ClockIn passes the reference straight through\npublic void ClockIn(int employeeId)\n{\n    var entry = new ClockEntry(employeeId, DateTime.Now);\n    _clockEntryRepository.SaveClockEntry(entry);   // repository now shares this exact object\n}"
     }
   ],
   "lab": {
-    "objective": "Add TryGetOpenEntry as a new out-parameter alternative to the real GetClockEntry, and write tests comparing both idioms' call sites.",
-    "startingCondition": "IClockEntryRepository and ClockEntryRepository already exist with the real async GetClockEntry method.",
+    "objective": "Observe reference sharing through Employee.Rename and value copying through ClockEntry's int/DateTime fields, using the real domain types.",
+    "startingCondition": "Employee, Address, and ClockEntry already exist with their real constructors and members.",
     "steps": [
-      "Add bool TryGetOpenEntry(int employeeId, out ClockEntry? entry) to ClockEntryRepository (not the interface -- this is a new, additional method, not a replacement).",
-      "Write a call site using if (repository.TryGetOpenEntry(...)) and confirm the compiler enforces entry's definite assignment inside the branch.",
-      "Write a second call site using the real, existing GetClockEntry and compare how each communicates 'not found.'",
-      "Add tests for TryGetOpenEntry's true and false paths."
+      "Construct one Employee, assign it to a second variable, and predict what employee.Name will be after calling Rename through the second variable.",
+      "Run the prediction and confirm both variables observe the renamed value.",
+      "Construct a ClockEntry, copy EmployeeId into a local int, and confirm changing the local variable has no effect on entry.EmployeeId (also confirm EmployeeId has no setter to change anyway).",
+      "Trace ClockEntryService.ClockIn and SaveClockEntry to confirm the exact same ClockEntry reference flows from construction into the repository's _clockEntries list."
     ],
-    "expectedBehavior": "TryGetOpenEntry returns true with entry assigned when an open entry exists, and false with entry null when it does not; the real GetClockEntry is unchanged.",
+    "expectedBehavior": "Renaming through an alias changes the name visible through the original variable; copying EmployeeId into a local int produces an independent value; SaveClockEntry stores the identical reference ClockIn constructed.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/ClockEntryRepository.cs",
-      "action": "Modify",
-      "why": "Add the new TryGetOpenEntry method alongside the real, unmodified GetClockEntry."
+      "path": "src/TimeClock.Domain/AssignmentExamples.cs",
+      "action": "Verify",
+      "why": "Confirm the reference-sharing example matches Employee's real mutable Name/Rename shape."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/ClockEntryTests.cs",
-      "action": "Modify",
-      "why": "Add coverage for TryGetOpenEntry's true and false paths."
-    },
-    {
-      "path": "site/data/sessions/session-08.json",
+      "path": "site/data/sessions/session-07.json",
       "action": "Add",
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-08: teach parameter passing with ref, out, and in",
+  "commit": "session-07: teach value and reference assignment",
   "review": [
-    "TryGetOpenEntry is added as a new method, not a replacement for the real GetClockEntry.",
-    "The out parameter's definite-assignment guarantee is demonstrated at a real call site.",
-    "ref and in are explained honestly as tools this domain does not currently need, not forced into contrived usage.",
+    "Employee assignment is described as reference copying, never as object duplication.",
+    "The example uses Employee.Rename, a real existing method, rather than an invented mutator.",
+    "ClockEntry.EmployeeId's value-type copying is demonstrated independently of ClockEntry's own reference-type status.",
+    "SaveClockEntry's identical-reference behavior is traced back to real ClockEntryService code.",
     "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "Why does TryGetOpenEntry return bool instead of just returning ClockEntry??",
+      "prompt": "Why can ClockEntryService.Clockout mutate the same ClockEntry that ClockIn created, days apart in the method call sequence?",
       "options": [
-        "Both are valid designs for the same problem -- the Try-pattern with out is one C# idiom, a nullable return (the real GetClockEntry's choice) is another; this session teaches the out alternative specifically",
-        "ClockEntry? cannot be returned from a synchronous method",
-        "bool is required by the out keyword"
+        "ClockIn passed the object's reference to SaveClockEntry, so the repository has held the one real object the whole time -- GetClockEntry hands that same reference back out",
+        "ClockEntry overrides Equals to look up entries by value",
+        "ClockOutEmployee creates a brand new ClockEntry internally"
       ],
       "correct": 0,
-      "explanation": "There is no technical requirement to use bool+out over a nullable return -- it is an idiom choice, and this session's point is recognizing both idioms."
+      "explanation": "There is exactly one ClockEntry object per clock-in; every method that touches it afterward is operating on that same shared reference."
     },
     {
-      "prompt": "What would go wrong if TryGetOpenEntry's implementation had a code path that returned true without assigning entry?",
+      "prompt": "If Employee.Address were reassigned (employee.Address = new Address {...}) through one alias, what would a second alias see?",
       "options": [
-        "The code would not compile -- C# requires every out parameter to be definitely assigned before the method returns, on every path",
-        "entry would default to a valid open ClockEntry automatically",
-        "Nothing -- out parameters are optional to assign"
+        "The new Address -- Address itself is also a reference-type property being reassigned on the one shared Employee object",
+        "The old Address -- Address is a value type",
+        "A compile error"
       ],
       "correct": 0,
-      "explanation": "Definite assignment of out parameters is enforced by the compiler, not just a convention -- this is exactly why callers can trust entry after a true return."
+      "explanation": "Address is assigned to Employee's Address property, and Employee itself is shared -- so any alias reading employee.Address afterward sees the newly assigned reference."
     },
     {
-      "prompt": "Could ref have been used instead of out for TryGetOpenEntry's entry parameter?",
+      "prompt": "Does calling entry.GetDuartion() copy the ClockEntry?",
       "options": [
-        "Technically yes, but it would require the caller to initialize entry before the call, for no benefit -- out is the correct, idiomatic choice when the method fully determines the value",
-        "No, ref and out are interchangeable in every situation with no difference",
-        "No, ref only works with value types"
+        "No -- entry is passed implicitly as the reference this method call operates on; no copy of the object occurs",
+        "Yes -- every method call copies its receiver",
+        "Only if ClockOut is null"
       ],
       "correct": 0,
-      "explanation": "ref requires the variable to already have a value going in; out does not -- since TryGetOpenEntry's caller has no meaningful value to provide beforehand, out is the right tool."
+      "explanation": "Method calls on a reference-type instance operate on the shared object directly, not on a copy."
     }
   ],
   "reflections": [
-    "Now that you have both GetClockEntry (nullable return) and TryGetOpenEntry (out parameter) side by side, which would you choose for a new method, and why?",
-    "Can you think of a genuine (not contrived) use for ref anywhere in this codebase as it might grow?",
-    "Why does 'this domain doesn't need in' feel like a legitimate lesson outcome rather than an incomplete one?"
+    "Why does Employee.Rename mutating in place matter for anything other than this one lesson -- where else in the app does that behavior get relied on?",
+    "What would you have to change about ClockEntry for two separately-constructed ClockEntry objects with the same EmployeeId and ClockIn to be considered 'equal'?",
+    "How does knowing SaveClockEntry stores a live reference (not a copy) change how you would reason about a bug where an entry's ClockOut value seems to change unexpectedly?"
   ],
-  "whatBreaks": "Adding a code path in TryGetOpenEntry that returns true without assigning entry would fail to compile -- the definite-assignment rule catches this at compile time rather than allowing a null-reference bug at runtime. Confusing ref with out would lead you to expect a caller-provided initial value for entry that TryGetOpenEntry does not need or use.",
-  "summary": "out lets a method return a second value (here, whether an open entry was found) alongside its normal return type, with the compiler enforcing definite assignment. ref would let a method reassign a caller's variable to an entirely different object -- a capability this codebase's real, ordinary-reference mutation patterns (Session 7) never need. in exists to avoid copying large structs, and this domain's small value types (int, DateTime) never pay that cost in the first place."
+  "whatBreaks": "Assuming Employee assignment copies the object would lead you to expect alias.Rename(...) to leave employee.Name unchanged -- it does not, and code relying on that wrong assumption would silently read stale names. Assuming ClockEntry.EmployeeId is somehow 'live' after being copied into a local variable would lead to bugs trying to use that local as if it still tracked the entry. Forgetting that SaveClockEntry holds a live reference (not a defensive copy) means any code that later mutates a ClockEntry object directly is also mutating what the repository has stored.",
+  "summary": "Employee is a reference type: assigning it copies the reference, so Employee.Rename's mutation through one alias is visible through every other alias. ClockEntry's EmployeeId and ClockIn are value types: copying them copies the number or date itself, independent of ClockEntry's own reference-type identity. SaveClockEntry stores the exact reference ClockIn constructs -- the mechanism that lets Clockout later mutate the same object."
 }

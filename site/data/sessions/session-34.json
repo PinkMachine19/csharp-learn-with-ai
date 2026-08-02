@@ -1,69 +1,167 @@
 {
   "number": 34,
-  "category": "Application milestone",
+  "category": "Data access and application integration",
   "estimatedTime": "45 minutes",
-  "connection": "Session 33 completed the HTTP failure boundary and fixed the real missing-IEmployeeService registration bug. Session 27 already fixed Program.cs's real CS4014 unawaited-Clockout bug. This final session follows one operation across domain validation, asynchronous EF Core persistence, query execution, and automated verification -- the last real gap the source syllabus's Step 40-44 milestones point toward.",
+  "connection": "Session 33 added the WebApi's first real controller, using IClockEntryService (fully registered). This session confronts the real, latent bug in the same DI container: PayrollService requires IEmployeeService, which TimeClock.Web/Program.cs -- mirroring the real Parm.Practice.WebApi/Program.cs -- never registers.",
   "objectives": [
-    "Trace a TimeClock operation across domain and persistence boundaries, from EntryCompletion's validation through PayrollDbContext's persistence to a typed WorkSummary result.",
-    "Confirm Session 27's Clockout fix and Session 33's IEmployeeService registration fix are both still in place and still passing their respective tests.",
-    "Keep validation ahead of state-changing work: an invalid clock-out must never reach the database.",
-    "Verify both successful persistence and failure atomicity with a real SQLite integration test."
+    "Reproduce the real bug directly: attempt to resolve PayrollService from TimeClock.Web's real DI container and observe the InvalidOperationException it throws.",
+    "Read WebApiRegistrationTests.cs, which already proves this exact failure (and its one-line fix) without needing a running web host.",
+    "Apply the real fix: register IEmployeeService/EmployeeService in Program.cs, and confirm PayrollService now resolves successfully.",
+    "Connect this fix back to Session 24's throw-vs-return rule: should a missing registration surface as a 500 error, or should the API return a more specific status code?"
   ],
   "visuals": [
-    {"diagram":"pipeline","title":"One request, explicit stages","explanation":"Input flows through construction, validation, persistence, and a typed summary result."},
-    {"diagram":"invariant","title":"Validation guards persistence","explanation":"Invalid completion stops before the DbContext receives a new entity."},
-    {"diagram":"flowstate","title":"Result state controls the path","explanation":"A failed completion returns immediately; success continues with a known duration."},
-    {"diagram":"tests","title":"Integration checks the boundary","explanation":"A real SQLite in-memory database verifies mapping, saving, querying, and the no-write failure case."}
+    {
+      "diagram": "invariant",
+      "title": "The real, latent bug",
+      "explanation": "PayrollService's constructor requires IEmployeeService; TimeClock.Web/Program.cs registers IClockEntryRepository, IEmployeeRepository, IClockEntryService, and PayrollService itself -- but never IEmployeeService."
+    },
+    {
+      "diagram": "call",
+      "title": "Undiscovered because nothing calls it yet",
+      "explanation": "Before Session 33 added a controller, and before any controller resolves PayrollService, this bug had no way to surface -- it was real but silent."
+    },
+    {
+      "diagram": "branch",
+      "title": "The real test proves both the failure and the fix",
+      "explanation": "WebApiRegistrationTests.cs's two tests: one confirms resolving PayrollService throws without IEmployeeService registered; the other confirms adding one line fixes it."
+    },
+    {
+      "diagram": "return",
+      "title": "A missing DI registration is a different failure than a business rule violation",
+      "explanation": "This bug happens before any request-specific logic runs -- Session 24's throw-vs-return rule was about expected domain outcomes, not startup configuration errors like this one."
+    }
   ],
   "preQuiz": [
-    {"prompt":"When should persistence begin?","options":["After domain validation succeeds","Before constructing the domain object","After ignoring the completion result"],"correct":0,"explanation":"Validation must protect the state-changing boundary."},
-    {"prompt":"What does an in-memory SQLite test add beyond a mocked repository?","options":["Real provider mapping and query execution","A production database server","Automatic proof of every HTTP behavior"],"correct":0,"explanation":"It exercises EF Core against the actual SQLite provider without external infrastructure."},
-    {"prompt":"Where should the cancellation token travel?","options":["Into the asynchronous persistence operation","Only into synchronous constructors","Nowhere once validation succeeds"],"correct":0,"explanation":"Passing the token lets the database operation cooperate with cancellation."}
+    {
+      "prompt": "Why did the real missing-IEmployeeService-registration bug go undiscovered in the source WebApi project for as long as it did?",
+      "options": [
+        "Nothing in the project ever actually tried to resolve PayrollService -- with zero controllers (confirmed in Session 33), the bug had no code path that would trigger it",
+        "It was actually discovered and fixed, then reintroduced",
+        "ASP.NET Core silently ignores missing DI registrations"
+      ],
+      "correct": 0,
+      "explanation": "This is exactly why Session 33's controller work matters here -- once something in the request pipeline resolves PayrollService, the bug becomes immediately, loudly visible."
+    },
+    {
+      "prompt": "What does WebApiRegistrationTests.cs's first test prove, without running a full ASP.NET Core host?",
+      "options": [
+        "That building a ServiceCollection with the real WebApi's exact registrations (minus IEmployeeService) and resolving PayrollService throws InvalidOperationException -- the same failure a real running host would hit",
+        "That the real WebApi project fails to compile",
+        "That IClockEntryRepository is broken"
+      ],
+      "correct": 0,
+      "explanation": "Reproducing a DI container's real registration graph in a fast unit test (no web server needed) is exactly how this bug is demonstrated without the overhead of an integration test."
+    },
+    {
+      "prompt": "What is the one-line fix for this real bug?",
+      "options": [
+        "Add builder.Services.AddSingleton<IEmployeeService, EmployeeService>(); to Program.cs, alongside the other three real registrations already there",
+        "Rewrite PayrollService's constructor to not require IEmployeeService",
+        "Delete PayrollService entirely"
+      ],
+      "correct": 0,
+      "explanation": "The fix is additive and minimal -- exactly what WebApiRegistrationTests.cs's second test confirms: adding the missing registration, and nothing else, resolves the failure."
+    }
   ],
   "concept": [
-    {"title":"Compose previously learned boundaries","paragraphs":["The workflow does not invent a second validation rule. It creates the domain object and delegates completion to EntryCompletion.","Only a successful Result permits mapping to a persistence entity."],"code":"Result<TimeSpan> completion = EntryCompletion.TryComplete(entry, clockedOutAt);\nif (!completion.IsSuccess) return Result<WorkSummary>.Failure(completion.Error!);"},
-    {"title":"Persist after the invariant holds","paragraphs":["The EF Core entity represents storage shape, while ClockEntry remains responsible for domain behavior.","SaveChangesAsync receives the caller's cancellation token, keeping asynchronous control explicit."],"code":"db.ClockEntries.Add(entity);\nawait db.SaveChangesAsync(cancellationToken);"},
-    {"title":"Verify outcome and atomicity","paragraphs":["The success test queries through the provider and checks the stored clock-out value.","The failure test confirms an invalid completion produces a failure result and leaves the table empty."],"code":"Assert.False(result.IsSuccess);\nAssert.Empty(await db.ClockEntries.ToListAsync());"}
+    {
+      "title": "Reproducing the real bug without a running host",
+      "paragraphs": [
+        "WebApiRegistrationTests.cs mirrors TimeClock.Web/Program.cs's exact real registrations (minus IEmployeeService) against a plain ServiceCollection, then calls provider.GetRequiredService<PayrollService>() and asserts it throws.",
+        "This is deliberately NOT a full ASP.NET Core integration test -- reproducing just the DI registration graph is enough to prove the bug exists, and is fast enough to run on every build."
+      ],
+      "code": "// tests/.../WebApiRegistrationTests.cs -- real, already-existing test\n[Fact]\npublic void Real_WebApi_registrations_cannot_resolve_PayrollService()\n{\n    using ServiceProvider provider = RealWebApiRegistrationsWithoutEmployeeService().BuildServiceProvider();\n\n    InvalidOperationException exception = Assert.Throws<InvalidOperationException>(\n        () => provider.GetRequiredService<PayrollService>());\n\n    Assert.Contains(\"IEmployeeService\", exception.Message);\n}"
+    },
+    {
+      "title": "The fix: one registration, confirmed by the second real test",
+      "paragraphs": [
+        "Adding services.AddSingleton<IEmployeeService, EmployeeService>() -- matching the pattern every other real registration in Program.cs already follows -- is the complete fix.",
+        "The second real test proves it: the exact same registration graph, plus that one line, resolves PayrollService successfully."
+      ],
+      "code": "// tests/.../WebApiRegistrationTests.cs -- the real fix, proven by the second test\n[Fact]\npublic void Registering_IEmployeeService_fixes_the_resolution()\n{\n    ServiceCollection services = RealWebApiRegistrationsWithoutEmployeeService();\n    services.AddSingleton<IEmployeeService, EmployeeService>();   // the real fix\n\n    using ServiceProvider provider = services.BuildServiceProvider();\n    PayrollService payrollService = provider.GetRequiredService<PayrollService>();\n\n    Assert.NotNull(payrollService);\n}"
+    },
+    {
+      "title": "A startup failure is a different category than a business-rule failure",
+      "paragraphs": [
+        "Session 24 established throw-vs-return for expected domain outcomes (like 'not currently clocked in') versus broken invariants (like a double clock-out). This bug is neither -- it is a configuration error, discovered only when something tries to construct PayrollService for the first time.",
+        "In a real ASP.NET Core host, an unresolvable DI dependency typically surfaces as an unhandled exception during request handling (or even at startup, if resolved eagerly) -- worth logging clearly, since a generic 500 response gives an API consumer no useful signal about what actually went wrong."
+      ],
+      "code": "dotnet test TimeClock.sln --configuration Release"
+    }
   ],
   "lab": {
-    "objective": "Build and verify the integrated record-completed-entry workflow.",
-    "startingCondition": "Sessions 01–33 are complete; domain validation, result values, async methods, EF Core, SQLite queries, and tests are available.",
+    "objective": "Confirm the real WebApiRegistrationTests.cs failure and fix, then apply the same fix to TimeClock.Web/Program.cs itself and verify a controller can now resolve PayrollService.",
+    "startingCondition": "TimeClock.Web/Program.cs still does not register IEmployeeService, matching the real, current Parm.Practice.WebApi/Program.cs exactly; WebApiRegistrationTests.cs already demonstrates both the failure and the fix against a plain ServiceCollection.",
     "steps": [
-      "Confirm Session 27's Program.cs Clockout fix and Session 33's WebApi IEmployeeService registration fix are both still present and their tests still pass.",
-      "Predict which stages execute for valid and invalid clock-out times.",
-      "Add ClockEntryWorkflow with PayrollDbContext supplied by constructor injection.",
-      "Delegate completion to EntryCompletion and return early on failure.",
-      "Map successful domain state to ClockEntryEntity and save asynchronously with cancellation.",
-      "Add SQLite integration tests for successful persistence and failure atomicity.",
-      "Run the complete Release build, test suite, application, and site validator."
+      "Run WebApiRegistrationTests.cs and confirm both tests pass as written (one proving the failure, one proving the fix) against the isolated ServiceCollection.",
+      "Add a controller action that resolves PayrollService (via constructor injection) and confirm, by running the host, that it throws the same real InvalidOperationException.",
+      "Add builder.Services.AddSingleton<IEmployeeService, EmployeeService>(); to TimeClock.Web/Program.cs.",
+      "Re-run the host and confirm the controller action now resolves PayrollService successfully and returns a real result."
     ],
-    "expectedBehavior": "A valid eight-hour entry is persisted and returned as WorkSummary; an invalid clock-out returns failure and persists nothing; the full test suite passes (57 tests as of Session 19; later sessions add more).",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release && npm test"
+    "expectedBehavior": "Before the fix, resolving PayrollService from the running WebApi host throws InvalidOperationException naming IEmployeeService; after adding the one-line registration, resolution succeeds.",
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
-    {"path":"src/TimeClock.Infrastructure/ClockEntryWorkflow.cs","action":"Add","why":"Compose domain validation and EF Core persistence."},
-    {"path":"tests/TimeClock.Domain.Tests/ClockEntryWorkflowTests.cs","action":"Add","why":"Verify the integrated success and failure paths with SQLite."},
-    {"path":"site/data/sessions/session-34.json","action":"Add","why":"Publish the final lesson, lab, and quiz."}
+    {
+      "path": "tests/TimeClock.Domain.Tests/WebApiRegistrationTests.cs",
+      "action": "Verify",
+      "why": "Confirm the real, existing proof of both the bug and its fix."
+    },
+    {
+      "path": "src/TimeClock.Web/Program.cs",
+      "action": "Modify",
+      "why": "Add the missing IEmployeeService registration, applying the real fix to the actual WebApi host."
+    },
+    {
+      "path": "site/data/sessions/session-33.json",
+      "action": "Add",
+      "why": "Publish synchronized lesson, lab, and quiz material."
+    }
   ],
-  "commit": "session-34: integrate and verify the time entry workflow",
+  "commit": "session-33: teach validation logging and api error responses",
   "review": [
-    "Domain validation runs before persistence.",
-    "Failure returns without adding or saving an entity.",
-    "Persistence models do not replace domain behavior.",
-    "Cancellation reaches SaveChangesAsync.",
-    "Tests use a real relational provider without external services.",
-    "The full solution and course site pass validation."
+    "The real bug is reproduced directly (both via the existing fast unit test and, in the lab, via the actual running host), not just described.",
+    "The fix matches the exact registration pattern every other real dependency in Program.cs already follows.",
+    "The distinction between a startup/configuration failure and Session 24's domain-level throw-vs-return rule is stated explicitly.",
+    "The full test suite passes, including both real WebApiRegistrationTests.cs cases."
   ],
   "postQuiz": [
-    {"prompt":"Why does the workflow call EntryCompletion instead of duplicating its checks?","options":["To keep one authoritative domain rule","To make EF Core validate timestamps","To avoid returning a result"],"correct":0,"explanation":"Delegation prevents validation rules from drifting across layers."},
-    {"prompt":"What proves the invalid workflow is atomic in this lab?","options":["The failure result and empty table","The entity has a generated ID","The query uses OrderBy"],"correct":0,"explanation":"No persisted row remains after the rejected operation."},
-    {"prompt":"What boundary does ToListAsync cross?","options":["Query description to provider execution and materialized results","Domain object to HTTP request","Task to dedicated thread"],"correct":0,"explanation":"Materialization causes the provider to execute the composed query."}
+    {
+      "prompt": "Why did WebApiRegistrationTests.cs's two tests not need a running ASP.NET Core web server to prove this bug and its fix?",
+      "options": [
+        "The bug is entirely about DI container registration, which a plain ServiceCollection reproduces exactly -- no HTTP request, routing, or web server involvement is needed to trigger or observe it",
+        "ASP.NET Core tests always require a running server",
+        "The tests are not actually testing the real bug"
+      ],
+      "correct": 0,
+      "explanation": "Isolating exactly the layer where a bug lives (here, DI registration) is what let this test run fast and without any web-hosting overhead."
+    },
+    {
+      "prompt": "If a second service were added to PayrollService's constructor in the future without updating Program.cs's registrations, what category of bug would result?",
+      "options": [
+        "The same category as this session's real bug -- a missing DI registration, undiscovered until something actually tries to resolve the affected service",
+        "A compile-time error, caught immediately",
+        "No bug -- DI containers automatically register every dependency"
+      ],
+      "correct": 0,
+      "explanation": "This is exactly why WebApiRegistrationTests.cs's pattern -- reproducing the real registration graph in a fast test -- is worth keeping around: it would catch this exact class of regression immediately."
+    },
+    {
+      "prompt": "Is 'PayrollService cannot be resolved' the same kind of failure as ClockEntryService.Clockout's 'employee not currently clocked in' from Session 24?",
+      "options": [
+        "No -- the first is a startup/configuration failure (a missing registration, unrelated to any specific request's data); the second is an expected, everyday domain outcome Session 24's throw-vs-return rule was written for",
+        "Yes -- both should be handled identically",
+        "No -- the first cannot actually occur in a real application"
+      ],
+      "correct": 0,
+      "explanation": "Session 24's rule was scoped to domain-level expected/unexpected outcomes -- this session's bug lives one layer below that, in DI configuration, and is worth naming as a distinct category rather than forcing it into the same rule."
+    }
   ],
   "reflections": [
-    "Which session supplied each part of the final workflow?",
-    "Where would logging and an HTTP DTO map around this workflow?",
-    "Which failures belong in Result and which should still propagate as exceptions?"
+    "Why might a bug like this one -- real, verified, and simple to fix -- persist undiscovered in a real project for a long time?",
+    "What would you add to this codebase's test suite to catch a similar missing-registration bug the moment a new dependency is introduced, rather than only after this specific one was found?",
+    "How does resolving this bug change your confidence in the rest of TimeClock.Web/Program.cs's registrations -- would you want to write a similar test for each one?"
   ],
-  "whatBreaks": "Removing domain validation permits invalid persistence. Removing SaveChangesAsync makes successful results disagree with stored state. Removing the cancellation token prevents cooperative cancellation at the database boundary. Removing the integration tests allows mapping, provider translation, or atomicity regressions to escape detection.",
-  "summary": "The completed workflow composes domain invariants, result-based expected failure, asynchronous persistence, cancellation, relational query execution, and integration testing without collapsing their boundaries."
+  "whatBreaks": "Leaving IEmployeeService unregistered means any future controller action that resolves PayrollService (directly or via a dependency chain) throws InvalidOperationException at the moment of resolution -- a real, silent trap for anyone who adds a new endpoint without knowing this gap exists. Registering EmployeeService with the wrong lifetime (say, Scoped instead of matching the other Singleton registrations) would still fix the immediate resolution failure but introduce the same kind of lifetime-mismatch question Session 30 studied.",
+  "summary": "TimeClock.Web/Program.cs -- mirroring the real, current Parm.Practice.WebApi/Program.cs -- never registers IEmployeeService, even though PayrollService's constructor requires it; resolving PayrollService throws InvalidOperationException as a result. WebApiRegistrationTests.cs already proves both the failure and its one-line fix without a running web host; this session's lab applies that same fix to the real Program.cs, and distinguishes this startup/configuration failure from Session 24's domain-level throw-vs-return rule."
 }

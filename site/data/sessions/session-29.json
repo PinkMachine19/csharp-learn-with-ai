@@ -1,177 +1,162 @@
 {
   "number": 29,
-  "category": "Testing and dependency injection",
+  "category": "test structure",
   "estimatedTime": "40 minutes",
-  "connection": "Session 28 traced the real PayrollServiceTests.cs, which uses Moq. This session studies a second, real test-double style already in the test suite -- hand-written fake repositories like EntryRecorderTests's RecordingRepository -- and the real, mixed Transient/Singleton DI lifetimes from Program.cs (decision-0005), demonstrated with ServiceComposition's Scoped-lifetime example.",
+  "connection": "Session 28 covered cancellation. This session studies the one real xUnit test in the source repository -- PayrollServiceTests.CalculateTotalHours_SumsDurationsOfCompletedEntries -- as a worked Arrange-Act-Assert example, including its unconfigured Mock<IEmployeeService>.",
   "objectives": [
-    "Contrast Moq's Mock<IClockEntryRepository> (Session 28) with a real, hand-written RecordingRepository : IClockEntryRepository test double -- both implement the same interface, by two different mechanisms.",
-    "Explain why a hand-written fake and a Moq mock are both valid test doubles, and what each costs (lines of code written by hand versus a small library dependency and some indirection).",
-    "Explain the real decision-0005 finding: Program.cs registers IClockEntryRepository as Singleton but IClockEntryService, PayrollService, and IEmployeeService as Transient -- and why that mix is safe for this specific console app.",
-    "Use ServiceComposition's real AddTimeClockCore extension to observe Scoped lifetime behavior: one instance per scope, a new instance per new scope."
+    "Identify the Arrange, Act, and Assert sections of the real PayrollServiceTests.cs, even though the source file has no comments marking them.",
+    "Explain why the test mocks IClockEntryRepository with a configured .Setup(...).Returns(...) but mocks IEmployeeService with no configuration at all.",
+    "Compute by hand why two shifts of 2 and 3 hours produce the asserted total of 5.0, tracing through GetEmployeeClockEntries and GetDuartion().",
+    "Write a second, independent test for a boundary case CalculateTotalHours does not yet cover, such as an employee with zero completed entries."
   ],
   "visuals": [
     {
       "diagram": "tests",
-      "title": "Two real ways to fake IClockEntryRepository",
-      "explanation": "Mock<IClockEntryRepository>() (Session 28, via Moq) and a hand-written RecordingRepository : IClockEntryRepository (this session) both satisfy the same interface for testing purposes."
+      "title": "Arrange builds the scenario",
+      "explanation": "Two ClockEntry objects are constructed and clocked out, then a mocked repository is configured to return them for employee 1."
     },
     {
       "diagram": "pipeline",
-      "title": "Both doubles work because ClockEntryService depends on the interface",
-      "explanation": "Session 17/19 already established this: any class implementing IClockEntryRepository can stand in wherever the interface is expected, hand-written or Moq-generated."
+      "title": "Act calls exactly one method",
+      "explanation": "CalculateTotalHours(1, DateTime.MinValue, DateTime.MaxValue) is the single call under test."
     },
     {
       "diagram": "comparison",
-      "title": "The real, mixed lifetimes in Program.cs",
-      "explanation": "AddSingleton<IClockEntryRepository, ClockEntryRepository>() shares one repository; AddTransient<IClockEntryService, ClockEntryService>() creates a new service instance on every resolution."
+      "title": "Assert checks one observable value",
+      "explanation": "Assert.Equal(5.0, totalHours, precision: 5) checks the sum, not any internal implementation detail."
     },
     {
       "diagram": "feedback",
-      "title": "Scoped sits between Transient and Singleton",
-      "explanation": "ServiceComposition's AddScoped<EntryRecorder>() gives one EntryRecorder per scope -- the same instance within one scope, a different one in the next."
+      "title": "An unconfigured mock is itself evidence",
+      "explanation": "Mock<IEmployeeService>() with no .Setup() calls proves, in the test's own structure, that PayrollService's IEmployeeService dependency is not exercised by this code path."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "What do Mock<IClockEntryRepository>() and RecordingRepository : IClockEntryRepository have in common as test doubles?",
+      "prompt": "Why does the real test configure repository.Setup(r => r.GetEmployeeClockEntries(1, DateTime.MinValue, DateTime.MaxValue)).Returns(...) with those exact arguments?",
       "options": [
-        "Both are objects that implement the real IClockEntryRepository interface, letting a test control GetEmployeeClockEntries/GetClockEntry/SaveClockEntry's behavior without touching the real, in-memory ClockEntryRepository",
-        "Nothing -- they are unrelated testing techniques",
-        "Both require the real database to be running"
+        "Moq only returns the configured value when the mocked method is called with matching arguments -- CalculateTotalHours must call GetEmployeeClockEntries with exactly DateTime.MinValue and DateTime.MaxValue for the test to work",
+        "The arguments are arbitrary and any values would work",
+        "DateTime.MinValue and DateTime.MaxValue are required by xUnit"
       ],
       "correct": 0,
-      "explanation": "The mechanism differs (Moq generates an implementation at runtime; RecordingRepository is a small class written by hand), but the underlying principle -- substituting an interface implementation for testing -- is identical."
+      "explanation": "Moq's Setup matches by argument value -- the test's Act call and the Setup's expected arguments must agree for the stub to fire."
     },
     {
-      "prompt": "Why does Program.cs register IClockEntryRepository as Singleton while IClockEntryService is Transient?",
+      "prompt": "Why is employeeService a Mock<IEmployeeService>() with no .Setup() calls at all?",
       "options": [
-        "ClockEntryRepository holds the actual state (_clockEntries) that ClockIn and Clockout both need to share across calls; ClockEntryService itself holds no state of its own, so a new instance per resolution costs nothing and shares the same underlying (Singleton) repository anyway",
-        "It is an arbitrary, unexplained inconsistency",
-        "Transient services cannot depend on Singleton services"
+        "PayrollService's constructor requires an IEmployeeService argument to exist, but CalculateTotalHours never calls any of its members, so no behavior needs to be configured",
+        "IEmployeeService cannot be mocked",
+        "The test is incomplete and missing required setup"
       ],
       "correct": 0,
-      "explanation": "decision-0005 documents this as real and verified against the actual Program.cs: the lifetime choice tracks which class actually needs shared state, not a uniform policy."
+      "explanation": "This is the real, deliberate shape of the test -- it proves the dependency is currently unused by simply never telling the mock what to do."
     },
     {
-      "prompt": "What does AddScoped<EntryRecorder>() guarantee within a single IServiceScope?",
+      "prompt": "2 hours + 3 hours = 5.0 -- which two real method calls produce those numbers?",
       "options": [
-        "Every GetRequiredService<EntryRecorder>() call within that one scope returns the SAME EntryRecorder instance; a different scope gets a different instance",
-        "A new instance every single call, scope or not",
-        "Exactly one instance for the entire application's lifetime"
+        "GetDuartion().TotalHours on each of the two mocked ClockEntry objects, summed by CalculateTotalHours's .Sum() call",
+        "PayrollService.CalculateTotalHours hardcodes 5.0 for testing",
+        "The Mock<IClockEntryRepository> computes the sum internally"
       ],
       "correct": 0,
-      "explanation": "Scoped is the real middle ground between Transient (always new) and Singleton (always the same) -- ServiceCompositionTests.cs demonstrates this directly with two different scopes."
+      "explanation": "Each ClockEntry's real GetDuartion() computes ClockOut - ClockIn; CalculateTotalHours's real Sum call adds the two TotalHours values together."
     }
   ],
   "concept": [
     {
-      "title": "Two real test-double mechanisms in this codebase",
+      "title": "Arrange: two real ClockEntry objects, one mocked repository",
       "paragraphs": [
-        "Session 28's PayrollServiceTests.cs uses Moq: new Mock<IClockEntryRepository>() generates an implementation at runtime, configured with .Setup(...).Returns(...).",
-        "EntryRecorderTests.cs's RecordingRepository is hand-written: a small, real private class implementing every member of IClockEntryRepository directly, tracking what was saved in a simple property."
+        "The real test constructs two genuine ClockEntry objects and clocks each one out -- no test double stands in for ClockEntry itself, only for IClockEntryRepository and IEmployeeService.",
+        "Mocking only the interfaces PayrollService depends on, while using the real domain objects those interfaces return, is what makes this an effective unit test of PayrollService specifically."
       ],
-      "code": "// Hand-written fake -- real, existing code\nprivate sealed class RecordingRepository : IClockEntryRepository\n{\n    public ClockEntry? Saved { get; private set; }\n    public void SaveClockEntry(ClockEntry clockEntry) => Saved = clockEntry;\n    public Task<ClockEntry?> GetClockEntry(int employeeId, CancellationToken cancellationToken = default) =>\n        Task.FromResult<ClockEntry?>(null);\n    public IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate) => [];\n}"
+      "code": "// tests/.../PayrollServiceTests.cs -- Arrange\nvar firstShift = new ClockEntry(1, At(9));\nfirstShift.ClockOutEmployee(At(11)); // 2 hours\n\nvar secondShift = new ClockEntry(1, At(13));\nsecondShift.ClockOutEmployee(At(16)); // 3 hours\n\nvar repository = new Mock<IClockEntryRepository>();\nrepository.Setup(r => r.GetEmployeeClockEntries(1, DateTime.MinValue, DateTime.MaxValue))\n    .Returns(new[] { firstShift, secondShift });\n\nvar employeeService = new Mock<IEmployeeService>();   // deliberately unconfigured"
     },
     {
-      "title": "The real, mixed DI lifetimes, and why they are safe here",
+      "title": "Act: one call, matching the test's own naming",
       "paragraphs": [
-        "decision-0005, verified directly against the real Program.cs: IClockEntryRepository is Singleton (one shared instance, holding the real _clockEntries state); IClockEntryService, PayrollService, and IEmployeeService are all Transient (a new instance every resolution).",
-        "This mix is safe specifically because ClockEntryService and PayrollService hold no mutable state of their own -- every Transient instance simply forwards to the one shared Singleton repository, so creating a new service instance costs a small allocation and nothing more."
+        "The method name -- CalculateTotalHours_SumsDurationsOfCompletedEntries -- states the single behavior under test before the Act line is even read.",
+        "PayrollService is constructed with both mocked dependencies, in the same order as its real constructor: employeeService first, then repository."
       ],
-      "code": "// Program.cs -- the real, verified registrations\nservices.AddTransient<IClockEntryService, ClockEntryService>();\nservices.AddSingleton<IClockEntryRepository, ClockEntryRepository>();\nservices.AddTransient<PayrollService>();\nservices.AddTransient<IEmployeeService, EmployeeService>();"
+      "code": "var payrollService = new PayrollService(employeeService.Object, repository.Object);\n\n// Act\nvar totalHours = payrollService.CalculateTotalHours(1, DateTime.MinValue, DateTime.MaxValue);"
     },
     {
-      "title": "Scoped: the lifetime this console app never needed, but ASP.NET Core will",
+      "title": "Assert: one observable value, with an explicit precision",
       "paragraphs": [
-        "ServiceComposition.AddTimeClockCore registers EntryRecorder as Scoped -- one instance per IServiceScope, demonstrated by ServiceCompositionTests.cs resolving it twice within one scope (same instance) and once in a second scope (a different instance).",
-        "Scoped becomes directly relevant once Session 32's ASP.NET Core WebApi is built: ASP.NET Core creates one scope per HTTP request automatically, so a Scoped registration there means one instance per request -- a pattern this console app, with no request boundary, never needed until now."
+        "Assert.Equal(5.0, totalHours, precision: 5) compares totalHours to 5.0 to five decimal places -- appropriate for a double built from TimeSpan.TotalHours arithmetic, which can carry tiny floating-point error.",
+        "Nothing in the Assert checks whether IEmployeeService was called -- if it becomes used by a future change to CalculateTotalHours, this test's unconfigured mock would need real Setup calls, and this test's silence about it would itself be a signal to update the test."
       ],
-      "code": "// A new extension, demonstrating a lifetime the real console app never used\nservices.AddScoped<EntryRecorder>();\n\nusing (IServiceScope scope = provider.CreateScope())\n{\n    var first = scope.ServiceProvider.GetRequiredService<EntryRecorder>();\n    var second = scope.ServiceProvider.GetRequiredService<EntryRecorder>();\n    // first and second are the SAME instance -- one per scope\n}"
+      "code": "// Assert\nAssert.Equal(5.0, totalHours, precision: 5);"
     }
   ],
   "lab": {
-    "objective": "Compare Moq-based and hand-written test doubles for IClockEntryRepository, and confirm all three real DI lifetimes (Transient, Singleton, Scoped) behave as documented.",
-    "startingCondition": "PayrollServiceTests.cs (Moq), EntryRecorderTests.cs (hand-written RecordingRepository), and ServiceCompositionTests.cs (Scoped) already exist.",
+    "objective": "Trace the real PayrollServiceTests.cs by hand, then add a second test covering an employee with zero completed entries.",
+    "startingCondition": "PayrollServiceTests.cs already contains the real, single test from the source repository.",
     "steps": [
-      "Read RecordingRepository's four interface members and compare its line count and readability to the equivalent Mock<IClockEntryRepository> setup in PayrollServiceTests.cs.",
-      "Resolve IClockEntryService twice from the same ServiceProvider and confirm you get two different (Transient) instances.",
-      "Resolve IClockEntryRepository twice from the same ServiceProvider and confirm you get the SAME (Singleton) instance.",
-      "Run ServiceCompositionTests.cs and confirm EntryRecorder is the same instance within one scope but different across two scopes."
+      "Compute firstShift and secondShift's durations by hand from the At(hour) helper and confirm they are 2 and 3 hours.",
+      "Trace repository.Setup's arguments against the Act line's arguments and confirm they match exactly.",
+      "Add a new [Fact] that configures GetEmployeeClockEntries to return an empty array and asserts CalculateTotalHours returns 0.0.",
+      "Run both tests and confirm the new test does not require any configuration on Mock<IEmployeeService> either."
     ],
-    "expectedBehavior": "Both test-double styles work correctly for their respective tests; Transient/Singleton/Scoped each demonstrate their documented, distinct behavior when resolved directly from a ServiceProvider.",
+    "expectedBehavior": "The original test still passes; the new zero-entries test passes with totalHours equal to 0.0; Mock<IEmployeeService> remains unconfigured in both tests.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "tests/TimeClock.Domain.Tests/EntryRecorderTests.cs",
-      "action": "Verify",
-      "why": "Confirm the real, hand-written RecordingRepository test double."
-    },
-    {
       "path": "tests/TimeClock.Domain.Tests/PayrollServiceTests.cs",
-      "action": "Verify",
-      "why": "Confirm the real Moq-based test double, for contrast."
+      "action": "Modify",
+      "why": "Add a second test for the zero-completed-entries boundary case."
     },
     {
-      "path": "src/TimeClock.Domain/ServiceComposition.cs",
-      "action": "Verify",
-      "why": "Confirm the real AddScoped<EntryRecorder>() registration."
-    },
-    {
-      "path": "tests/TimeClock.Domain.Tests/ServiceCompositionTests.cs",
-      "action": "Verify",
-      "why": "Confirm the real scoped-vs-cross-scope instance assertions."
-    },
-    {
-      "path": "site/data/sessions/session-29.json",
+      "path": "site/data/sessions/session-28.json",
       "action": "Add",
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-29: teach test doubles di lifetimes and service tests",
+  "commit": "session-28: teach unit tests and arrange act assert",
   "review": [
-    "Both real test-double mechanisms (Moq and hand-written) are compared directly, not treated as interchangeable without discussion.",
-    "decision-0005's real, mixed DI lifetimes are explained by what state each class holds, not applied as an unexplained rule.",
-    "Scoped lifetime is demonstrated with the real ServiceCompositionTests.cs assertions, and connected forward to Session 32's ASP.NET Core per-request scoping.",
-    "The full test suite passes."
+    "The new test follows the same Arrange-Act-Assert shape as the real, existing test.",
+    "Mock<IEmployeeService> remains unconfigured, consistent with PayrollService's real, unused dependency.",
+    "The new test's assertion checks one observable value, matching the existing test's style.",
+    "Both tests pass together, and the full suite remains green."
   ],
   "postQuiz": [
     {
-      "prompt": "Why would registering IClockEntryRepository as Transient (instead of the real Singleton) break ClockIn/Clockout's real behavior in Program.cs?",
+      "prompt": "If CalculateTotalHours were changed to call _employeeService.RenameService somewhere, what would happen to the existing PayrollServiceTests.cs test as written today?",
       "options": [
-        "Each resolution would get a fresh, empty _clockEntries list -- ClockIn's saved entry would live in a different repository instance than the one Clockout later queries, so Clockout would never find it",
-        "Nothing would break -- Transient and Singleton behave identically for this class",
-        "It would cause a compile error"
+        "It would likely throw, since Mock<IEmployeeService>() with no setup returns default/null behavior for any called member -- the test would need a real .Setup() added",
+        "Nothing -- Moq automatically implements every member with sensible behavior",
+        "The test would automatically update itself"
       ],
       "correct": 0,
-      "explanation": "This is exactly the scenario Session 19's lab explored -- Singleton is what lets ClockIn and Clockout share the same underlying state across two separate method calls."
+      "explanation": "An unconfigured mock is not a no-op stand-in for every possible future call -- it only behaves correctly for the calls the test author anticipated."
     },
     {
-      "prompt": "When would you choose a hand-written fake like RecordingRepository over a Moq-based mock?",
+      "prompt": "Why does the test use At(9), At(11), At(13), At(16) instead of DateTime.Now for the shift times?",
       "options": [
-        "When the interface is small and the fake's behavior is simple enough that hand-writing it is clearer and has no extra library dependency -- both are legitimate choices, and this codebase genuinely uses both",
-        "Never -- Moq should always be preferred",
-        "Hand-written fakes are only valid for interfaces with one member"
+        "Deterministic, fixed timestamps make the expected duration (2 hours, 3 hours) exact and reproducible on every test run",
+        "DateTime.Now cannot be used inside a Mock setup",
+        "At() is required by xUnit's [Fact] attribute"
       ],
       "correct": 0,
-      "explanation": "There is no universal rule -- IClockEntryRepository's real test suite uses both approaches in different tests, which is itself the honest answer: it depends on the specific test's needs."
+      "explanation": "A test that depended on DateTime.Now would have a different 'now' every run -- fixed offsets from DateTime.Today keep the math exact and repeatable."
     },
     {
-      "prompt": "If ClockEntryService.Clockout were called from two different HTTP requests handled concurrently by the real WebApi project (Session 32), and IClockEntryRepository stayed registered as Singleton there too, what real risk would that introduce?",
+      "prompt": "What would a new test for 'an employee with one still-open (not clocked out) entry' need to configure differently?",
       "options": [
-        "Concurrent requests could race on the same shared, mutable _clockEntries list with no synchronization -- a genuine risk this codebase's real, single-threaded console app never had to face",
-        "No risk -- Singleton services are always thread-safe automatically",
-        "The WebApi would fail to start"
+        "GetEmployeeClockEntries would need to return only completed entries -- matching the real repository's own ClockOut != null filter -- so the open entry should simply not appear in the mocked return value",
+        "The test would need to catch an exception from CalculateTotalHours",
+        "PayrollService would need a different constructor"
       ],
       "correct": 0,
-      "explanation": "This is a real, forward-looking risk worth naming honestly: Singleton state that was safe in a single-threaded console app becomes a genuine concurrency concern once multiple requests can run in parallel."
+      "explanation": "The real GetEmployeeClockEntries already filters out open entries before PayrollService ever sees them -- the mock should reproduce that same real filtering behavior, not rely on CalculateTotalHours to filter again."
     }
   ],
   "reflections": [
-    "Why does this codebase's test suite use two different test-double styles (Moq and hand-written) instead of standardizing on one?",
-    "What would you need to verify before trusting that IClockEntryRepository's real Singleton registration is still safe once the WebApi project (Session 32) starts handling concurrent requests?",
-    "Where might Scoped be a better fit than Transient or Singleton for a class this codebase doesn't have yet?"
+    "Why is an unconfigured Mock<IEmployeeService> itself evidence about PayrollService's current behavior, not just an incomplete test?",
+    "What would you need to change about this test if PayrollService's constructor parameter order were swapped?",
+    "How does testing against interfaces (IClockEntryRepository, IEmployeeService) rather than concrete classes make this test possible without an EF Core database?"
   ],
-  "whatBreaks": "Registering IClockEntryRepository as Transient instead of Singleton breaks the real ClockIn-then-Clockout sequence, because each resolution would receive an independent, empty _clockEntries list. Using Moq for every single test double, even trivially simple ones, adds a library dependency and a layer of setup-call indirection where a five-line hand-written fake like RecordingRepository would be just as clear. Assuming Singleton services are automatically safe under concurrent access ignores a real risk that becomes relevant the moment this codebase gains a multi-request host (Session 32).",
-  "summary": "This codebase's real test suite uses two legitimate test-double styles side by side: Moq (Session 28's PayrollServiceTests.cs) and hand-written fakes (EntryRecorderTests.cs's RecordingRepository) -- both satisfy IClockEntryRepository, by different mechanisms. decision-0005's real, mixed Transient/Singleton registrations in Program.cs are safe specifically because only ClockEntryRepository holds shared state; ServiceComposition's Scoped example previews a third lifetime this console app never needed but Session 32's ASP.NET Core WebApi (one scope per request) will."
+  "whatBreaks": "Configuring Mock<IEmployeeService> with unnecessary .Setup() calls would not break the test, but it would misrepresent the real dependency as used when it is not -- exactly the kind of drift Session 20's dead-dependency discussion warns about. Using DateTime.Now instead of the fixed At(hour) helper would make the expected duration nondeterministic. Asserting on an internal field instead of the public totalHours return value would couple the test to PayrollService's implementation instead of its contract.",
+  "summary": "PayrollServiceTests.cs is the source repository's one real xUnit test: Arrange builds two genuine ClockEntry shifts behind a configured Mock<IClockEntryRepository>, Act calls CalculateTotalHours once, and Assert checks the single resulting total -- while its unconfigured Mock<IEmployeeService> is itself proof that PayrollService's second dependency is not yet exercised."
 }

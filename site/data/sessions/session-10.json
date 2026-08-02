@@ -1,168 +1,177 @@
 {
   "number": 10,
-  "category": "Collections and generics",
+  "category": "Memory and type behavior",
   "estimatedTime": "40 minutes",
-  "connection": "Session 9 covered equality. This session studies the real, public List<ClockEntry> _clockEntries field in ClockEntryRepository -- both how List<T> supports the repository's real operations, and why exposing that field publicly is a real, unfixed encapsulation smell worth naming now and revisiting in Session 16.",
+  "connection": "Session 9 covered ref/out/in. This session contrasts ClockEntry and Employee's default reference equality with WorkSummary's real record value equality (introduced in Session 22), and looks at where string comparison rules actually matter in this codebase.",
   "objectives": [
-    "Identify ClockEntryRepository's real, public _clockEntries field and explain what capability that exposes to any caller, not just the repository's own methods.",
-    "Trace how SaveClockEntry (Add) and GetEmployeeClockEntries (Where, a LINQ extension method on IEnumerable<T>) both operate on the same underlying List<ClockEntry>.",
-    "Explain why List<T> was chosen here over an array: the repository does not know how many entries it will ever hold.",
-    "Enumerate _clockEntries with foreach and explain what a foreach loop actually calls behind the syntax."
+    "Predict, and then confirm, that two separately-constructed ClockEntry objects with identical EmployeeId/ClockIn/ClockOut are NOT equal by default -- neither ClockEntry nor Employee overrides Equals.",
+    "Confirm that two WorkSummary records with the same EmployeeId and Hours ARE equal, because record types generate value-based equality automatically.",
+    "Explain why EmployeeDirectory's city-uniqueness check uses StringComparer.OrdinalIgnoreCase rather than default string equality.",
+    "Distinguish struct value-copy semantics (WorkCode, a record struct) from class reference semantics (ClockEntry, Employee)."
   ],
   "visuals": [
     {
-      "diagram": "blueprint",
-      "title": "List<ClockEntry> grows as ClockIn is called",
-      "explanation": "Every ClockIn call adds one more ClockEntry to _clockEntries -- the list's size is never fixed in advance."
-    },
-    {
-      "diagram": "pipeline",
-      "title": "Add appends; Where filters without removing",
-      "explanation": "SaveClockEntry calls _clockEntries.Add(entry); GetEmployeeClockEntries calls _clockEntries.Where(...), which reads the list without changing it."
-    },
-    {
-      "diagram": "invariant",
-      "title": "public means any caller can bypass the repository's methods",
-      "explanation": "Because _clockEntries is a public field, code outside ClockEntryRepository could call _clockEntries.Clear() or .Add(...) directly, skipping SaveClockEntry entirely -- a real, unfixed encapsulation gap."
+      "diagram": "comparison",
+      "title": "class gives you reference equality unless you opt out",
+      "explanation": "new ClockEntry(1, t) != new ClockEntry(1, t) is true (they are unequal) -- ClockEntry never overrode Equals, so two separately-constructed objects are never equal, even with identical field values."
     },
     {
       "diagram": "instances",
-      "title": "foreach is syntax over an enumerator",
-      "explanation": "The real leftover foreach(var clockentry in _clockEntries) { } in GetClockEntry compiles to repeated calls to an enumerator's MoveNext/Current, even though this particular loop body does nothing with each element."
+      "title": "record gives you value equality automatically",
+      "explanation": "new WorkSummary(1, 8m) == new WorkSummary(1, 8m) is true -- the compiler generates Equals/GetHashCode from WorkSummary's declared members."
+    },
+    {
+      "diagram": "type",
+      "title": "Case sensitivity is a choice, not a default",
+      "explanation": "\"Springfield\" == \"springfield\" is false under ordinal string comparison; EmployeeDirectory explicitly opts into StringComparer.OrdinalIgnoreCase to treat them as the same city."
+    },
+    {
+      "diagram": "decimal",
+      "title": "record struct copies by value, like int or DateTime",
+      "explanation": "WorkCode is declared readonly record struct -- assigning one WorkCode variable to another copies its Year and Sequence, the same as any other value type."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Why does ClockEntryRepository use List<ClockEntry> instead of ClockEntry[]?",
+      "prompt": "Does ClockEntry override Equals?",
       "options": [
-        "The repository has no way to know how many entries it will ever hold -- List<T> grows as SaveClockEntry adds more, which a fixed-size array cannot do without manual resizing",
-        "List<T> is required by the IClockEntryRepository interface",
-        "Arrays cannot hold reference types"
+        "No -- it uses the default reference equality inherited from object, so two ClockEntry objects with identical EmployeeId/ClockIn/ClockOut are still considered unequal",
+        "Yes -- it compares EmployeeId, ClockIn, and ClockOut",
+        "Yes, but only ClockOut is compared"
       ],
       "correct": 0,
-      "explanation": "An array's length is fixed at creation; a growing collection of unknown final size is exactly what List<T> is for."
+      "explanation": "Nothing in the real ClockEntry.cs overrides Equals or GetHashCode -- confirmed by reading the actual file; it relies entirely on object identity."
     },
     {
-      "prompt": "What does _clockEntries being a public field (not private) actually expose to code outside ClockEntryRepository?",
+      "prompt": "Why does new WorkSummary(1, 8m).Equals(new WorkSummary(1, 8m)) return true without any code written for it?",
       "options": [
-        "Direct access to Add, Remove, Clear, and every other List<ClockEntry> member -- completely bypassing SaveClockEntry and any future validation it might contain",
-        "Nothing extra -- public fields behave identically to private ones",
-        "Only read access, never write access"
+        "WorkSummary is declared as a record, and the compiler automatically generates member-wise Equals/GetHashCode/== for records",
+        "decimal always compares by value across all types",
+        "WorkSummary happens to be a singleton"
       ],
       "correct": 0,
-      "explanation": "A public field grants full read/write access to the underlying list's entire API, not just the repository's intended SaveClockEntry/GetEmployeeClockEntries/GetClockEntry surface."
+      "explanation": "record is a C# feature specifically for value-equality-by-default types -- WorkSummary gets this for free from its declaration, unlike the plain class ClockEntry."
     },
     {
-      "prompt": "What does the real, leftover foreach(var clockentry in _clockEntries) { } inside GetClockEntry actually do?",
+      "prompt": "What would \"Springfield\" == \"springfield\" evaluate to using C#'s default string equality?",
       "options": [
-        "It enumerates every entry and does nothing with each one -- a genuine, harmless-but-pointless leftover in the real source, kept intentionally as a 'spot the smell' artifact",
-        "It searches for the requested employeeId",
-        "It deletes completed entries"
+        "false -- default string comparison is ordinal (case-sensitive) unless you explicitly choose a case-insensitive comparer",
+        "true -- strings always compare case-insensitively",
+        "A compile error"
       ],
       "correct": 0,
-      "explanation": "The loop body is empty in the real repository -- confirmed by reading Repositories/ClockEntryRepository.cs directly. It has no effect on the method's behavior."
+      "explanation": "C#'s default == for string is ordinal and case-sensitive; EmployeeDirectory has to opt into StringComparer.OrdinalIgnoreCase specifically to treat differently-cased city names as duplicates."
     }
   ],
   "concept": [
     {
-      "title": "List<ClockEntry> is the repository's only storage",
+      "title": "ClockEntry and Employee: reference equality, by default and by choice",
       "paragraphs": [
-        "_clockEntries is declared public readonly List<ClockEntry> _clockEntries = new(); -- readonly means the field itself can never be reassigned to point at a different list, but the list's contents remain fully mutable through Add, Remove, Clear, and indexing.",
-        "Every real method on ClockEntryRepository -- SaveClockEntry, GetClockEntry, GetEmployeeClockEntries -- reads or writes this one list. There is no other storage anywhere in the class."
+        "ClockEntry and Employee are both plain class declarations with no Equals override anywhere in the real source. That means == and .Equals() compare object identity: are these two variables pointing at the very same object?",
+        "This is a real, verified fact about the actual repository, not an assumption -- reading Models/ClockEntry.cs and Models/Employee.cs directly confirms neither type overrides equality members."
       ],
-      "code": "// Repositories/ClockEntryRepository.cs -- the real, complete storage\npublic readonly List<ClockEntry> _clockEntries = new();"
+      "code": "ClockEntry first = new(1, DateTime.Today);\nClockEntry second = new(1, DateTime.Today);\n\nConsole.WriteLine(first.Equals(second)); // false -- two different objects, same field values"
     },
     {
-      "title": "Add and Where operate on the same list, for different purposes",
+      "title": "WorkSummary: a record gets value equality automatically",
       "paragraphs": [
-        "SaveClockEntry's _clockEntries.Add(clockEntry) is List<T>'s own instance method -- it mutates the list in place, growing its Count by one.",
-        "GetEmployeeClockEntries's _clockEntries.Where(...) is a LINQ extension method available on any IEnumerable<T>, including List<T> -- it does not mutate anything; it returns a new, deferred query over the existing elements (Session 22)."
+        "public sealed record WorkSummary(int EmployeeId, decimal Hours) is a positional record. Declaring it with record instead of class is what generates member-wise Equals, GetHashCode, and == overloads -- no extra code required.",
+        "This is the real, meaningful contrast this session teaches: the same 'compare these two objects' question gets a different default answer depending on whether the type is declared class or record."
       ],
-      "code": "// Real Add: mutates the list\npublic void SaveClockEntry(ClockEntry clockEntry) => _clockEntries.Add(clockEntry);\n\n// Real Where: reads the list, returns a query, does not mutate\npublic IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate) =>\n    _clockEntries.Where(entry => entry.EmployeeId == employeeId && entry.ClockOut != null\n        && entry.ClockIn >= startDate && entry.ClockIn <= endDate);"
+      "code": "public sealed record WorkSummary(int EmployeeId, decimal Hours);\n\nWorkSummary a = new(1, 8m);\nWorkSummary b = new(1, 8m);\nConsole.WriteLine(a == b); // true -- record-generated value equality"
     },
     {
-      "title": "A public field is a real, named smell, not a rewrite target today",
+      "title": "String comparison is a choice you make explicitly",
       "paragraphs": [
-        "This session names the problem without fixing it: nothing stops calling code from writing repository._clockEntries.Clear() directly, deleting every clock entry without going through any method at all.",
-        "Session 16 (Encapsulation and Composition) is where this gets revisited as an explicit before/after -- this session's job is only to make sure you can see the gap clearly first."
+        "EmployeeDirectory's Cities set is constructed with new HashSet<string>(StringComparer.OrdinalIgnoreCase) specifically so \"Springfield\" and \"springfield\" collapse into one entry.",
+        "Without that explicit comparer, HashSet<string>'s default ordinal comparison would treat them as two different cities -- exactly the kind of silent data-quality bug case-insensitive matching exists to prevent."
       ],
-      "code": "// Legal today, and a real problem -- nothing in ClockEntryRepository prevents this\nrepository._clockEntries.Clear();"
+      "code": "// src/TimeClock.Domain/EmployeeDirectory.cs\nprivate readonly HashSet<string> cities = new(StringComparer.OrdinalIgnoreCase);"
     }
   ],
   "lab": {
-    "objective": "Trace every real operation ClockEntryRepository performs on _clockEntries, and write a test that demonstrates the public field's real encapsulation gap.",
-    "startingCondition": "ClockEntryRepository already exists with its real public _clockEntries field and three real methods.",
+    "objective": "Confirm ClockEntry's reference equality and WorkSummary's record value equality with executable tests, and explain EmployeeDirectory's explicit string comparer choice.",
+    "startingCondition": "ClockEntry, WorkSummary, and EmployeeDirectory already exist with their real declarations.",
     "steps": [
-      "List every method in ClockEntryRepository and identify which List<T> operation (Add, Where, FirstOrDefault, foreach) each one uses.",
-      "Write a test that directly manipulates repository._clockEntries (e.g. .Clear() or .Add(...)) from outside the class, and confirm it compiles and runs -- proving the field is genuinely public, not just documentation.",
-      "Predict what SaveClockEntry followed immediately by a direct _clockEntries.Clear() call does to a subsequent GetClockEntry lookup, then confirm it.",
-      "Write down, without changing any code yet, what a private field plus explicit methods would have prevented."
+      "Write a test constructing two ClockEntry objects with identical arguments and assert they are NOT equal.",
+      "Write a test constructing two WorkSummary records with identical arguments and assert they ARE equal.",
+      "Temporarily remove StringComparer.OrdinalIgnoreCase from EmployeeDirectory's cities field and observe a previously-passing uniqueness test start to fail.",
+      "Restore the comparer and confirm the test passes again."
     ],
-    "expectedBehavior": "The direct-manipulation test compiles and passes, demonstrating the field really is publicly writable; the prediction about Clear() erasing a just-saved entry is confirmed.",
+    "expectedBehavior": "Two ClockEntry objects with equal field values are unequal by default; two equal-valued WorkSummary records are equal; removing OrdinalIgnoreCase breaks the case-insensitive city-uniqueness test.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/ClockEntryRepository.cs",
+      "path": "src/TimeClock.Domain/ClockEntry.cs",
       "action": "Verify",
-      "why": "Confirm the real public _clockEntries field and its three real consuming methods."
+      "why": "Confirm no Equals override exists -- reference equality is the real, current behavior."
+    },
+    {
+      "path": "src/TimeClock.Domain/WorkSummary.cs",
+      "action": "Verify",
+      "why": "Confirm the real record declaration and its generated value equality."
     },
     {
       "path": "tests/TimeClock.Domain.Tests/ClockEntryTests.cs",
       "action": "Modify",
-      "why": "Add a test demonstrating direct external access to the public _clockEntries field."
+      "why": "Add a test asserting two field-identical ClockEntry objects are unequal."
     },
     {
-      "path": "site/data/sessions/session-10.json",
+      "path": "tests/TimeClock.Domain.Tests/WorkSummaryTests.cs",
+      "action": "Verify",
+      "why": "Confirm the existing record-equality test."
+    },
+    {
+      "path": "site/data/sessions/session-09.json",
       "action": "Add",
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-10: teach arrays lists and enumeration",
+  "commit": "session-09: teach strings records structs and equality",
   "review": [
-    "The real public _clockEntries field is read directly from source, not assumed.",
-    "Add and Where are correctly distinguished as mutating versus non-mutating list operations.",
-    "The encapsulation gap is named honestly as a real, currently-unfixed issue, not silently patched in this session.",
-    "The new test demonstrates the gap is real and reproducible, not hypothetical.",
-    "The full test suite passes."
+    "ClockEntry's lack of an Equals override is confirmed by reading the real file, not assumed.",
+    "WorkSummary's record-generated equality is demonstrated with a real, passing test.",
+    "EmployeeDirectory's explicit StringComparer.OrdinalIgnoreCase choice is explained as deliberate, not default behavior.",
+    "The full test suite passes, including the new ClockEntry inequality test."
   ],
   "postQuiz": [
     {
-      "prompt": "If _clockEntries were changed from List<ClockEntry> to ClockEntry[], what would break first?",
+      "prompt": "If ClockEntry were changed to a record instead of a class, what would change about existing code that stores ClockEntry objects in a List and looks them up by reference?",
       "options": [
-        "SaveClockEntry's _clockEntries.Add(...) call -- arrays have no Add method; a fixed-size array cannot grow to accept new entries",
-        "GetEmployeeClockEntries's Where call -- arrays do not support LINQ",
-        "Nothing -- arrays and List<T> are interchangeable everywhere"
+        "Value equality would mean two field-identical ClockEntry objects become interchangeable for Equals-based lookups, which could silently change behavior anywhere identity currently mattered (like GetClockEntry's FirstOrDefault)",
+        "Nothing would change -- record and class behave identically",
+        "The code would fail to compile"
       ],
       "correct": 0,
-      "explanation": "Arrays support LINQ's Where perfectly well (they implement IEnumerable<T>), but they have no Add method -- List<T>'s growable capacity is specifically what SaveClockEntry depends on."
+      "explanation": "Switching class to record is not a purely cosmetic change -- it changes the equality semantics every consumer of that type relies on, which is exactly why this session treats it as a real design decision, not a syntax preference."
     },
     {
-      "prompt": "What is the real, concrete risk of _clockEntries being public, beyond 'it looks untidy'?",
+      "prompt": "Why is WorkCode declared as a readonly record struct instead of a record (class)?",
       "options": [
-        "Any code anywhere in the same process that has a ClockEntryRepository reference can mutate its stored entries directly, bypassing whatever business rules SaveClockEntry might someday enforce",
-        "Public fields cause a measurable performance penalty",
-        "It prevents the repository from implementing IClockEntryRepository"
+        "record struct combines record's generated value equality with struct's copy-by-value semantics -- appropriate for a small, immutable value like a year+sequence pair",
+        "record struct is required syntax for any type with two properties",
+        "There is no difference between record and record struct"
       ],
       "correct": 0,
-      "explanation": "The real risk is behavioral: any future validation added to SaveClockEntry can be silently bypassed by code that mutates _clockEntries directly instead."
+      "explanation": "record struct is specifically for small, copyable, value-equality types -- exactly what a WorkCode(Year, Sequence) pair is."
     },
     {
-      "prompt": "Does GetEmployeeClockEntries's Where call remove non-matching entries from _clockEntries?",
+      "prompt": "Would GetEmployeeClockEntries's real Where filter (entry.EmployeeId == employeeId) behave any differently if ClockEntry had record value equality instead of reference equality?",
       "options": [
-        "No -- Where returns a new filtered view without modifying the underlying list at all; _clockEntries still contains every entry afterward",
-        "Yes -- Where permanently removes entries that do not match",
-        "Only entries where ClockOut is null are removed"
+        "No -- that filter compares an int (EmployeeId) to an int, which already uses value equality regardless of whether ClockEntry itself is a class or record",
+        "Yes -- it would start matching by full object equality instead",
+        "Yes -- it would stop compiling"
       ],
       "correct": 0,
-      "explanation": "LINQ's Where is non-destructive by design -- this is part of why Session 22's deferred-execution discussion matters: querying never mutates the source."
+      "explanation": "The filter never compares whole ClockEntry objects to each other -- it compares one of their int fields, which is unaffected by ClockEntry's own equality semantics."
     }
   ],
   "reflections": [
-    "Why does this session deliberately not fix the public-field problem it identifies -- what would you lose by fixing it here instead of in Session 16?",
-    "What would you need to add to ClockEntryRepository to make _clockEntries.Add(...) impossible from outside the class, while keeping SaveClockEntry's own behavior unchanged?",
-    "Where else in this codebase might a similarly 'too-permissive' field or property be hiding?"
+    "Why might a real codebase deliberately choose reference equality for ClockEntry rather than adding value equality?",
+    "What would you need to add to ClockEntry to make two field-identical instances equal, and what would you risk changing by doing so?",
+    "Where else in this codebase might case-insensitive string comparison matter, beyond EmployeeDirectory's city set?"
   ],
-  "whatBreaks": "Directly clearing or mutating _clockEntries from outside ClockEntryRepository bypasses SaveClockEntry entirely, and would silently corrupt GetClockEntry/GetEmployeeClockEntries's results for any code that assumed only SaveClockEntry could add entries. Replacing List<ClockEntry> with a fixed-size array would break SaveClockEntry's Add call the moment more entries are saved than the array's original length allows.",
-  "summary": "List<ClockEntry> is ClockEntryRepository's entire storage: SaveClockEntry mutates it with Add, while GetEmployeeClockEntries and GetClockEntry read it with LINQ's Where and FirstOrDefault without changing it. The field's real public accessibility is a genuine, currently-unfixed encapsulation gap -- named honestly here, and revisited as an explicit fix in Session 16."
+  "whatBreaks": "Assuming ClockEntry has value equality (because it superficially looks like a simple data holder) would lead to bugs anywhere code tries to deduplicate or compare ClockEntry objects by field value instead of by reference. Removing WorkSummary's record declaration in favor of class would silently break any test or code that currently relies on WorkSummary equality by value, including the real HoursByEmployee grouping test from Session 22. Removing EmployeeDirectory's StringComparer.OrdinalIgnoreCase would let differently-cased city names silently multiply instead of being treated as one city.",
+  "summary": "class gives you reference equality unless you explicitly override it -- confirmed true for both the real ClockEntry and Employee. record gives you value equality automatically, which is exactly why WorkSummary (Session 22's grouping result) compares equal across separately-constructed instances with the same values. String comparison is ordinal and case-sensitive by default; EmployeeDirectory's StringComparer.OrdinalIgnoreCase is a deliberate, visible choice to treat city names case-insensitively."
 }
