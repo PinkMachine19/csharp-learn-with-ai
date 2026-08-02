@@ -1,3 +1,13 @@
+const projectStatus = document.querySelector(".academy-project-status");
+if (projectStatus) {
+  const STORAGE_KEY = "academy-project-status-open";
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored !== null) projectStatus.open = stored === "true";
+  projectStatus.addEventListener("toggle", () => {
+    localStorage.setItem(STORAGE_KEY, String(projectStatus.open));
+  });
+}
+
 const menuButton = document.querySelector(".menu-button");
 const navigation = document.querySelector("#site-nav");
 
