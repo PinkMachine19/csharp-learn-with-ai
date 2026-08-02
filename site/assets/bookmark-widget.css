@@ -72,7 +72,7 @@
 .bookmark-toast {
   position: fixed;
   right: 20px;
-  bottom: 132px;
+  bottom: 188px;
   z-index: 9002;
   max-width: min(320px, calc(100vw - 40px));
   padding: 10px 14px;
