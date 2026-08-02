@@ -58,6 +58,53 @@ const layerRows = raw.layers.map((layer) => `<tr><td><span class="badge badge-la
 const syllabus = page({ title: "Syllabus", active: "syllabus", description: "The dependency-ordered course path", body: `<main id="main-content"><div class="container">
   <h1>${escapeHtml(raw.course.title)}</h1>
   <p class="subtitle">${escapeHtml(raw.course.subtitle)} — thirty-five focused sessions move from language foundations to tested application integration, published in validated batches.</p>
+  <details class="preface" open>
+    <summary><strong>Preface</strong><span class="preface-hint">Click to collapse</span></summary>
+    <div class="preface-body">
+      <p>Welcome.</p>
+      <p>I&rsquo;m building this course primarily for myself.</p>
+      <p>After spending years building production software, I&rsquo;m refreshing my C# and .NET skills while preparing for my next software engineering role. Rather than keeping scattered notes across notebooks and chat histories, I wanted a structured course that I could work through from beginning to end.</p>
+      <p>If other people find it useful too, that&rsquo;s a bonus.</p>
+      <hr>
+      <p>This course is also an experiment in learning with AI.</p>
+      <p>I use AI constantly. ChatGPT, Claude, Cursor, GitHub Copilot, and whatever comes next have become part of my everyday workflow. I don&rsquo;t see AI as a replacement for software engineers&mdash;I see it as an incredibly powerful accelerator.</p>
+      <p>One way I think about AI is as an evidence engine.</p>
+      <p>I&rsquo;ll describe an idea, ask a question, or make a claim, and AI searches across an enormous amount of information to build an answer. Sometimes it reinforces what I already believe. Sometimes it challenges me. Sometimes it points me toward ideas I hadn&rsquo;t considered.</p>
+      <p>It&rsquo;s an amazing tool.</p>
+      <p>It&rsquo;s also imperfect.</p>
+      <p>AI occasionally gets facts wrong, flattens complex ideas into oversimplified explanations, or confidently presents something that simply isn&rsquo;t true. That&rsquo;s why every explanation in this course should be treated as something to understand and think about&mdash;not something to accept blindly.</p>
+      <p>Engineering judgment still belongs to the human.</p>
+      <hr>
+      <p>One thing you&rsquo;ll notice about this repository&hellip;</p>
+      <p>Much of it was created conversationally.</p>
+      <p>I rarely sit down and type long sections directly into the editor.</p>
+      <p>Instead, I talk through ideas, argue with AI, ask questions, challenge explanations, and gradually shape the lesson. Once I&rsquo;m happy with the direction, I have the AI help organize it into the course structure, and then I come back later to review, refine, and improve it.</p>
+      <p>If you notice rough edges, incomplete explanations, or areas that later improve&mdash;that&rsquo;s expected.</p>
+      <p>This repository is intentionally a living document.</p>
+      <p>You&rsquo;re seeing it evolve, not pretending it was perfect from day one.</p>
+      <hr>
+      <p>You might wonder:</p>
+      <p>&ldquo;If AI can generate code, why spend time learning any of this?&rdquo;</p>
+      <p>Because writing code is only one small part of software engineering.</p>
+      <p>Professional software has to be understood.<br>Maintained.<br>Debugged.<br>Extended.<br>Tested.<br>Reviewed.<br>Deployed.<br>Supported.</p>
+      <p>Sometimes years after the original developers have moved on.</p>
+      <p>AI can help you generate code.</p>
+      <p>It cannot replace understanding why that code exists or how an entire system fits together.</p>
+      <p>That&rsquo;s what this course is about.</p>
+      <p>Learning the fundamentals that make AI useful instead of becoming dependent on it.</p>
+      <hr>
+      <p>Every session ends with a lab.</p>
+      <p>Sometimes you&rsquo;ll write code.<br>Sometimes you&rsquo;ll debug.<br>Sometimes you&rsquo;ll design.<br>Sometimes you&rsquo;ll document.<br>Sometimes you&rsquo;ll simply slow down long enough to organize your own thinking.</p>
+      <p>Programming isn&rsquo;t a spectator sport.</p>
+      <p>Reading creates familiarity.</p>
+      <p>Practice creates skill.</p>
+      <hr>
+      <p>Finally, if you find this course useful, you&rsquo;re welcome to build on it.</p>
+      <p>Fork it.<br>Improve it.<br>Adapt it.<br>Translate it.<br>Use it however it helps you learn.</p>
+      <p>My goal isn&rsquo;t to create the definitive C# course.</p>
+      <p style="margin-bottom:0;">It&rsquo;s to create a resource I&rsquo;d be happy to use myself&mdash;and if it helps someone else become a better software engineer along the way, that&rsquo;s even better.</p>
+    </div>
+  </details>
   <div class="card">
     <div class="card-title">Course Overview</div>
     <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:10px;">

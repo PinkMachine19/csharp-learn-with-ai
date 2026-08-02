@@ -1,12 +1,14 @@
-const projectStatus = document.querySelector(".academy-project-status");
-if (projectStatus) {
-  const STORAGE_KEY = "academy-project-status-open";
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored !== null) projectStatus.open = stored === "true";
-  projectStatus.addEventListener("toggle", () => {
-    localStorage.setItem(STORAGE_KEY, String(projectStatus.open));
+function persistDetailsOpenState(element, storageKey) {
+  if (!element) return;
+  const stored = localStorage.getItem(storageKey);
+  if (stored !== null) element.open = stored === "true";
+  element.addEventListener("toggle", () => {
+    localStorage.setItem(storageKey, String(element.open));
   });
 }
+
+persistDetailsOpenState(document.querySelector(".academy-project-status"), "academy-project-status-open");
+persistDetailsOpenState(document.querySelector(".preface"), "academy-preface-open");
 
 const menuButton = document.querySelector(".menu-button");
 const navigation = document.querySelector("#site-nav");
