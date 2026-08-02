@@ -57,8 +57,8 @@
 
 .shortcuts-modal {
   width: 100%;
-  max-width: 760px;
-  max-height: min(90vh, 720px);
+  max-width: 860px;
+  max-height: min(90vh, 780px);
   display: flex;
   flex-direction: column;
   border: 1px solid var(--border, #30363d);
@@ -125,6 +125,77 @@
 .shortcuts-search:focus {
   outline: none;
   border-color: var(--accent, #58a6ff);
+}
+
+.shortcuts-categories {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.shortcuts-category {
+  border: 1px solid var(--border, #30363d);
+  border-radius: var(--radius, 6px);
+  background: var(--surface-2, #21262d);
+}
+
+.shortcuts-category[hidden] {
+  display: none;
+}
+
+.shortcuts-category summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  color: var(--text, #c9d1d9);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.shortcuts-category summary::-webkit-details-marker {
+  display: none;
+}
+
+.shortcuts-category summary::before {
+  content: "▸";
+  display: inline-block;
+  font-size: 11px;
+  color: var(--accent, #58a6ff);
+  transition: transform 0.15s;
+}
+
+.shortcuts-category[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.shortcuts-category summary:hover {
+  color: var(--accent, #58a6ff);
+}
+
+.shortcuts-category-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 0 14px 14px;
+}
+
+.shortcuts-section[hidden] {
+  display: none;
+}
+
+.shortcuts-section-title {
+  margin: 0 0 6px;
+  color: var(--text-muted, #8b949e);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
 }
 
 .shortcuts-table-wrap {
