@@ -43,14 +43,67 @@ await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
 await cp(path.join(site, "assets"), path.join(dist, "assets"), { recursive: true });
 
-const syllabusRows = sessions.map((session) => `<tr><td><span class="session-number">${String(session.number).padStart(2,"0")}</span></td><td>${session.completionStatus === "complete" ? `<a href="${url(session.lessonPath.replace("index.html", ""))}"><strong>${escapeHtml(session.title)}</strong></a>` : `<strong>${escapeHtml(session.title)}</strong>`}<small>${escapeHtml(session.curriculumLayer)}</small></td><td>${session.prerequisiteSession ? `Session ${String(session.prerequisiteSession).padStart(2,"0")}` : "None"}</td><td><span class="status ${session.completionStatus}">${session.completionStatus === "complete" ? "Complete" : "Planned"}</span></td></tr>`).join("");
-const syllabus = page({ title: "Syllabus", active: "syllabus", description: "The dependency-ordered course path", body: `<main id="main-content"><section class="page-intro shell"><p class="eyebrow">Course map</p><h1>A syllabus built in dependency order.</h1><p class="lede">Thirty-four focused sessions move from language foundations to tested application integration. Session content will be published in validated batches.</p></section><section class="shell section compact"><div class="table-wrap"><table><thead><tr><th>Session</th><th>Topic</th><th>Prerequisite</th><th>Status</th></tr></thead><tbody>${syllabusRows}</tbody></table></div></section></main>` });
+const completeCount = sessions.filter((session) => session.completionStatus === "complete").length;
+const plannedCount = sessions.length - completeCount;
+const statusBadge = (session) => session.completionStatus === "complete" ? `<span class="badge badge-complete">Complete</span>` : `<span class="badge badge-locked">Planned</span>`;
 
-const sessionCards = sessions.map((session) => `<article class="session-card"><div><span class="session-number">${String(session.number).padStart(2,"0")}</span><span class="status ${session.completionStatus}">${session.completionStatus === "complete" ? "Complete" : "Planned"}</span></div><p>${escapeHtml(session.curriculumLayer)}</p><h2>${session.completionStatus === "complete" ? `<a href="${url(session.lessonPath.replace("index.html", ""))}">${escapeHtml(session.title)}</a>` : escapeHtml(session.title)}</h2><p>Prerequisite: ${session.prerequisiteSession ? `Session ${String(session.prerequisiteSession).padStart(2,"0")}` : "None"}</p></article>`).join("");
-const sessionsIndex = page({ title: "Sessions", active: "sessions", description: "All course sessions", body: `<main id="main-content"><section class="page-intro shell"><p class="eyebrow">34 focused lessons</p><h1>One conceptual slice at a time.</h1><p class="lede">Completed lessons will combine visual previews, prediction, explanation, a focused lab, review, and reflection.</p></section><section class="shell section compact"><div class="session-grid">${sessionCards}</div></section></main>` });
+const syllabusRows = sessions.map((session) => `<tr><td><span class="badge badge-layer">${String(session.number).padStart(2,"0")}</span></td><td>${session.completionStatus === "complete" ? `<a href="${url(session.lessonPath.replace("index.html", ""))}"><strong>${escapeHtml(session.title)}</strong></a>` : `<strong>${escapeHtml(session.title)}</strong>`}<br><small style="color:var(--text-muted)">${escapeHtml(session.curriculumLayer)}</small></td><td>${session.prerequisiteSession ? `Session ${String(session.prerequisiteSession).padStart(2,"0")}` : "None"}</td><td>${statusBadge(session)}</td></tr>`).join("");
+const navGrid = `<div class="nav-grid">
+  <a class="nav-card" href="${url("syllabus/")}"><div class="nav-card-title">Syllabus</div><div class="nav-card-desc">The dependency-ordered course path, one row per session.</div></a>
+  <a class="nav-card" href="${url("sessions/")}"><div class="nav-card-title">Sessions</div><div class="nav-card-desc">All ${sessions.length} sessions grouped by curriculum layer.</div></a>
+  <a class="nav-card" href="${url("quizzes/")}"><div class="nav-card-title">Quizzes</div><div class="nav-card-desc">Prediction and observation quizzes for every session.</div></a>
+  <a class="nav-card" href="${url("labs/")}"><div class="nav-card-title">Labs</div><div class="nav-card-desc">Focused C# and .NET labs with validation commands.</div></a>
+</div>`;
+const layerRows = raw.layers.map((layer) => `<tr><td><span class="badge badge-layer">${layer.number}</span></td><td>${escapeHtml(layer.title)}</td><td>${escapeHtml(layer.range)}</td></tr>`).join("");
+const syllabus = page({ title: "Syllabus", active: "syllabus", description: "The dependency-ordered course path", body: `<main id="main-content"><div class="container">
+  <h1>${escapeHtml(raw.course.title)}</h1>
+  <p class="subtitle">${escapeHtml(raw.course.subtitle)} — thirty-four focused sessions move from language foundations to tested application integration, published in validated batches.</p>
+  <div class="card">
+    <div class="card-title">Course Overview</div>
+    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:10px;">
+      <span class="badge badge-layer">${sessions.length} sessions</span>
+      <span class="badge badge-layer">${raw.layers.length} layers</span>
+      <span class="badge badge-complete">Complete: ${completeCount}</span>
+      <span class="badge badge-locked">Planned: ${plannedCount}</span>
+    </div>
+  </div>
+  <h2>Documentation Sections</h2>
+  ${navGrid}
+  <h2>Curriculum Layers</h2>
+  <div class="table-wrap"><table><thead><tr><th>Layer</th><th>Topic</th><th>Sessions</th></tr></thead><tbody>${layerRows}</tbody></table></div>
+  <h2>Syllabus</h2>
+  <div class="table-wrap"><table><thead><tr><th>Session</th><th>Topic</th><th>Prerequisite</th><th>Status</th></tr></thead><tbody>${syllabusRows}</tbody></table></div>
+</div></main>` });
 
-const quizzes = page({ title: "Quizzes", active: "quizzes", description: "Prediction and observation quizzes", body: `<main id="main-content"><section class="page-intro shell"><p class="eyebrow">Predict, then explain</p><h1>Quizzes test mental models—not trivia.</h1><p class="lede">Each session begins with prerequisite and prediction questions, then ends with code-reading and cause-and-effect questions. The consistent advancement threshold is 80%.</p></section>${interactionDemo()}</main>` });
-const labs = page({ title: "Labs", active: "labs", description: "Focused C# and .NET labs", body: `<main id="main-content"><section class="page-intro shell"><p class="eyebrow">Observable experiments</p><h1>Every lab has one primary objective.</h1><p class="lede">Labs state the starting condition, exact repository paths, expected behavior, validation command, files changed, and a suggested commit.</p></section><section class="section shell"><div class="lab-contract"><h2>The lab contract</h2><ol><li>Predict the behavior before editing.</li><li>Change the smallest useful surface.</li><li>Run the documented command.</li><li>Compare the result with the expectation.</li><li>Review and commit a stable state.</li></ol></div></section></main>` });
+const sessionsByLayer = raw.layers.map((layer) => ({ layer, items: sessions.filter((session) => session.layerId === layer.id) }));
+const sessionsIndexBody = sessionsByLayer.map(({ layer, items }) => `<div class="layer-header"><span class="badge badge-layer">${layer.number}</span><span class="layer-title">${escapeHtml(layer.title)}</span></div><p class="layer-desc">Sessions ${escapeHtml(layer.range)}</p><div class="nav-grid">${items.map((session) => session.completionStatus === "complete"
+  ? `<a class="nav-card" href="${url(session.lessonPath.replace("index.html", ""))}"><div class="nav-card-title">Session ${String(session.number).padStart(2,"0")} — ${escapeHtml(session.title)}</div><div class="nav-card-desc">${statusBadge(session)}</div></a>`
+  : `<div class="nav-card" style="opacity:.6"><div class="nav-card-title">Session ${String(session.number).padStart(2,"0")} — ${escapeHtml(session.title)}</div><div class="nav-card-desc">${statusBadge(session)}</div></div>`).join("")}</div>`).join("");
+const sessionsIndex = page({ title: "Sessions", active: "sessions", description: "All course sessions", body: `<main id="main-content"><div class="container">
+  <h1>Sessions</h1>
+  <p class="subtitle">One conceptual slice at a time — each completed session combines visual previews, prediction, explanation, a focused lab, review, and reflection.</p>
+  ${sessionsIndexBody}
+</div></main>` });
+
+const quizzes = page({ title: "Quizzes", active: "quizzes", description: "Prediction and observation quizzes", body: `<main id="main-content"><div class="container">
+  <h1>Quizzes</h1>
+  <p class="subtitle">Quizzes test mental models, not trivia. Each session begins with prerequisite and prediction questions, then ends with code-reading and cause-and-effect questions. The consistent advancement threshold is ${raw.course.advancementThreshold}%.</p>
+  ${interactionDemo()}
+</div></main>` });
+const labs = page({ title: "Labs", active: "labs", description: "Focused C# and .NET labs", body: `<main id="main-content"><div class="container">
+  <h1>Labs</h1>
+  <p class="subtitle">Every lab has one primary objective. Labs state the starting condition, exact repository paths, expected behavior, validation command, files changed, and a suggested commit.</p>
+  <div class="card">
+    <div class="card-title">The lab contract</div>
+    <ol>
+      <li>Predict the behavior before editing.</li>
+      <li>Change the smallest useful surface.</li>
+      <li>Run the documented command.</li>
+      <li>Compare the result with the expectation.</li>
+      <li>Review and commit a stable state.</li>
+    </ol>
+  </div>
+</div></main>` });
 
 const sessionRoutes = [];
 for (const [number, content] of sessionContent) {
@@ -68,7 +121,7 @@ await Promise.all([
   writeRoute("sessions/index.html", sessionsIndex),
   writeRoute("quizzes/index.html", quizzes),
   writeRoute("labs/index.html", labs),
-  writeRoute("404.html", page({ title: "Page not found", active: "", description: "Page not found", body: `<main id="main-content"><section class="page-intro shell"><p class="eyebrow">404</p><h1>This page is not part of the course yet.</h1><a class="button primary" href="${url("")}">Return home</a></section></main>` })),
+  writeRoute("404.html", page({ title: "Page not found", active: "", description: "Page not found", body: `<main id="main-content"><div class="container"><p class="subtitle">404</p><h1>This page is not part of the course yet.</h1><p><a class="btn" href="${url("")}">Return home</a></p></div></main>` })),
   writeFile(path.join(dist, "course-manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`),
   writeFile(path.join(dist, ".nojekyll"), ""),
   ...sessionRoutes
@@ -81,38 +134,62 @@ function normalizeBase(value) { return `/${value.split("/").filter(Boolean).join
 function url(relative) { return `${basePath}${relative}`; }
 function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]); }
 async function writeRoute(relative, content) { const target = path.join(dist, relative); await mkdir(path.dirname(target), { recursive: true }); await writeFile(target, content); }
-function navLink(id, label, href, active) { return `<a${active === id ? ' aria-current="page"' : ""} href="${url(href)}">${label}</a>`; }
-function page({ title, active, description, body }) { const documentTitle = title === raw.course.title ? title : `${title} | ${raw.course.title}`; return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="${escapeHtml(description)}"><meta name="theme-color" content="#0d1117"><title>${escapeHtml(documentTitle)}</title><link rel="stylesheet" href="${url("assets/styles.css")}"><script defer src="${url("assets/app.js")}"></script></head><body><a class="skip-link" href="#main-content">Skip to content</a><header class="site-header"><div class="shell nav-wrap"><a class="brand" href="${url("")}" aria-label="C#/.NET Learn with AI home"><span aria-hidden="true">C#</span><strong>Learn with AI</strong></a><button class="menu-button" type="button" aria-expanded="false" aria-controls="site-nav">Menu</button><nav id="site-nav" aria-label="Primary navigation">${navLink("home","Home","",active)}${navLink("syllabus","Syllabus","syllabus/",active)}${navLink("sessions","Sessions","sessions/",active)}${navLink("quizzes","Quizzes","quizzes/",active)}${navLink("labs","Labs","labs/",active)}</nav></div></header>${body}<footer><div class="shell"><div><strong>C#/.NET Learn with AI</strong><p>A Practical C# and .NET Refresher</p></div><a href="${url("syllabus/")}">View the course map</a></div></footer><aside class="academy-project-status" aria-label="Project status" style="max-width:920px;margin:40px auto 24px;padding:16px 24px;border:1px solid #30363d;border-left:4px solid #ff5ca8;border-radius:6px;background:#161b22;color:#8b949e;font:13px/1.6 -apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,Helvetica,Arial,sans-serif"><strong style="color:#ff5ca8">Project Status:</strong> This course is part of an evolving personal engineering library. AI assisted with drafting and organization, but every lesson is intended to be reviewed, validated, and improved over time as I work through the material myself. Draft content should be treated as work in progress until marked as validated.</aside></body></html>`; }
-function interactionDemo() { return `<section class="section shell"><div class="quiz-card" data-quiz><p class="quiz-label">Interaction preview</p><h2>Which statement best describes what a useful pre-coding question should do?</h2><div class="answers"><label><input type="radio" name="demo" value="a"> Check whether syntax was memorized</label><label><input type="radio" name="demo" value="b"> Reveal a misconception by asking for a prediction</label><label><input type="radio" name="demo" value="c"> Introduce an unrelated advanced feature</label></div><button class="button primary" type="button" data-check-answer data-correct="b">Check answer</button><p class="quiz-feedback" role="status" aria-live="polite"></p></div><div class="reveal-card"><button type="button" aria-expanded="false"><span>Why prediction comes first</span><small>Reveal explanation</small></button><div hidden><p>A prediction makes the learner commit to a mental model. The observed result can then confirm or correct that model.</p></div></div></section>`; }
+function navLink(id, label, href, active) { return `<a${active === id ? ' class="active" aria-current="page"' : ""} href="${url(href)}">${label}</a>`; }
+function page({ title, active, description, body }) { const documentTitle = title === raw.course.title ? title : `${title} | ${raw.course.title}`; return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="${escapeHtml(description)}"><meta name="theme-color" content="#0d1117"><title>${escapeHtml(documentTitle)}</title><link rel="stylesheet" href="${url("assets/styles.css")}"><script defer src="${url("assets/app.js")}"></script></head><body><a class="skip-link" href="#main-content">Skip to content</a><nav aria-label="Primary navigation"><div class="container"><a href="${url("")}" class="brand${active === "home" || active === "syllabus" ? " active" : ""}" aria-label="C#/.NET Learn with AI home">C# Learn with AI</a>${navLink("home","Home","",active)}${navLink("syllabus","Syllabus","syllabus/",active)}${navLink("sessions","Sessions","sessions/",active)}${navLink("quizzes","Quizzes","quizzes/",active)}${navLink("labs","Labs","labs/",active)}</div></nav>${body}<footer><div class="container"><div><strong>C#/.NET Learn with AI</strong><p>A Practical C# and .NET Refresher</p></div><a href="${url("syllabus/")}">View the course map</a></div></footer><aside class="academy-project-status" aria-label="Project status" style="max-width:920px;margin:24px auto 24px;padding:16px 24px;border:1px solid #30363d;border-left:4px solid #ff5ca8;border-radius:6px;background:#161b22;color:#8b949e;font:13px/1.6 -apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,Helvetica,Arial,sans-serif"><strong style="color:#ff5ca8">Project Status:</strong> This course is part of an evolving personal engineering library. AI assisted with drafting and organization, but every lesson is intended to be reviewed, validated, and improved over time as I work through the material myself. Draft content should be treated as work in progress until marked as validated.</aside></body></html>`; }
+function interactionDemo() { return `<div class="card quiz-card" data-quiz><p class="quiz-label">Interaction preview</p><h2>Which statement best describes what a useful pre-coding question should do?</h2><div class="answers"><label><input type="radio" name="demo" value="a"> Check whether syntax was memorized</label><label><input type="radio" name="demo" value="b"> Reveal a misconception by asking for a prediction</label><label><input type="radio" name="demo" value="c"> Introduce an unrelated advanced feature</label></div><button class="btn" type="button" data-check-answer data-correct="b">Check answer</button><p class="quiz-feedback" role="status" aria-live="polite"></p></div><div class="reveal-card"><button type="button" aria-expanded="false"><span>Why prediction comes first</span><small>Reveal explanation</small></button><div hidden><p>A prediction makes the learner commit to a mental model. The observed result can then confirm or correct that model.</p></div></div>`; }
 
 function sessionPage(session, content) {
   const padded = String(session.number).padStart(2, "0");
   const previous = session.number > 1 ? sessions[session.number - 2] : null;
   const next = session.number < sessions.length ? sessions[session.number] : null;
-  return page({ title: `Session ${padded} — ${session.title}`, active: "sessions", description: content.connection, body: `<main id="main-content" class="lesson">
-    <header class="lesson-header shell"><p class="eyebrow">Layer ${layersById.get(session.layerId).number} · Session ${padded} · ${escapeHtml(content.category)}</p><h1>${escapeHtml(session.title)}</h1><p class="lede">${escapeHtml(content.connection)}</p><p class="lesson-time">Estimated time: ${escapeHtml(content.estimatedTime)}</p></header>
-    <section class="visual-deck shell" aria-label="Lesson mental models">${content.visuals.map(visualCard).join("")}</section>
-    <div class="lesson-body shell">
-      ${lessonSection("1. Learning Objectives", `<ul>${content.objectives.map((item)=>`<li>${escapeHtml(item)}</li>`).join("")}</ul>`)}
-      ${lessonSection("2. Pre-Coding Quiz", renderQuiz(`${session.id}-pre`, content.preQuiz))}
-      ${lessonSection("3. The Concept", content.concept.map((part)=>`<article class="concept-part"><h3>${escapeHtml(part.title)}</h3>${part.paragraphs.map((text)=>`<p>${escapeHtml(text)}</p>`).join("")}${part.code ? `<pre><code>${escapeHtml(part.code)}</code></pre>` : ""}</article>`).join(""))}
-      ${lessonSection("4. Lab", `<p><strong>Primary objective:</strong> ${escapeHtml(content.lab.objective)}</p><p><strong>Starting condition:</strong> ${escapeHtml(content.lab.startingCondition)}</p><ol>${content.lab.steps.map((step)=>`<li>${escapeHtml(step)}</li>`).join("")}</ol><p><strong>Validate:</strong> <code>${escapeHtml(content.lab.validation)}</code></p><p><a class="button secondary" href="${url(session.labPath)}">Open standalone lab</a></p>`)}
-      ${lessonSection("5. Expected Files Changed", `<div class="table-wrap"><table><thead><tr><th>File</th><th>Action</th><th>Why</th></tr></thead><tbody>${content.expectedFiles.map((file)=>`<tr><td><code>${escapeHtml(file.path)}</code></td><td>${escapeHtml(file.action)}</td><td>${escapeHtml(file.why)}</td></tr>`).join("")}</tbody></table></div>`)}
-      ${lessonSection("6. Commit Checkpoint", `<div class="checkpoint"><code>${escapeHtml(content.commit)}</code></div>`)}
-      ${lessonSection("7. Code Review Checklist", `<ul class="check-list">${content.review.map((item)=>`<li>${escapeHtml(item)}</li>`).join("")}</ul>`)}
-      ${lessonSection("8. Post-Coding Quiz", renderQuiz(`${session.id}-post`, content.postQuiz))}
-      ${lessonSection("9. Reflection Questions", `<ol>${content.reflections.map((item)=>`<li>${escapeHtml(item)}</li>`).join("")}</ol>`)}
-      ${lessonSection("10. What Breaks If This Code Is Removed?", `<p>${escapeHtml(content.whatBreaks)}</p>`)}
-      ${lessonSection("11. What C#/.NET Concept Was Learned Today?", `<div class="concept-summary"><p>${escapeHtml(content.summary)}</p></div>`)}
-    </div>
-    <nav class="lesson-nav shell" aria-label="Session navigation">${previous && previous.completionStatus === "complete" ? `<a href="${url(previous.lessonPath.replace("index.html", ""))}">← Session ${String(previous.number).padStart(2,"0")}</a>` : `<span aria-label="No previous session"></span>`}<a href="${url("syllabus/")}">Syllabus</a>${next ? next.completionStatus === "complete" ? `<a href="${url(next.lessonPath.replace("index.html", ""))}">Session ${String(next.number).padStart(2,"0")} →</a>` : `<a href="${url("sessions/")}">Session ${String(next.number).padStart(2,"0")} (planned) →</a>` : `<span aria-label="No next session"></span>`}</nav>
-  </main>` });
+  const prevLink = previous && previous.completionStatus === "complete" ? `<a href="${url(previous.lessonPath.replace("index.html", ""))}">← Session ${String(previous.number).padStart(2,"0")}</a>` : `<span>No previous session</span>`;
+  const nextLink = next ? (next.completionStatus === "complete" ? `<a href="${url(next.lessonPath.replace("index.html", ""))}">Session ${String(next.number).padStart(2,"0")} →</a>` : `<a href="${url("sessions/")}">Session ${String(next.number).padStart(2,"0")} (planned) →</a>`) : `<span>No next session</span>`;
+  return page({ title: `Session ${padded} — ${session.title}`, active: "sessions", description: content.connection, body: `<main id="main-content"><div class="container">
+    <div style="margin-bottom:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><span class="badge badge-layer">Layer ${layersById.get(session.layerId).number}</span><span class="badge badge-current">Session ${padded}</span><span style="color:var(--text-muted); font-size:12px;">${escapeHtml(content.category)}</span></div>
+    <h1>${escapeHtml(session.title)}</h1>
+    <p class="subtitle">${escapeHtml(content.connection)}</p>
+    <div class="alert alert-info"><strong>Estimated time:</strong> ${escapeHtml(content.estimatedTime)}</div>
+    <h2 aria-label="Lesson mental models">Mental Models</h2>
+    <div class="visual-grid">${content.visuals.map(visualCard).join("")}</div>
+    ${lessonSection("1. Learning Objectives", `<div class="card"><ol>${content.objectives.map((item)=>`<li>${escapeHtml(item)}</li>`).join("")}</ol></div>`)}
+    ${lessonSection("2. Pre-Coding Quiz", renderQuiz(`${session.id}-pre`, content.preQuiz))}
+    ${lessonSection("3. The Concept", content.concept.map((part)=>`<article class="concept-part"><h3>${escapeHtml(part.title)}</h3>${part.paragraphs.map((text)=>`<p>${escapeHtml(text)}</p>`).join("")}${part.code ? `<pre><code>${escapeHtml(part.code)}</code></pre>` : ""}</article>`).join(""))}
+    ${lessonSection("4. Lab", `<div class="card"><p><strong>Primary objective:</strong> ${escapeHtml(content.lab.objective)}</p><p style="margin-bottom:0;"><strong>Starting condition:</strong> ${escapeHtml(content.lab.startingCondition)}</p></div>${content.lab.steps.map((step, index)=>`<div class="step"><div class="step-num">${index+1}</div><div class="step-body">${escapeHtml(step)}</div></div>`).join("")}<p><strong>Validate:</strong> <code>${escapeHtml(content.lab.validation)}</code></p><p><a class="btn secondary" href="${url(session.labPath)}">Open standalone lab</a></p>`)}
+    ${lessonSection("5. Expected Files Changed", `<div class="table-wrap"><table><thead><tr><th>File</th><th>Action</th><th>Why</th></tr></thead><tbody>${content.expectedFiles.map((file)=>`<tr><td><code>${escapeHtml(file.path)}</code></td><td>${escapeHtml(file.action)}</td><td>${escapeHtml(file.why)}</td></tr>`).join("")}</tbody></table></div>`)}
+    ${lessonSection("6. Commit Checkpoint", `<div class="alert alert-success"><code>${escapeHtml(content.commit)}</code></div>`)}
+    ${lessonSection("7. Code Review Checklist", `<ul class="check-list">${content.review.map((item)=>`<li>${escapeHtml(item)}</li>`).join("")}</ul>`)}
+    ${lessonSection("8. Post-Coding Quiz", renderQuiz(`${session.id}-post`, content.postQuiz))}
+    ${lessonSection("9. Reflection Questions", `<ol>${content.reflections.map((item)=>`<li>${escapeHtml(item)}</li>`).join("")}</ol>`)}
+    ${lessonSection("10. What Breaks If This Code Is Removed?", `<div class="alert alert-warning">${escapeHtml(content.whatBreaks)}</div>`)}
+    ${lessonSection("11. What C#/.NET Concept Was Learned Today?", `<div class="card"><p style="margin-bottom:0;">${escapeHtml(content.summary)}</p></div>`)}
+    <hr>
+    <p style="margin-top:24px;" aria-label="Session navigation">${prevLink} &nbsp;·&nbsp; <a href="${url("syllabus/")}">Syllabus</a> &nbsp;·&nbsp; ${nextLink}</p>
+  </div></main>` });
 }
-function labPage(session, content) { return page({title:`Lab ${String(session.number).padStart(2,"0")} — ${session.title}`,active:"labs",description:content.lab.objective,body:`<main id="main-content"><section class="page-intro shell"><p class="eyebrow">Session ${String(session.number).padStart(2,"0")} lab</p><h1>${escapeHtml(content.lab.objective)}</h1><p class="lede">Starting condition: ${escapeHtml(content.lab.startingCondition)}</p></section><section class="section compact shell"><div class="lab-contract"><ol>${content.lab.steps.map((step)=>`<li>${escapeHtml(step)}</li>`).join("")}</ol><h2>Expected behavior</h2><p>${escapeHtml(content.lab.expectedBehavior)}</p><h2>Validation</h2><pre><code>${escapeHtml(content.lab.validation)}</code></pre><h2>Commit</h2><code>${escapeHtml(content.commit)}</code><p><a href="${url(session.lessonPath.replace("index.html", ""))}">Return to Session ${String(session.number).padStart(2,"0")}</a></p></div></section></main>`}); }
-function quizPage(session, content) { return page({title:`Quiz ${String(session.number).padStart(2,"0")} — ${session.title}`,active:"quizzes",description:`Session ${session.number} quizzes`,body:`<main id="main-content"><section class="page-intro shell"><p class="eyebrow">Session ${String(session.number).padStart(2,"0")}</p><h1>Prediction and observation quizzes</h1><p class="lede">Score at least ${raw.course.advancementThreshold}% and read every explanation.</p></section><section class="section compact shell"><h2>Before coding</h2>${renderQuiz(`${session.id}-quiz-pre`,content.preQuiz)}<h2>After coding</h2>${renderQuiz(`${session.id}-quiz-post`,content.postQuiz)}<p><a href="${url(session.lessonPath.replace("index.html", ""))}">Return to the lesson</a></p></section></main>`}); }
-function lessonSection(title, body) { return `<section class="lesson-section"><h2>${title}</h2>${body}</section>`; }
-function renderQuiz(id, questions) { return `<div class="quiz-set" data-quiz-set data-threshold="${raw.course.advancementThreshold}">${questions.map((question,index)=>`<div class="quiz-card" data-quiz><p class="quiz-label">Question ${index+1}</p><h3>${escapeHtml(question.prompt)}</h3><div class="answers">${question.options.map((option,optionIndex)=>`<label><input type="radio" name="${id}-${index}" value="${optionIndex}"> ${escapeHtml(option)}</label>`).join("")}</div><button class="button primary" type="button" data-check-answer data-correct="${question.correct}">Check answer</button><p class="quiz-feedback" data-explanation="${escapeHtml(question.explanation)}" role="status" aria-live="polite"></p></div>`).join("")}</div>`; }
-function visualCard(visual) { return `<article class="visual-card"><div class="visual-art">${diagram(visual.diagram)}</div><h2>${escapeHtml(visual.title)}</h2><button type="button" aria-expanded="false"><span>Explanation</span><small>Reveal</small></button><div hidden><p>${escapeHtml(visual.explanation)}</p></div></article>`; }
+function labPage(session, content) { return page({title:`Lab ${String(session.number).padStart(2,"0")} — ${session.title}`,active:"labs",description:content.lab.objective,body:`<main id="main-content"><div class="container">
+  <p class="subtitle">Session ${String(session.number).padStart(2,"0")} lab</p>
+  <h1>${escapeHtml(content.lab.objective)}</h1>
+  <p class="subtitle">Starting condition: ${escapeHtml(content.lab.startingCondition)}</p>
+  ${content.lab.steps.map((step, index)=>`<div class="step"><div class="step-num">${index+1}</div><div class="step-body">${escapeHtml(step)}</div></div>`).join("")}
+  <h2>Expected behavior</h2>
+  <p>${escapeHtml(content.lab.expectedBehavior)}</p>
+  <h2>Validation</h2>
+  <pre><code>${escapeHtml(content.lab.validation)}</code></pre>
+  <h2>Commit</h2>
+  <div class="alert alert-success"><code>${escapeHtml(content.commit)}</code></div>
+  <p><a href="${url(session.lessonPath.replace("index.html", ""))}">Return to Session ${String(session.number).padStart(2,"0")}</a></p>
+</div></main>`}); }
+function quizPage(session, content) { return page({title:`Quiz ${String(session.number).padStart(2,"0")} — ${session.title}`,active:"quizzes",description:`Session ${session.number} quizzes`,body:`<main id="main-content"><div class="container">
+  <p class="subtitle">Session ${String(session.number).padStart(2,"0")}</p>
+  <h1>Prediction and observation quizzes</h1>
+  <p class="subtitle">Score at least ${raw.course.advancementThreshold}% and read every explanation.</p>
+  <h2>Before coding</h2>${renderQuiz(`${session.id}-quiz-pre`,content.preQuiz)}
+  <h2>After coding</h2>${renderQuiz(`${session.id}-quiz-post`,content.postQuiz)}
+  <p><a href="${url(session.lessonPath.replace("index.html", ""))}">Return to the lesson</a></p>
+</div></main>`}); }
+function lessonSection(title, body) { return `<hr class="section-divider">\n<h2>${title}</h2>${body}`; }
+function renderQuiz(id, questions) { return `<div class="quiz-set" data-quiz-set data-threshold="${raw.course.advancementThreshold}">${questions.map((question,index)=>`<div class="card quiz-card" data-quiz><p class="quiz-label">Question ${index+1}</p><h3>${escapeHtml(question.prompt)}</h3><div class="answers">${question.options.map((option,optionIndex)=>`<label><input type="radio" name="${id}-${index}" value="${optionIndex}"> ${escapeHtml(option)}</label>`).join("")}</div><button class="btn" type="button" data-check-answer data-correct="${question.correct}">Check answer</button><p class="quiz-feedback" data-explanation="${escapeHtml(question.explanation)}" role="status" aria-live="polite"></p></div>`).join("")}</div>`; }
+function visualCard(visual) { return `<div class="visual-card"><div class="visual-art">${diagram(visual.diagram)}</div><h3>${escapeHtml(visual.title)}</h3><button type="button" aria-expanded="false"><span>Explanation</span><small>Reveal</small></button><div hidden><p>${escapeHtml(visual.explanation)}</p></div></div>`; }
 function diagram(kind) { const diagrams = {
   solution:`<svg viewBox="0 0 180 120" role="img" aria-labelledby="d1t d1d"><title id="d1t">Solution contains projects</title><desc id="d1d">A solution box contains app, domain, and tests project boxes.</desc><rect x="8" y="8" width="164" height="104" rx="12"/><rect x="22" y="37" width="40" height="50"/><rect x="70" y="37" width="40" height="50"/><rect x="118" y="37" width="40" height="50"/><text x="90" y="27">solution</text><text x="42" y="66">app</text><text x="90" y="66">core</text><text x="138" y="66">tests</text></svg>`,
   pipeline:`<svg viewBox="0 0 180 120" role="img" aria-labelledby="d2t d2d"><title id="d2t">Build pipeline</title><desc id="d2d">Source flows through compiler to application output.</desc><defs><marker id="a2" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0 0L0 6L8 3z"/></marker></defs><rect x="6" y="42" width="45" height="35" rx="6"/><rect x="68" y="42" width="45" height="35" rx="6"/><rect x="130" y="42" width="45" height="35" rx="6"/><path d="M52 60h15M114 60h15" marker-end="url(#a2)"/><text x="28" y="64">code</text><text x="90" y="64">build</text><text x="152" y="64">app</text></svg>`,
