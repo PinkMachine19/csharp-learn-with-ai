@@ -15,11 +15,11 @@ The course was then given a new opening chapter, Session 00 ("Why Learn C# in 20
 ## Repository areas
 
 - `site/` — GitHub Pages course site
-- `src/TimeClock.Domain/` — domain model and business rules
-- `src/TimeClock.App/` — deterministic console application
-- `src/TimeClock.Infrastructure/` — EF Core persistence and integrated workflows
-- `src/TimeClock.Web/` — ASP.NET Core API boundary
-- `tests/TimeClock.Domain.Tests/` — xUnit domain and integration tests
+- `src/PinkMachine19.TimeClock.Domain/` — domain model and business rules
+- `src/PinkMachine19.TimeClock.App/` — deterministic console application
+- `src/PinkMachine19.TimeClock.Infrastructure/` — EF Core persistence and integrated workflows
+- `src/PinkMachine19.TimeClock.Web/` — ASP.NET Core API boundary
+- `tests/PinkMachine19.TimeClock.Domain.Tests/` — xUnit domain and integration tests
 - `tools/` — course and site validation
 
 The repository has an independent history and intentionally reconstructed course material.
@@ -36,14 +36,14 @@ GitHub Pages: <https://pinkmachine19.github.io/csharp-learn-with-ai/>
 ## Run the application
 
 ```powershell
-dotnet run --project src/TimeClock.App/TimeClock.App.csproj
+dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj
 ```
 
 ## Build and test the solution
 
 ```powershell
-dotnet build TimeClock.sln --configuration Release
-dotnet test TimeClock.sln --configuration Release --no-build
+dotnet build PinkMachine19.TimeClock.sln --configuration Release
+dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build
 ```
 
 ## Build and validate the course site
