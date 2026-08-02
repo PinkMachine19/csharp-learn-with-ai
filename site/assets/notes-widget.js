@@ -129,7 +129,7 @@
       '  <div class="notes-modal-body">' +
       '    <textarea class="notes-textarea" placeholder="Type your notes here…" spellcheck="true"></textarea>' +
       '    <label class="notes-checkbox-row">' +
-      '      <input type="checkbox" class="notes-include-lesson" />' +
+      '      <input type="checkbox" class="notes-include-lesson" checked />' +
       '      <span>Include lesson/tutorial text</span>' +
       '    </label>' +
       '  </div>' +
