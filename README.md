@@ -6,9 +6,11 @@ This repository contains a professional, documentation-first course for developi
 
 ## Course status
 
-All 35 dependency-ordered sessions build, validate, and publish. The generated course contains lessons, labs, quizzes, accessible inline diagrams, and a cumulative TimeClock application -- a renamed, byte-faithful port of the real `practice-07092026` Employee/ClockEntry/PayrollService app, not an invented domain -- spanning C# foundations through ASP.NET Core and EF Core integration. 12 of 35 sessions are deep-rewritten against verified real source; the remaining 23 currently carry a verified mechanical rename onto the real domain's vocabulary without session-specific real-code grounding yet. See `SOURCE_MAPPING.md` and `REBUILD_STATUS.md` for the exact, honest per-session status.
+All 36 dependency-ordered sessions build, validate, and publish. The generated course contains lessons, labs, quizzes, accessible inline diagrams, and a cumulative TimeClock application -- a renamed, byte-faithful port of the real `practice-07092026` Employee/ClockEntry/PayrollService app, not an invented domain -- spanning orientation through C# foundations to ASP.NET Core and EF Core integration. 12 of 36 sessions are deep-rewritten against verified real source; the remaining currently carry a verified mechanical rename onto the real domain's vocabulary without session-specific real-code grounding yet. See `SOURCE_MAPPING.md` and `REBUILD_STATUS.md` for the exact, honest per-session status.
 
 Original Session 1 ("Scaffolding the Solution") was later split into Session 01 (scaffolding + standard project-folder organization) and a new Session 02 (project references and dependency direction) — see `SOURCE_MAPPING.md`'s "Session 01/02 split" section for what moved where.
+
+The course was then given a new opening chapter, Session 00 ("Why Learn C# in 2026?") — a non-technical orientation session motivating the course before any code is written. Every session that used to be numbered 01–35 shifted up by one to 02–36; see `SOURCE_MAPPING.md`'s "Session 00 addition" section for what's new and why session number 1 is intentionally unused in the final numbering.
 
 ## Repository areas
 

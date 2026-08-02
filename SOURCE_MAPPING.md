@@ -217,3 +217,107 @@ new Session 02.
   as written rather than retroactively renumbered, consistent with how `COURSE_REBUILD_PLAN.md`
   is preserved as a historical record elsewhere in this repository. For the current,
   authoritative numbering, see `site/data/course-manifest.json`.
+
+  (Note: the numbering described in this section was itself superseded again by the Session
+  00 addition documented immediately below — the session referred to here as "new Session 01"
+  is now **Session 02**, and "new Session 02" is now **Session 03**.)
+
+## Session 00 addition: a new, non-technical opening chapter
+
+After the 01/02 split documented above (35 sessions, 9 layers), a new **Session 00** —
+"Why Learn C# in 2026?" — was added as the course's permanent opening chapter. Unlike every
+other session, it is **original orientation material written for this task, not derived from
+`practice-07092026` or `csharp-refresher`**. There is no real source to map it to, and this
+section says so plainly rather than inventing a fictional syllabus-step mapping the way the
+old TimeLedger rebuild invented `TimeLedger` — `site/data/sessions/session-00.json`'s
+`migrationSource` field in `course-manifest.json` states this directly.
+
+**What it is:** a motivational, orientational session with no C# syntax and no code to write.
+It answers "if Python and JavaScript are everywhere, why should anyone still learn C#?" by
+explaining that visible tutorial/AI-example content skews toward scripting and web languages
+for reasons that have nothing to do with professional usage, that a large enterprise ecosystem
+(finance, insurance, healthcare, logistics, government, enterprise SaaS) runs substantially on
+C#/.NET largely out of view of that content, that real production systems are polyglot by
+design (C# APIs, TypeScript/JavaScript frontends, SQL Server, Redis, Azure, Docker,
+Kubernetes, Python automation/analytics, CI/CD — collaborating, not competing), and why
+organizations keep choosing C# for concrete engineering reasons (static typing, compile-time
+safety, tooling maturity, performance, cross-platform support, NuGet, long-term
+maintainability). Its mental model, "Languages are tools. Systems are ecosystems.," is the
+session's visual centerpiece. Its lab has no code: the student hand-writes
+`foundation-notes.md`, a personal notebook with five required sections, establishing this
+course's "if your hands aren't moving, you're probably not learning" habit from session one.
+
+**Why session number 1 is intentionally unused:** the task brief specified, in explicit,
+repeated, procedural detail (an exact rename algorithm — "rename in descending order,
+35→36 first, down to 01→02, to avoid collisions" — stated twice, once in the task's opening
+paragraph and once in its mechanical-consequences list), that every existing session 01–35
+should shift up by one to become 02–36, with the new session occupying 00. That produces a
+final numbering of 0, then 2 through 36 — session number 1 is not reused by anything. A
+different, more minimal reading was also present elsewhere in the same brief (an aside
+suggesting the old Session 01 "slots in" and "is still numbered 01"), which would have
+avoided the gap entirely by leaving 01–35 untouched and only adding 00 in front. These two
+readings directly conflict. The literal, twice-stated rename algorithm was treated as
+authoritative because (a) a collision-avoidance rename order is only meaningful if a real
+shift and real renames are happening — there's nothing to collide with if 00 is simply added
+in front of an unchanged 01–35 — and (b) the brief separately calls out that the session right
+after Session 00 needs an *explicit* prerequisite of `0` rather than following the standard
+`prerequisite = number − 1` pattern, which is only a meaningful, non-trivial thing to call out
+if that session's number is 2 (where the standard pattern would otherwise incorrectly compute
+prerequisite `1`, a number that no longer exists) — under the non-shifting reading, prerequisite
+`0` falls out of the standard formula automatically for a session still numbered `1`, making
+the special-case callout pointless. Both signals point the same direction, so the full shift
+was implemented. This is called out explicitly here, per the task's own instruction to make a
+defensible, documented judgment call rather than pause for clarification on a genuine
+in-brief contradiction.
+
+**Mechanical consequences applied:**
+- Every session file from `session-01.json` (34 through 01, in that descending order) shifted
+  up by one, `session-01.json` → `session-02.json`, ..., `session-35.json` → `session-36.json`,
+  including each file's own `"number"` field and every in-prose `"Session N"` / `"Sessions
+  N–M"` / `"session-NN"` cross-reference, applied by a small, verified Node script rather than
+  by hand (36 files, hundreds of cross-references). A pre-existing, unrelated quirk from the
+  01/02 split — several sessions' own `commit`/`expectedFiles` self-references were already
+  one number behind their actual filename (e.g. old `session-04.json`'s commit said
+  `session-03: ...`) — was **preserved, not fixed**, by the same uniform shift; fixing it was
+  out of scope for this task and the shift does not make it worse.
+- `course-manifest.json`: `sessionCount` 35 → 36; a new single-session `"orientation"` layer
+  (number 1, range `00`) was added ahead of the existing nine layers, each of which had its
+  `number` incremented and its `range` shifted by one session to match (e.g. `foundations`
+  moved from `01–07` to `02–08`). The `sessions` array gained a new `[0, ...]` row with
+  `prerequisite: null` and every subsequent row's `number` and `prerequisite` were
+  recomputed (`prerequisite = null` for 0, `prerequisite = 0` for the session immediately
+  after it, `prerequisite = number − 1` for every session after that — unchanged from the
+  existing pattern, just shifted).
+- `tools/build-site.mjs`: the session-detail page's previous/next navigation previously
+  computed neighbors by number arithmetic (`sessions[session.number - 2]` /
+  `sessions[session.number]`), which assumed contiguous numbering. That assumption is now
+  false (number 1 doesn't exist), so navigation was rewritten to walk the `sessions` array by
+  position instead. Separately, the syllabus table's prerequisite column used
+  `session.prerequisiteSession ? ... : "None"` — a real bug exposed by this change, since `0`
+  is falsy in JavaScript and Session 02's real prerequisite of `0` would have silently
+  rendered as "None." Fixed to an explicit `null`/`undefined` check. Four new inline SVG
+  `diagram()` kinds were added for Session 00 — `toolbelt`, `skew`, `ecosystem`, `stack` —
+  rather than reusing existing kinds, because every existing diagram has baked-in text labels
+  from its original TimeClock-domain lesson (e.g. `solution`'s "app"/"core"/"tests") that
+  would have been actively misleading in a non-technical orientation session about languages
+  and ecosystems.
+- `tools/validate-site.mjs`: the layer-count check (`layers.length !== 9`) became `!== 10`;
+  the session-sequence check, which assumed `number === index + 1` for every session, was
+  rewritten to expect `0` at index 0 and `index + 1` from index 1 onward, with prerequisite
+  `0` explicitly expected at index 1 instead of the standard `expected − 1` formula.
+- `README.md`, `REBUILD_STATUS.md`: updated session counts (35 → 36) and this section's
+  cross-reference, following the same pattern the 01/02 split used — new, dated sections
+  added at the top, older sections left with their original numbering intact and explicitly
+  labeled as historical.
+
+**Verification performed:** `npm run build && npm run validate` pass against the new
+36-session structure (`Validated 114 HTML pages and 36 manifest sessions`). `dotnet build
+TimeClock.sln -c Release` and `dotnet test TimeClock.sln -c Release --no-build` are unchanged
+(0 warnings, 0 errors, 56/56 tests passing) — this task added no C# code. Session 00 was
+browser-verified directly against a locally served build: all 11 fixed lesson sections render,
+its 4 new SVGs pass the same `role="img"`/`title`/`desc` accessibility contract as every other
+diagram, the quiz check-answer and reveal-card interactions both work, session navigation
+correctly reads Session 00 → Session 02 → Session 03 (and Session 02's "previous" link points
+back to Session 00), and the syllabus page lists Session 00 first with the new "Orientation
+and Context" layer and prerequisite "None." A full `grep` across `site/data/sessions/*.json`
+for stray `"Session N"` references outside the valid 0/2–36 range came back empty.

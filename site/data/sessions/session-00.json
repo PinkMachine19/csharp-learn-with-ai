@@ -42,7 +42,7 @@
       "Add ## Three reasons enterprise organizations use C#, and list three of the reasons from this session (in your own phrasing) that felt most convincing to you, with one sentence each on why.",
       "Add ## What surprised me most, and write about whichever part of this session shifted your thinking the most — the AI content skew, the size of the hidden enterprise ecosystem, or something else entirely.",
       "Add ## Why enterprise software is usually polyglot, and explain in your own words why a real system tends to use several languages and technologies together instead of just one.",
-      "Add ## My biggest takeaway, and write one or two sentences summarizing what you want to remember from this session going into Session 01.",
+      "Add ## My biggest takeaway, and write one or two sentences summarizing what you want to remember from this session going into Session 02.",
       "Save the file. Read it back once, out loud if you can. You could absolutely ask AI to write this file for you — it would probably do an excellent job. Unfortunately, your fingers don't learn by watching someone else type, so resist the shortcut just this once."
     ],
     "expectedBehavior": "foundation-notes.md exists at the repository root, is non-empty, and contains all five required ## section headings, each followed by content written in your own words rather than copied from this lesson.",
