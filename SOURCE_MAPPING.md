@@ -4,6 +4,77 @@ This document supersedes `COURSE_REBUILD_PLAN.md`'s claims about content quality
 about "TimeLedger" being a justified canonical domain. It is the authoritative record of
 where every session's content and code actually comes from.
 
+## Fourth post-rebuild update: PinkMachine19 company-prefix convention (current)
+
+Every project, namespace, and assembly in the solution was given the `PinkMachine19.`
+prefix, per the course author's instruction to teach the real enterprise convention of
+grouping related projects under a company/product prefix from the very first session,
+rather than retrofitting it later.
+
+**What changed, mechanically:**
+- Solution and project renames: `TimeClock.sln` -> `PinkMachine19.TimeClock.sln`;
+  `src/TimeClock.Domain` -> `src/PinkMachine19.TimeClock.Domain`; same pattern for
+  `TimeClock.App`, `TimeClock.Infrastructure`, `TimeClock.Web`, and
+  `tests/TimeClock.Domain.Tests` -> `tests/PinkMachine19.TimeClock.Domain.Tests`. Every
+  `.csproj` was renamed to match its folder, and every `<ProjectReference>` relative path
+  and the `.sln`'s project entries were updated to the new paths. Each `.csproj` also
+  gained an explicit `<RootNamespace>`/`<AssemblyName>` set to the full prefixed name,
+  rather than relying on the SDK's filename-derived default, so the assembly identity is
+  unambiguous even if a project is ever renamed on disk again.
+- Namespaces: contrary to this task's own starting assumption that no `.cs` file declared
+  a namespace, every file already had one (`namespace TimeClock.Domain;`,
+  `TimeClock.Infrastructure;`, `TimeClock.Domain.Tests;` — file-scoped, modern style).
+  Since no project has Models/Interfaces/Services-style subfolders yet (the folders added
+  in the Session 01 project-organization lab are empty except for their README.md
+  placeholders), one flat namespace per project was correct and sufficient — there was no
+  real subfolder structure to mirror with sub-namespaces. Every `namespace` declaration and
+  every `using TimeClock.X;` directive was mechanically renamed to
+  `PinkMachine19.TimeClock.X`. No type name changed. `src/PinkMachine19.TimeClock.App` and
+  `src/PinkMachine19.TimeClock.Web`'s `Program.cs` files use top-level statements and stay
+  in the implicit global namespace, as C# requires — this is unrelated to the prefix and
+  was left alone.
+- `dotnet new sln` on the SDK pinned by `global.json` (10.0.302) defaults to the newer
+  `.slnx` format, not the classic `.sln` format this repository actually uses. Session 01's
+  lab and lesson text for `dotnet new sln -n TimeClock` were updated to
+  `dotnet new sln -n PinkMachine19.TimeClock -f sln`, both renaming the solution and adding
+  the explicit format flag needed to reproduce this repository's actual `.sln` file — an
+  accuracy gap discovered while re-running the command for this pass, not something
+  introduced by it.
+- All 36 session JSON files (`session-00.json` through `session-35.json`) had every
+  `TimeClock.Domain`/`TimeClock.App`/`TimeClock.Infrastructure`/`TimeClock.Web`/
+  `TimeClock.Domain.Tests`/`TimeClock.sln` reference renamed in prose, code blocks, lab
+  steps, `expectedFiles` paths, and `commit` messages. Casual, non-identifier mentions of
+  "TimeClock" as the name of the course's running example application (e.g. "Every real
+  project in TimeClock points at Domain") were deliberately left as-is, matching how real
+  engineering docs refer to a codebase by its informal name without spelling out the full
+  company-prefixed identifier every time.
+- `README.md`'s repository-areas list and build/run commands were updated to the new
+  paths and solution name. `course-manifest.json` and `tools/build-site.mjs`/
+  `tools/validate-site.mjs` had no hardcoded `TimeClock.*` references to begin with.
+- Per an explicit correction from the course author mid-pass, no real or fictional company
+  name (including "Microsoft" or "RapidFinance") appears anywhere in learner-facing content
+  as an illustrative comparison for the naming convention. `PinkMachine19` is the only
+  organization name used in the course; a grep across the diff confirmed no such comparison
+  text was ever introduced. `Microsoft.Extensions.*`, `Microsoft.NET.Sdk`,
+  `Microsoft.EntityFrameworkCore.*`, and `Microsoft.AspNetCore.*` remain untouched, since
+  those are real, necessary package/SDK identifiers, not naming-convention examples.
+
+**Verification performed:** `dotnet build PinkMachine19.TimeClock.sln -c Release` (0
+warnings, 0 errors) and `dotnet test PinkMachine19.TimeClock.sln -c Release --no-build`
+(56/56 tests passing) both succeeded immediately after the rename — the pre-existing
+namespaces meant no cross-project `using` fixes were actually needed beyond the mechanical
+rename itself. `npm run build && npm run validate` passed against all 36 updated session
+files (`Validated 114 HTML pages and 36 manifest sessions`). The `dotnet new sln`/
+`dotnet sln add`/`dotnet build`/`dotnet sln list` sequence documented in Session 01 and
+Session 02 was re-run end to end in a scratch folder and against this repository, and its
+real output (project lists, build success) matches what the lesson text now shows. A final
+repository-wide grep for any remaining unprefixed `TimeClock.Domain`/`TimeClock.App`/
+`TimeClock.Infrastructure`/`TimeClock.Web`/`TimeClock.Domain.Tests`/`TimeClock.sln`
+reference across both the .NET code and `site/data/sessions/*.json` returned nothing,
+outside of this file's, `REBUILD_STATUS.md`'s, and `COURSE_REBUILD_PLAN.md`'s historical
+narrative describing what things were called before this pass, which is intentionally left
+unchanged.
+
 ## The core correction
 
 The prior rebuild audited `practice-07092026`, noticed it existed, and then concluded no

@@ -4,6 +4,21 @@ This file reflects the real, independently re-verified state as of the final com
 rebuild pass. Nothing below is asserted without having actually run the referenced command
 in this session and reading its real output.
 
+## Fourth post-rebuild update: PinkMachine19 company-prefix convention (current)
+
+Every project, `.csproj`, the `.sln`, and every namespace/`using` directive was renamed
+with the `PinkMachine19.` prefix (`TimeClock.sln` -> `PinkMachine19.TimeClock.sln`,
+`TimeClock.Domain` -> `PinkMachine19.TimeClock.Domain`, and so on for `App`,
+`Infrastructure`, `Web`, and `Domain.Tests`), and all 36 session JSON files were updated to
+match, including re-running and re-pasting the real `dotnet new sln`/`dotnet sln add`/
+`dotnet build`/`dotnet sln list` output referenced in Sessions 01-02. See
+`SOURCE_MAPPING.md`'s "PinkMachine19 company-prefix convention" section for full detail,
+including the discovery that `dotnet new sln` now defaults to `.slnx` on the pinned SDK and
+needs an explicit `-f sln` flag to match this repository's actual solution format.
+Re-verified: `dotnet build PinkMachine19.TimeClock.sln -c Release` (0 warnings, 0 errors),
+`dotnet test PinkMachine19.TimeClock.sln -c Release --no-build` (56/56 tests passing), and
+`npm run build && npm run validate` (`Validated 114 HTML pages and 36 manifest sessions`).
+
 ## Third post-rebuild update: numbering correction (current, 36-session, contiguous 0–35 state)
 
 The Session 00 addition below initially retired session number 1, producing 0, then 2–36.
