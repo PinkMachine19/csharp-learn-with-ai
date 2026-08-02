@@ -2,120 +2,120 @@
   "number": 18,
   "category": "Object-oriented design",
   "estimatedTime": "40 minutes",
-  "connection": "Session 17 fixed a real encapsulation gap. This session studies the real interfaces already driving this codebase's polymorphism -- IClockEntryRepository, IClockEntryService, IEmployeeRepository, IEmployeeService -- plus IHoursPolicy's two swappable implementations, StandardHoursPolicy and FlexibleHoursPolicy.",
+  "connection": "Session 12 named ClockEntryRepository's public _clockEntries field as a real, unfixed encapsulation gap and promised to revisit it here. This session fixes it, and studies Timesheet -- a new extension composing Employee and List<ClockEntry> -- as a contrast in deliberate composition.",
   "objectives": [
-    "List all four real interfaces in TimeClock.Domain and their real implementing classes, including the real EmployeeRepositor typo.",
-    "Explain what 'polymorphism' means concretely for ClockEntryService: it depends on IClockEntryRepository, and works correctly regardless of which implementation Program.cs registers.",
-    "Swap StandardHoursPolicy for FlexibleHoursPolicy in a call site and confirm the caller's code does not change, only its behavior.",
-    "Explain why EmployeeRepositor's real class-name typo does not affect polymorphism at all -- the interface name is what callers depend on, not the class name."
+    "Fix ClockEntryRepository's real public _clockEntries field: make it private, and confirm every existing caller still compiles using only SaveClockEntry/GetClockEntry/GetEmployeeClockEntries.",
+    "Contrast that fix with ClockEntry's own ClockOut property, which was already correctly encapsulated (get with a private set) from the very first session.",
+    "Read Timesheet as composition: it owns an Employee and a List<ClockEntry>, and enforces (via Add) that every ClockEntry actually belongs to its Employee.",
+    "Explain why Timesheet.Add throws rather than silently ignoring a mismatched EmployeeId."
   ],
   "visuals": [
     {
-      "diagram": "branch",
-      "title": "Four real interfaces, four real implementations",
-      "explanation": "IClockEntryRepository -> ClockEntryRepository, IClockEntryService -> ClockEntryService, IEmployeeRepository -> EmployeeRepositor (typo, real), IEmployeeService -> EmployeeService."
+      "diagram": "invariant",
+      "title": "Before: any caller could bypass SaveClockEntry",
+      "explanation": "public readonly List<ClockEntry> _clockEntries let external code call repository._clockEntries.Clear() directly -- a real gap identified in Session 12."
     },
     {
       "diagram": "call",
-      "title": "Callers depend on the interface, never the class name",
-      "explanation": "ClockEntryService's constructor parameter is IClockEntryRepository -- it would compile and run identically no matter what the concrete class implementing it is named, typo or not."
+      "title": "After: only the repository's own methods can touch storage",
+      "explanation": "Making _clockEntries private forces every interaction through SaveClockEntry, GetClockEntry, and GetEmployeeClockEntries -- exactly the surface IClockEntryRepository already promises."
+    },
+    {
+      "diagram": "blueprint",
+      "title": "ClockEntry.ClockOut was already encapsulated correctly",
+      "explanation": "public DateTime? ClockOut { get; private set; } has been this way since Session 7 -- only ClockOutEmployee can change it, which is why Session 18 is a repository fix, not a ClockEntry fix."
     },
     {
       "diagram": "instances",
-      "title": "Two IHoursPolicy implementations, one call site",
-      "explanation": "IHoursPolicy policy = flexible ? new FlexibleHoursPolicy() : new StandardHoursPolicy(8m); -- the line that calls policy.GetVariance(...) never changes."
-    },
-    {
-      "diagram": "type",
-      "title": "Polymorphism is resolved at the call, not the declaration",
-      "explanation": "The actual GetVariance implementation that runs depends on which concrete object policy refers to at runtime, not on the declared IHoursPolicy type."
+      "title": "Timesheet composes an Employee and a List<ClockEntry>",
+      "explanation": "Timesheet does not inherit from either type -- it owns one Employee and a private list of that employee's ClockEntry objects, exposed only as IReadOnlyList<ClockEntry>."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Does EmployeeRepositor's real class-name typo (missing the 'y' in Repository) affect how IEmployeeRepository consumers behave?",
+      "prompt": "What real, external capability does making ClockEntryRepository's _clockEntries field private remove?",
       "options": [
-        "No -- consumers depend on the IEmployeeRepository interface and its GetEmployeeById method, never on the concrete class's name; the typo is cosmetic to anyone using the interface",
-        "Yes -- it would cause a runtime error every time GetEmployeeById is called",
-        "Yes -- the interface itself must share the same name as its implementation"
+        "Direct access to _clockEntries.Clear(), .Add(...), or indexing from any code outside ClockEntryRepository -- the exact bypass Session 12 identified as a real, unfixed gap",
+        "The ability to call GetEmployeeClockEntries",
+        "Nothing observable changes"
       ],
       "correct": 0,
-      "explanation": "This is a real, verified fact about the source: EmployeeRepositor's typo has shipped in production-adjacent code without breaking anything, precisely because C# does not require implementation class names to relate to their interface names at all."
+      "explanation": "This is precisely the fix Session 12 promised: private forces every interaction through the repository's own three methods, closing the bypass without changing any of IClockEntryRepository's public contract."
     },
     {
-      "prompt": "What single line changes when swapping StandardHoursPolicy for FlexibleHoursPolicy at a call site that only ever calls policy.GetVariance(...)?",
+      "prompt": "Why was ClockEntry.ClockOut never a similar problem, even though it is also a mutable piece of state?",
       "options": [
-        "Only the line that constructs the policy object (new StandardHoursPolicy(8m) becomes new FlexibleHoursPolicy()) -- every line that calls policy.GetVariance(...) afterward is unchanged",
-        "Every line in the calling method needs to change",
-        "GetVariance's method signature must change"
+        "ClockOut has always had a private setter (public DateTime? ClockOut { get; private set; }) -- only ClockOutEmployee, a method on ClockEntry itself, can ever change it; there was never a public-field-style bypass to begin with",
+        "ClockOut is a value type and therefore automatically safe",
+        "ClockOut is read-only and can never change"
       ],
       "correct": 0,
-      "explanation": "This is the entire value of programming against IHoursPolicy: the construction site is the only place that names a concrete type; every subsequent use goes through the interface."
+      "explanation": "This is a genuinely different situation from _clockEntries -- ClockEntry got its encapsulation right from Session 7; the repository's field is what needed the fix."
     },
     {
-      "prompt": "How many real, distinct interfaces in TimeClock.Domain have exactly one concrete implementing class each?",
+      "prompt": "Why does Timesheet.Add throw ArgumentException when given a ClockEntry whose EmployeeId doesn't match the Timesheet's own Employee?",
       "options": [
-        "Four -- IClockEntryRepository, IClockEntryService, IEmployeeRepository, IEmployeeService each have exactly one real implementation, confirmed by reading the source directly",
-        "Zero -- none of these are actually interfaces",
-        "Eight -- each has two implementations"
+        "A Timesheet's whole reason for existing is grouping one employee's entries together -- silently accepting a mismatched entry would corrupt that invariant without any visible sign of the mistake",
+        "ArgumentException is required by every Add method in C#",
+        "It has no real reason -- it is arbitrary"
       ],
       "correct": 0,
-      "explanation": "Even with only one implementation each today, all four are still real interfaces, giving Session 20's dependency injection and Session 30's test doubles a seam to substitute against."
+      "explanation": "This mirrors Session 25's throw-vs-return rule: adding another employee's entry to this Timesheet is a broken caller expectation, not an expected everyday outcome, so it throws rather than silently ignoring the mismatch."
     }
   ],
   "concept": [
     {
-      "title": "Four real interfaces, verified against source",
+      "title": "Fixing the real encapsulation gap",
       "paragraphs": [
-        "IClockEntryRepository (implemented by ClockEntryRepository), IClockEntryService (implemented by ClockEntryService), IEmployeeRepository (implemented by EmployeeRepositor -- the real typo), and IEmployeeService (implemented by EmployeeService) are the complete list of interfaces in this codebase, confirmed directly against the source files.",
-        "Every one of ClockEntryService, PayrollService, and Program.cs depends on these interfaces, never on the concrete class names -- this is why EmployeeRepositor's typo never had to be fixed for the application to work correctly."
+        "The fix is one word: public readonly List<ClockEntry> _clockEntries becomes private readonly List<ClockEntry> _clockEntries. Every existing real method (SaveClockEntry, GetClockEntry, GetEmployeeClockEntries) is a member of the same class, so none of them need to change.",
+        "Every caller outside ClockEntryRepository -- ClockEntryService, PayrollService, every test -- was already going through the interface's three methods, never the field directly, so this fix is observable only in that the old bypass (repository._clockEntries.Clear()) now fails to compile."
       ],
-      "code": "public interface IEmployeeRepository { Employee GetEmployeeById(int employeeId); }\n\n// Real typo, real class name -- callers never notice, because they depend on IEmployeeRepository\npublic sealed class EmployeeRepositor : IEmployeeRepository\n{\n    public Employee GetEmployeeById(int employeeId) => new Employee(1, \"Parm\", new Address());\n}"
+      "code": "// Before -- Session 12's real, verified gap\npublic readonly List<ClockEntry> _clockEntries = new();\n\n// After -- the fix\nprivate readonly List<ClockEntry> _clockEntries = new();"
     },
     {
-      "title": "Polymorphism at a real call site: IHoursPolicy",
+      "title": "Contrast: ClockEntry.ClockOut was correct from the start",
       "paragraphs": [
-        "IHoursPolicy has two real implementations: StandardHoursPolicy(decimal scheduledHours), which computes recordedHours - scheduledHours, and FlexibleHoursPolicy, which always returns 0m.",
-        "A caller holding an IHoursPolicy variable calls .GetVariance(recordedHours) without knowing or caring which implementation it actually is -- the correct GetVariance runs based on the object's real runtime type, not the variable's declared type."
+        "ClockEntry's constructor and ClockOutEmployee have not changed since Session 7 -- ClockOut's private setter already prevented exactly the kind of external bypass _clockEntries just had.",
+        "Seeing both the correct original design (ClockEntry) and the real gap that needed fixing (ClockEntryRepository) side by side is what makes 'encapsulation' concrete instead of abstract."
       ],
-      "code": "IHoursPolicy policy = flexible ? new FlexibleHoursPolicy() : new StandardHoursPolicy(8m);\ndecimal variance = policy.GetVariance(7.5m);   // -0.5m or 0m, depending on which object policy actually is"
+      "code": "public DateTime? ClockOut { get; private set; }   // correct since Session 7 -- never needed fixing"
     },
     {
-      "title": "What would actually break polymorphism here",
+      "title": "Timesheet: composition with an enforced invariant",
       "paragraphs": [
-        "If ClockEntryService's constructor took the concrete ClockEntryRepository class instead of IClockEntryRepository, Session 30's test doubles (a fake repository implementing the same interface) would have nowhere to substitute in -- polymorphism is what makes substitution possible at all.",
-        "The four real interfaces exist specifically so Program.cs's DI registrations (Session 20) can choose which concrete class to wire up, and so tests can wire up a different one entirely."
+        "Timesheet owns an Employee (assigned once, in its constructor) and a private List<ClockEntry> exposed only as IReadOnlyList<ClockEntry> -- callers can read Entries but cannot Add to it directly; they must go through Timesheet.Add.",
+        "Add's real check -- entry.EmployeeId != Employee.EmployeeId -- is what keeps every entry in Entries genuinely belonging to this Timesheet's Employee, for the lifetime of the object."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "public sealed class Timesheet\n{\n    private readonly List<ClockEntry> entries = [];\n    public Timesheet(Employee employee) => Employee = employee ?? throw new ArgumentNullException(nameof(employee));\n    public Employee Employee { get; }\n    public IReadOnlyList<ClockEntry> Entries => entries;\n\n    public void Add(ClockEntry entry)\n    {\n        ArgumentNullException.ThrowIfNull(entry);\n        if (entry.EmployeeId != Employee.EmployeeId)\n            throw new ArgumentException(\"The entry belongs to another employee.\", nameof(entry));\n        entries.Add(entry);\n    }\n}"
     }
   ],
   "lab": {
-    "objective": "Trace all four real interface/implementation pairs, and swap IHoursPolicy implementations at a call site to observe polymorphism directly.",
-    "startingCondition": "IClockEntryRepository, IClockEntryService, IEmployeeRepository, IEmployeeService, IHoursPolicy, and their real implementations already exist.",
+    "objective": "Make ClockEntryRepository's _clockEntries field private, confirm the whole solution still builds, and exercise Timesheet's composition invariant.",
+    "startingCondition": "ClockEntryRepository's _clockEntries field is still public, as in the real source repository; Timesheet already exists with its real composition and Add invariant.",
     "steps": [
-      "List all four repository/service interface pairs and confirm each implementing class's real name, including EmployeeRepositor's typo.",
-      "Write a small test that resolves an IEmployeeRepository as EmployeeRepositor and confirm GetEmployeeById works despite the class-name typo.",
-      "Call HoursPolicyTests.Caller_uses_policies_polymorphically with both flexible=true and flexible=false and confirm the SAME calling code produces two different GetVariance results.",
-      "Write down what would need to change in ClockEntryService if it depended on ClockEntryRepository (the concrete class) instead of IClockEntryRepository."
+      "Change _clockEntries from public to private in ClockEntryRepository.cs.",
+      "Build the whole solution and confirm nothing outside ClockEntryRepository referenced the field directly (it should not have).",
+      "Write a Timesheet, add one matching ClockEntry successfully, then attempt to add a ClockEntry with a different EmployeeId and confirm ArgumentException is thrown.",
+      "Confirm Timesheet.Entries is read-only from the outside -- Entries.Add(...) should not compile."
     ],
-    "expectedBehavior": "All four interfaces resolve to their real implementations correctly; the IHoursPolicy test demonstrates two different behaviors from one call site depending only on which object is passed in.",
+    "expectedBehavior": "The solution builds and all tests pass after the private-field fix; Timesheet.Add succeeds for a matching entry and throws for a mismatched one; Entries cannot be mutated directly from outside Timesheet.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/IEmployeeRepository.cs",
-      "action": "Verify",
-      "why": "Confirm the real interface and EmployeeRepositor's real typo'd implementing class."
+      "path": "src/TimeClock.Domain/ClockEntryRepository.cs",
+      "action": "Modify",
+      "why": "Change _clockEntries from public to private, closing the real encapsulation gap named in Session 12."
     },
     {
-      "path": "src/TimeClock.Domain/IHoursPolicy.cs",
+      "path": "src/TimeClock.Domain/Timesheet.cs",
       "action": "Verify",
-      "why": "Confirm both real IHoursPolicy implementations and their differing GetVariance behavior."
+      "why": "Confirm the real composition and EmployeeId-matching invariant."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/HoursPolicyTests.cs",
+      "path": "tests/TimeClock.Domain.Tests/TimesheetTests.cs",
       "action": "Verify",
-      "why": "Confirm the existing polymorphic-call test."
+      "why": "Confirm both the successful-add and mismatched-employee-throws cases."
     },
     {
       "path": "site/data/sessions/session-17.json",
@@ -123,50 +123,51 @@
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-17: teach interfaces and polymorphism",
+  "commit": "session-17: teach encapsulation and composition",
   "review": [
-    "All four real interface/implementation pairs are verified against source, including the real EmployeeRepositor typo.",
-    "IHoursPolicy's two implementations are demonstrated producing different results from identical calling code.",
-    "The connection between 'depend on the interface' and 'the typo never mattered' is made explicit, not left implicit.",
+    "The _clockEntries field is private, and every existing real method still compiles unchanged.",
+    "No caller outside ClockEntryRepository referenced the field directly before or after the fix.",
+    "ClockEntry.ClockOut's already-correct encapsulation is used as a contrast, not silently ignored.",
+    "Timesheet's Add invariant is demonstrated with both a passing and a throwing case.",
     "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "If a third IHoursPolicy implementation were added tomorrow (say, OvertimeHoursPolicy), how many existing call sites that call policy.GetVariance(...) would need to change?",
+      "prompt": "Why did fixing _clockEntries's visibility require no changes to IClockEntryRepository or any of its three method signatures?",
       "options": [
-        "Zero -- any code written against the IHoursPolicy interface accepts any implementation without modification; only the code that decides WHICH implementation to construct would need updating",
-        "All of them -- every call site would need a new branch",
-        "Exactly one -- the interface declaration itself"
+        "The interface never exposed the field in the first place -- SaveClockEntry, GetClockEntry, and GetEmployeeClockEntries were always the intended public surface; only the field's accidental public visibility needed correcting",
+        "IClockEntryRepository was also changed as part of the fix",
+        "It required changes to every class implementing IClockEntryRepository"
       ],
       "correct": 0,
-      "explanation": "This is the practical payoff of polymorphism: adding a new implementation is additive, not a breaking change to existing interface-typed code."
+      "explanation": "This is exactly why the fix is small and safe -- the intended contract (the interface) was already correct; only an implementation detail (the field's visibility) needed to catch up to it."
     },
     {
-      "prompt": "Why does EmployeeRepositor's typo matter for a code reviewer, even though it doesn't matter for runtime behavior?",
+      "prompt": "Could Timesheet have used inheritance (Timesheet : Employee) instead of composition (Timesheet owning an Employee) to associate an employee with their entries?",
       "options": [
-        "It is a real, minor maintainability smell -- future readers searching for 'EmployeeRepository' by exact name will not find it, even though the code works correctly",
-        "It causes GetEmployeeById to return null",
-        "It prevents the class from implementing IEmployeeRepository"
+        "No -- a Timesheet is not a kind of Employee (inheritance's 'is-a' relationship doesn't hold); it HAS an Employee, which is exactly what composition ('has-a') models",
+        "Yes -- inheritance and composition are interchangeable here",
+        "Only if Employee were declared abstract"
       ],
       "correct": 0,
-      "explanation": "The lesson distinguishes correctness (unaffected) from maintainability (mildly affected) -- both are real, separate concerns worth naming honestly."
+      "explanation": "This is the classic is-a versus has-a distinction: Timesheet has an Employee and a list of that employee's entries -- it is not itself a more specific kind of Employee."
     },
     {
-      "prompt": "What would ClockEntryService lose if its constructor took ClockEntryRepository directly instead of IClockEntryRepository?",
+      "prompt": "What would happen if Timesheet.Entries returned List<ClockEntry> instead of IReadOnlyList<ClockEntry>?",
       "options": [
-        "The ability for Session 30's test doubles (a fake repository) to substitute in during testing, and the ability for a future EF Core-backed repository (Session 31) to substitute in during production",
-        "Nothing -- ClockEntryRepository already implements every member ClockEntryService needs",
-        "The ability to call SaveClockEntry"
+        "Callers could call Entries.Add(...) or Entries.Clear() directly, bypassing Timesheet.Add's EmployeeId-matching check entirely -- reintroducing the exact kind of bypass Session 18 just fixed in ClockEntryRepository",
+        "Nothing would change -- List<T> and IReadOnlyList<T> expose identical members",
+        "The code would fail to compile"
       ],
       "correct": 0,
-      "explanation": "Depending on the concrete class still compiles and runs today, but permanently forecloses substitution -- exactly the cost Session 20 discusses for dependency direction."
+      "explanation": "IReadOnlyList<T> deliberately omits Add/Remove/Clear -- returning the narrower interface is what protects Timesheet's own invariant, the same principle Session 14 covered for GetEmployeeClockEntries."
     }
   ],
   "reflections": [
-    "Why does 'the interface name matters, the class name doesn't' feel counterintuitive at first, given how often class names are chosen carefully?",
-    "Where else in this codebase besides IHoursPolicy could a second, alternative implementation plausibly be added without touching any existing call site?",
-    "What would you look for in a code review to confirm a new class is genuinely programmed against an interface, not accidentally coupled to one concrete implementation?"
+    "Why did this exact same kind of bug (a public field bypassing intended validation) not exist anywhere in ClockEntry itself?",
+    "What would you check for, in a code review, to catch a class exposing a mutable field the way ClockEntryRepository originally did?",
+    "How does Timesheet's IReadOnlyList<ClockEntry> return type connect back to Session 14's discussion of interface-level promises?"
   ],
-  "whatBreaks": "Changing ClockEntryService's constructor to depend on the concrete ClockEntryRepository class instead of IClockEntryRepository would still compile today, but it would permanently prevent Session 30's test doubles and Session 31's EF Core-backed repository from ever substituting in without changing ClockEntryService itself. Renaming EmployeeRepositor to fix its typo would require no changes anywhere else in the codebase precisely because nothing depends on that class name directly -- proof, by omission, that the typo was always harmless to behavior.",
-  "summary": "TimeClock.Domain has four real interfaces, each with one real implementation, verified directly against source -- including EmployeeRepositor's real class-name typo, which never mattered because nothing depends on implementation class names. IHoursPolicy's two implementations, StandardHoursPolicy and FlexibleHoursPolicy, demonstrate polymorphism concretely: one call site, policy.GetVariance(...), produces different results depending only on which object policy actually refers to at runtime."
+  "whatBreaks": "Leaving _clockEntries public keeps the real bypass Session 12 identified: any code with a ClockEntryRepository reference can clear or directly mutate stored entries, invalidating anything SaveClockEntry might someday enforce. Changing Timesheet.Entries to return the mutable List<ClockEntry> directly would let callers add entries without EmployeeId validation, reintroducing the same class of bug in a different class.",
+  "summary": "ClockEntryRepository's real public _clockEntries field -- named as a gap in Session 12 -- is fixed here by making it private, with no change required to IClockEntryRepository or any of its three real methods. ClockEntry.ClockOut's private setter shows what correct encapsulation looked like from the start. Timesheet demonstrates composition: it owns an Employee and a list of that employee's entries, and Add enforces that every entry actually belongs to it."
 }

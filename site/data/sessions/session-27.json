@@ -1,116 +1,121 @@
 {
   "number": 27,
-  "category": "Asynchronous programming",
+  "category": "task-based work",
   "estimatedTime": "40 minutes",
-  "connection": "Session 26 identified (but did not fix) Program.cs's real unawaited Clockout(1) call. This session studies EntryBatchLoader's real LoadSequentialAsync versus LoadConcurrentAsync -- a new extension showing what running several async operations one-at-a-time versus all-at-once actually looks like, since the real Clockout is always called for exactly one employee at a time.",
+  "connection": "Session 26 covered exception propagation. This session reads the real, correct async/await example in the source app -- ClockEntryService.Clockout -- and previews the real bug in Program.cs that Session 29 fixes: Clockout(1) called with no await.",
   "objectives": [
-    "Trace LoadSequentialAsync's real await load(id) inside a foreach loop, and explain why each iteration waits for the previous one to finish before starting.",
-    "Trace LoadConcurrentAsync's real Task.WhenAll(ids.Select(load)), and explain why every load call starts before any of them necessarily finishes.",
-    "Predict, then confirm with EntryBatchLoaderTests's real active/maximum counters, that LoadSequentialAsync never has more than one operation in flight while LoadConcurrentAsync starts all of them immediately.",
-    "Explain why the real Clockout(int employeeId) has no equivalent choice to make -- it always operates on exactly one employee, so 'sequential vs concurrent' has never been a real question for it."
+    "Explain why Task<ClockEntry?> represents an operation that may complete later, and why 'async' alone does not guarantee a new thread is used.",
+    "Read ClockEntryService.Clockout as a correct await example: it awaits GetClockEntry before branching on the result.",
+    "Read ClockEntryRepository.GetClockEntry as a 'fake async' anti-pattern: an async method whose body is entirely synchronous, wrapped in Task.FromResult.",
+    "Identify, without yet fixing, the real CS4014 warning in Program.cs: clockEntryService.Clockout(1) called with no await."
   ],
   "visuals": [
     {
       "diagram": "pipeline",
-      "title": "Sequential: one await, then the next",
-      "explanation": "foreach (int id in ids) results.Add(await load(id)); -- the loop does not call load again until the current await completes."
+      "title": "await suspends, it does not block",
+      "explanation": "Clockout awaits GetClockEntry and only continues once the Task completes -- the calling thread is not blocked while waiting."
     },
     {
       "diagram": "call",
-      "title": "Concurrent: every operation starts immediately",
-      "explanation": "await Task.WhenAll(ids.Select(load)) calls load for every id up front (Select is enumerated eagerly here), then awaits all of them together."
+      "title": "async does not promise a thread",
+      "explanation": "GetClockEntry is declared async but its body -- a debug loop, an empty foreach, then Task.FromResult(...) -- never actually leaves the calling thread."
     },
     {
-      "diagram": "branch",
-      "title": "The real test proves it with a counter, not just a description",
-      "explanation": "EntryBatchLoaderTests tracks active/maximum concurrent operations: LoadSequentialAsync's maximum never exceeds 1; LoadConcurrentAsync's started count reaches the full batch size before any complete."
+      "diagram": "return",
+      "title": "A Task can represent already-completed work",
+      "explanation": "Task.FromResult wraps a value that is already known, producing a completed Task -- there is no real asynchronous operation underneath it."
     },
     {
       "diagram": "feedback",
-      "title": "Clockout never had this choice to make",
-      "explanation": "ClockEntryService.Clockout(int employeeId) processes one employee per call -- there is no batch of employees to run sequentially or concurrently, which is exactly why this session needed a new example."
+      "title": "An un-awaited Task keeps running unobserved",
+      "explanation": "Program.cs calls Clockout(1) without await -- the method starts, but Program.cs moves on to CalculateTotalHours before Clockout necessarily finishes."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "In LoadSequentialAsync's foreach (int id in ids) results.Add(await load(id));, does the loop call load for the second id before the first load call has completed?",
+      "prompt": "Does ClockEntryRepository.GetClockEntry's async keyword mean it runs on a background thread?",
       "options": [
-        "No -- await load(id) suspends the loop until that specific call completes before moving to the next iteration; only one load operation is ever in flight",
-        "Yes -- foreach starts every iteration immediately regardless of await",
-        "It depends on how many ids there are"
+        "No -- its body executes synchronously (a debug loop, an empty foreach, then a lookup) and Task.FromResult wraps an already-computed result; no real asynchronous work happens",
+        "Yes -- async always schedules work on the thread pool",
+        "It depends on the CancellationToken passed in"
       ],
       "correct": 0,
-      "explanation": "This is exactly what the real EntryBatchLoaderTests.cs proves with its active/maximum counter: LoadSequentialAsync's maximum concurrent count never exceeds 1."
+      "explanation": "This is the real 'fake async' pattern in ClockEntryRepository.cs -- async and Task.FromResult do not by themselves create concurrency."
     },
     {
-      "prompt": "In LoadConcurrentAsync's Task.WhenAll(ids.Select(load)), when does the second load call happen relative to the first?",
+      "prompt": "What does ClockEntryService.Clockout do with the Task returned by GetClockEntry?",
       "options": [
-        "Effectively immediately -- ids.Select(load) is enumerated eagerly by WhenAll's argument evaluation, calling load for every id before any of the resulting Tasks are awaited together",
-        "Only after the first load call's Task completes",
-        "Never -- WhenAll only calls load once"
+        "It awaits it before checking whether the result is null",
+        "It ignores it and checks a different variable",
+        "It calls .Result on it synchronously"
       ],
       "correct": 0,
-      "explanation": "WhenAll takes a collection of already-started Tasks; Select(load) is what starts them all before WhenAll begins waiting for the whole set to finish."
+      "explanation": "await ClockEntryRepository.GetClockEntry(employeeId) is the real, correct usage this session studies before Session 29 studies the broken one."
     },
     {
-      "prompt": "Why doesn't ClockEntryService.Clockout(int employeeId) ever need to choose between sequential and concurrent execution?",
+      "prompt": "What is different about clockEntryService.Clockout(1) in Program.cs, compared to the await inside Clockout itself?",
       "options": [
-        "It only ever processes one employeeId per call -- 'sequential vs concurrent' is a question about running MULTIPLE independent async operations together, which never applies to a method that handles exactly one",
-        "Clockout is always sequential by definition",
-        "Clockout cannot be called for multiple employees under any circumstances"
+        "Program.cs calls Clockout(1) with no await at all -- a real, uncorrected CS4014 warning",
+        "Program.cs awaits it exactly like Clockout does internally",
+        "Clockout cannot be called from Program.cs"
       ],
       "correct": 0,
-      "explanation": "This is precisely why EntryBatchLoader needed to be a new, purpose-built extension -- there was no real multi-item async operation in the source app to study this concept against."
+      "explanation": "This is the real bug: the method itself awaits correctly internally, but its caller in Program.cs does not await the call."
     }
   ],
   "concept": [
     {
-      "title": "LoadSequentialAsync: one operation, then the next",
+      "title": "A correct await, inside Clockout",
       "paragraphs": [
-        "The real implementation is a plain foreach loop that awaits each load call before moving to the next id -- exactly the shape ClockEntryService.Clockout already uses for its single await _clockEntryRepository.GetClockEntry(employeeId) call, just repeated across a collection instead of called once.",
-        "Total time for LoadSequentialAsync is roughly the sum of every individual load call's duration, because none of them overlap."
+        "ClockEntryService.Clockout is async Task, and its first line awaits _clockEntryRepository.GetClockEntry(employeeId) before doing anything else with the result.",
+        "This is the shape this session wants you to recognize: await suspends Clockout's own execution until the Task completes, then the method resumes with a real ClockEntry? value to branch on."
       ],
-      "code": "// src/TimeClock.Domain/EntryBatchLoader.cs -- real implementation\npublic static async Task<IReadOnlyList<ClockEntry>> LoadSequentialAsync(IEnumerable<int> ids, Func<int, Task<ClockEntry>> load)\n{\n    List<ClockEntry> results = [];\n    foreach (int id in ids) results.Add(await load(id));\n    return results;\n}"
+      "code": "// Services/ClockEntryService.cs -- the real, correct implementation\npublic async Task Clockout(int employeeId)\n{\n    ClockEntry? clockEntry = await _clockEntryRepository.GetClockEntry(employeeId);\n    if (clockEntry == null)\n    {\n        throw new InvalidOperationException(\"Employee is not currently clocked in \");\n    }\n    clockEntry.ClockOutEmployee(DateTime.Now);\n    _clockEntryRepository.SaveClockEntry(clockEntry);\n}"
     },
     {
-      "title": "LoadConcurrentAsync: every operation starts together",
+      "title": "A 'fake async' method, one layer down",
       "paragraphs": [
-        "ids.Select(load) calls load once per id, starting every operation before Task.WhenAll begins waiting -- the operations overlap in time instead of running one after another.",
-        "Total time for LoadConcurrentAsync is roughly the duration of the SLOWEST individual load call, not the sum of all of them, because they all run concurrently rather than one at a time."
+        "GetClockEntry is declared async Task<ClockEntry?>, but nothing inside it actually awaits an I/O operation or yields control. It runs a leftover debug loop, an empty foreach, then wraps a synchronous FirstOrDefault lookup in Task.FromResult.",
+        "This is real, uncorrected code -- kept intentionally as a 'spot the smell' artifact. A caller awaiting this method does get suspended-and-resumed semantics from await's perspective, but there is no actual asynchronous work happening underneath."
       ],
-      "code": "public static async Task<IReadOnlyList<ClockEntry>> LoadConcurrentAsync(IEnumerable<int> ids, Func<int, Task<ClockEntry>> load) =>\n    await Task.WhenAll(ids.Select(load));"
+      "code": "// Repositories/ClockEntryRepository.cs -- the real implementation\npublic async Task<ClockEntry?> GetClockEntry(int employeeId, CancellationToken cancellationToken = default)\n{\n    for (int i = 0; i < 10; i++) { Console.WriteLine(i); }   // leftover debug loop, real\n    foreach (var clockEntry in _clockEntries) { }              // empty foreach, real\n\n    return await Task.FromResult(\n        _clockEntries.FirstOrDefault(entry =>\n            entry.EmployeeId == employeeId && entry.ClockOut is null));\n}"
     },
     {
-      "title": "The real test proves the difference with counters, not timing guesses",
+      "title": "Program.cs previews the bug Session 29 fixes",
       "paragraphs": [
-        "EntryBatchLoaderTests's sequential test tracks an active counter, incrementing before each load call and decrementing after, then asserts the observed maximum never exceeded 1.",
-        "The concurrent test uses a TaskCompletionSource as a gate every load call awaits, then asserts all load calls had already started (incrementing a started counter) before any of them are allowed to complete -- proving concurrency directly, not by guessing at timing."
+        "clockEntryService.Clockout(1) in Program.cs is called with no await, despite Clockout being async Task -- a real CS4014 warning ('because this call is not awaited, execution of the current method continues before the call is completed').",
+        "This session only asks you to find and explain the warning, not fix it -- Session 29 (Cancellation and Asynchronous Exceptions) is where the fix and its consequences for CalculateTotalHours's near-zero output are worked through."
       ],
-      "code": "// tests/.../EntryBatchLoaderTests.cs -- real assertions\nawait EntryBatchLoader.LoadSequentialAsync(new[] { 1, 2 }, Load);\nAssert.Equal(1, maximum);   // sequential: never more than one in flight\n\nawait Task.Yield();\nAssert.Equal(2, started);   // concurrent: both started before either completed"
+      "code": "// Program.cs -- the real, uncorrected bug\nclockEntryService.ClockIn(1);\nclockEntryService.Clockout(1);   // CS4014: not awaited\nvar result = payrollService.CalculateTotalHours(1, DateTime.Today.AddHours(-4), DateTime.Now.AddHours(4));"
     }
   ],
   "lab": {
-    "objective": "Run both LoadSequentialAsync and LoadConcurrentAsync against a controlled, artificially-delayed load function and confirm their real timing difference directly.",
-    "startingCondition": "EntryBatchLoader already exists with both real methods; EntryBatchLoaderTests already exists with its real active/maximum and started/gate assertions.",
+    "objective": "Trace await through Clockout and GetClockEntry, and locate (without fixing) the real CS4014 warning in Program.cs.",
+    "startingCondition": "ClockEntryService.Clockout, ClockEntryRepository.GetClockEntry, and Program.cs already exist with their real, uncorrected implementations.",
     "steps": [
-      "Write a load function with an artificial Task.Delay, and time how long LoadSequentialAsync takes for three ids.",
-      "Time how long LoadConcurrentAsync takes for the same three ids and the same delayed load function.",
-      "Confirm LoadConcurrentAsync's total time is close to one delay period, while LoadSequentialAsync's is close to three delay periods.",
-      "Run the existing EntryBatchLoaderTests.cs and confirm both counter-based assertions pass."
+      "Add a Console.WriteLine immediately before and after the await inside Clockout, and observe the order of output relative to GetClockEntry's own debug loop.",
+      "Read GetClockEntry line by line and identify which parts are genuinely asynchronous (none) versus synchronous work wrapped in Task.FromResult.",
+      "Build the solution and read the real CS4014 compiler warning text for clockEntryService.Clockout(1) in Program.cs.",
+      "Write, in your own words, what execution order the missing await allows: does ClockIn, then Clockout's body, then CalculateTotalHours definitely happen in that order, or not?"
     ],
-    "expectedBehavior": "LoadSequentialAsync's total duration scales with the number of items; LoadConcurrentAsync's stays roughly constant regardless of item count, matching a single delay period.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "expectedBehavior": "The build produces a real CS4014 warning naming Program.cs's unawaited Clockout(1) call; your written explanation correctly identifies that the missing await means CalculateTotalHours can run before Clockout's body finishes.",
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/EntryBatchLoader.cs",
+      "path": "src/TimeClock.Domain/ClockEntryService.cs",
       "action": "Verify",
-      "why": "Confirm the real LoadSequentialAsync and LoadConcurrentAsync implementations."
+      "why": "Confirm the real, correct await usage inside Clockout."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/EntryBatchLoaderTests.cs",
+      "path": "src/TimeClock.Domain/ClockEntryRepository.cs",
       "action": "Verify",
-      "why": "Confirm the existing counter-based proof of sequential-vs-concurrent behavior."
+      "why": "Confirm GetClockEntry's fake-async shape: async keyword, no real asynchronous work."
+    },
+    {
+      "path": "src/TimeClock.App/Program.cs",
+      "action": "Verify",
+      "why": "Confirm the real, uncorrected CS4014 warning on the unawaited Clockout(1) call."
     },
     {
       "path": "site/data/sessions/session-26.json",
@@ -118,50 +123,51 @@
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-26: teach sequential and concurrent asynchronous flow",
+  "commit": "session-26: teach tasks threads and awaitable work",
   "review": [
-    "LoadSequentialAsync and LoadConcurrentAsync's real implementations are quoted directly, not paraphrased.",
-    "The real test's counter-based proof (not a timing guess) is used as the primary evidence for the sequential-vs-concurrent claim.",
-    "Clockout's real lack of a sequential-vs-concurrent decision is explained honestly as the reason this session needed a new example.",
-    "The full test suite passes."
+    "Clockout's internal await is read correctly as suspend-and-resume, not as thread creation.",
+    "GetClockEntry's async keyword is not mistaken for guaranteed concurrency.",
+    "The real CS4014 warning is located and explained, not silently fixed in this session.",
+    "The debug-loop and empty-foreach cruft in GetClockEntry are identified, not silently removed.",
+    "The full test suite still passes -- no code was changed yet."
   ],
   "postQuiz": [
     {
-      "prompt": "If ClockEntryService gained a new method that clocked out an entire list of employees at once, which of EntryBatchLoader's two patterns would it most resemble if implemented naively with a foreach loop and await inside it?",
+      "prompt": "If GetClockEntry's Task.FromResult call were replaced with a real database call (Session 32's EF Core work), what would change about Clockout's own code?",
       "options": [
-        "LoadSequentialAsync's pattern -- a foreach loop awaiting each Clockout call in turn processes one employee at a time, exactly like LoadSequentialAsync processes one id at a time",
-        "LoadConcurrentAsync's pattern -- foreach loops are always concurrent",
-        "Neither -- foreach cannot contain await"
+        "Nothing in Clockout itself -- it already awaits GetClockEntry correctly, so a genuinely asynchronous implementation underneath is a drop-in replacement",
+        "Clockout would need to add its own await keyword for the first time",
+        "Clockout would need to become synchronous"
       ],
       "correct": 0,
-      "explanation": "A plain foreach with await inside it is definitionally sequential -- this is exactly the shape LoadSequentialAsync demonstrates, and exactly what such a hypothetical batch-Clockout method would need to deliberately change (to Task.WhenAll, LoadConcurrentAsync's pattern) if concurrency were desired instead."
+      "explanation": "This is exactly why Clockout's correct await matters: the caller-side contract does not change when the callee becomes genuinely asynchronous instead of fake-asynchronous."
     },
     {
-      "prompt": "Why might LoadSequentialAsync sometimes be preferred over LoadConcurrentAsync, even though it is slower in total wall-clock time?",
+      "prompt": "Why does this session stop short of fixing Program.cs's missing await on Clockout(1)?",
       "options": [
-        "When the operations share a resource that cannot safely handle concurrent access (like the real, Singleton-registered ClockEntryRepository's mutable _clockEntries list), running them sequentially avoids race conditions that concurrent execution could introduce",
-        "LoadSequentialAsync is always strictly better in every situation",
-        "There is never a reason to prefer it"
+        "Session 29 (Cancellation and Asynchronous Exceptions) is where the fix and its effect on CalculateTotalHours's output are worked through in depth",
+        "The bug cannot be fixed in C#",
+        "Program.cs does not actually contain this bug"
       ],
       "correct": 0,
-      "explanation": "This connects directly back to the real DI lifetime discussion (Session 20/30): a Singleton-registered, mutable repository is exactly the kind of shared resource where uncontrolled concurrent writes could cause real problems."
+      "explanation": "This session is about recognizing await's real behavior first; Session 29 and Session 36 are where the bug is actually corrected."
     },
     {
-      "prompt": "What would happen if LoadConcurrentAsync's ids.Select(load) were changed to ids.Select(load).ToList() before being passed to Task.WhenAll?",
+      "prompt": "What is the real, observable evidence that GetClockEntry does no genuine asynchronous work?",
       "options": [
-        "Functionally very little would change here -- .ToList() would force eager enumeration explicitly, but Select(load) passed directly to WhenAll already causes every load call to run before WhenAll starts waiting",
-        "It would make the calls run sequentially instead",
-        "It would prevent the calls from starting until awaited"
+        "Its entire body -- the debug loop, the empty foreach, and the FirstOrDefault lookup -- runs synchronously before Task.FromResult wraps an already-known value",
+        "It returns void instead of Task",
+        "It has no CancellationToken parameter"
       ],
       "correct": 0,
-      "explanation": "This is a subtle but real point: LINQ's Select is lazy in general, but passing it directly as WhenAll's argument still causes it to be enumerated (and therefore every load call invoked) immediately, before any awaiting happens -- .ToList() here would be redundant, not a behavior change."
+      "explanation": "Task.FromResult wraps a value that is already computed -- there is no I/O or yield point anywhere in the method for real concurrency to occur."
     }
   ],
   "reflections": [
-    "Why did teaching sequential-vs-concurrent async flow require a brand-new example (EntryBatchLoader) instead of extending something already real in the source app?",
-    "What real resource in this codebase (think back to Session 20's DI lifetimes) would make LoadConcurrentAsync's approach risky if applied carelessly?",
-    "How does EntryBatchLoaderTests's counter-based proof give you more confidence than simply timing the two methods and comparing durations?"
+    "Why does await in Clockout still work correctly even though GetClockEntry never truly runs asynchronously underneath it?",
+    "What does the real CS4014 warning tell you that a successful, warning-free build would not?",
+    "Which of GetClockEntry's real code smells (the debug loop, the empty foreach, the fake async) would you flag first in a code review, and why?"
   ],
-  "whatBreaks": "Changing LoadSequentialAsync's foreach loop to start every load call before awaiting any of them would turn it into a concurrent implementation in disguise, breaking the real active/maximum test's assertion that at most one operation is ever in flight. Changing LoadConcurrentAsync to await each load call individually inside its Select callback (instead of collecting Tasks for WhenAll) would make it behave like LoadSequentialAsync instead, breaking the real started/gate test's assertion that all operations start together.",
-  "summary": "EntryBatchLoader's real LoadSequentialAsync awaits each operation before starting the next, keeping at most one in flight at a time -- proven by the real test's active/maximum counter, not just asserted. LoadConcurrentAsync starts every operation immediately via Task.WhenAll, proven by the real test's started-count/gate assertion. ClockEntryService.Clockout never faced this choice, because it always processes exactly one employee -- which is exactly why this session needed a new, purpose-built example."
+  "whatBreaks": "Removing the await inside Clockout would make it return a Task immediately, before GetClockEntry's result is known -- clockEntry would never be checked for null correctly. Leaving GetClockEntry's fake-async pattern in place is harmless today only because nothing is genuinely asynchronous yet; it becomes a real bug the moment Session 32 swaps in a genuinely async EF Core call and callers still assume synchronous-speed completion. Ignoring the real CS4014 warning in Program.cs is exactly what lets ClockIn and Clockout race against CalculateTotalHours, producing the near-zero total-hours output Session 36 investigates.",
+  "summary": "ClockEntryService.Clockout is the app's one correct async/await example: it awaits GetClockEntry before branching. GetClockEntry itself is real 'fake async' -- an async signature over entirely synchronous work. Program.cs's real, unawaited Clockout(1) call previews the bug Session 29 and Session 36 fix."
 }

@@ -1,88 +1,167 @@
 {
   "number": 20,
-  "category": "dependency boundaries",
+  "category": "Object-oriented design",
   "estimatedTime": "40 minutes",
-  "connection": "Session 19 covered abstract classes and inheritance. This session shows constructor injection as it is actually used across the real application: ClockEntryService depends on IClockEntryRepository, and PayrollService depends on both IEmployeeService and IClockEntryRepository -- one of which it never calls.",
+  "connection": "Session 19 studied interface polymorphism. Nothing in the real practice-07092026 source uses inheritance or abstract classes at all -- this session introduces HoursPolicyBase, a new, clearly-labeled abstract class that StandardHoursPolicy and FlexibleHoursPolicy now inherit from, and previews PayrollDbContext's real inheritance from EF Core's DbContext (Session 32).",
   "objectives": [
-    "Explain why a class should depend on an interface, not a concrete implementation, when another class constructs it for it.",
-    "Trace how Program.cs's ServiceCollection registrations connect an interface to a concrete class at resolution time.",
-    "Read PayrollService's constructor as a real example of a declared-but-unused dependency, and explain why that is a legitimate (if incomplete) design rather than a bug.",
-    "Explain the real Transient/Singleton mix in Program.cs and what would change if every registration were Singleton."
+    "Explain what HoursPolicyBase adds beyond what IHoursPolicy alone already provided: a shared, non-abstract Round helper both derived classes inherit for free.",
+    "Distinguish HoursPolicyBase's abstract GetVariance (each derived class must supply its own) from its concrete Round (shared, inherited, never overridden).",
+    "Confirm StandardHoursPolicy.GetVariance's override keyword is required, and explain what the compiler checks it against.",
+    "Preview why PayrollDbContext (Session 32) will be this codebase's first real, necessary use of inheritance -- EF Core requires a DbContext subclass, not just an interface implementation."
   ],
   "visuals": [
-    {"diagram":"constructor","title":"The constructor states the contract","explanation":"PayrollService's constructor lists IEmployeeService and IClockEntryRepository -- both required to construct the object, whether or not every method uses both."},
-    {"diagram":"signature","title":"DI resolves interfaces to concrete types","explanation":"services.AddTransient<IClockEntryService, ClockEntryService>() is what lets the container hand back a working ClockEntryService whenever code asks for IClockEntryService."},
-    {"diagram":"pipeline","title":"Follow one resolution","explanation":"provider.GetRequiredService<PayrollService>() walks the registration graph: PayrollService needs IEmployeeService and IClockEntryRepository, so the container builds those first."},
-    {"diagram":"invariant","title":"Lifetime changes identity, not correctness","explanation":"IClockEntryRepository is Singleton so every resolution shares the same in-memory list; IClockEntryService is Transient so each resolution is a new instance -- both work here because ClockEntryService itself holds no per-instance state."}
+    {
+      "diagram": "blueprint",
+      "title": "An abstract class can mix required and shared members",
+      "explanation": "HoursPolicyBase declares GetVariance as abstract (each subclass must implement it) and Round as a concrete, shared protected method (subclasses inherit it unchanged)."
+    },
+    {
+      "diagram": "call",
+      "title": "override is checked against the abstract declaration",
+      "explanation": "StandardHoursPolicy.GetVariance must use override, and its signature must match HoursPolicyBase's abstract declaration exactly, or the compiler rejects it."
+    },
+    {
+      "diagram": "instances",
+      "title": "Round is never duplicated",
+      "explanation": "Neither StandardHoursPolicy nor FlexibleHoursPolicy defines its own Round method -- both inherit the single implementation from HoursPolicyBase."
+    },
+    {
+      "diagram": "invariant",
+      "title": "An interface alone could not have done this",
+      "explanation": "IHoursPolicy could declare GetVariance, but interfaces (before default interface members) cannot supply Round's shared implementation the way an abstract base class can."
+    }
   ],
   "preQuiz": [
-    {"prompt":"Why does PayrollService's constructor take IEmployeeService even though CalculateTotalHours never calls it?","options":["It is a real, documented dead dependency in the source app -- wired in for a future employee-lookup feature, not a mistake to silently delete","Every service in the app is required to take at least two dependencies","IEmployeeService is required by the C# compiler for constructor injection to work"],"correct":0,"explanation":"decision-0006 in the source project's decision log confirms this was verified against the real constructor, not assumed -- the dependency is real and currently unused."},
-    {"prompt":"What does services.AddSingleton<IClockEntryRepository, ClockEntryRepository>() mean for two different classes that both request IClockEntryRepository?","options":["They receive two independent repositories with separate in-memory lists","They receive the same repository instance, so entries saved through one are visible through the other","The registration is invalid because two classes cannot share one type"],"correct":1,"explanation":"Singleton means one instance for the lifetime of the container -- this is why ClockIn and Clockout, resolved separately, still see the same _clockEntries list."},
-    {"prompt":"If IClockEntryService were registered AddSingleton instead of AddTransient, what would change in this app?","options":["Nothing observable, since ClockEntryService holds no per-instance state of its own -- it only forwards to the (already-Singleton) repository","The app would fail to build","ClockIn would stop working"],"correct":0,"explanation":"Lifetime only matters when a class holds state across calls; ClockEntryService is stateless itself, so Transient vs Singleton is a real but currently inert design choice -- exactly what decision-0005 documents and what Session 30 explores in depth."}
+    {
+      "prompt": "What could HoursPolicyBase do that IHoursPolicy alone could not?",
+      "options": [
+        "Provide Round as a real, shared method body that both StandardHoursPolicy and FlexibleHoursPolicy inherit without rewriting it -- an interface can declare a member's signature but an ordinary interface cannot supply reusable implementation the way an abstract class can",
+        "Nothing -- interfaces and abstract classes are functionally identical",
+        "Prevent FlexibleHoursPolicy from ever changing its GetVariance result"
+      ],
+      "correct": 0,
+      "explanation": "This is the concrete difference this session demonstrates: shared, inherited implementation is an abstract class capability that a plain interface does not give you."
+    },
+    {
+      "prompt": "Why must StandardHoursPolicy.GetVariance use the override keyword?",
+      "options": [
+        "HoursPolicyBase declares GetVariance as abstract, which requires every concrete derived class to supply an implementation marked override -- the compiler checks the signature matches exactly",
+        "override is optional stylistic decoration",
+        "override is required by IHoursPolicy, not HoursPolicyBase"
+      ],
+      "correct": 0,
+      "explanation": "abstract members create a contract just as binding as an interface member -- override is how C# confirms a derived class is fulfilling that specific abstract declaration, not just adding an unrelated method with the same name."
+    },
+    {
+      "prompt": "Why will PayrollDbContext (Session 32) be forced to use inheritance, when nothing else in this codebase has needed it?",
+      "options": [
+        "EF Core's design requires your context class to literally BE a DbContext (public class PayrollDbContext : DbContext), inheriting its real infrastructure (change tracking, SaveChangesAsync) -- there is no interface-based alternative for that specific framework requirement",
+        "It isn't forced to -- it's a stylistic choice",
+        "DbContext is an interface, not a base class"
+      ],
+      "correct": 0,
+      "explanation": "This is a genuine, external constraint from the EF Core framework itself, not a design preference this course is choosing -- worth previewing now so Session 32's inheritance doesn't feel unmotivated."
+    }
   ],
   "concept": [
     {
-      "title": "Depend on the interface, not the class",
+      "title": "HoursPolicyBase: abstract plus concrete, in one class",
       "paragraphs": [
-        "ClockEntryService's constructor takes IClockEntryRepository, not ClockEntryRepository. That one-word difference is what lets ClockEntryService be tested with a fake repository (Session 30) without ever touching the real one.",
-        "The same shape appears in PayrollService, which depends on IEmployeeService and IClockEntryRepository -- two interfaces, zero concrete types, even though CalculateTotalHours only actually calls one of them."
+        "public abstract class HoursPolicyBase : IHoursPolicy declares GetVariance as abstract decimal GetVariance(decimal recordedHours) -- no body, forcing every non-abstract derived class to supply one.",
+        "The same class also declares protected static decimal Round(decimal hours) with a real, complete body -- every derived class inherits this exact implementation; none of them re-declare it."
       ],
-      "code": "// Services/PayrollService.cs -- the real constructor\npublic PayrollService(IEmployeeService employeeService, IClockEntryRepository clockEntryRepository)\n{\n    _employeeService = employeeService;\n    _clockEntryRepository = clockEntryRepository;\n}"
+      "code": "public abstract class HoursPolicyBase : IHoursPolicy\n{\n    public abstract decimal GetVariance(decimal recordedHours);\n\n    protected static decimal Round(decimal hours) =>\n        Math.Round(hours, 2, MidpointRounding.AwayFromZero);\n}"
     },
     {
-      "title": "Registration is where the interface meets its implementation",
+      "title": "Two derived classes, one required override, one free inheritance",
       "paragraphs": [
-        "Nothing in ClockEntryService.cs or PayrollService.cs says which concrete class satisfies IClockEntryRepository. Program.cs's ServiceCollection is the one place that decision is made.",
-        "The real registrations mix lifetimes: IClockEntryRepository is Singleton, while IClockEntryService, PayrollService, and IEmployeeService are all Transient -- verified directly against the source Program.cs, not assumed."
+        "StandardHoursPolicy and FlexibleHoursPolicy both extend HoursPolicyBase now, instead of implementing IHoursPolicy directly. Each provides its own override decimal GetVariance(...) -- required, because GetVariance is abstract.",
+        "Neither class writes its own Round method -- both simply call the inherited one, exactly as HoursPolicyBase defined it, with zero duplication."
       ],
-      "code": "// Program.cs -- the real, mixed-lifetime registrations\nvar services = new ServiceCollection();\nservices.AddTransient<IClockEntryService, ClockEntryService>();\nservices.AddSingleton<IClockEntryRepository, ClockEntryRepository>();\nservices.AddTransient<PayrollService>();\nservices.AddTransient<IEmployeeService, EmployeeService>();"
+      "code": "public sealed class StandardHoursPolicy(decimal scheduledHours) : HoursPolicyBase\n{\n    public override decimal GetVariance(decimal recordedHours) => Round(recordedHours - scheduledHours);\n}\n\npublic sealed class FlexibleHoursPolicy : HoursPolicyBase\n{\n    public override decimal GetVariance(decimal recordedHours) => 0m;\n}"
     },
     {
-      "title": "A declared dependency does not have to be used yet",
+      "title": "A preview: PayrollDbContext's real, necessary inheritance",
       "paragraphs": [
-        "PayrollService constructor-injects IEmployeeService but CalculateTotalHours never calls it. That is not dead code to delete reflexively -- it is a real, documented design point (decision-0006): the dependency was likely added in anticipation of an employee-lookup feature that has not been built yet.",
-        "The real xUnit test for PayrollService (Session 29) mocks IEmployeeService with Mock<IEmployeeService>() and never configures it -- proof, in the test itself, that the dependency is currently inert."
+        "Session 32 introduces PayrollDbContext : DbContext -- EF Core's own design requires your context type to literally be a DbContext, gaining its real change-tracking and SaveChangesAsync machinery through inheritance.",
+        "This is different from HoursPolicyBase's inheritance, which this course chose deliberately to demonstrate the concept -- PayrollDbContext's inheritance is externally required by the EF Core framework itself, the first genuinely necessary use of inheritance in this codebase."
       ],
-      "code": "// tests/.../PayrollServiceTests.cs -- the real test\nvar employeeService = new Mock<IEmployeeService>();   // never configured, never verified\nvar payrollService = new PayrollService(employeeService.Object, repository.Object);"
+      "code": "// Coming in Session 32 -- EF Core requires this shape, not just an interface\n// public sealed class PayrollDbContext(DbContextOptions<PayrollDbContext> options) : DbContext(options)"
     }
   ],
   "lab": {
-    "objective": "Trace dependency direction through the real Program.cs registrations and confirm PayrollService's dead IEmployeeService dependency by reading, not guessing.",
-    "startingCondition": "ClockEntryService, PayrollService, EmployeeService, and their interfaces already exist with the real constructors from Sessions 5-18.",
+    "objective": "Confirm HoursPolicyBase's split between abstract and concrete members, and that both derived policies inherit Round unchanged.",
+    "startingCondition": "HoursPolicyBase, StandardHoursPolicy, and FlexibleHoursPolicy already exist with the real abstract/concrete split.",
     "steps": [
-      "List every constructor parameter type across ClockEntryService, PayrollService, and EmployeeService, and confirm each one is an interface.",
-      "In Program.cs, match each AddTransient/AddSingleton call to the interface it satisfies.",
-      "Search PayrollService.cs for every use of _employeeService and confirm CalculateTotalHours never calls it.",
-      "Run the existing PayrollServiceTests.cs and confirm it passes with an unconfigured Mock<IEmployeeService>.",
-      "Change IClockEntryRepository's registration from Singleton to Transient, rerun the app, and observe that ClockIn and Clockout now operate on two different empty lists -- explaining in writing why Singleton was the correct choice here."
+      "Attempt to instantiate HoursPolicyBase directly (new HoursPolicyBase()) and confirm the compiler rejects it -- abstract classes cannot be constructed.",
+      "Remove the override keyword from StandardHoursPolicy.GetVariance and confirm the compiler rejects the resulting method as an unrelated overload, not a valid override.",
+      "Confirm neither StandardHoursPolicy nor FlexibleHoursPolicy declares its own Round method, and that GetVariance's rounded results still work correctly through the inherited one.",
+      "Run the existing HoursPolicyTests.cs and confirm both policies still pass with their real, unchanged expected values."
     ],
-    "expectedBehavior": "All constructor parameters are interfaces; the registration graph in Program.cs resolves PayrollService without error; PayrollServiceTests.cs passes; switching IClockEntryRepository to Transient breaks the app's total-hours calculation because ClockIn and Clockout no longer share state.",
+    "expectedBehavior": "HoursPolicyBase cannot be constructed directly; removing override causes a compile error; both policies correctly use the inherited Round method with no duplication; existing tests pass unchanged.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
-    {"path":"src/TimeClock.Domain/TimeClockService.cs","action":"Verify","why":"Confirm PayrollService's real two-interface constructor and the unused _employeeService field."},
-    {"path":"src/TimeClock.App/Program.cs","action":"Verify","why":"Confirm the real mixed Transient/Singleton registrations."},
-    {"path":"tests/TimeClock.Domain.Tests/PayrollServiceTests.cs","action":"Verify","why":"Confirm the unconfigured Mock<IEmployeeService> proves the dependency is currently inert."},
-    {"path":"site/data/sessions/session-19.json","action":"Add","why":"Publish synchronized lesson, lab, and quiz material."}
+    {
+      "path": "src/TimeClock.Domain/IHoursPolicy.cs",
+      "action": "Verify",
+      "why": "Confirm HoursPolicyBase's real abstract/concrete member split and both derived classes."
+    },
+    {
+      "path": "tests/TimeClock.Domain.Tests/HoursPolicyTests.cs",
+      "action": "Verify",
+      "why": "Confirm existing coverage still passes against the now-inherited implementation."
+    },
+    {
+      "path": "site/data/sessions/session-19.json",
+      "action": "Add",
+      "why": "Publish synchronized lesson, lab, and quiz material."
+    }
   ],
-  "commit": "session-19: teach dependency direction and constructor injection",
+  "commit": "session-19: teach abstract classes inheritance and overrides",
   "review": [
-    "Every constructor in the domain layer depends on an interface, never a concrete class.",
-    "Program.cs is the only file that names a concrete implementation for each interface.",
-    "PayrollService's unused IEmployeeService dependency is explained, not silently removed.",
-    "The Singleton/Transient mix is explained by what state each class holds, not applied uniformly.",
-    "The full test suite passes."
+    "HoursPolicyBase is explicitly introduced as new, since no real inheritance exists in the source app.",
+    "The abstract/concrete split (GetVariance vs Round) is demonstrated by actually attempting to instantiate the base class and remove the override keyword.",
+    "PayrollDbContext's future, genuinely-required inheritance is previewed honestly as a different motivation than this session's deliberate teaching example.",
+    "The full test suite passes with both policies working correctly through the new inheritance chain."
   ],
   "postQuiz": [
-    {"prompt":"What would break if ClockEntryService's constructor took ClockEntryRepository instead of IClockEntryRepository?","options":["Nothing at runtime, but Session 30's fake-repository tests could no longer substitute a test double","The app would fail to build immediately","ClockIn would stop persisting entries"],"correct":0,"explanation":"Depending on the concrete type still compiles and runs -- the cost shows up later, when nothing but the real repository can be substituted in a test."},
-    {"prompt":"Where in this codebase is the only place that names ClockEntryRepository as the implementation of IClockEntryRepository?","options":["Program.cs's ServiceCollection registration","ClockEntryService.cs","IClockEntryRepository.cs"],"correct":0,"explanation":"Every other file references the interface; only the composition root wires the interface to its concrete implementation."},
-    {"prompt":"Why is PayrollService's unused IEmployeeService dependency a legitimate design point rather than something to fix in this session?","options":["decision-0006 documents it was verified against the real constructor and left in place deliberately for a not-yet-built feature","IEmployeeService cannot be removed from any constructor in C#","Unused dependencies always indicate a compiler bug"],"correct":0,"explanation":"The source project's own decision log treats this as a resolved, intentional state -- not an open question to silently patch."}
+    {
+      "prompt": "Why can't HoursPolicyBase be instantiated directly with new HoursPolicyBase()?",
+      "options": [
+        "It is declared abstract, and abstract classes can never be constructed directly -- only concrete (non-abstract) derived classes like StandardHoursPolicy and FlexibleHoursPolicy can be instantiated",
+        "It has no constructor",
+        "IHoursPolicy prevents it"
+      ],
+      "correct": 0,
+      "explanation": "abstract on a class is exactly this: a promise that the class is incomplete on its own and exists only to be extended."
+    },
+    {
+      "prompt": "If HoursPolicyBase's Round method were declared virtual instead of a plain (non-virtual) method, what new capability would that add?",
+      "options": [
+        "Derived classes could optionally override Round with their own rounding behavior, using the override keyword -- today, neither StandardHoursPolicy nor FlexibleHoursPolicy can customize it at all",
+        "Nothing would change",
+        "Round would become abstract automatically"
+      ],
+      "correct": 0,
+      "explanation": "virtual is what opens a concrete method up to being overridden; a plain method (like Round today) is fixed for every derived class, which is exactly why neither policy can (or needs to) customize rounding."
+    },
+    {
+      "prompt": "What is genuinely different about PayrollDbContext's future inheritance from DbContext, compared to StandardHoursPolicy's inheritance from HoursPolicyBase?",
+      "options": [
+        "PayrollDbContext's inheritance is required by the EF Core framework's own design; HoursPolicyBase's inheritance was a deliberate choice this course made specifically to have a real example to teach from",
+        "There is no real difference between the two",
+        "PayrollDbContext will not actually use inheritance"
+      ],
+      "correct": 0,
+      "explanation": "This distinction matters for judgment: not every inheritance relationship is equally motivated -- some are genuinely required by a framework, others are a design choice worth justifying on their own merits."
+    }
   ],
   "reflections": [
-    "Which of PayrollService's two dependencies does CalculateTotalHours actually use, and what would have to change for it to use the other?",
-    "Why does IClockEntryRepository need to be Singleton for this console app's ClockIn/Clockout sequence to work at all?",
-    "What would you need to change if IEmployeeService's RenameService were later called from inside PayrollService?"
+    "Why did this course choose to add a new abstract class (HoursPolicyBase) rather than leave Session 20 without any real inheritance example at all?",
+    "What would you lose if HoursPolicyBase's Round method were duplicated separately inside StandardHoursPolicy and FlexibleHoursPolicy instead of shared?",
+    "Now that you've seen both an interface-only design (Session 19's original IHoursPolicy) and an abstract-class design (this session's HoursPolicyBase), when would you reach for each?"
   ],
-  "whatBreaks": "Changing ClockEntryService or PayrollService's constructors to depend on concrete classes removes the seam Session 30's test doubles rely on. Registering IClockEntryRepository as Transient breaks ClockIn/Clockout's shared state, since each resolution would get its own empty list. Removing IEmployeeService from PayrollService's constructor would break the real, existing xUnit test, which constructs PayrollService with two arguments.",
-  "summary": "Constructor injection in this app means every domain class depends on interfaces, and Program.cs is the single place those interfaces are wired to concrete types. PayrollService's real, unused IEmployeeService dependency shows that a declared dependency does not have to be exercised yet to be a legitimate part of the constructor's contract."
+  "whatBreaks": "Attempting new HoursPolicyBase() directly fails to compile, because abstract classes exist only to be extended, never instantiated on their own. Removing StandardHoursPolicy's override keyword from GetVariance produces a compile error, because the compiler can no longer connect that method to HoursPolicyBase's abstract declaration. Duplicating Round's logic separately inside each derived policy (instead of inheriting it) would reintroduce the exact kind of duplication generics (Session 15) and interfaces (Session 19) already exist to avoid.",
+  "summary": "HoursPolicyBase is a new, clearly-labeled abstract class -- nothing in the real source uses inheritance, so this session builds one specifically to demonstrate what an abstract class adds beyond an interface: a required abstract member (GetVariance) alongside a shared, concrete, inherited one (Round). Session 32's PayrollDbContext will be this codebase's first genuinely framework-required use of inheritance, previewed here so it does not feel unmotivated when it arrives."
 }

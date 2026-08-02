@@ -1,15 +1,68 @@
 {
-  "number": 5,"category":"Language foundations","estimatedTime":"40 minutes","connection":"Session 04 classified a variance inline. This session extracts that work into named methods and makes data flow and scope explicit.",
-  "objectives":["Identify a method signature, arguments, parameters, and return value.","Trace values into and out of a method call.","Explain local scope and lifetime.","Extract repeated or conceptually named work without changing behavior."],
-  "visuals":[{"diagram":"call","title":"Arguments enter a method","explanation":"A call supplies argument values to parameters; control enters the method and later returns to the caller."},{"diagram":"frame","title":"Parameters and locals stay scoped","explanation":"Parameters and local variables are available inside their method boundary, preventing unrelated code from depending on temporary details."},{"diagram":"return","title":"Return sends one result back","explanation":"A return value crosses the method boundary and lets the caller decide what to do with the result."},{"diagram":"signature","title":"The signature is a contract","explanation":"Return type, method name, and parameter list describe how callers may use the method."}],
-  "preQuiz":[{"prompt":"What is scheduledHours in CalculateVariance(entry, scheduledHours)?","options":["An argument at the call site","A return type","A namespace"],"correct":0,"explanation":"The call supplies the current value as an argument; the method receives it through a parameter."},{"prompt":"Can a local variable declared inside CalculateVariance be read directly in top-level code?","options":["Yes, all locals are global","No, its scope is the method body","Only after build"],"correct":1,"explanation":"A local is only in scope within its declaring block."},{"prompt":"Why return a decimal from CalculateVariance?","options":["So the caller receives the calculated value","To print automatically","To create a project"],"correct":0,"explanation":"The method produces a decimal result that the caller can store or use."}],
-  "concept":[{"title":"A method names a unit of behavior","paragraphs":["A method groups statements behind a name. A good name lets the caller express intent while the body owns calculation details.","Extraction is useful when it clarifies responsibility, not merely to make code shorter."],"code":"decimal varianceHours = CalculateVariance(entry, scheduledHours);"},{"title":"Parameters receive values","paragraphs":["Arguments are expressions at the call site. Parameters are local names in the method declaration. By default, C# passes the resulting values by value.","The ClockEntry argument value is a reference, so the method and caller can refer to the same object; deeper reference behavior is taught later."],"code":"static decimal CalculateVariance(ClockEntry entry, decimal scheduledHours)"},{"title":"Scope limits dependencies","paragraphs":["recordedHours exists only inside CalculateVariance. scheduleStatus exists only inside ClassifyVariance. Those boundaries prevent temporary details from leaking into unrelated statements.","return ends the method and supplies its result to the caller."],"code":"decimal recordedHours = (decimal)entry.GetDuartion().TotalHours;\nreturn recordedHours - scheduledHours;"}],
-  "lab":{"objective":"Extract variance calculation and classification into local methods without changing output.","startingCondition":"Program.cs calculates recordedHours, varianceHours, and scheduleStatus inline.","steps":["Predict which variables will no longer be visible in top-level code.","Create CalculateVariance with ClockEntry and decimal parameters and a decimal return type.","Move recorded-hours conversion and subtraction into CalculateVariance.","Create ClassifyVariance with a decimal parameter and string return type.","Replace inline work with method calls, then build, run, and test."],"expectedBehavior":"Console output remains +0.50 hours and over schedule; all tests pass.","validation":"dotnet build TimeClock.sln --configuration Release && dotnet run --project src/TimeClock.App/TimeClock.App.csproj --configuration Release && dotnet test TimeClock.sln --configuration Release --no-build"},
-  "expectedFiles":[{"path":"src/TimeClock.App/Program.cs","action":"Modify","why":"Extract named methods and demonstrate parameters, returns, and scope."},{"path":"site/data/sessions/session-04.json","action":"Add","why":"Publish synchronized lesson materials."}],
-  "commit":"session-04: teach methods parameters scope and returns",
-  "review":["Method names describe results rather than mechanics.","Parameter and return types match the values crossing each boundary.","Temporary variables have the narrowest useful scope.","Refactoring preserves console output.","Build and tests pass without warnings."],
-  "postQuiz":[{"prompt":"Where is recordedHours available after extraction?","options":["Only inside CalculateVariance","Every project","Only in the solution file"],"correct":0,"explanation":"It is a local declared in that method body."},{"prompt":"What changes if CalculateVariance returns scheduledHours - recordedHours?","options":["Only formatting","The sign and meaning of variance","The project reference"],"correct":1,"explanation":"Reversing operands preserves compilation but changes semantics."},{"prompt":"Why can ClassifyVariance be tested through application output here?","options":["Its returned string is displayed","Methods always print","Tests rewrite source"],"correct":0,"explanation":"The caller displays the returned status, making the result observable."}],
-  "reflections":["Which details became hidden after extraction?","When would a method with many parameters signal a design problem?","How does return type constrain callers?"],
-  "whatBreaks":"Removing CalculateVariance leaves the caller without the numeric result. Removing a return statement prevents a non-void method from compiling. Moving recordedHours outside the method widens scope and weakens the boundary even if behavior remains the same.",
-  "summary":"Methods name behavior. Arguments produce values for parameters, locals stay within scope, and return values carry results back to callers."
+  "number": 5,
+  "category": "Language foundations",
+  "estimatedTime": "40 minutes",
+  "connection": "Session 04 produced a numeric variance. This session turns that value into a decision, tracing which execution path runs and why.",
+  "objectives": [
+    "Explain how Boolean conditions select an execution path.",
+    "Predict the result of relational comparisons at boundary values.",
+    "Use a switch expression with relational patterns to classify a value.",
+    "Recognize ordering and fallback behavior in a decision."
+  ],
+  "visuals": [
+    {"diagram":"branch","title":"A condition selects a branch","explanation":"A condition is evaluated once at the decision point. Only the matching path runs, and execution continues after that branch."},
+    {"diagram":"comparison","title":"Comparisons produce Boolean values","explanation":"Relational operators compare compatible operands and produce true or false. They do not change either operand."},
+    {"diagram":"switch","title":"Patterns map input to an outcome","explanation":"A switch expression evaluates arms from top to bottom and returns the expression from the first matching pattern."},
+    {"diagram":"path","title":"One input follows one path","explanation":"For a single switch evaluation, one arm supplies the result. The discard pattern provides a deliberate fallback for remaining values."}
+  ],
+  "preQuiz": [
+    {"prompt":"If varianceHours is 0m, which comparison is true?","options":["varianceHours > 0m","varianceHours < 0m","Neither comparison"],"correct":2,"explanation":"Zero is neither greater than nor less than zero, so a fallback handles it."},
+    {"prompt":"In a switch expression, what does the first matching arm do?","options":["Its result becomes the value of the switch expression","Every later arm also runs","It changes the input variable"],"correct":0,"explanation":"The first match supplies the result; later arms are not evaluated."},
+    {"prompt":"Why include the discard pattern _?","options":["It deletes the input","It handles values not matched by earlier arms","It converts every value to null"],"correct":1,"explanation":"The discard pattern is a fallback that matches any remaining input."}
+  ],
+  "concept": [
+    {"title":"Conditions answer yes-or-no questions","paragraphs":["A comparison such as varianceHours > 0m is an expression whose result is Boolean. Control-flow constructs use that result to choose what executes.","Boundary values matter. Zero needs explicit reasoning because it matches neither greater-than nor less-than comparisons."],"code":"bool isOverSchedule = varianceHours > 0m;"},
+    {"title":"if statements control execution","paragraphs":["An if statement runs a block only when its condition is true. else if adds another condition, and else handles everything left over.","The order communicates priority. Overlapping conditions can make later branches unreachable or surprising, so conditions should be reviewed as a set."],"code":"if (varianceHours > 0m)\n{\n    Console.WriteLine(\"Over schedule\");\n}\nelse if (varianceHours < 0m)\n{\n    Console.WriteLine(\"Under schedule\");\n}\nelse\n{\n    Console.WriteLine(\"On schedule\");\n}"},
+    {"title":"A switch expression maps one value to another","paragraphs":["A switch expression is useful when the goal is to produce one result from a set of patterns. Here, one decimal variance becomes one status string.","Relational patterns keep comparisons beside their outcomes. The discard arm handles zero after positive and negative values have been matched."],"code":"string scheduleStatus = varianceHours switch\n{\n    > 0m => \"over schedule\",\n    < 0m => \"under schedule\",\n    _ => \"on schedule\"\n};"}
+  ],
+  "lab": {
+    "objective": "Classify the numeric variance as over schedule, under schedule, or on schedule.",
+    "startingCondition": "Program.cs calculates a +0.50 decimal variance and displays its numeric value.",
+    "steps": [
+      "Predict the status for positive, negative, and zero variance before editing.",
+      "Add a switch expression whose input is varianceHours.",
+      "Use relational patterns for positive and negative values and a discard pattern for zero.",
+      "Display Schedule status after the numeric variance.",
+      "Run once with scheduledHours equal to 7.5m, then temporarily try 8m and 8.5m to observe all paths.",
+      "Restore scheduledHours to 7.5m, then build and run all tests."
+    ],
+    "expectedBehavior": "The stable application reports over schedule for +0.50 variance. Temporary 0.00 and -0.50 experiments report on schedule and under schedule respectively.",
+    "validation": "dotnet run --project src/TimeClock.App/TimeClock.App.csproj --configuration Release && dotnet test TimeClock.sln --configuration Release"
+  },
+  "expectedFiles": [
+    {"path":"src/TimeClock.App/Program.cs","action":"Modify","why":"Map numeric variance to one observable status using relational patterns."},
+    {"path":"site/data/sessions/session-04.json","action":"Add","why":"Publish the synchronized lesson, lab, and quizzes."}
+  ],
+  "commit": "session-04: teach control flow and pattern decisions",
+  "review": [
+    "Positive, negative, and zero inputs each have one documented outcome.",
+    "More specific relational patterns appear before the fallback.",
+    "The discard pattern is used intentionally for the remaining zero case.",
+    "Temporary boundary experiments were reverted to the stable starting value.",
+    "Displayed status agrees with the displayed numeric variance.",
+    "The solution builds without warnings and all tests pass."
+  ],
+  "postQuiz": [
+    {"prompt":"With scheduledHours at 8.5m and recordedHours at 8m, which arm matches?","options":["> 0m","< 0m","_"],"correct":1,"explanation":"Recorded minus scheduled is -0.5m, so the less-than-zero pattern matches."},
+    {"prompt":"What breaks if the discard arm is removed?","options":["Positive values stop matching","The switch is not exhaustive for zero and fails to compile","The decimal becomes a string"],"correct":1,"explanation":"The compiler requires the switch expression to produce a result for every possible decimal input."},
+    {"prompt":"Does evaluating varianceHours > 0m modify varianceHours?","options":["Yes, it increments the value","No, it produces a separate Boolean result","Only in Release builds"],"correct":1,"explanation":"A comparison observes operands and produces true or false; it does not mutate them."}
+  ],
+  "reflections": [
+    "Why is zero a boundary case in this decision?",
+    "When would an if statement communicate intent better than a switch expression?",
+    "How does the order of patterns affect overlapping cases?"
+  ],
+  "whatBreaks": "Removing the status calculation leaves the numeric variance intact but removes its domain interpretation. Removing the fallback makes the switch non-exhaustive for zero. Reversing the positive and negative labels produces believable but incorrect output, so the build alone would not catch the semantic error.",
+  "summary": "Comparisons produce Boolean values, control flow selects execution paths, and relational patterns map one input to one outcome. Boundary cases and fallback behavior are part of the decision, not afterthoughts."
 }
+

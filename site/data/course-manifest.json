@@ -6,55 +6,358 @@
     "subtitle": "A Practical C# and .NET Refresher",
     "basePath": "/csharp-learn-with-ai/",
     "advancementThreshold": 80,
-    "sessionCount": 35
+    "sessionCount": 36
   },
   "layers": [
-    { "id": "foundations", "number": 1, "title": "C# and .NET Foundations", "range": "01–07" },
-    { "id": "memory", "number": 2, "title": "Memory and Type Behavior", "range": "08–10" },
-    { "id": "collections", "number": 3, "title": "Collections and Generics", "range": "11–16" },
-    { "id": "design", "number": 4, "title": "Object-Oriented Design", "range": "17–20" },
-    { "id": "linq", "number": 5, "title": "LINQ and Data Transformation", "range": "21–23" },
-    { "id": "errors", "number": 6, "title": "Errors and Resource Management", "range": "24–25" },
-    { "id": "async", "number": 7, "title": "Asynchronous Programming", "range": "26–28" },
-    { "id": "testing", "number": 8, "title": "Testing and Dependency Injection", "range": "29–30" },
-    { "id": "integration", "number": 9, "title": "Data Access and Application Integration", "range": "31–35" }
+    {
+      "id": "orientation",
+      "number": 1,
+      "title": "Orientation and Context",
+      "range": "00"
+    },
+    {
+      "id": "foundations",
+      "number": 2,
+      "title": "C# and .NET Foundations",
+      "range": "02–08"
+    },
+    {
+      "id": "memory",
+      "number": 3,
+      "title": "Memory and Type Behavior",
+      "range": "09–11"
+    },
+    {
+      "id": "collections",
+      "number": 4,
+      "title": "Collections and Generics",
+      "range": "12–17"
+    },
+    {
+      "id": "design",
+      "number": 5,
+      "title": "Object-Oriented Design",
+      "range": "18–21"
+    },
+    {
+      "id": "linq",
+      "number": 6,
+      "title": "LINQ and Data Transformation",
+      "range": "22–24"
+    },
+    {
+      "id": "errors",
+      "number": 7,
+      "title": "Errors and Resource Management",
+      "range": "25–26"
+    },
+    {
+      "id": "async",
+      "number": 8,
+      "title": "Asynchronous Programming",
+      "range": "27–29"
+    },
+    {
+      "id": "testing",
+      "number": 9,
+      "title": "Testing and Dependency Injection",
+      "range": "30–31"
+    },
+    {
+      "id": "integration",
+      "number": 10,
+      "title": "Data Access and Application Integration",
+      "range": "32–36"
+    }
   ],
   "sessions": [
-    [1,"scaffolding-the-solution-src-tests-and-sln","Scaffolding the Solution: src, tests, and the .sln","foundations",null,"001–006"],
-    [2,"project-references-and-dependency-direction","Project References and Dependency Direction","foundations",1,"internal: split out of original session 1 (scaffolding), expanded with new dependency-graph and layering material"],
-    [3,"variables-expressions-and-numeric-types","Variables, Expressions, and Numeric Types","foundations",2,"007, 013"],
-    [4,"control-flow-and-pattern-based-decisions","Control Flow and Pattern-Based Decisions","foundations",3,"007–013"],
-    [5,"methods-parameters-scope-and-return-values","Methods, Parameters, Scope, and Return Values","foundations",4,"008–010"],
-    [6,"classes-objects-properties-and-constructors","Classes, Objects, Properties, and Constructors","foundations",5,"023–027, 040"],
-    [7,"initialization-nullability-and-invariants","Initialization, Nullability, and Invariants","foundations",6,"011, 028–029, 079"],
-    [8,"value-and-reference-assignment","Value and Reference Assignment","memory",7,"076"],
-    [9,"parameter-passing-with-ref-out-and-in","Parameter Passing with ref, out, and in","memory",8,"076"],
-    [10,"strings-records-structs-and-equality","Strings, Records, Structs, and Equality","memory",9,"013, 076"],
-    [11,"arrays-lists-and-enumeration","Arrays, Lists, and Enumeration","collections",10,"014–019"],
-    [12,"dictionaries-sets-and-lookup-semantics","Dictionaries, Sets, and Lookup Semantics","collections",11,"020–021"],
-    [13,"collection-interfaces-and-ienumerable","Collection Interfaces and IEnumerable<T>","collections",12,"014–022, 044"],
-    [14,"generic-types-and-methods","Generic Types and Methods","collections",13,"014, 020"],
-    [15,"generic-constraints","Generic Constraints","collections",14,"032–038"],
-    [16,"variance-at-api-boundaries","Variance at API Boundaries","collections",15,"032, 076"],
-    [17,"encapsulation-and-composition","Encapsulation and Composition","design",16,"028–030, 034"],
-    [18,"interfaces-and-polymorphism","Interfaces and Polymorphism","design",17,"032–033, 075"],
-    [19,"abstract-classes-inheritance-and-overrides","Abstract Classes, Inheritance, and Overrides","design",18,"073–075"],
-    [20,"dependency-direction-and-constructor-injection","Dependency Direction and Constructor Injection","design",19,"035–039, 077"],
-    [21,"linq-pipelines","LINQ Pipelines with Where, Select, and Ordering","linq",20,"022, 045"],
-    [22,"grouping-joining-and-aggregation","Grouping, Joining, and Aggregation","linq",21,"044–045, 080"],
-    [23,"deferred-execution-materialization-and-query-sources","Deferred Execution, Materialization, and Query Sources","linq",22,"045, 060"],
-    [24,"validation-return-values-and-exceptions","Validation, Return Values, and Exceptions","errors",23,"010, 012, 046"],
-    [25,"exception-propagation-idisposable-and-using","Exception Propagation, IDisposable, and using","errors",24,"046, 078"],
-    [26,"tasks-threads-and-awaitable-work","Tasks, Threads, and Awaitable Work","async",25,"047"],
-    [27,"sequential-and-concurrent-asynchronous-flow","Sequential and Concurrent Asynchronous Flow","async",26,"047–048"],
-    [28,"cancellation-and-asynchronous-exceptions","Cancellation and Asynchronous Exceptions","async",27,"048, 078"],
-    [29,"unit-tests-and-arrange-act-assert","Unit Tests and Arrange–Act–Assert","testing",28,"063"],
-    [30,"test-doubles-di-lifetimes-and-service-tests","Test Doubles, DI Lifetimes, and Service Tests","testing",29,"035, 064, 077"],
-    [31,"ef-core-context-entities-and-tracking","EF Core Context, Entities, and Tracking","integration",30,"057–059"],
-    [32,"ef-core-query-execution","EF Core Queries: In-Memory versus Database Execution","integration",31,"057, 060–061"],
-    [33,"aspnet-core-requests-routing-and-dtos","ASP.NET Core Requests, Routing, and DTO Boundaries","integration",32,"049–053"],
-    [34,"validation-logging-and-api-errors","Validation, Logging, and API Error Responses","integration",33,"054–056, 062"],
-    [35,"integrated-workflow-and-end-to-end-verification","Integrated Workflow and End-to-End Verification","integration",34,"040–044, 061, 065"]
+    [
+      0,
+      "why-learn-csharp-in-2026",
+      "Why Learn C# in 2026?",
+      "orientation",
+      null,
+      "original orientation material, not derived from practice-07092026 or csharp-refresher; see SOURCE_MAPPING.md"
+    ],
+    [
+      2,
+      "scaffolding-the-solution-src-tests-and-sln",
+      "Scaffolding the Solution: src, tests, and the .sln",
+      "foundations",
+      0,
+      "001–006"
+    ],
+    [
+      3,
+      "project-references-and-dependency-direction",
+      "Project References and Dependency Direction",
+      "foundations",
+      2,
+      "internal: split out of original session 1 (scaffolding), expanded with new dependency-graph and layering material"
+    ],
+    [
+      4,
+      "variables-expressions-and-numeric-types",
+      "Variables, Expressions, and Numeric Types",
+      "foundations",
+      3,
+      "007, 013"
+    ],
+    [
+      5,
+      "control-flow-and-pattern-based-decisions",
+      "Control Flow and Pattern-Based Decisions",
+      "foundations",
+      4,
+      "007–013"
+    ],
+    [
+      6,
+      "methods-parameters-scope-and-return-values",
+      "Methods, Parameters, Scope, and Return Values",
+      "foundations",
+      5,
+      "008–010"
+    ],
+    [
+      7,
+      "classes-objects-properties-and-constructors",
+      "Classes, Objects, Properties, and Constructors",
+      "foundations",
+      6,
+      "023–027, 040"
+    ],
+    [
+      8,
+      "initialization-nullability-and-invariants",
+      "Initialization, Nullability, and Invariants",
+      "foundations",
+      7,
+      "011, 028–029, 079"
+    ],
+    [
+      9,
+      "value-and-reference-assignment",
+      "Value and Reference Assignment",
+      "memory",
+      8,
+      "076"
+    ],
+    [
+      10,
+      "parameter-passing-with-ref-out-and-in",
+      "Parameter Passing with ref, out, and in",
+      "memory",
+      9,
+      "076"
+    ],
+    [
+      11,
+      "strings-records-structs-and-equality",
+      "Strings, Records, Structs, and Equality",
+      "memory",
+      10,
+      "013, 076"
+    ],
+    [
+      12,
+      "arrays-lists-and-enumeration",
+      "Arrays, Lists, and Enumeration",
+      "collections",
+      11,
+      "014–019"
+    ],
+    [
+      13,
+      "dictionaries-sets-and-lookup-semantics",
+      "Dictionaries, Sets, and Lookup Semantics",
+      "collections",
+      12,
+      "020–021"
+    ],
+    [
+      14,
+      "collection-interfaces-and-ienumerable",
+      "Collection Interfaces and IEnumerable<T>",
+      "collections",
+      13,
+      "014–022, 044"
+    ],
+    [
+      15,
+      "generic-types-and-methods",
+      "Generic Types and Methods",
+      "collections",
+      14,
+      "014, 020"
+    ],
+    [
+      16,
+      "generic-constraints",
+      "Generic Constraints",
+      "collections",
+      15,
+      "032–038"
+    ],
+    [
+      17,
+      "variance-at-api-boundaries",
+      "Variance at API Boundaries",
+      "collections",
+      16,
+      "032, 076"
+    ],
+    [
+      18,
+      "encapsulation-and-composition",
+      "Encapsulation and Composition",
+      "design",
+      17,
+      "028–030, 034"
+    ],
+    [
+      19,
+      "interfaces-and-polymorphism",
+      "Interfaces and Polymorphism",
+      "design",
+      18,
+      "032–033, 075"
+    ],
+    [
+      20,
+      "abstract-classes-inheritance-and-overrides",
+      "Abstract Classes, Inheritance, and Overrides",
+      "design",
+      19,
+      "073–075"
+    ],
+    [
+      21,
+      "dependency-direction-and-constructor-injection",
+      "Dependency Direction and Constructor Injection",
+      "design",
+      20,
+      "035–039, 077"
+    ],
+    [
+      22,
+      "linq-pipelines",
+      "LINQ Pipelines with Where, Select, and Ordering",
+      "linq",
+      21,
+      "022, 045"
+    ],
+    [
+      23,
+      "grouping-joining-and-aggregation",
+      "Grouping, Joining, and Aggregation",
+      "linq",
+      22,
+      "044–045, 080"
+    ],
+    [
+      24,
+      "deferred-execution-materialization-and-query-sources",
+      "Deferred Execution, Materialization, and Query Sources",
+      "linq",
+      23,
+      "045, 060"
+    ],
+    [
+      25,
+      "validation-return-values-and-exceptions",
+      "Validation, Return Values, and Exceptions",
+      "errors",
+      24,
+      "010, 012, 046"
+    ],
+    [
+      26,
+      "exception-propagation-idisposable-and-using",
+      "Exception Propagation, IDisposable, and using",
+      "errors",
+      25,
+      "046, 078"
+    ],
+    [
+      27,
+      "tasks-threads-and-awaitable-work",
+      "Tasks, Threads, and Awaitable Work",
+      "async",
+      26,
+      "047"
+    ],
+    [
+      28,
+      "sequential-and-concurrent-asynchronous-flow",
+      "Sequential and Concurrent Asynchronous Flow",
+      "async",
+      27,
+      "047–048"
+    ],
+    [
+      29,
+      "cancellation-and-asynchronous-exceptions",
+      "Cancellation and Asynchronous Exceptions",
+      "async",
+      28,
+      "048, 078"
+    ],
+    [
+      30,
+      "unit-tests-and-arrange-act-assert",
+      "Unit Tests and Arrange–Act–Assert",
+      "testing",
+      29,
+      "063"
+    ],
+    [
+      31,
+      "test-doubles-di-lifetimes-and-service-tests",
+      "Test Doubles, DI Lifetimes, and Service Tests",
+      "testing",
+      30,
+      "035, 064, 077"
+    ],
+    [
+      32,
+      "ef-core-context-entities-and-tracking",
+      "EF Core Context, Entities, and Tracking",
+      "integration",
+      31,
+      "057–059"
+    ],
+    [
+      33,
+      "ef-core-query-execution",
+      "EF Core Queries: In-Memory versus Database Execution",
+      "integration",
+      32,
+      "057, 060–061"
+    ],
+    [
+      34,
+      "aspnet-core-requests-routing-and-dtos",
+      "ASP.NET Core Requests, Routing, and DTO Boundaries",
+      "integration",
+      33,
+      "049–053"
+    ],
+    [
+      35,
+      "validation-logging-and-api-errors",
+      "Validation, Logging, and API Error Responses",
+      "integration",
+      34,
+      "054–056, 062"
+    ],
+    [
+      36,
+      "integrated-workflow-and-end-to-end-verification",
+      "Integrated Workflow and End-to-End Verification",
+      "integration",
+      35,
+      "040–044, 061, 065"
+    ]
   ]
 }
-

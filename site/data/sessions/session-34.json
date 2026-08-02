@@ -2,115 +2,115 @@
   "number": 34,
   "category": "Data access and application integration",
   "estimatedTime": "45 minutes",
-  "connection": "Session 33 added the WebApi's first real controller, using IClockEntryService (fully registered). This session confronts the real, latent bug in the same DI container: PayrollService requires IEmployeeService, which TimeClock.Web/Program.cs -- mirroring the real Parm.Practice.WebApi/Program.cs -- never registers.",
+  "connection": "Session 31 covered Scoped lifetime, previewing ASP.NET Core's per-request scoping. This session studies the real Parm.Practice.WebApi/Program.cs scaffold, mirrored verbatim in TimeClock.Web/Program.cs: it calls AddControllers()/MapControllers() against zero controller classes. This session writes the first one.",
   "objectives": [
-    "Reproduce the real bug directly: attempt to resolve PayrollService from TimeClock.Web's real DI container and observe the InvalidOperationException it throws.",
-    "Read WebApiRegistrationTests.cs, which already proves this exact failure (and its one-line fix) without needing a running web host.",
-    "Apply the real fix: register IEmployeeService/EmployeeService in Program.cs, and confirm PayrollService now resolves successfully.",
-    "Connect this fix back to Session 24's throw-vs-return rule: should a missing registration surface as a 500 error, or should the API return a more specific status code?"
+    "Read TimeClock.Web/Program.cs and confirm, by inspection, that AddControllers()/MapControllers() are wired up with no Controllers/ directory and no controller classes anywhere in the project -- a real, verified gap, not a hypothetical.",
+    "Write ClockEntriesController, the project's first real controller, exposing an HTTP endpoint over the real IClockEntryService.",
+    "Explain why a controller action's parameters and return type form a DTO boundary distinct from the domain's ClockEntry/Employee types.",
+    "Confirm MapControllers() now has at least one real route to map, by calling the new endpoint."
   ],
   "visuals": [
     {
       "diagram": "invariant",
-      "title": "The real, latent bug",
-      "explanation": "PayrollService's constructor requires IEmployeeService; TimeClock.Web/Program.cs registers IClockEntryRepository, IEmployeeRepository, IClockEntryService, and PayrollService itself -- but never IEmployeeService."
+      "title": "The real, verified gap",
+      "explanation": "builder.Services.AddControllers(); ... app.MapControllers(); -- both real lines exist in Parm.Practice.WebApi/Program.cs today, with zero [ApiController] classes anywhere in the project for them to map."
     },
     {
       "diagram": "call",
-      "title": "Undiscovered because nothing calls it yet",
-      "explanation": "Before Session 33 added a controller, and before any controller resolves PayrollService, this bug had no way to surface -- it was real but silent."
-    },
-    {
-      "diagram": "branch",
-      "title": "The real test proves both the failure and the fix",
-      "explanation": "WebApiRegistrationTests.cs's two tests: one confirms resolving PayrollService throws without IEmployeeService registered; the other confirms adding one line fixes it."
+      "title": "A controller action is the missing piece",
+      "explanation": "[HttpPost] public IActionResult ClockIn(int employeeId) gives MapControllers() something real to route requests to -- the first controller this real project has ever had."
     },
     {
       "diagram": "return",
-      "title": "A missing DI registration is a different failure than a business rule violation",
-      "explanation": "This bug happens before any request-specific logic runs -- Session 24's throw-vs-return rule was about expected domain outcomes, not startup configuration errors like this one."
+      "title": "The action's parameters are the HTTP boundary, not the domain boundary",
+      "explanation": "A controller action receives request data (route values, query strings, request bodies) -- it is not the same thing as calling IClockEntryService.ClockIn(int employeeId) directly from C# code."
+    },
+    {
+      "diagram": "pipeline",
+      "title": "One request, routed to one action, calling the real service",
+      "explanation": "POST /employees/1/clock-in -> ClockEntriesController.ClockIn(1) -> the real, unmodified IClockEntryService.ClockIn(1)."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Why did the real missing-IEmployeeService-registration bug go undiscovered in the source WebApi project for as long as it did?",
+      "prompt": "Why does the real Parm.Practice.WebApi project currently have zero working HTTP endpoints, despite calling AddControllers() and MapControllers()?",
       "options": [
-        "Nothing in the project ever actually tried to resolve PayrollService -- with zero controllers (confirmed in Session 33), the bug had no code path that would trigger it",
-        "It was actually discovered and fixed, then reintroduced",
-        "ASP.NET Core silently ignores missing DI registrations"
+        "Those two calls only wire up the infrastructure FOR controllers -- MapControllers() maps whatever [ApiController]-attributed classes it finds, and the real project has never had any",
+        "AddControllers() and MapControllers() are broken in this version of ASP.NET Core",
+        "The project uses minimal APIs instead, which are incompatible with MapControllers()"
       ],
       "correct": 0,
-      "explanation": "This is exactly why Session 33's controller work matters here -- once something in the request pipeline resolves PayrollService, the bug becomes immediately, loudly visible."
+      "explanation": "This is confirmed by inspecting the real project directly -- the DI/routing infrastructure is present and correctly configured; only the controllers themselves are missing."
     },
     {
-      "prompt": "What does WebApiRegistrationTests.cs's first test prove, without running a full ASP.NET Core host?",
+      "prompt": "What does ClockEntriesController.ClockIn(int employeeId) actually call to perform the real work?",
       "options": [
-        "That building a ServiceCollection with the real WebApi's exact registrations (minus IEmployeeService) and resolving PayrollService throws InvalidOperationException -- the same failure a real running host would hit",
-        "That the real WebApi project fails to compile",
-        "That IClockEntryRepository is broken"
+        "The real, unmodified IClockEntryService.ClockIn(int employeeId) -- the controller is a thin HTTP-facing wrapper around logic that already exists and is already tested",
+        "A new, duplicate implementation of the clock-in logic written specifically for the controller",
+        "PayrollService directly"
       ],
       "correct": 0,
-      "explanation": "Reproducing a DI container's real registration graph in a fast unit test (no web server needed) is exactly how this bug is demonstrated without the overhead of an integration test."
+      "explanation": "This is the whole point of Sessions 6-20's interface-based design: the controller is new, but the logic it calls into is the same real, already-tested ClockEntryService."
     },
     {
-      "prompt": "What is the one-line fix for this real bug?",
+      "prompt": "Is a controller action's int employeeId parameter (bound from the URL) the same thing as calling IClockEntryService.ClockIn(employeeId) directly in C# code?",
       "options": [
-        "Add builder.Services.AddSingleton<IEmployeeService, EmployeeService>(); to Program.cs, alongside the other three real registrations already there",
-        "Rewrite PayrollService's constructor to not require IEmployeeService",
-        "Delete PayrollService entirely"
+        "Not exactly -- the controller parameter is bound from an HTTP request (route value, query string, or body) by ASP.NET Core's model binding, THEN passed to the real ClockIn method; the HTTP boundary and the domain method call are two distinct steps",
+        "Yes -- they are identical in every respect",
+        "No -- controller actions cannot call domain services at all"
       ],
       "correct": 0,
-      "explanation": "The fix is additive and minimal -- exactly what WebApiRegistrationTests.cs's second test confirms: adding the missing registration, and nothing else, resolves the failure."
+      "explanation": "This distinction matters for Session 35's DTO/validation discussion: HTTP requests need explicit binding and validation before their values can be trusted as valid domain method arguments."
     }
   ],
   "concept": [
     {
-      "title": "Reproducing the real bug without a running host",
+      "title": "The real, verified gap",
       "paragraphs": [
-        "WebApiRegistrationTests.cs mirrors TimeClock.Web/Program.cs's exact real registrations (minus IEmployeeService) against a plain ServiceCollection, then calls provider.GetRequiredService<PayrollService>() and asserts it throws.",
-        "This is deliberately NOT a full ASP.NET Core integration test -- reproducing just the DI registration graph is enough to prove the bug exists, and is fast enough to run on every build."
+        "TimeClock.Web/Program.cs mirrors Parm.Practice.WebApi/Program.cs verbatim: builder.Services.AddControllers(); wires up controller-related services, and app.MapControllers(); tells ASP.NET Core's routing to map any [ApiController]-attributed classes it discovers -- but there is no Controllers/ directory anywhere in the project, and zero such classes exist.",
+        "This is real and current, not a hypothetical scenario -- confirmed by inspecting both the real practice-07092026 repository and this course's own TimeClock.Web project before this session's lab."
       ],
-      "code": "// tests/.../WebApiRegistrationTests.cs -- real, already-existing test\n[Fact]\npublic void Real_WebApi_registrations_cannot_resolve_PayrollService()\n{\n    using ServiceProvider provider = RealWebApiRegistrationsWithoutEmployeeService().BuildServiceProvider();\n\n    InvalidOperationException exception = Assert.Throws<InvalidOperationException>(\n        () => provider.GetRequiredService<PayrollService>());\n\n    Assert.Contains(\"IEmployeeService\", exception.Message);\n}"
+      "code": "// src/TimeClock.Web/Program.cs -- real, mirrored verbatim from the source WebApi\nvar builder = WebApplication.CreateBuilder(args);\nbuilder.Services.AddControllers();\n\nbuilder.Services.AddSingleton<IClockEntryRepository, ClockEntryRepository>();\nbuilder.Services.AddSingleton<IEmployeeRepository, EmployeeRepositor>();\nbuilder.Services.AddSingleton<IClockEntryService, ClockEntryService>();\nbuilder.Services.AddSingleton<PayrollService>();\n\nvar app = builder.Build();\napp.MapControllers();   // maps nothing today -- zero controllers exist\napp.Run();"
     },
     {
-      "title": "The fix: one registration, confirmed by the second real test",
+      "title": "ClockEntriesController: the first real controller",
       "paragraphs": [
-        "Adding services.AddSingleton<IEmployeeService, EmployeeService>() -- matching the pattern every other real registration in Program.cs already follows -- is the complete fix.",
-        "The second real test proves it: the exact same registration graph, plus that one line, resolves PayrollService successfully."
+        "A minimal controller action exposing the real, already-tested IClockEntryService.ClockIn over HTTP -- new code, but calling into logic Sessions 6 and 19 already built and tested.",
+        "[ApiController] plus a route attribute is what makes this class discoverable by MapControllers(); nothing about IClockEntryService itself needs to change for this to work."
       ],
-      "code": "// tests/.../WebApiRegistrationTests.cs -- the real fix, proven by the second test\n[Fact]\npublic void Registering_IEmployeeService_fixes_the_resolution()\n{\n    ServiceCollection services = RealWebApiRegistrationsWithoutEmployeeService();\n    services.AddSingleton<IEmployeeService, EmployeeService>();   // the real fix\n\n    using ServiceProvider provider = services.BuildServiceProvider();\n    PayrollService payrollService = provider.GetRequiredService<PayrollService>();\n\n    Assert.NotNull(payrollService);\n}"
+      "code": "// New: TimeClock.Web/Controllers/ClockEntriesController.cs\n[ApiController]\n[Route(\"employees/{employeeId}/clock-in\")]\npublic sealed class ClockEntriesController(IClockEntryService clockEntryService) : ControllerBase\n{\n    [HttpPost]\n    public IActionResult ClockIn(int employeeId)\n    {\n        clockEntryService.ClockIn(employeeId);\n        return Accepted();\n    }\n}"
     },
     {
-      "title": "A startup failure is a different category than a business-rule failure",
+      "title": "The HTTP boundary is a separate step from the domain call",
       "paragraphs": [
-        "Session 24 established throw-vs-return for expected domain outcomes (like 'not currently clocked in') versus broken invariants (like a double clock-out). This bug is neither -- it is a configuration error, discovered only when something tries to construct PayrollService for the first time.",
-        "In a real ASP.NET Core host, an unresolvable DI dependency typically surfaces as an unhandled exception during request handling (or even at startup, if resolved eagerly) -- worth logging clearly, since a generic 500 response gives an API consumer no useful signal about what actually went wrong."
+        "Before ClockIn(int employeeId) ever runs, ASP.NET Core's model binding has already parsed employeeId out of the URL segment {employeeId} and converted it to an int -- a step Session 35 studies more closely when it can fail (a non-numeric segment, for instance).",
+        "This is why controller actions are described as a boundary: everything on one side (HTTP requests, routing, model binding) is new to this session; everything on the other side (IClockEntryService, ClockEntry, the real domain) is unchanged from Sessions 6-30."
       ],
       "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
-    "objective": "Confirm the real WebApiRegistrationTests.cs failure and fix, then apply the same fix to TimeClock.Web/Program.cs itself and verify a controller can now resolve PayrollService.",
-    "startingCondition": "TimeClock.Web/Program.cs still does not register IEmployeeService, matching the real, current Parm.Practice.WebApi/Program.cs exactly; WebApiRegistrationTests.cs already demonstrates both the failure and the fix against a plain ServiceCollection.",
+    "objective": "Add ClockEntriesController as the real project's first controller, and confirm MapControllers() now routes a real HTTP request to it.",
+    "startingCondition": "TimeClock.Web/Program.cs already calls AddControllers()/MapControllers() with zero controllers, mirroring the real, current Parm.Practice.WebApi project exactly.",
     "steps": [
-      "Run WebApiRegistrationTests.cs and confirm both tests pass as written (one proving the failure, one proving the fix) against the isolated ServiceCollection.",
-      "Add a controller action that resolves PayrollService (via constructor injection) and confirm, by running the host, that it throws the same real InvalidOperationException.",
-      "Add builder.Services.AddSingleton<IEmployeeService, EmployeeService>(); to TimeClock.Web/Program.cs.",
-      "Re-run the host and confirm the controller action now resolves PayrollService successfully and returns a real result."
+      "Confirm, by searching the project, that no Controllers/ directory or [ApiController] class currently exists.",
+      "Add Controllers/ClockEntriesController.cs with a ClockIn action calling the real IClockEntryService.ClockIn.",
+      "Run the WebApi host and send a POST request to the new route, confirming a successful response.",
+      "Confirm the underlying ClockEntryRepository now has a new open ClockEntry for that employee, proving the controller genuinely reached the real domain logic."
     ],
-    "expectedBehavior": "Before the fix, resolving PayrollService from the running WebApi host throws InvalidOperationException naming IEmployeeService; after adding the one-line registration, resolution succeeds.",
+    "expectedBehavior": "Before the lab, no route exists for clocking in over HTTP. After adding ClockEntriesController, the POST request succeeds and a new open ClockEntry is created through the same real ClockEntryService used by the console app.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "tests/TimeClock.Domain.Tests/WebApiRegistrationTests.cs",
+      "path": "src/TimeClock.Web/Program.cs",
       "action": "Verify",
-      "why": "Confirm the real, existing proof of both the bug and its fix."
+      "why": "Confirm the real, current AddControllers()/MapControllers() scaffold with zero controllers."
     },
     {
-      "path": "src/TimeClock.Web/Program.cs",
-      "action": "Modify",
-      "why": "Add the missing IEmployeeService registration, applying the real fix to the actual WebApi host."
+      "path": "src/TimeClock.Web/Controllers/ClockEntriesController.cs",
+      "action": "Add",
+      "why": "Write the project's first real controller, filling the gap MapControllers() has been waiting on."
     },
     {
       "path": "site/data/sessions/session-33.json",
@@ -118,50 +118,50 @@
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-33: teach validation logging and api error responses",
+  "commit": "session-33: teach aspnet core requests routing and dto boundaries",
   "review": [
-    "The real bug is reproduced directly (both via the existing fast unit test and, in the lab, via the actual running host), not just described.",
-    "The fix matches the exact registration pattern every other real dependency in Program.cs already follows.",
-    "The distinction between a startup/configuration failure and Session 24's domain-level throw-vs-return rule is stated explicitly.",
-    "The full test suite passes, including both real WebApiRegistrationTests.cs cases."
+    "The real, current zero-controller gap is confirmed by inspection before any code is written, not assumed.",
+    "ClockEntriesController calls the real, unmodified IClockEntryService rather than duplicating its logic.",
+    "The HTTP boundary (model binding, routing) is explicitly distinguished from the domain method call it eventually makes.",
+    "The full test suite passes, and the new endpoint is confirmed working end to end."
   ],
   "postQuiz": [
     {
-      "prompt": "Why did WebApiRegistrationTests.cs's two tests not need a running ASP.NET Core web server to prove this bug and its fix?",
+      "prompt": "If PayrollService were resolved inside a new controller action today, without any other changes, what real bug from the source WebApi would surface?",
       "options": [
-        "The bug is entirely about DI container registration, which a plain ServiceCollection reproduces exactly -- no HTTP request, routing, or web server involvement is needed to trigger or observe it",
-        "ASP.NET Core tests always require a running server",
-        "The tests are not actually testing the real bug"
+        "The real, latent missing-IEmployeeService-registration bug -- PayrollService's constructor requires IEmployeeService, which TimeClock.Web/Program.cs (mirroring the real WebApi) never registers, so resolution would throw InvalidOperationException",
+        "Nothing -- PayrollService resolves without issue in the WebApi host",
+        "A compile error, not a runtime error"
       ],
       "correct": 0,
-      "explanation": "Isolating exactly the layer where a bug lives (here, DI registration) is what let this test run fast and without any web-hosting overhead."
+      "explanation": "This is exactly the bug Session 35 discovers and fixes -- Session 34 deliberately used IClockEntryService, which IS fully registered, so this particular controller avoids the bug; Session 35 confronts it directly."
     },
     {
-      "prompt": "If a second service were added to PayrollService's constructor in the future without updating Program.cs's registrations, what category of bug would result?",
+      "prompt": "Why does ClockEntriesController.ClockIn accept int employeeId as a route parameter rather than, say, a full ClockEntry object in the request body?",
       "options": [
-        "The same category as this session's real bug -- a missing DI registration, undiscovered until something actually tries to resolve the affected service",
-        "A compile-time error, caught immediately",
-        "No bug -- DI containers automatically register every dependency"
+        "Clocking in only requires an identity (which employee); ClockEntry's ClockIn timestamp is set by the server (DateTime.Now, inside the real ClockEntryService.ClockIn), not supplied by the client -- the route parameter matches exactly what the operation actually needs from the caller",
+        "ASP.NET Core does not support request bodies",
+        "ClockEntry cannot be deserialized from JSON"
       ],
       "correct": 0,
-      "explanation": "This is exactly why WebApiRegistrationTests.cs's pattern -- reproducing the real registration graph in a fast test -- is worth keeping around: it would catch this exact class of regression immediately."
+      "explanation": "This mirrors the real ClockEntryService.ClockIn(int employeeId) signature exactly -- the controller's parameter list is deliberately no wider than the domain method it calls."
     },
     {
-      "prompt": "Is 'PayrollService cannot be resolved' the same kind of failure as ClockEntryService.Clockout's 'employee not currently clocked in' from Session 24?",
+      "prompt": "Was writing ClockEntriesController itself a change to any existing, real, tested code?",
       "options": [
-        "No -- the first is a startup/configuration failure (a missing registration, unrelated to any specific request's data); the second is an expected, everyday domain outcome Session 24's throw-vs-return rule was written for",
-        "Yes -- both should be handled identically",
-        "No -- the first cannot actually occur in a real application"
+        "No -- it is entirely new code; IClockEntryService, ClockEntryService, and every existing test remain completely unmodified",
+        "Yes -- IClockEntryService needed a new HTTP-specific method",
+        "Yes -- ClockEntry's constructor needed to change"
       ],
       "correct": 0,
-      "explanation": "Session 24's rule was scoped to domain-level expected/unexpected outcomes -- this session's bug lives one layer below that, in DI configuration, and is worth naming as a distinct category rather than forcing it into the same rule."
+      "explanation": "This is deliberate: the controller is additive, calling into the exact same real, already-verified domain logic every earlier session already tested."
     }
   ],
   "reflections": [
-    "Why might a bug like this one -- real, verified, and simple to fix -- persist undiscovered in a real project for a long time?",
-    "What would you add to this codebase's test suite to catch a similar missing-registration bug the moment a new dependency is introduced, rather than only after this specific one was found?",
-    "How does resolving this bug change your confidence in the rest of TimeClock.Web/Program.cs's registrations -- would you want to write a similar test for each one?"
+    "Why did MapControllers() compile and run successfully for 31 sessions with zero controllers to map, without ever producing an error?",
+    "What would you need to add to ClockEntriesController for it to also expose Clockout and CalculateTotalHours over HTTP?",
+    "How does keeping ClockEntriesController's action parameters narrow (just employeeId) protect it from becoming coupled to internal domain details that might change?"
   ],
-  "whatBreaks": "Leaving IEmployeeService unregistered means any future controller action that resolves PayrollService (directly or via a dependency chain) throws InvalidOperationException at the moment of resolution -- a real, silent trap for anyone who adds a new endpoint without knowing this gap exists. Registering EmployeeService with the wrong lifetime (say, Scoped instead of matching the other Singleton registrations) would still fix the immediate resolution failure but introduce the same kind of lifetime-mismatch question Session 30 studied.",
-  "summary": "TimeClock.Web/Program.cs -- mirroring the real, current Parm.Practice.WebApi/Program.cs -- never registers IEmployeeService, even though PayrollService's constructor requires it; resolving PayrollService throws InvalidOperationException as a result. WebApiRegistrationTests.cs already proves both the failure and its one-line fix without a running web host; this session's lab applies that same fix to the real Program.cs, and distinguishes this startup/configuration failure from Session 24's domain-level throw-vs-return rule."
+  "whatBreaks": "Forgetting the [ApiController] attribute (or a valid route) on a new controller class means MapControllers() still will not discover it -- ASP.NET Core needs both the attribute and app.MapControllers() together to route requests to it. Calling PayrollService instead of IClockEntryService from a new controller action today would surface the real, still-unfixed missing-IEmployeeService-registration bug before Session 35 formally addresses it.",
+  "summary": "TimeClock.Web/Program.cs -- mirroring the real, current Parm.Practice.WebApi/Program.cs -- calls AddControllers()/MapControllers() against zero controller classes, a real and verified gap, not a hypothetical one. This session's lab writes ClockEntriesController, the project's first real controller, calling directly into the same real, already-tested IClockEntryService every earlier session built -- the HTTP boundary (routing, model binding) is new; the domain logic it reaches is not."
 }

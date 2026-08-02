@@ -1,126 +1,116 @@
 {
   "number": 10,
   "category": "Memory and type behavior",
-  "estimatedTime": "40 minutes",
-  "connection": "Session 9 covered ref/out/in. This session contrasts ClockEntry and Employee's default reference equality with WorkSummary's real record value equality (introduced in Session 22), and looks at where string comparison rules actually matter in this codebase.",
+  "estimatedTime": "35 minutes",
+  "connection": "Session 9 covered value versus reference assignment. Nothing in the real Parm.Practice.ConsoleApplication uses ref, out, or in -- this session is a clearly-labeled new extension, written as a small TryGetOpenEntry helper next to the real IClockEntryRepository so the parameter-passing keywords have somewhere real-shaped to attach to.",
   "objectives": [
-    "Predict, and then confirm, that two separately-constructed ClockEntry objects with identical EmployeeId/ClockIn/ClockOut are NOT equal by default -- neither ClockEntry nor Employee overrides Equals.",
-    "Confirm that two WorkSummary records with the same EmployeeId and Hours ARE equal, because record types generate value-based equality automatically.",
-    "Explain why EmployeeDirectory's city-uniqueness check uses StringComparer.OrdinalIgnoreCase rather than default string equality.",
-    "Distinguish struct value-copy semantics (WorkCode, a record struct) from class reference semantics (ClockEntry, Employee)."
+    "Explain why out lets a method report a lookup result and success/failure without a nullable return type or a thrown exception.",
+    "Write TryGetOpenEntry(int employeeId, out ClockEntry? entry), a new method modeled on GetClockEntry's real nullable-return shape but demonstrating the out alternative.",
+    "Explain why ref would let a method reassign a caller's ClockEntry? variable entirely, not just mutate the object it currently refers to.",
+    "Explain why in is not needed anywhere in this codebase, since no method here takes a large struct by value."
   ],
   "visuals": [
     {
-      "diagram": "comparison",
-      "title": "class gives you reference equality unless you opt out",
-      "explanation": "new ClockEntry(1, t) != new ClockEntry(1, t) is true (they are unequal) -- ClockEntry never overrode Equals, so two separately-constructed objects are never equal, even with identical field values."
+      "diagram": "call",
+      "title": "out reports a second value on the way out",
+      "explanation": "bool TryGetOpenEntry(int employeeId, out ClockEntry? entry) returns whether the lookup succeeded AND assigns entry -- two pieces of information from one call."
     },
     {
-      "diagram": "instances",
-      "title": "record gives you value equality automatically",
-      "explanation": "new WorkSummary(1, 8m) == new WorkSummary(1, 8m) is true -- the compiler generates Equals/GetHashCode from WorkSummary's declared members."
+      "diagram": "branch",
+      "title": "The caller must handle both outcomes",
+      "explanation": "if (repository.TryGetOpenEntry(1, out var entry)) uses entry only inside the branch where TryGetOpenEntry returned true -- the compiler enforces entry is definitely assigned by that point."
     },
     {
-      "diagram": "type",
-      "title": "Case sensitivity is a choice, not a default",
-      "explanation": "\"Springfield\" == \"springfield\" is false under ordinal string comparison; EmployeeDirectory explicitly opts into StringComparer.OrdinalIgnoreCase to treat them as the same city."
+      "diagram": "variable",
+      "title": "ref lets a method replace what the caller's variable refers to",
+      "explanation": "A ref ClockEntry? parameter could reassign the caller's variable to a completely different object, not just mutate the current one."
     },
     {
-      "diagram": "decimal",
-      "title": "record struct copies by value, like int or DateTime",
-      "explanation": "WorkCode is declared readonly record struct -- assigning one WorkCode variable to another copies its Year and Sequence, the same as any other value type."
+      "diagram": "invariant",
+      "title": "in protects a large struct from being copied",
+      "explanation": "None of this codebase's parameters are large structs, so in has no real use here -- it exists for a category of problem this domain does not have."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Does ClockEntry override Equals?",
+      "prompt": "What does TryGetOpenEntry(1, out var entry) let you avoid, compared to the real async GetClockEntry(1)?",
       "options": [
-        "No -- it uses the default reference equality inherited from object, so two ClockEntry objects with identical EmployeeId/ClockIn/ClockOut are still considered unequal",
-        "Yes -- it compares EmployeeId, ClockIn, and ClockOut",
-        "Yes, but only ClockOut is compared"
+        "Nothing conceptually different -- it is a synchronous alternative to the same nullable-result idea, useful for comparing the two patterns side by side",
+        "It avoids ever needing a null check",
+        "It makes the lookup run faster"
       ],
       "correct": 0,
-      "explanation": "Nothing in the real ClockEntry.cs overrides Equals or GetHashCode -- confirmed by reading the actual file; it relies entirely on object identity."
+      "explanation": "Both patterns communicate 'found or not found' -- out ClockEntry? plus a bool return is one C# idiom for it; a nullable return type (the real GetClockEntry's choice) is another."
     },
     {
-      "prompt": "Why does new WorkSummary(1, 8m).Equals(new WorkSummary(1, 8m)) return true without any code written for it?",
+      "prompt": "Inside if (repository.TryGetOpenEntry(1, out var entry)) { ... }, what does the compiler guarantee about entry?",
       "options": [
-        "WorkSummary is declared as a record, and the compiler automatically generates member-wise Equals/GetHashCode/== for records",
-        "decimal always compares by value across all types",
-        "WorkSummary happens to be a singleton"
+        "entry is definitely assigned to a non-null ClockEntry inside the if block, because out parameters must be assigned before the method returns",
+        "entry might still be null even though TryGetOpenEntry returned true",
+        "entry is only valid outside the if block"
       ],
       "correct": 0,
-      "explanation": "record is a C# feature specifically for value-equality-by-default types -- WorkSummary gets this for free from its declaration, unlike the plain class ClockEntry."
+      "explanation": "C# requires every out parameter to be assigned before the method returns -- combined with a true return value, this is the whole point of the Try-pattern."
     },
     {
-      "prompt": "What would \"Springfield\" == \"springfield\" evaluate to using C#'s default string equality?",
+      "prompt": "Why does this course's real domain have no genuine use for the in modifier?",
       "options": [
-        "false -- default string comparison is ordinal (case-sensitive) unless you explicitly choose a case-insensitive comparer",
-        "true -- strings always compare case-insensitively",
-        "A compile error"
+        "in exists to avoid copying large structs by value; every struct-like value this codebase passes around (int, DateTime) is small enough that copying is already cheap and idiomatic",
+        "in is deprecated in modern C#",
+        "in only works with reference types"
       ],
       "correct": 0,
-      "explanation": "C#'s default == for string is ordinal and case-sensitive; EmployeeDirectory has to opt into StringComparer.OrdinalIgnoreCase specifically to treat differently-cased city names as duplicates."
+      "explanation": "in is a performance tool for large structs -- this codebase's value types (int, DateTime) are exactly the small, cheap-to-copy kind in was never meant to optimize."
     }
   ],
   "concept": [
     {
-      "title": "ClockEntry and Employee: reference equality, by default and by choice",
+      "title": "out: two results from one call",
       "paragraphs": [
-        "ClockEntry and Employee are both plain class declarations with no Equals override anywhere in the real source. That means == and .Equals() compare object identity: are these two variables pointing at the very same object?",
-        "This is a real, verified fact about the actual repository, not an assumption -- reading Models/ClockEntry.cs and Models/Employee.cs directly confirms neither type overrides equality members."
+        "The real GetClockEntry communicates 'found or not' entirely through its return type: Task<ClockEntry?>. The Try-pattern is the other common C# idiom for the same idea -- a bool return for success/failure, and an out parameter for the value.",
+        "This session adds TryGetOpenEntry as a new, clearly-labeled method next to the real GetClockEntry, so both idioms exist side by side for comparison -- not because the real repository needs both."
       ],
-      "code": "ClockEntry first = new(1, DateTime.Today);\nClockEntry second = new(1, DateTime.Today);\n\nConsole.WriteLine(first.Equals(second)); // false -- two different objects, same field values"
+      "code": "// New extension, modeled on the real GetClockEntry's nullable contract\npublic bool TryGetOpenEntry(int employeeId, out ClockEntry? entry)\n{\n    entry = _clockEntries.FirstOrDefault(e => e.EmployeeId == employeeId && e.ClockOut is null);\n    return entry is not null;\n}"
     },
     {
-      "title": "WorkSummary: a record gets value equality automatically",
+      "title": "ref: replacing what a variable refers to, not just mutating it",
       "paragraphs": [
-        "public sealed record WorkSummary(int EmployeeId, decimal Hours) is a positional record. Declaring it with record instead of class is what generates member-wise Equals, GetHashCode, and == overloads -- no extra code required.",
-        "This is the real, meaningful contrast this session teaches: the same 'compare these two objects' question gets a different default answer depending on whether the type is declared class or record."
+        "Session 9 showed that ClockEntryService.Clockout already mutates a shared ClockEntry object through an ordinary reference -- no ref keyword needed, because mutating an object's members never requires ref.",
+        "ref parameters solve a narrower, different problem: letting a method reassign which object the CALLER's variable points to, not just change the current object's state. Nothing in this domain currently needs that."
       ],
-      "code": "public sealed record WorkSummary(int EmployeeId, decimal Hours);\n\nWorkSummary a = new(1, 8m);\nWorkSummary b = new(1, 8m);\nConsole.WriteLine(a == b); // true -- record-generated value equality"
+      "code": "// Illustrative only -- not used anywhere in this codebase\nstatic void ReplaceIfClosed(ref ClockEntry entry, ClockEntry replacement)\n{\n    if (entry.ClockOut is not null) entry = replacement;   // reassigns the CALLER's variable\n}"
     },
     {
-      "title": "String comparison is a choice you make explicitly",
+      "title": "in: a tool for a problem this domain doesn't have",
       "paragraphs": [
-        "EmployeeDirectory's Cities set is constructed with new HashSet<string>(StringComparer.OrdinalIgnoreCase) specifically so \"Springfield\" and \"springfield\" collapse into one entry.",
-        "Without that explicit comparer, HashSet<string>'s default ordinal comparison would treat them as two different cities -- exactly the kind of silent data-quality bug case-insensitive matching exists to prevent."
+        "in tells the compiler a parameter is passed by reference but must not be modified -- its value is to avoid copying a large struct on every call.",
+        "Every value type in this codebase (int EmployeeId, DateTime ClockIn/ClockOut) is small; copying them is already effectively free. in would add a keyword with no measurable benefit here."
       ],
-      "code": "// src/TimeClock.Domain/EmployeeDirectory.cs\nprivate readonly HashSet<string> cities = new(StringComparer.OrdinalIgnoreCase);"
+      "code": "// Not used in this codebase -- int and DateTime are already cheap to copy\nstatic double HoursBetween(in DateTime start, in DateTime end) => (end - start).TotalHours;"
     }
   ],
   "lab": {
-    "objective": "Confirm ClockEntry's reference equality and WorkSummary's record value equality with executable tests, and explain EmployeeDirectory's explicit string comparer choice.",
-    "startingCondition": "ClockEntry, WorkSummary, and EmployeeDirectory already exist with their real declarations.",
+    "objective": "Add TryGetOpenEntry as a new out-parameter alternative to the real GetClockEntry, and write tests comparing both idioms' call sites.",
+    "startingCondition": "IClockEntryRepository and ClockEntryRepository already exist with the real async GetClockEntry method.",
     "steps": [
-      "Write a test constructing two ClockEntry objects with identical arguments and assert they are NOT equal.",
-      "Write a test constructing two WorkSummary records with identical arguments and assert they ARE equal.",
-      "Temporarily remove StringComparer.OrdinalIgnoreCase from EmployeeDirectory's cities field and observe a previously-passing uniqueness test start to fail.",
-      "Restore the comparer and confirm the test passes again."
+      "Add bool TryGetOpenEntry(int employeeId, out ClockEntry? entry) to ClockEntryRepository (not the interface -- this is a new, additional method, not a replacement).",
+      "Write a call site using if (repository.TryGetOpenEntry(...)) and confirm the compiler enforces entry's definite assignment inside the branch.",
+      "Write a second call site using the real, existing GetClockEntry and compare how each communicates 'not found.'",
+      "Add tests for TryGetOpenEntry's true and false paths."
     ],
-    "expectedBehavior": "Two ClockEntry objects with equal field values are unequal by default; two equal-valued WorkSummary records are equal; removing OrdinalIgnoreCase breaks the case-insensitive city-uniqueness test.",
+    "expectedBehavior": "TryGetOpenEntry returns true with entry assigned when an open entry exists, and false with entry null when it does not; the real GetClockEntry is unchanged.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/ClockEntry.cs",
-      "action": "Verify",
-      "why": "Confirm no Equals override exists -- reference equality is the real, current behavior."
-    },
-    {
-      "path": "src/TimeClock.Domain/WorkSummary.cs",
-      "action": "Verify",
-      "why": "Confirm the real record declaration and its generated value equality."
+      "path": "src/TimeClock.Domain/ClockEntryRepository.cs",
+      "action": "Modify",
+      "why": "Add the new TryGetOpenEntry method alongside the real, unmodified GetClockEntry."
     },
     {
       "path": "tests/TimeClock.Domain.Tests/ClockEntryTests.cs",
       "action": "Modify",
-      "why": "Add a test asserting two field-identical ClockEntry objects are unequal."
-    },
-    {
-      "path": "tests/TimeClock.Domain.Tests/WorkSummaryTests.cs",
-      "action": "Verify",
-      "why": "Confirm the existing record-equality test."
+      "why": "Add coverage for TryGetOpenEntry's true and false paths."
     },
     {
       "path": "site/data/sessions/session-09.json",
@@ -128,50 +118,50 @@
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-09: teach strings records structs and equality",
+  "commit": "session-09: teach parameter passing with ref, out, and in",
   "review": [
-    "ClockEntry's lack of an Equals override is confirmed by reading the real file, not assumed.",
-    "WorkSummary's record-generated equality is demonstrated with a real, passing test.",
-    "EmployeeDirectory's explicit StringComparer.OrdinalIgnoreCase choice is explained as deliberate, not default behavior.",
-    "The full test suite passes, including the new ClockEntry inequality test."
+    "TryGetOpenEntry is added as a new method, not a replacement for the real GetClockEntry.",
+    "The out parameter's definite-assignment guarantee is demonstrated at a real call site.",
+    "ref and in are explained honestly as tools this domain does not currently need, not forced into contrived usage.",
+    "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "If ClockEntry were changed to a record instead of a class, what would change about existing code that stores ClockEntry objects in a List and looks them up by reference?",
+      "prompt": "Why does TryGetOpenEntry return bool instead of just returning ClockEntry??",
       "options": [
-        "Value equality would mean two field-identical ClockEntry objects become interchangeable for Equals-based lookups, which could silently change behavior anywhere identity currently mattered (like GetClockEntry's FirstOrDefault)",
-        "Nothing would change -- record and class behave identically",
-        "The code would fail to compile"
+        "Both are valid designs for the same problem -- the Try-pattern with out is one C# idiom, a nullable return (the real GetClockEntry's choice) is another; this session teaches the out alternative specifically",
+        "ClockEntry? cannot be returned from a synchronous method",
+        "bool is required by the out keyword"
       ],
       "correct": 0,
-      "explanation": "Switching class to record is not a purely cosmetic change -- it changes the equality semantics every consumer of that type relies on, which is exactly why this session treats it as a real design decision, not a syntax preference."
+      "explanation": "There is no technical requirement to use bool+out over a nullable return -- it is an idiom choice, and this session's point is recognizing both idioms."
     },
     {
-      "prompt": "Why is WorkCode declared as a readonly record struct instead of a record (class)?",
+      "prompt": "What would go wrong if TryGetOpenEntry's implementation had a code path that returned true without assigning entry?",
       "options": [
-        "record struct combines record's generated value equality with struct's copy-by-value semantics -- appropriate for a small, immutable value like a year+sequence pair",
-        "record struct is required syntax for any type with two properties",
-        "There is no difference between record and record struct"
+        "The code would not compile -- C# requires every out parameter to be definitely assigned before the method returns, on every path",
+        "entry would default to a valid open ClockEntry automatically",
+        "Nothing -- out parameters are optional to assign"
       ],
       "correct": 0,
-      "explanation": "record struct is specifically for small, copyable, value-equality types -- exactly what a WorkCode(Year, Sequence) pair is."
+      "explanation": "Definite assignment of out parameters is enforced by the compiler, not just a convention -- this is exactly why callers can trust entry after a true return."
     },
     {
-      "prompt": "Would GetEmployeeClockEntries's real Where filter (entry.EmployeeId == employeeId) behave any differently if ClockEntry had record value equality instead of reference equality?",
+      "prompt": "Could ref have been used instead of out for TryGetOpenEntry's entry parameter?",
       "options": [
-        "No -- that filter compares an int (EmployeeId) to an int, which already uses value equality regardless of whether ClockEntry itself is a class or record",
-        "Yes -- it would start matching by full object equality instead",
-        "Yes -- it would stop compiling"
+        "Technically yes, but it would require the caller to initialize entry before the call, for no benefit -- out is the correct, idiomatic choice when the method fully determines the value",
+        "No, ref and out are interchangeable in every situation with no difference",
+        "No, ref only works with value types"
       ],
       "correct": 0,
-      "explanation": "The filter never compares whole ClockEntry objects to each other -- it compares one of their int fields, which is unaffected by ClockEntry's own equality semantics."
+      "explanation": "ref requires the variable to already have a value going in; out does not -- since TryGetOpenEntry's caller has no meaningful value to provide beforehand, out is the right tool."
     }
   ],
   "reflections": [
-    "Why might a real codebase deliberately choose reference equality for ClockEntry rather than adding value equality?",
-    "What would you need to add to ClockEntry to make two field-identical instances equal, and what would you risk changing by doing so?",
-    "Where else in this codebase might case-insensitive string comparison matter, beyond EmployeeDirectory's city set?"
+    "Now that you have both GetClockEntry (nullable return) and TryGetOpenEntry (out parameter) side by side, which would you choose for a new method, and why?",
+    "Can you think of a genuine (not contrived) use for ref anywhere in this codebase as it might grow?",
+    "Why does 'this domain doesn't need in' feel like a legitimate lesson outcome rather than an incomplete one?"
   ],
-  "whatBreaks": "Assuming ClockEntry has value equality (because it superficially looks like a simple data holder) would lead to bugs anywhere code tries to deduplicate or compare ClockEntry objects by field value instead of by reference. Removing WorkSummary's record declaration in favor of class would silently break any test or code that currently relies on WorkSummary equality by value, including the real HoursByEmployee grouping test from Session 22. Removing EmployeeDirectory's StringComparer.OrdinalIgnoreCase would let differently-cased city names silently multiply instead of being treated as one city.",
-  "summary": "class gives you reference equality unless you explicitly override it -- confirmed true for both the real ClockEntry and Employee. record gives you value equality automatically, which is exactly why WorkSummary (Session 22's grouping result) compares equal across separately-constructed instances with the same values. String comparison is ordinal and case-sensitive by default; EmployeeDirectory's StringComparer.OrdinalIgnoreCase is a deliberate, visible choice to treat city names case-insensitively."
+  "whatBreaks": "Adding a code path in TryGetOpenEntry that returns true without assigning entry would fail to compile -- the definite-assignment rule catches this at compile time rather than allowing a null-reference bug at runtime. Confusing ref with out would lead you to expect a caller-provided initial value for entry that TryGetOpenEntry does not need or use.",
+  "summary": "out lets a method return a second value (here, whether an open entry was found) alongside its normal return type, with the compiler enforcing definite assignment. ref would let a method reassign a caller's variable to an entirely different object -- a capability this codebase's real, ordinary-reference mutation patterns (Session 9) never need. in exists to avoid copying large structs, and this domain's small value types (int, DateTime) never pay that cost in the first place."
 }

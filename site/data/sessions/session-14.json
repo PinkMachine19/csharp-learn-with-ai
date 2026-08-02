@@ -2,115 +2,115 @@
   "number": 14,
   "category": "Collections and generics",
   "estimatedTime": "40 minutes",
-  "connection": "Session 13 studied IEnumerable<ClockEntry>, itself a generic interface. This session steps back to name what T actually means, using generic types already at work throughout the real codebase -- List<ClockEntry>, Dictionary<int, Employee>, Task<ClockEntry?> -- plus one new generic method, GenericRules.Later<T>.",
+  "connection": "Session 13 covered Dictionary and HashSet. This session studies the real IEnumerable<ClockEntry> return type on GetEmployeeClockEntries (Step 44 of the source syllabus) and what the collection interface hierarchy above it -- IEnumerable<T>, ICollection<T>, IList<T> -- actually promises to callers.",
   "objectives": [
-    "Identify at least three generic types already in real, everyday use across this codebase, and state what concrete type argument each is instantiated with.",
-    "Explain why IClockEntryRepository.GetClockEntry returns Task<ClockEntry?> specifically, not just Task -- what the type argument communicates.",
-    "Read GenericRules.Later<T>(T left, T right) and explain why it can compare 'left' and 'right' generically without knowing T is DateTime or int in advance.",
-    "Call Later<T> with both DateTime (ClockIn timestamps) and int (EmployeeId values) and confirm one method definition serves both."
+    "Read GetEmployeeClockEntries's real return type, IEnumerable<ClockEntry>, and explain exactly what capability that promises callers: enumeration, nothing else.",
+    "Explain why GetEmployeeClockEntries does NOT return List<ClockEntry>, even though its implementation is built from one.",
+    "Place List<T> in the interface hierarchy it implements: IList<T>, which implements ICollection<T>, which implements IEnumerable<T>.",
+    "Predict what capabilities are lost by declaring a return type as IEnumerable<T> instead of the concrete List<T> the method happens to build internally."
   ],
   "visuals": [
     {
       "diagram": "blueprint",
-      "title": "Generic types are filled in at each use site",
-      "explanation": "List<ClockEntry>, Dictionary<int, Employee>, and Task<ClockEntry?> are the same three generic type definitions (List<T>, Dictionary<TKey,TValue>, Task<TResult>) each instantiated differently."
+      "title": "The real signature promises only enumeration",
+      "explanation": "IEnumerable<ClockEntry> GetEmployeeClockEntries(...) -- callers can foreach over the result; nothing in the signature promises Count, indexing, or the ability to Add."
     },
     {
-      "diagram": "call",
-      "title": "A generic method infers T from its arguments",
-      "explanation": "GenericRules.Later(entryA.ClockIn, entryB.ClockIn) infers T as DateTime from the arguments' actual type -- no explicit Later<DateTime> is required."
+      "diagram": "pipeline",
+      "title": "List<T> implements more than it exposes here",
+      "explanation": "_clockEntries.Where(...) returns something that is enumerable, built from a List<ClockEntry> internally -- but the method's declared return type hides the List-specific members from callers."
     },
     {
-      "diagram": "return",
-      "title": "Task<ClockEntry?> says exactly what eventually arrives",
-      "explanation": "The T in Task<T> is the type of value the asynchronous operation eventually produces -- here, possibly-null ClockEntry, matching GetClockEntry's real nullable contract."
+      "diagram": "invariant",
+      "title": "The interface hierarchy is a chain of promises",
+      "explanation": "IList<T> extends ICollection<T> extends IEnumerable<T> -- each step up adds capability (indexing, then adding/removing, on top of plain enumeration)."
     },
     {
       "diagram": "instances",
-      "title": "One method definition, many closed types",
-      "explanation": "Later<DateTime> and Later<int> are two different closed generic methods generated from the one open Later<T> definition, at compile time."
+      "title": "Narrower return types communicate intent",
+      "explanation": "Returning IEnumerable<ClockEntry> tells callers 'treat this as read-only, enumerate it once' even though the concrete object underneath could support more."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "What are List<T>, Dictionary<TKey,TValue>, and Task<TResult> called before a concrete type is supplied?",
+      "prompt": "Can a caller of GetEmployeeClockEntries call .Count on its return value directly, using only the declared IEnumerable<ClockEntry> type?",
       "options": [
-        "Open generic types -- they define a shape with placeholder type parameters that must be filled in (with ClockEntry, or int and Employee, or ClockEntry?) at the point of use",
-        "Interfaces",
-        "Abstract classes"
+        "Not with a Count property -- IEnumerable<T> only guarantees enumeration; callers would need .Count() (the LINQ extension method, which itself enumerates) or to call .ToList() first for an indexable, countable collection",
+        "Yes -- IEnumerable<T> always exposes Count",
+        "No -- IEnumerable<T> cannot be enumerated at all"
       ],
       "correct": 0,
-      "explanation": "A generic type definition like List<T> is not usable on its own -- List<ClockEntry> is the closed, concrete type actually declared and used."
+      "explanation": "IEnumerable<T>'s only member is GetEnumerator() -- Count, indexing, and Add all belong to interfaces further up the hierarchy (ICollection<T>, IList<T>) that GetEmployeeClockEntries's declared return type does not promise."
     },
     {
-      "prompt": "Why does IClockEntryRepository.GetClockEntry return Task<ClockEntry?> instead of plain Task?",
+      "prompt": "Why doesn't GetEmployeeClockEntries return List<ClockEntry>, even though .Where() is called on a List<ClockEntry> internally?",
       "options": [
-        "Task<T> carries a result value once the asynchronous operation completes; plain Task represents an operation with no result at all -- GetClockEntry needs to eventually hand back a ClockEntry? value, so it needs the generic form",
-        "Task<ClockEntry?> and Task are interchangeable",
-        "Task<T> is required for every async method regardless of return value"
+        "Returning the narrower IEnumerable<ClockEntry> tells callers exactly what they may rely on (enumeration) without promising list-specific capabilities (indexing, Add, Remove) that might not remain true if the implementation changes later",
+        "IEnumerable<T> is required by C# for any LINQ query result",
+        "List<ClockEntry> cannot be returned from a method"
       ],
       "correct": 0,
-      "explanation": "ClockIn's IClockEntryService.ClockIn method, by contrast, is synchronous void -- and Clockout returns plain Task because it produces no result value, only completion. GetClockEntry needs Task<ClockEntry?> specifically because it DOES produce a result."
+      "explanation": "This is a deliberate narrowing: the real implementation happens to use a List internally, but the interface promises only what callers actually need -- read-only enumeration."
     },
     {
-      "prompt": "Can GenericRules.Later<T> be called with both DateTime and int arguments, using the same method definition?",
+      "prompt": "Where does IList<T> sit relative to IEnumerable<T> in the standard collection interface hierarchy?",
       "options": [
-        "Yes -- as long as the argument type implements IComparable<T> (both DateTime and int do), the compiler generates a specific closed version of Later<T> for each type used",
-        "No -- a separate Later method must be written for each type",
-        "Only with int, since DateTime cannot be compared"
+        "IList<T> extends ICollection<T>, which extends IEnumerable<T> -- each interface adds capability on top of the one below it",
+        "IList<T> and IEnumerable<T> are unrelated interfaces",
+        "IEnumerable<T> extends IList<T>"
       ],
       "correct": 0,
-      "explanation": "This is the entire value of generics: one definition, reused across every type that satisfies its constraint -- Session 15 studies that constraint directly."
+      "explanation": "The hierarchy builds upward: plain enumeration (IEnumerable<T>), then add/remove/count (ICollection<T>), then indexing and insertion (IList<T>) -- List<T> implements all three."
     }
   ],
   "concept": [
     {
-      "title": "Generic types already everywhere in this codebase",
+      "title": "IEnumerable<ClockEntry> is a promise of enumeration, nothing more",
       "paragraphs": [
-        "ClockEntryRepository._clockEntries is List<ClockEntry> -- List<T> with T filled in as ClockEntry. EmployeeDirectory's employees field is Dictionary<int, Employee> -- Dictionary<TKey,TValue> with two type arguments supplied. IClockEntryRepository.GetClockEntry returns Task<ClockEntry?> -- Task<TResult> with TResult filled in as the nullable ClockEntry type.",
-        "None of these are new concepts introduced by this session -- they are the same generic types Sessions 5-12 already used, named explicitly here for the first time."
+        "The real GetEmployeeClockEntries signature is IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate) -- confirmed directly against Interfaces/IClockEntryRepository.cs.",
+        "A caller holding this return value can foreach over it, or chain further LINQ methods (.Sum(), .OrderBy(), etc., all defined as extension methods on IEnumerable<T>) -- but cannot index into it with [0] or ask for .Count as a property, because IEnumerable<T> itself declares neither."
       ],
-      "code": "List<ClockEntry> _clockEntries;              // List<T> with T = ClockEntry\nDictionary<int, Employee> employees;         // Dictionary<TKey,TValue> with TKey=int, TValue=Employee\nTask<ClockEntry?> GetClockEntry(int employeeId, ...);  // Task<TResult> with TResult = ClockEntry?"
+      "code": "// Interfaces/IClockEntryRepository.cs -- the real signature\nIEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate);"
     },
     {
-      "title": "A generic method: one definition, many closed forms",
+      "title": "The implementation returns more than the interface promises",
       "paragraphs": [
-        "GenericRules.Later<T>(T left, T right) where T : IComparable<T> works for any type T that can compare itself to another T -- DateTime and int both implement IComparable<T> in the .NET base class library.",
-        "Calling Later(entryA.ClockIn, entryB.ClockIn) lets the compiler infer T as DateTime from the argument types; calling Later(employeeA.EmployeeId, employeeB.EmployeeId) infers T as int. No explicit type argument is required at either call site."
+        "ClockEntryRepository's real implementation is _clockEntries.Where(...) -- Where's actual runtime return type implements IEnumerable<ClockEntry> but is not a List<ClockEntry> at all; it is a compiler-generated iterator.",
+        "This is exactly why the interface, not the concrete implementation detail, is what callers should be written against: PayrollService.CalculateTotalHours never needed to know or care what concrete type Where actually returns."
       ],
-      "code": "// src/TimeClock.Domain/GenericRules.cs\npublic static T Later<T>(T left, T right) where T : IComparable<T> =>\n    left.CompareTo(right) >= 0 ? left : right;\n\n// Two closed forms generated from one open definition\nDateTime latest = GenericRules.Later(entryA.ClockIn, entryB.ClockIn);\nint higherId = GenericRules.Later(employeeA.EmployeeId, employeeB.EmployeeId);"
+      "code": "// Repositories/ClockEntryRepository.cs -- returns something IEnumerable<ClockEntry>, not literally a List\npublic IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate)\n{\n    return _clockEntries.Where(entry => /* ...real filter... */ true);\n}"
     },
     {
-      "title": "Why not just write two separate methods?",
+      "title": "The hierarchy: IEnumerable<T>, ICollection<T>, IList<T>",
       "paragraphs": [
-        "A non-generic LaterDate(DateTime, DateTime) and LaterId(int, int) would duplicate the exact same >= 0 comparison logic twice, with only the type name different.",
-        "Later<T> expresses that duplication as one piece of logic, parameterized over any comparable type -- this is the same motivation as IEnumerable<T> in Session 13: write the capability once, apply it to many concrete types."
+        "List<ClockEntry> (ClockEntryRepository's actual backing storage) implements IList<ClockEntry>, which implements ICollection<ClockEntry>, which implements IEnumerable<ClockEntry>.",
+        "Each step adds capability: IEnumerable<T> for foreach; ICollection<T> adds Count, Add, Remove, Contains; IList<T> adds indexing ([int]) and Insert/RemoveAt. GetEmployeeClockEntries deliberately exposes only the bottom rung."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "List<ClockEntry> _clockEntries;      // implements IList<ClockEntry>\nIList<ClockEntry> asList = _clockEntries;          // indexing, Insert, RemoveAt\nICollection<ClockEntry> asCollection = _clockEntries; // Count, Add, Remove, Contains\nIEnumerable<ClockEntry> asEnumerable = _clockEntries; // foreach only -- what GetEmployeeClockEntries actually returns"
     }
   ],
   "lab": {
-    "objective": "Call GenericRules.Later<T> with both DateTime and int arguments from the real domain, and confirm one method definition serves both without modification.",
-    "startingCondition": "GenericRules.Later<T> already exists with the real where T : IComparable<T> constraint.",
+    "objective": "Confirm GetEmployeeClockEntries's real IEnumerable<ClockEntry> contract and demonstrate what capabilities are and are not available through it.",
+    "startingCondition": "IClockEntryRepository and ClockEntryRepository already exist with the real GetEmployeeClockEntries signature and implementation.",
     "steps": [
-      "Call Later with two ClockEntry.ClockIn values and confirm the later of the two DateTimes is returned.",
-      "Call Later with two Employee.EmployeeId values and confirm the greater int is returned.",
-      "Attempt to call Later with two Employee objects directly (not their EmployeeId), and observe the compile error -- Employee does not implement IComparable<Employee>.",
-      "Explain, in writing, why that compile error is the constraint working as intended, not a bug."
+      "Call GetEmployeeClockEntries and confirm foreach works directly on the result.",
+      "Attempt to index the result with [0] and confirm the compiler rejects it, given the declared IEnumerable<ClockEntry> type.",
+      "Call .ToList() on the result and confirm the resulting List<ClockEntry> DOES support indexing and .Count.",
+      "Write down which of List<T>'s members (Add, this[int], Count) are and are not accessible through GetEmployeeClockEntries's declared return type without first calling .ToList()."
     ],
-    "expectedBehavior": "Later(DateTime, DateTime) and Later(int, int) both compile and return the correct result; Later(Employee, Employee) fails to compile with a constraint-violation error.",
+    "expectedBehavior": "foreach works directly on GetEmployeeClockEntries's result; indexing does not compile without first materializing with .ToList(); the materialized List<ClockEntry> supports indexing and Count.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/GenericRules.cs",
+      "path": "src/TimeClock.Domain/IClockEntryRepository.cs",
       "action": "Verify",
-      "why": "Confirm the real generic method and its IComparable<T> constraint."
+      "why": "Confirm the real IEnumerable<ClockEntry> return type on GetEmployeeClockEntries."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/GenericRulesTests.cs",
+      "path": "src/TimeClock.Domain/ClockEntryRepository.cs",
       "action": "Verify",
-      "why": "Confirm coverage across at least two different closed generic types."
+      "why": "Confirm the real Where-based implementation."
     },
     {
       "path": "site/data/sessions/session-13.json",
@@ -118,50 +118,50 @@
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-13: teach generic types and methods",
+  "commit": "session-13: teach collection interfaces and ienumerable",
   "review": [
-    "Every generic type cited is quoted from real, already-existing code, not invented for this session.",
-    "Later<T> is demonstrated with two genuinely different closed type arguments, not just described abstractly.",
-    "The Employee compile-error case is used to make the constraint's purpose concrete, not skipped.",
+    "GetEmployeeClockEntries's real signature is quoted directly from IClockEntryRepository.cs, not paraphrased.",
+    "The distinction between what the implementation returns and what the interface promises is demonstrated, not just asserted.",
+    "The IEnumerable<T>/ICollection<T>/IList<T> hierarchy is connected to List<T>'s real, concrete role as ClockEntryRepository's storage.",
     "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "Why can List<ClockEntry> and Dictionary<int, Employee> both exist in the same codebase using the same underlying generic collection library?",
+      "prompt": "If PayrollService.CalculateTotalHours needed the count of an employee's clock entries as well as their sum, what would it need to do?",
       "options": [
-        "List<T> and Dictionary<TKey,TValue> are separate generic type definitions in .NET's base class library, each independently instantiated with whatever type arguments the codebase needs",
-        "They are the same generic type used two different ways",
-        "Dictionary is built from List internally in every case"
+        "Call .ToList() on GetEmployeeClockEntries's result first (or use .Count(), the LINQ extension method, which re-enumerates), since IEnumerable<ClockEntry> alone has no Count property",
+        "Access ._clockEntries directly, since that already has Count",
+        "Nothing extra -- IEnumerable<T> already exposes Count"
       ],
       "correct": 0,
-      "explanation": "List<T> and Dictionary<TKey,TValue> are distinct generic types -- the shared idea is only that both defer their element/key/value types to a type parameter, filled in at each declaration."
+      "explanation": "IEnumerable<T> genuinely has no Count property -- LINQ's .Count() extension method is a substitute that works by enumerating, not a shortcut to a property that was already there."
     },
     {
-      "prompt": "What would happen if GenericRules.Later<T> had no constraint at all (just Later<T>(T left, T right))?",
+      "prompt": "Why might ClockEntryRepository's internal choice of List<ClockEntry> change in the future (e.g. to a database-backed collection) without breaking PayrollService?",
       "options": [
-        "left.CompareTo(right) would fail to compile -- without a constraint, the compiler only knows T could be any type, including one with no CompareTo method at all",
-        "It would work exactly the same for every type",
-        "T would default to object automatically"
+        "PayrollService only depends on IEnumerable<ClockEntry> (via IClockEntryRepository's interface), never on List<ClockEntry> specifically -- any implementation that can produce an IEnumerable<ClockEntry> satisfies the contract",
+        "PayrollService directly references List<ClockEntry> in its own code",
+        "It cannot change without breaking PayrollService"
       ],
       "correct": 0,
-      "explanation": "This is exactly what Session 15 studies next -- without the where T : IComparable<T> constraint, the compiler cannot assume CompareTo exists on an arbitrary T."
+      "explanation": "This is the same principle Session 21 taught about depending on interfaces -- here it applies one level deeper, to the collection type returned by an interface member."
     },
     {
-      "prompt": "Does calling Later(entryA.ClockIn, entryB.ClockIn) require writing Later<DateTime>(...) explicitly?",
+      "prompt": "What is the real reason GetEmployeeClockEntries's declared return type matters, if the actual object at runtime could support more?",
       "options": [
-        "No -- the compiler infers T as DateTime from the argument types automatically; explicit type arguments are only needed when inference is ambiguous or impossible",
-        "Yes -- generic methods always require an explicit type argument",
-        "No -- but only because DateTime is a built-in type"
+        "It documents and enforces, at compile time, exactly what callers are allowed to assume -- protecting the implementation's freedom to change without callers noticing",
+        "Declared return types have no effect on what callers can do -- only the actual runtime type matters",
+        "It is purely a style preference with no functional consequence"
       ],
       "correct": 0,
-      "explanation": "Type inference from arguments is standard for generic methods in C# -- explicit type arguments (Later<DateTime>(...)) are optional here and rarely needed."
+      "explanation": "C#'s static typing means the compiler enforces the DECLARED type's members, not the runtime type's full capability -- this is precisely the mechanism that makes narrow interfaces protect implementation freedom."
     }
   ],
   "reflections": [
-    "Why does writing Later<T> once, instead of LaterDate and LaterId separately, matter beyond saving a few lines of code?",
-    "What other places in this codebase might benefit from a generic helper like Later<T>, once you start looking for duplicated type-specific logic?",
-    "How does Task<ClockEntry?> communicate more to a reader than plain Task would, at the exact call site where GetClockEntry is awaited?"
+    "Why does GetEmployeeClockEntries's author choosing IEnumerable<ClockEntry> over List<ClockEntry> matter for anyone besides the method's own implementation?",
+    "What would you lose, as a caller, if every method in this codebase returned the most general possible type (object) instead of a specific interface?",
+    "Where else in this codebase does a method's declared return type deliberately hide more specific capability the implementation happens to have?"
   ],
-  "whatBreaks": "Calling GenericRules.Later with two Employee arguments (instead of their EmployeeId or another IComparable value) fails to compile, because Employee implements no comparison logic -- this is the constraint doing its job, not a limitation to work around. Removing the where T : IComparable<T> constraint would let Later<T> compile against any T, but left.CompareTo(right) inside the method body would then fail to compile, since the compiler could no longer assume CompareTo exists.",
-  "summary": "Generic types are not a new concept this session invents -- List<ClockEntry>, Dictionary<int, Employee>, and Task<ClockEntry?> were already doing real work throughout Sessions 5-12. GenericRules.Later<T> demonstrates the other half of generics: one method definition, reused unmodified across every type (DateTime, int, and any future IComparable<T>) that satisfies its constraint."
+  "whatBreaks": "Changing GetEmployeeClockEntries's declared return type to List<ClockEntry> would let callers start depending on list-specific members (indexing, Add) that the repository's author never intended to promise -- making a future change to the underlying storage a breaking change for those callers. Assuming IEnumerable<ClockEntry> supports indexing without first materializing it with .ToList() produces a compile error, not a runtime surprise -- exactly the kind of mistake the type system is built to catch early.",
+  "summary": "GetEmployeeClockEntries's real, verified return type is IEnumerable<ClockEntry> -- a promise of enumeration only, even though its actual implementation is built from a List<ClockEntry>. The standard IEnumerable<T> -> ICollection<T> -> IList<T> hierarchy explains exactly what capability each step adds, and why a method's declared interface type, not its concrete backing type, is what callers should be written against."
 }

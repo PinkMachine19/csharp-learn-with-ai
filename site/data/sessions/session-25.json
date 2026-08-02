@@ -1,121 +1,122 @@
 {
   "number": 25,
-  "category": "Errors and resource management",
+  "category": "failure contracts",
   "estimatedTime": "40 minutes",
-  "connection": "Session 24 established the real throw-vs-return rule. This session traces a real exception's full propagation path -- GetDuartion's InvalidOperationException, uncaught anywhere between ClockEntry and Program.cs -- and studies IDisposable/using through the real database connections Sessions 30-31's tests already open.",
+  "connection": "Session 24 covered when LINQ queries execute. This session reads the real ClockEntryService.Clockout method as the app's live example of the throw-vs-return-null rule that decisions and step-046 of the source syllabus write down explicitly, even though the code itself predates the written rule.",
   "objectives": [
-    "Trace GetDuartion's real InvalidOperationException from where it is thrown up through PayrollService.CalculateTotalHours to Program.cs, and identify that nothing in that path catches it.",
-    "Explain what 'unhandled exception' means concretely for this console app: the process terminates and prints a stack trace, since Program.cs never wraps its calls in try/catch.",
-    "Explain what using (or await using) guarantees for a SqliteConnection or PayrollDbContext, even if an exception is thrown partway through the code block.",
-    "Identify a real await using PayrollDbContext db = new(options); statement in the test suite and explain what would leak without it."
+    "State the project's real throw-vs-return rule: exceptions signal a broken invariant (double clock-out); nullable/return values signal an expected, everyday outcome (not currently clocked in).",
+    "Read GetClockEntry's ClockEntry? return type as the 'expected absence' half of the rule, and ClockOutEmployee's InvalidOperationException as the 'broken invariant' half.",
+    "Audit ClockEntryService.Clockout against the rule and confirm it already follows it, even though the rule itself was written down only after the code existed.",
+    "Improve an exception message to name the specific employee and violated invariant, per Step 46 substep 3."
   ],
   "visuals": [
     {
-      "diagram": "call",
-      "title": "An exception propagates up, unchanged, until something catches it",
-      "explanation": "GetDuartion throws inside ClockEntry; CalculateTotalHours does not catch it; Program.cs does not catch it either -- the exception reaches the very top of the call stack unmodified."
+      "diagram": "invariant",
+      "title": "Two failure shapes, one rule",
+      "explanation": "GetClockEntry returns null for an expected 'not clocked in' case; ClockOutEmployee throws for a broken 'already clocked out' invariant."
     },
     {
       "diagram": "branch",
-      "title": "No catch means the process terminates",
-      "explanation": "dotnet run for a console app with an unhandled exception prints the exception's stack trace to stderr and exits with a non-zero code -- there is no generic 'error page' the way a web app might have."
-    },
-    {
-      "diagram": "invariant",
-      "title": "using guarantees Dispose runs, exception or not",
-      "explanation": "await using SqliteConnection connection = new(...) ensures the connection is closed even if an exception is thrown between opening it and the end of the block."
+      "title": "Clockout branches on the nullable result",
+      "explanation": "ClockEntryService.Clockout checks clockEntry == null before calling ClockOutEmployee -- the nullable return forces this check to exist."
     },
     {
       "diagram": "return",
-      "title": "IDisposable is a contract for releasing unmanaged resources",
-      "explanation": "SqliteConnection and DbContext both implement IDisposable/IAsyncDisposable because they hold real, external resources (a database connection) that the garbage collector alone cannot reliably clean up promptly."
+      "title": "A caught exception should name what broke",
+      "explanation": "Step 46 asks for exception messages that identify the employee and the invariant, not just a generic failure."
+    },
+    {
+      "diagram": "call",
+      "title": "The rule predates ASP.NET Core, on purpose",
+      "explanation": "Deciding throw-vs-return now means Session 34's HTTP status codes have an existing convention to align with instead of inventing one under pressure."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "If GetDuartion throws InvalidOperationException on an open entry, and PayrollService.CalculateTotalHours never catches it, what happens when Program.cs calls CalculateTotalHours?",
+      "prompt": "Why does GetClockEntry return ClockEntry? instead of throwing when an employee has no open entry?",
       "options": [
-        "The exception propagates unchanged all the way out of CalculateTotalHours, out of Program.cs's top-level statements, and terminates the process with an unhandled-exception stack trace",
-        "The exception is silently swallowed and CalculateTotalHours returns 0",
-        "The compiler prevents this code from ever throwing"
+        "Not being clocked in is an expected, everyday outcome -- not a broken invariant, so it does not deserve an exception",
+        "ClockEntry cannot be constructed without an open entry existing first",
+        "Nullable return types are required by every repository method"
       ],
       "correct": 0,
-      "explanation": "Nothing in the real call chain -- ClockEntry, PayrollService, or Program.cs -- catches this exception, so it propagates all the way to the runtime's default unhandled-exception behavior."
+      "explanation": "This is the rule step-046 writes down: exceptions are for 'this should not be possible given the contract'; nullable returns are for expected outcomes."
     },
     {
-      "prompt": "What does await using SqliteConnection connection = new(...) guarantee that a plain SqliteConnection connection = new(...) (without using) does not?",
+      "prompt": "Why does ClockOutEmployee throw InvalidOperationException instead of returning false when ClockOut is already set?",
       "options": [
-        "connection.DisposeAsync() runs automatically at the end of the block, even if an exception is thrown partway through -- releasing the underlying database connection either way",
-        "The connection opens faster",
-        "The connection cannot throw exceptions"
+        "Clocking out an already-closed entry violates ClockEntry's own invariant -- it should not be possible given the contract, so it throws",
+        "Exceptions are always preferred over return values in C#",
+        "ClockOutEmployee never fails"
       ],
       "correct": 0,
-      "explanation": "using (and await using) compiles to a try/finally under the hood -- Dispose/DisposeAsync is guaranteed to run in the finally, regardless of whether the try block completed normally or threw."
+      "explanation": "A double clock-out is exactly the 'broken invariant' half of the rule -- the entry's own contract says ClockOut can only be set once."
     },
     {
-      "prompt": "Why do SqliteConnection and DbContext implement IDisposable/IAsyncDisposable at all?",
+      "prompt": "Was ClockEntryService.Clockout's real code written to match a pre-existing throw-vs-return rule, or the other way around?",
       "options": [
-        "They hold real external resources (an open database connection) that need explicit, timely release -- the garbage collector would eventually clean them up, but not promptly or deterministically enough for a resource this expensive",
-        "IDisposable is required by every C# class",
-        "It is purely a style convention with no functional purpose"
+        "The code came first; step-046 confirms the code already matches the rule and simply writes the rule down explicitly for the first time",
+        "The rule was written first and the code was generated from it",
+        "Neither -- the rule and the code are unrelated"
       ],
       "correct": 0,
-      "explanation": "IDisposable exists specifically for exactly this category of resource -- something external to the .NET managed heap that benefits from prompt, deterministic release."
+      "explanation": "Step 46's own notes say the code already follows the pattern -- what was missing was the written-down rule, not a code fix."
     }
   ],
   "concept": [
     {
-      "title": "Tracing GetDuartion's real, unhandled exception",
+      "title": "The rule, stated once",
       "paragraphs": [
-        "The path is real and short: ClockEntry.GetDuartion throws InvalidOperationException(\"Employee has not clcoked out yet\") if ClockOut is null; PayrollService.CalculateTotalHours calls .Sum(x => x.GetDuartion().TotalHours) with no try/catch around it; Program.cs calls CalculateTotalHours with no try/catch either.",
-        "This is not a bug this course is inventing -- it is the real, current shape of the codebase, verified by reading all three files. GetEmployeeClockEntries's real ClockOut != null filter is what normally prevents this from happening in practice, by excluding open entries before Sum ever sees them."
+        "Exceptions are for 'this should not be possible given the contract' -- a double clock-out. Nullable or return values are for 'this is an expected, everyday outcome' -- no open entry to clock out of.",
+        "GetClockEntry already chose the nullable-return pattern; ClockOutEmployee already chose the exception pattern. Step 46's real contribution was writing that distinction down, not changing any code."
       ],
-      "code": "// Models/ClockEntry.cs\npublic TimeSpan GetDuartion()\n{\n    if (ClockOut == null)\n    {\n        throw new InvalidOperationException(\"Employee has not clcoked out yet\");\n    }\n    return ClockOut.Value - ClockIn;\n}"
+      "code": "// Interfaces/IClockEntryRepository.cs\nTask<ClockEntry?> GetClockEntry(int employeeId, CancellationToken cancellationToken = default);\n\n// Models/ClockEntry.cs\npublic void ClockOutEmployee(DateTime clockOut)\n{\n    if (ClockOut != null)\n    {\n        throw new InvalidOperationException(\"Employee can only clock out once\");\n    }\n    ClockOut = clockOut;\n}"
     },
     {
-      "title": "An unhandled exception in a console app terminates the process",
+      "title": "Clockout is the audited example",
       "paragraphs": [
-        "There is no global exception handler anywhere in TimeClock.App's real Program.cs. If an exception ever did reach it unhandled, .NET's default behavior for a console app is to print the exception type, message, and stack trace to stderr, then exit with a non-zero exit code.",
-        "This is different from what Session 34 will cover for the WebApi project: ASP.NET Core has its own exception-handling middleware pipeline that a console app's top-level statements simply do not have."
+        "ClockEntryService.Clockout checks the nullable result of GetClockEntry and throws its own InvalidOperationException if it is null -- the expected-absence case at the repository boundary becomes a broken-invariant-at-the-service-boundary the moment someone tries to clock out an employee who never clocked in.",
+        "This double layer is deliberate: 'no open entry' is a normal database-style lookup miss at the repository, but 'you asked to clock out someone who is not clocked in' is a caller error at the service boundary."
       ],
-      "code": "// No try/catch anywhere in the real Program.cs -- an exception here would terminate the process\nvar result = payrollService.CalculateTotalHours(1, DateTime.Today.AddHours(-4), DateTime.Now.AddHours(4));"
+      "code": "// Services/ClockEntryService.cs -- the real implementation\npublic async Task Clockout(int employeeId)\n{\n    ClockEntry? clockEntry = await _clockEntryRepository.GetClockEntry(employeeId);\n\n    if (clockEntry == null)\n    {\n        throw new InvalidOperationException(\"Employee is not currently clocked in \");\n    }\n\n    clockEntry.ClockOutEmployee(DateTime.Now);\n    _clockEntryRepository.SaveClockEntry(clockEntry);\n}"
     },
     {
-      "title": "using/await using: Dispose runs no matter what",
+      "title": "A message should name what broke",
       "paragraphs": [
-        "The real integration tests already do this: await using SqliteConnection connection = new(\"Data Source=:memory:\"); and await using PayrollDbContext db = new(options); both guarantee the connection and context are disposed at the end of their block, exception or not.",
-        "Without using, an exception thrown between opening the connection and the end of the method would skip whatever cleanup code came after it -- leaving the connection open until the garbage collector eventually, non-deterministically, finalizes it."
+        "The real exception messages ('Employee can only clock out once', 'Employee is not currently clocked in ') name the rule but not the employee. Step 46 substep 3 proposes improving them to include the EmployeeId -- framed explicitly as a lab this course performs, since this exact improved message has not been applied to the real repository.",
+        "This is the one piece of this session's content that step-046 itself marks as goal/why prose without executed code -- treat it as inspiration for the lab, not as a claim about what the real source currently does."
       ],
-      "code": "// tests/.../ClockEntryWorkflowTests.cs -- real, existing usage\nawait using SqliteConnection connection = new(\"Data Source=:memory:\");\nawait connection.OpenAsync();\n...\nawait using PayrollDbContext db = new(options);\nawait db.Database.EnsureCreatedAsync();\n// Both connection and db are disposed automatically at the end of this method, even on failure."
+      "code": "// Lab improvement -- NOT yet in the real source repository\nthrow new InvalidOperationException(\n    $\"Employee {EmployeeId} is already clocked out. A single entry cannot be closed twice.\");"
     }
   ],
   "lab": {
-    "objective": "Reproduce GetDuartion's real unhandled exception end to end, and confirm using/await using's guaranteed cleanup by deliberately throwing inside a using block.",
-    "startingCondition": "ClockEntry.GetDuartion, PayrollService.CalculateTotalHours, and the real SQLite-based integration tests already exist.",
+    "objective": "Audit ClockEntryService.Clockout and ClockEntry.ClockOutEmployee against the throw-vs-return rule, then improve the real exception messages to name the employee, as a clearly-labeled lab extension.",
+    "startingCondition": "ClockEntry, IClockEntryRepository, and ClockEntryService already carry the real throw-vs-return behavior from Sessions 6-20.",
     "steps": [
-      "Call CalculateTotalHours in a way that includes an open (not clocked out) entry in the date range, and confirm the real, unhandled InvalidOperationException propagates out of the call.",
-      "Wrap that same call in a try/catch in a throwaway test and confirm you can observe the exact real exception message.",
-      "Write a small test that opens a using SqliteConnection, throws an exception inside the block, and confirms (via a flag or mock) that Dispose still ran.",
-      "Explain, in writing, why GetEmployeeClockEntries's ClockOut != null filter is what normally prevents this exception from surfacing in ordinary use."
+      "Write the throw-vs-return rule down in one sentence, before touching any code.",
+      "Check every branch in ClockIn and Clockout against that sentence and confirm both already comply.",
+      "Change ClockOutEmployee's exception message to include EmployeeId and the existing ClockOut timestamp.",
+      "Change Clockout's 'not currently clocked in' message to include the employeeId argument.",
+      "Update the ClockEntry tests to assert on the new, more specific messages."
     ],
-    "expectedBehavior": "The unhandled InvalidOperationException is reproduced and its exact message confirmed; the using-block test confirms Dispose runs even when an exception is thrown inside the block.",
+    "expectedBehavior": "Both exception messages now name the specific employee; all existing tests are updated to match and the full suite still passes.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
       "path": "src/TimeClock.Domain/ClockEntry.cs",
-      "action": "Verify",
-      "why": "Confirm GetDuartion's real, unhandled exception path."
+      "action": "Modify",
+      "why": "Add the employee id to ClockOutEmployee's exception message, per Step 46's proposed (not-yet-applied) improvement."
     },
     {
-      "path": "src/TimeClock.Domain/TimeClockService.cs",
-      "action": "Verify",
-      "why": "Confirm PayrollService.CalculateTotalHours has no try/catch around its Sum call."
+      "path": "src/TimeClock.Domain/ClockEntryService.cs",
+      "action": "Modify",
+      "why": "Add the employee id to Clockout's exception message."
     },
     {
       "path": "tests/TimeClock.Domain.Tests/ClockEntryTests.cs",
       "action": "Modify",
-      "why": "Add a test reproducing the real unhandled-exception path and a using-block Dispose guarantee test."
+      "why": "Assert on the new, more specific exception messages."
     },
     {
       "path": "site/data/sessions/session-24.json",
@@ -123,50 +124,51 @@
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-24: teach exception propagation idisposable and using",
+  "commit": "session-24: teach validation results and exceptions",
   "review": [
-    "GetDuartion's real exception path is traced through all three real files (ClockEntry, PayrollService, Program.cs), not asserted abstractly.",
-    "The console app's real lack of a global exception handler is contrasted honestly with what Session 34's WebApi will need.",
-    "using/await using's Dispose guarantee is demonstrated with a real, deliberately-throwing test, not just described.",
-    "The full test suite passes."
+    "The throw-vs-return rule is written down in one sentence before any code changes.",
+    "GetClockEntry's nullable return type is preserved, not converted to an exception.",
+    "ClockOutEmployee still throws for a double clock-out, with a message naming the employee.",
+    "Clockout's null check against GetClockEntry is unchanged in structure, only in message detail.",
+    "The full test suite passes with updated message assertions."
   ],
   "postQuiz": [
     {
-      "prompt": "Why doesn't GetEmployeeClockEntries's real filter (ClockOut != null) fully eliminate the possibility of GetDuartion throwing inside CalculateTotalHours?",
+      "prompt": "Why is 'employee not currently clocked in' modeled as an exception at the service layer but a null return at the repository layer?",
       "options": [
-        "It eliminates it for THAT specific call path -- but any other code that calls GetDuartion directly on an open ClockEntry (bypassing GetEmployeeClockEntries's filter) would still trigger the same real exception",
-        "It does fully eliminate the possibility everywhere in the codebase",
-        "GetDuartion cannot be called on an open entry -- the compiler prevents it"
+        "A repository miss is a normal lookup outcome; a service-level attempt to clock out someone who is not clocked in is a caller error against the service's contract",
+        "The two layers use different versions of C#",
+        "Exceptions are only allowed in service classes"
       ],
       "correct": 0,
-      "explanation": "The filter protects one specific call path, not GetDuartion itself -- GetDuartion's own guard clause is what actually protects it universally, which is exactly why Session 7 studied that guard clause directly."
+      "explanation": "The same 'no open entry' fact is expected at the data layer and a contract violation at the point someone tries to act on it."
     },
     {
-      "prompt": "What would you need to add to Program.cs for an unhandled exception from CalculateTotalHours to be caught and handled gracefully instead of terminating the process?",
+      "prompt": "What would change if ClockOutEmployee returned false instead of throwing on a double clock-out?",
       "options": [
-        "A try/catch block around the call, or a broader pattern like a global unhandled-exception handler -- neither currently exists in the real Program.cs",
-        "Nothing -- Program.cs already handles this",
-        "async/await, since only asynchronous exceptions can be caught"
+        "Callers could silently ignore the failure, since C# does not force you to check a bool return value the way it forces you to handle a thrown exception",
+        "Nothing -- both approaches are functionally identical here",
+        "The method would no longer compile"
       ],
       "correct": 0,
-      "explanation": "This is a genuine, currently-true gap in the real console app -- there is no exception handling anywhere in Program.cs today."
+      "explanation": "This is exactly why the rule favors exceptions for broken invariants -- a silently-ignored bool return would let a double clock-out pass unnoticed."
     },
     {
-      "prompt": "If a using block's Dispose call itself throws an exception, what happens to an exception that was already being thrown from inside the block?",
+      "prompt": "Does step-046's proposed 'name the employee in the message' change already exist in the real source repository?",
       "options": [
-        "This is a genuinely subtle edge case (Dispose exceptions during unwinding) -- in the common case relevant to this codebase's SqliteConnection/DbContext usage, Dispose completing without its own exception is what actually happens, so the original exception propagates normally",
-        "The original exception is always silently discarded",
-        "The program always crashes immediately with no information"
+        "No -- step-046 documents it as unexecuted goal/why prose; this session's lab is what actually applies it",
+        "Yes, it was applied and verified on 2026-07-27",
+        "It cannot be determined from the source material"
       ],
       "correct": 0,
-      "explanation": "This session focuses on the common, real case (Dispose succeeding) rather than the rarer double-fault scenario -- worth naming as a known edge case without needing to solve it here."
+      "explanation": "The task brief is explicit that Step 46's proposed code has not been applied to the real repo -- this session's lab, not the real source, is where it happens."
     }
   ],
   "reflections": [
-    "Why does this session trace a real exception path instead of inventing a hypothetical one?",
-    "What would change about Program.cs's behavior if it wrapped its ClockIn/Clockout/CalculateTotalHours sequence in a single try/catch?",
-    "Where else in this codebase (beyond the SQLite tests) might a resource benefit from using/await using that doesn't currently have it?"
+    "Why did the real Clockout code already follow the throw-vs-return rule before that rule was ever written down?",
+    "What would you lose if every failure in ClockEntryService threw an exception, including 'not currently clocked in'?",
+    "How does naming the employee id in an exception message change what a caller can do with a caught exception?"
   ],
-  "whatBreaks": "Calling GetDuartion on an open ClockEntry anywhere outside GetEmployeeClockEntries's filtered path reproduces the real, unhandled InvalidOperationException -- and because Program.cs has no try/catch, that would terminate the console app. Forgetting using/await using around a SqliteConnection or PayrollDbContext would leave the connection open if an exception occurred mid-method, relying on non-deterministic garbage collection to eventually release it instead of a guaranteed, immediate Dispose call.",
-  "summary": "GetDuartion's real InvalidOperationException propagates unchanged through PayrollService.CalculateTotalHours and Program.cs, because none of the three catches it -- a real, currently-true fact about this console app, not a hypothetical. using and await using (already at work in the real SQLite integration tests) guarantee Dispose/DisposeAsync runs at the end of a block regardless of whether an exception was thrown inside it, which is exactly why SqliteConnection and DbContext -- both real, external-resource-holding types -- are always opened inside one."
+  "whatBreaks": "Converting GetClockEntry's nullable return into an exception would force every normal 'employee not clocked in yet' check to use a try/catch instead of a null check, for an outcome that is not actually exceptional. Removing ClockOutEmployee's exception entirely would let a double clock-out silently overwrite ClockOut, corrupting the recorded duration. Leaving exception messages generic (no employee id) makes a caught exception in a multi-employee batch operation useless for diagnosing which employee failed.",
+  "summary": "The real ClockEntryService.Clockout already follows the rule step-046 writes down explicitly: GetClockEntry's nullable return models an expected 'not clocked in' outcome, while ClockOutEmployee's exception models a broken 'already clocked out' invariant. This session's lab applies step-046's one unexecuted proposal -- naming the employee in both messages -- directly to the real files."
 }

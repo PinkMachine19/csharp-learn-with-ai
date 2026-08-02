@@ -1,116 +1,126 @@
 {
   "number": 31,
-  "category": "Data access and application integration",
-  "estimatedTime": "45 minutes",
-  "connection": "Session 30 covered DI lifetimes. EF Core does not exist anywhere in the real practice-07092026 source -- ClockEntryRepository's real storage is a plain in-memory List<ClockEntry>. This session studies PayrollDbContext, a new, clearly-labeled extension giving IClockEntryRepository a genuine database-backed alternative implementation.",
+  "category": "Testing and dependency injection",
+  "estimatedTime": "40 minutes",
+  "connection": "Session 30 traced the real PayrollServiceTests.cs, which uses Moq. This session studies a second, real test-double style already in the test suite -- hand-written fake repositories like EntryRecorderTests's RecordingRepository -- and the real, mixed Transient/Singleton DI lifetimes from Program.cs (decision-0005), demonstrated with ServiceComposition's Scoped-lifetime example.",
   "objectives": [
-    "Explain the real gap this session fills: the source app's real ClockEntryRepository has no persistence beyond an in-memory list that is discarded when the process exits.",
-    "Read PayrollDbContext : DbContext as this codebase's first genuinely framework-required inheritance, previewed in Session 19.",
-    "Map ClockEntryEntity's fields to ClockEntry's real properties, and explain why the entity is a separate type rather than reusing ClockEntry directly.",
-    "Explain what 'change tracking' means concretely: db.ClockEntries.Add(entity) marks the entity as Added before SaveChangesAsync ever runs."
+    "Contrast Moq's Mock<IClockEntryRepository> (Session 30) with a real, hand-written RecordingRepository : IClockEntryRepository test double -- both implement the same interface, by two different mechanisms.",
+    "Explain why a hand-written fake and a Moq mock are both valid test doubles, and what each costs (lines of code written by hand versus a small library dependency and some indirection).",
+    "Explain the real decision-0005 finding: Program.cs registers IClockEntryRepository as Singleton but IClockEntryService, PayrollService, and IEmployeeService as Transient -- and why that mix is safe for this specific console app.",
+    "Use ServiceComposition's real AddTimeClockCore extension to observe Scoped lifetime behavior: one instance per scope, a new instance per new scope."
   ],
   "visuals": [
     {
-      "diagram": "invariant",
-      "title": "The real gap: no persistence beyond one process's lifetime",
-      "explanation": "ClockEntryRepository's real _clockEntries list exists only in memory -- restarting Parm.Practice.ConsoleApplication loses every clocked-in employee. PayrollDbContext fills this real, unaddressed gap."
+      "diagram": "tests",
+      "title": "Two real ways to fake IClockEntryRepository",
+      "explanation": "Mock<IClockEntryRepository>() (Session 30, via Moq) and a hand-written RecordingRepository : IClockEntryRepository (this session) both satisfy the same interface for testing purposes."
     },
     {
-      "diagram": "blueprint",
-      "title": "PayrollDbContext : DbContext -- required inheritance, not chosen",
-      "explanation": "EF Core requires your context type to literally be a DbContext; there is no interface-based alternative for this specific framework capability."
+      "diagram": "pipeline",
+      "title": "Both doubles work because ClockEntryService depends on the interface",
+      "explanation": "Session 19/20 already established this: any class implementing IClockEntryRepository can stand in wherever the interface is expected, hand-written or Moq-generated."
     },
     {
-      "diagram": "instances",
-      "title": "ClockEntryEntity mirrors ClockEntry's shape, but is a distinct type",
-      "explanation": "EmployeeId, ClockIn, ClockOut are copied field-for-field from the real ClockEntry -- but ClockEntryEntity is EF Core's storage-shaped type, not the domain's behavior-shaped ClockEntry."
+      "diagram": "comparison",
+      "title": "The real, mixed lifetimes in Program.cs",
+      "explanation": "AddSingleton<IClockEntryRepository, ClockEntryRepository>() shares one repository; AddTransient<IClockEntryService, ClockEntryService>() creates a new service instance on every resolution."
     },
     {
-      "diagram": "call",
-      "title": "Add marks an entity tracked before anything is saved",
-      "explanation": "db.ClockEntries.Add(entity) changes the entity's EntityState to Added immediately -- SaveChangesAsync later translates every tracked change into the actual database write."
+      "diagram": "feedback",
+      "title": "Scoped sits between Transient and Singleton",
+      "explanation": "ServiceComposition's AddScoped<EntryRecorder>() gives one EntryRecorder per scope -- the same instance within one scope, a different one in the next."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "What happens to every ClockEntry the real console app has recorded when the process exits?",
+      "prompt": "What do Mock<IClockEntryRepository>() and RecordingRepository : IClockEntryRepository have in common as test doubles?",
       "options": [
-        "All of it is lost -- ClockEntryRepository's real storage is an in-memory List<ClockEntry> with no persistence to disk or a database",
-        "It is automatically saved to a local file",
-        "Nothing -- the real repository already uses EF Core"
+        "Both are objects that implement the real IClockEntryRepository interface, letting a test control GetEmployeeClockEntries/GetClockEntry/SaveClockEntry's behavior without touching the real, in-memory ClockEntryRepository",
+        "Nothing -- they are unrelated testing techniques",
+        "Both require the real database to be running"
       ],
       "correct": 0,
-      "explanation": "This is a real, verified gap in practice-07092026 -- confirmed by reading Repositories/ClockEntryRepository.cs, which has no persistence mechanism at all."
+      "explanation": "The mechanism differs (Moq generates an implementation at runtime; RecordingRepository is a small class written by hand), but the underlying principle -- substituting an interface implementation for testing -- is identical."
     },
     {
-      "prompt": "Why must PayrollDbContext be declared as a class that inherits from DbContext, rather than just implementing an interface?",
+      "prompt": "Why does Program.cs register IClockEntryRepository as Singleton while IClockEntryService is Transient?",
       "options": [
-        "EF Core's design requires your context type to literally extend DbContext to gain its real infrastructure (DbSet<T> properties, change tracking, SaveChangesAsync) -- there is no interface-only way to opt into that machinery",
-        "It is a stylistic preference this course chose",
-        "DbContext is itself an interface"
+        "ClockEntryRepository holds the actual state (_clockEntries) that ClockIn and Clockout both need to share across calls; ClockEntryService itself holds no state of its own, so a new instance per resolution costs nothing and shares the same underlying (Singleton) repository anyway",
+        "It is an arbitrary, unexplained inconsistency",
+        "Transient services cannot depend on Singleton services"
       ],
       "correct": 0,
-      "explanation": "This is the genuinely framework-required inheritance Session 19 previewed -- the first inheritance relationship in this codebase that isn't a deliberate teaching choice."
+      "explanation": "decision-0005 documents this as real and verified against the actual Program.cs: the lifetime choice tracks which class actually needs shared state, not a uniform policy."
     },
     {
-      "prompt": "What does db.ClockEntries.Add(entity) do before SaveChangesAsync is ever called?",
+      "prompt": "What does AddScoped<EntryRecorder>() guarantee within a single IServiceScope?",
       "options": [
-        "It marks the entity as tracked with EntityState.Added -- SaveChangesAsync later reads every tracked entity's state to decide what SQL to generate",
-        "It immediately writes the entity to the database",
-        "Nothing -- Add has no effect until SaveChangesAsync runs"
+        "Every GetRequiredService<EntryRecorder>() call within that one scope returns the SAME EntryRecorder instance; a different scope gets a different instance",
+        "A new instance every single call, scope or not",
+        "Exactly one instance for the entire application's lifetime"
       ],
       "correct": 0,
-      "explanation": "Change tracking is exactly this: EF Core records what changed in memory first, then translates the accumulated changes into database operations only when SaveChangesAsync is explicitly called."
+      "explanation": "Scoped is the real middle ground between Transient (always new) and Singleton (always the same) -- ServiceCompositionTests.cs demonstrates this directly with two different scopes."
     }
   ],
   "concept": [
     {
-      "title": "A real gap, honestly named",
+      "title": "Two real test-double mechanisms in this codebase",
       "paragraphs": [
-        "Nothing in practice-07092026 persists a ClockEntry anywhere beyond process memory. Every employee's clock-in and clock-out history is gone the moment the console app exits.",
-        "This session does not claim EF Core already exists in the real source -- it builds PayrollDbContext specifically because that gap is real, and giving IClockEntryRepository a second, database-backed implementation is the natural next step once the gap is visible."
+        "Session 30's PayrollServiceTests.cs uses Moq: new Mock<IClockEntryRepository>() generates an implementation at runtime, configured with .Setup(...).Returns(...).",
+        "EntryRecorderTests.cs's RecordingRepository is hand-written: a small, real private class implementing every member of IClockEntryRepository directly, tracking what was saved in a simple property."
       ],
-      "code": "// The real gap, confirmed by reading the source directly\npublic class ClockEntryRepository : IClockEntryRepository\n{\n    public readonly List<ClockEntry> _clockEntries = new();   // in-memory only -- gone on process exit\n}"
+      "code": "// Hand-written fake -- real, existing code\nprivate sealed class RecordingRepository : IClockEntryRepository\n{\n    public ClockEntry? Saved { get; private set; }\n    public void SaveClockEntry(ClockEntry clockEntry) => Saved = clockEntry;\n    public Task<ClockEntry?> GetClockEntry(int employeeId, CancellationToken cancellationToken = default) =>\n        Task.FromResult<ClockEntry?>(null);\n    public IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate) => [];\n}"
     },
     {
-      "title": "PayrollDbContext: the entity, the context, and change tracking",
+      "title": "The real, mixed DI lifetimes, and why they are safe here",
       "paragraphs": [
-        "PayrollDbContext(DbContextOptions<PayrollDbContext> options) : DbContext(options) exposes DbSet<ClockEntryEntity> ClockEntries -- EF Core's queryable, trackable representation of a database table.",
-        "ClockEntryEntity deliberately mirrors ClockEntry's real fields (EmployeeId, ClockIn, ClockOut) plus an Id primary key EF Core needs -- it is a separate, storage-shaped type, not a reuse of the domain's ClockEntry class."
+        "decision-0005, verified directly against the real Program.cs: IClockEntryRepository is Singleton (one shared instance, holding the real _clockEntries state); IClockEntryService, PayrollService, and IEmployeeService are all Transient (a new instance every resolution).",
+        "This mix is safe specifically because ClockEntryService and PayrollService hold no mutable state of their own -- every Transient instance simply forwards to the one shared Singleton repository, so creating a new service instance costs a small allocation and nothing more."
       ],
-      "code": "// src/TimeClock.Infrastructure/TimeClockDbContext.cs -- new extension\npublic sealed class PayrollDbContext(DbContextOptions<PayrollDbContext> options) : DbContext(options)\n{\n    public DbSet<ClockEntryEntity> ClockEntries => Set<ClockEntryEntity>();\n}\n\npublic sealed class ClockEntryEntity\n{\n    public int Id { get; set; }\n    public int EmployeeId { get; set; }\n    public DateTime ClockIn { get; set; }\n    public DateTime? ClockOut { get; set; }\n}"
+      "code": "// Program.cs -- the real, verified registrations\nservices.AddTransient<IClockEntryService, ClockEntryService>();\nservices.AddSingleton<IClockEntryRepository, ClockEntryRepository>();\nservices.AddTransient<PayrollService>();\nservices.AddTransient<IEmployeeService, EmployeeService>();"
     },
     {
-      "title": "Why a separate entity, not ClockEntry itself",
+      "title": "Scoped: the lifetime this console app never needed, but ASP.NET Core will",
       "paragraphs": [
-        "ClockEntry's real constructor takes only employeeId and clockIn, and ClockOut has a private setter -- both deliberate domain invariants (Session 6-7). EF Core needs to construct and populate ClockEntryEntity freely (including an Id it generates), which would conflict with those same invariants if forced onto ClockEntry directly.",
-        "Keeping them separate means ClockEntry's domain rules stay exactly as strict as Sessions 5-24 established, while ClockEntryEntity is free to be exactly as permissive as EF Core's mapping needs."
+        "ServiceComposition.AddTimeClockCore registers EntryRecorder as Scoped -- one instance per IServiceScope, demonstrated by ServiceCompositionTests.cs resolving it twice within one scope (same instance) and once in a second scope (a different instance).",
+        "Scoped becomes directly relevant once Session 34's ASP.NET Core WebApi is built: ASP.NET Core creates one scope per HTTP request automatically, so a Scoped registration there means one instance per request -- a pattern this console app, with no request boundary, never needed until now."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "// A new extension, demonstrating a lifetime the real console app never used\nservices.AddScoped<EntryRecorder>();\n\nusing (IServiceScope scope = provider.CreateScope())\n{\n    var first = scope.ServiceProvider.GetRequiredService<EntryRecorder>();\n    var second = scope.ServiceProvider.GetRequiredService<EntryRecorder>();\n    // first and second are the SAME instance -- one per scope\n}"
     }
   ],
   "lab": {
-    "objective": "Trace PayrollDbContext's real shape and confirm change tracking's Added state, using an in-memory SQLite database.",
-    "startingCondition": "PayrollDbContext and ClockEntryEntity already exist as a new extension in TimeClock.Infrastructure.",
+    "objective": "Compare Moq-based and hand-written test doubles for IClockEntryRepository, and confirm all three real DI lifetimes (Transient, Singleton, Scoped) behave as documented.",
+    "startingCondition": "PayrollServiceTests.cs (Moq), EntryRecorderTests.cs (hand-written RecordingRepository), and ServiceCompositionTests.cs (Scoped) already exist.",
     "steps": [
-      "Open an in-memory SQLite connection and create a PayrollDbContext against it.",
-      "Add a new ClockEntryEntity and check db.Entry(entity).State before calling SaveChangesAsync -- confirm it reports Added.",
-      "Call SaveChangesAsync and check db.Entry(entity).State again -- confirm it now reports Unchanged.",
-      "Query db.ClockEntries.CountAsync() and confirm exactly one row was persisted."
+      "Read RecordingRepository's four interface members and compare its line count and readability to the equivalent Mock<IClockEntryRepository> setup in PayrollServiceTests.cs.",
+      "Resolve IClockEntryService twice from the same ServiceProvider and confirm you get two different (Transient) instances.",
+      "Resolve IClockEntryRepository twice from the same ServiceProvider and confirm you get the SAME (Singleton) instance.",
+      "Run ServiceCompositionTests.cs and confirm EntryRecorder is the same instance within one scope but different across two scopes."
     ],
-    "expectedBehavior": "The entity's EntityState transitions from Added to Unchanged exactly when SaveChangesAsync is called; the row count reflects the real, persisted entity afterward.",
+    "expectedBehavior": "Both test-double styles work correctly for their respective tests; Transient/Singleton/Scoped each demonstrate their documented, distinct behavior when resolved directly from a ServiceProvider.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Infrastructure/TimeClockDbContext.cs",
+      "path": "tests/TimeClock.Domain.Tests/EntryRecorderTests.cs",
       "action": "Verify",
-      "why": "Confirm PayrollDbContext and ClockEntryEntity's real declarations."
+      "why": "Confirm the real, hand-written RecordingRepository test double."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/TimeClockDbContextTests.cs",
+      "path": "tests/TimeClock.Domain.Tests/PayrollServiceTests.cs",
       "action": "Verify",
-      "why": "Confirm the real EntityState-transition test."
+      "why": "Confirm the real Moq-based test double, for contrast."
+    },
+    {
+      "path": "src/TimeClock.Domain/ServiceComposition.cs",
+      "action": "Verify",
+      "why": "Confirm the real AddScoped<EntryRecorder>() registration."
+    },
+    {
+      "path": "tests/TimeClock.Domain.Tests/ServiceCompositionTests.cs",
+      "action": "Verify",
+      "why": "Confirm the real scoped-vs-cross-scope instance assertions."
     },
     {
       "path": "site/data/sessions/session-30.json",
@@ -118,50 +128,50 @@
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-30: teach ef core context entities and tracking",
+  "commit": "session-30: teach test doubles di lifetimes and service tests",
   "review": [
-    "The real gap (no persistence in the source app) is stated honestly, not assumed away.",
-    "PayrollDbContext's inheritance from DbContext is explained as framework-required, connecting back to Session 19's preview.",
-    "ClockEntryEntity's separateness from ClockEntry is justified by real, specific domain invariants (constructor shape, private setter), not asserted as a generic best practice.",
+    "Both real test-double mechanisms (Moq and hand-written) are compared directly, not treated as interchangeable without discussion.",
+    "decision-0005's real, mixed DI lifetimes are explained by what state each class holds, not applied as an unexplained rule.",
+    "Scoped lifetime is demonstrated with the real ServiceCompositionTests.cs assertions, and connected forward to Session 34's ASP.NET Core per-request scoping.",
     "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "If ClockEntryEntity were removed and ClockEntry were used directly as the EF Core entity, what real conflict would arise?",
+      "prompt": "Why would registering IClockEntryRepository as Transient (instead of the real Singleton) break ClockIn/Clockout's real behavior in Program.cs?",
       "options": [
-        "EF Core needs to construct ClockEntry objects and assign an Id/ClockOut freely when materializing query results, which conflicts with ClockEntry's real constructor (no Id parameter) and ClockOut's private setter",
-        "There would be no conflict -- EF Core can use any class as an entity",
-        "ClockEntry would need to become an interface"
+        "Each resolution would get a fresh, empty _clockEntries list -- ClockIn's saved entry would live in a different repository instance than the one Clockout later queries, so Clockout would never find it",
+        "Nothing would break -- Transient and Singleton behave identically for this class",
+        "It would cause a compile error"
       ],
       "correct": 0,
-      "explanation": "This is the concrete, specific reason for the separate entity type -- not a generic 'always separate your layers' rule, but a real conflict between EF Core's needs and ClockEntry's real domain invariants."
+      "explanation": "This is exactly the scenario Session 21's lab explored -- Singleton is what lets ClockIn and Clockout share the same underlying state across two separate method calls."
     },
     {
-      "prompt": "Why does db.Entry(entity).State change from Added to Unchanged only after SaveChangesAsync, not immediately after Add?",
+      "prompt": "When would you choose a hand-written fake like RecordingRepository over a Moq-based mock?",
       "options": [
-        "Add only registers the entity with the context's in-memory change tracker; SaveChangesAsync is the operation that actually executes the database write and then updates tracking to reflect the now-persisted, unchanged state",
-        "State never changes -- this is a bug in EF Core",
-        "Add and SaveChangesAsync do the same thing"
+        "When the interface is small and the fake's behavior is simple enough that hand-writing it is clearer and has no extra library dependency -- both are legitimate choices, and this codebase genuinely uses both",
+        "Never -- Moq should always be preferred",
+        "Hand-written fakes are only valid for interfaces with one member"
       ],
       "correct": 0,
-      "explanation": "This two-step behavior -- track first, persist on demand -- is exactly what allows EntryCompletion's validation (Session 24) to run before anything reaches the database (Session 35's workflow)."
+      "explanation": "There is no universal rule -- IClockEntryRepository's real test suite uses both approaches in different tests, which is itself the honest answer: it depends on the specific test's needs."
     },
     {
-      "prompt": "Does adding PayrollDbContext change anything about the real, in-memory ClockEntryRepository or its consumers (ClockEntryService, PayrollService)?",
+      "prompt": "If ClockEntryService.Clockout were called from two different HTTP requests handled concurrently by the real WebApi project (Session 34), and IClockEntryRepository stayed registered as Singleton there too, what real risk would that introduce?",
       "options": [
-        "No -- PayrollDbContext is a new, separate, alternative implementation of persistence; the real ClockEntryRepository and every class depending on IClockEntryRepository continue to work exactly as before",
-        "Yes -- ClockEntryRepository is deleted and replaced",
-        "Yes -- IClockEntryRepository's interface must change"
+        "Concurrent requests could race on the same shared, mutable _clockEntries list with no synchronization -- a genuine risk this codebase's real, single-threaded console app never had to face",
+        "No risk -- Singleton services are always thread-safe automatically",
+        "The WebApi would fail to start"
       ],
       "correct": 0,
-      "explanation": "This session adds a new capability alongside the real, unmodified source code -- exactly the 'clearly-labeled extension' framing the task's own instructions call for."
+      "explanation": "This is a real, forward-looking risk worth naming honestly: Singleton state that was safe in a single-threaded console app becomes a genuine concurrency concern once multiple requests can run in parallel."
     }
   ],
   "reflections": [
-    "Why does this session build a new entity type instead of trying to make ClockEntry itself EF Core-compatible?",
-    "What would you need to change about PayrollDbContext to make it usable as a real, additional implementation of IClockEntryRepository, alongside the existing in-memory one?",
-    "Where else in this codebase might a domain type's strict invariants make it a poor fit for direct use as a persistence entity?"
+    "Why does this codebase's test suite use two different test-double styles (Moq and hand-written) instead of standardizing on one?",
+    "What would you need to verify before trusting that IClockEntryRepository's real Singleton registration is still safe once the WebApi project (Session 34) starts handling concurrent requests?",
+    "Where might Scoped be a better fit than Transient or Singleton for a class this codebase doesn't have yet?"
   ],
-  "whatBreaks": "Constructing ClockEntryEntity with EF Core's usual pattern (a parameterless constructor plus property setters) would fail if attempted against ClockEntry directly, since ClockEntry's real constructor requires employeeId and clockIn and ClockOut cannot be set from outside ClockOutEmployee. Skipping SaveChangesAsync after Add leaves the entity tracked as Added but never actually written to the database -- a common source of 'why didn't my data save' bugs when the two steps are conflated.",
-  "summary": "The real practice-07092026 source has no persistence beyond an in-memory List<ClockEntry> -- a genuine, verified gap. PayrollDbContext : DbContext is this codebase's first framework-required inheritance (previewed in Session 19), and ClockEntryEntity is a deliberately separate, storage-shaped type -- not a reuse of ClockEntry -- because ClockEntry's real domain invariants (constructor shape, private ClockOut setter) would conflict with how EF Core needs to construct and populate entities."
+  "whatBreaks": "Registering IClockEntryRepository as Transient instead of Singleton breaks the real ClockIn-then-Clockout sequence, because each resolution would receive an independent, empty _clockEntries list. Using Moq for every single test double, even trivially simple ones, adds a library dependency and a layer of setup-call indirection where a five-line hand-written fake like RecordingRepository would be just as clear. Assuming Singleton services are automatically safe under concurrent access ignores a real risk that becomes relevant the moment this codebase gains a multi-request host (Session 34).",
+  "summary": "This codebase's real test suite uses two legitimate test-double styles side by side: Moq (Session 30's PayrollServiceTests.cs) and hand-written fakes (EntryRecorderTests.cs's RecordingRepository) -- both satisfy IClockEntryRepository, by different mechanisms. decision-0005's real, mixed Transient/Singleton registrations in Program.cs are safe specifically because only ClockEntryRepository holds shared state; ServiceComposition's Scoped example previews a third lifetime this console app never needed but Session 34's ASP.NET Core WebApi (one scope per request) will."
 }

@@ -47,7 +47,7 @@ const completeCount = sessions.filter((session) => session.completionStatus === 
 const plannedCount = sessions.length - completeCount;
 const statusBadge = (session) => session.completionStatus === "complete" ? `<span class="badge badge-complete">Complete</span>` : `<span class="badge badge-locked">Planned</span>`;
 
-const syllabusRows = sessions.map((session) => `<tr><td><span class="badge badge-layer">${String(session.number).padStart(2,"0")}</span></td><td>${session.completionStatus === "complete" ? `<a href="${url(session.lessonPath.replace("index.html", ""))}"><strong>${escapeHtml(session.title)}</strong></a>` : `<strong>${escapeHtml(session.title)}</strong>`}<br><small style="color:var(--text-muted)">${escapeHtml(session.curriculumLayer)}</small></td><td>${session.prerequisiteSession ? `Session ${String(session.prerequisiteSession).padStart(2,"0")}` : "None"}</td><td>${statusBadge(session)}</td></tr>`).join("");
+const syllabusRows = sessions.map((session) => `<tr><td><span class="badge badge-layer">${String(session.number).padStart(2,"0")}</span></td><td>${session.completionStatus === "complete" ? `<a href="${url(session.lessonPath.replace("index.html", ""))}"><strong>${escapeHtml(session.title)}</strong></a>` : `<strong>${escapeHtml(session.title)}</strong>`}<br><small style="color:var(--text-muted)">${escapeHtml(session.curriculumLayer)}</small></td><td>${session.prerequisiteSession !== null && session.prerequisiteSession !== undefined ? `Session ${String(session.prerequisiteSession).padStart(2,"0")}` : "None"}</td><td>${statusBadge(session)}</td></tr>`).join("");
 const navGrid = `<div class="nav-grid">
   <a class="nav-card" href="${url("syllabus/")}"><div class="nav-card-title">Syllabus</div><div class="nav-card-desc">The dependency-ordered course path, one row per session.</div></a>
   <a class="nav-card" href="${url("sessions/")}"><div class="nav-card-title">Sessions</div><div class="nav-card-desc">All ${sessions.length} sessions grouped by curriculum layer.</div></a>
@@ -57,7 +57,7 @@ const navGrid = `<div class="nav-grid">
 const layerRows = raw.layers.map((layer) => `<tr><td><span class="badge badge-layer">${layer.number}</span></td><td>${escapeHtml(layer.title)}</td><td>${escapeHtml(layer.range)}</td></tr>`).join("");
 const syllabus = page({ title: "Syllabus", active: "syllabus", description: "The dependency-ordered course path", body: `<main id="main-content"><div class="container">
   <h1>${escapeHtml(raw.course.title)}</h1>
-  <p class="subtitle">${escapeHtml(raw.course.subtitle)} — thirty-five focused sessions move from language foundations to tested application integration, published in validated batches.</p>
+  <p class="subtitle">${escapeHtml(raw.course.subtitle)} — thirty-six focused sessions move from orientation and language foundations to tested application integration, published in validated batches.</p>
   <details class="preface" open>
     <summary><strong>Preface</strong><span class="preface-hint">Click to collapse</span></summary>
     <div class="preface-body">
@@ -187,8 +187,9 @@ function interactionDemo() { return `<div class="card quiz-card" data-quiz><p cl
 
 function sessionPage(session, content) {
   const padded = String(session.number).padStart(2, "0");
-  const previous = session.number > 1 ? sessions[session.number - 2] : null;
-  const next = session.number < sessions.length ? sessions[session.number] : null;
+  const position = sessions.indexOf(session);
+  const previous = position > 0 ? sessions[position - 1] : null;
+  const next = position < sessions.length - 1 ? sessions[position + 1] : null;
   const prevLink = previous && previous.completionStatus === "complete" ? `<a href="${url(previous.lessonPath.replace("index.html", ""))}">← Session ${String(previous.number).padStart(2,"0")}</a>` : `<span>No previous session</span>`;
   const nextLink = next ? (next.completionStatus === "complete" ? `<a href="${url(next.lessonPath.replace("index.html", ""))}">Session ${String(next.number).padStart(2,"0")} →</a>` : `<a href="${url("sessions/")}">Session ${String(next.number).padStart(2,"0")} (planned) →</a>`) : `<span>No next session</span>`;
   return page({ title: `Session ${padded} — ${session.title}`, active: "sessions", description: content.connection, sessionWidgets: true, body: `<main id="main-content"><div class="container">
