@@ -99,11 +99,11 @@
       "Trace ClockEntryService.ClockIn and SaveClockEntry to confirm the exact same ClockEntry reference flows from construction into the repository's _clockEntries list."
     ],
     "expectedBehavior": "Renaming through an alias changes the name visible through the original variable; copying EmployeeId into a local int produces an independent value; SaveClockEntry stores the identical reference ClockIn constructed.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/AssignmentExamples.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/AssignmentExamples.cs",
       "action": "Verify",
       "why": "Confirm the reference-sharing example matches Employee's real mutable Name/Rename shape."
     },

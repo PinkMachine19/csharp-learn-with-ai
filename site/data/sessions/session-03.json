@@ -36,10 +36,10 @@
       "Display all three values with two decimal places, then run the application and tests."
     ],
     "expectedBehavior": "The console reports 7.50 scheduled hours, 8.00 recorded hours, and a +0.50 variance; all tests pass.",
-    "validation": "dotnet run --project src/TimeClock.App/TimeClock.App.csproj --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
-    {"path":"src/TimeClock.App/Program.cs","action":"Modify","why":"Add typed numeric values, an explicit conversion, and observable expressions."},
+    {"path":"src/PinkMachine19.TimeClock.App/Program.cs","action":"Modify","why":"Add typed numeric values, an explicit conversion, and observable expressions."},
     {"path":"site/data/sessions/session-02.json","action":"Add","why":"Publish the synchronized lesson, lab, and quizzes."}
   ],
   "commit": "session-02: teach variables expressions and numeric types",

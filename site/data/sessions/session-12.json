@@ -70,7 +70,7 @@
         "EmployeeDirectory's private Dictionary<int, Employee> employees maps each EmployeeId directly to its Employee -- TryFind's employees.TryGetValue(employeeId, out employee) is a direct key lookup, with no need to inspect every stored Employee.",
         "Add uses employees.TryAdd(employee.EmployeeId, employee), returning false (and adding nothing) if that EmployeeId is already present -- this is what makes Add's own return value meaningful as a duplicate-detection signal."
       ],
-      "code": "// src/TimeClock.Domain/EmployeeDirectory.cs\nprivate readonly Dictionary<int, Employee> employees = [];\n\npublic bool Add(Employee employee)\n{\n    if (!employees.TryAdd(employee.EmployeeId, employee)) return false;\n    if (!string.IsNullOrWhiteSpace(employee.Address.City)) cities.Add(employee.Address.City);\n    return true;\n}"
+      "code": "// src/PinkMachine19.TimeClock.Domain/EmployeeDirectory.cs\nprivate readonly Dictionary<int, Employee> employees = [];\n\npublic bool Add(Employee employee)\n{\n    if (!employees.TryAdd(employee.EmployeeId, employee)) return false;\n    if (!string.IsNullOrWhiteSpace(employee.Address.City)) cities.Add(employee.Address.City);\n    return true;\n}"
     },
     {
       "title": "HashSet<string>: membership, not order or count",
@@ -99,16 +99,16 @@
       "Call TryFind for a present and an absent EmployeeId, and confirm the bool result and out value in both cases."
     ],
     "expectedBehavior": "Duplicate EmployeeId additions are rejected without throwing; differently-cased city names collapse to one entry; TryFind correctly reports found/not-found with the out parameter matching.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/EmployeeDirectory.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/EmployeeDirectory.cs",
       "action": "Verify",
       "why": "Confirm the real Dictionary<int, Employee> and HashSet<string> fields and their real methods."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/EmployeeDirectoryTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/EmployeeDirectoryTests.cs",
       "action": "Verify",
       "why": "Confirm existing duplicate-key and case-insensitive-city coverage."
     },

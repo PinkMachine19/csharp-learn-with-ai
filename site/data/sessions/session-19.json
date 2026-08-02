@@ -99,16 +99,16 @@
       "Run the existing HoursPolicyTests.cs and confirm both policies still pass with their real, unchanged expected values."
     ],
     "expectedBehavior": "HoursPolicyBase cannot be constructed directly; removing override causes a compile error; both policies correctly use the inherited Round method with no duplication; existing tests pass unchanged.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/IHoursPolicy.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/IHoursPolicy.cs",
       "action": "Verify",
       "why": "Confirm HoursPolicyBase's real abstract/concrete member split and both derived classes."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/HoursPolicyTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/HoursPolicyTests.cs",
       "action": "Verify",
       "why": "Confirm existing coverage still passes against the now-inherited implementation."
     },

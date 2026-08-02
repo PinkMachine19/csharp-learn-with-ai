@@ -86,7 +86,7 @@
         "EmployeeDirectory's Cities set is constructed with new HashSet<string>(StringComparer.OrdinalIgnoreCase) specifically so \"Springfield\" and \"springfield\" collapse into one entry.",
         "Without that explicit comparer, HashSet<string>'s default ordinal comparison would treat them as two different cities -- exactly the kind of silent data-quality bug case-insensitive matching exists to prevent."
       ],
-      "code": "// src/TimeClock.Domain/EmployeeDirectory.cs\nprivate readonly HashSet<string> cities = new(StringComparer.OrdinalIgnoreCase);"
+      "code": "// src/PinkMachine19.TimeClock.Domain/EmployeeDirectory.cs\nprivate readonly HashSet<string> cities = new(StringComparer.OrdinalIgnoreCase);"
     }
   ],
   "lab": {
@@ -99,26 +99,26 @@
       "Restore the comparer and confirm the test passes again."
     ],
     "expectedBehavior": "Two ClockEntry objects with equal field values are unequal by default; two equal-valued WorkSummary records are equal; removing OrdinalIgnoreCase breaks the case-insensitive city-uniqueness test.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/ClockEntry.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntry.cs",
       "action": "Verify",
       "why": "Confirm no Equals override exists -- reference equality is the real, current behavior."
     },
     {
-      "path": "src/TimeClock.Domain/WorkSummary.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/WorkSummary.cs",
       "action": "Verify",
       "why": "Confirm the real record declaration and its generated value equality."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/ClockEntryTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryTests.cs",
       "action": "Modify",
       "why": "Add a test asserting two field-identical ClockEntry objects are unequal."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/WorkSummaryTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/WorkSummaryTests.cs",
       "action": "Verify",
       "why": "Confirm the existing record-equality test."
     },

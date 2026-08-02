@@ -38,11 +38,11 @@
       "Run the complete Release build, test suite, application, and site validator."
     ],
     "expectedBehavior": "A valid eight-hour entry is persisted and returned as WorkSummary; an invalid clock-out returns failure and persists nothing; the full test suite passes (57 tests as of Session 20; later sessions add more).",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release && npm test"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release && npm test"
   },
   "expectedFiles": [
-    {"path":"src/TimeClock.Infrastructure/ClockEntryWorkflow.cs","action":"Add","why":"Compose domain validation and EF Core persistence."},
-    {"path":"tests/TimeClock.Domain.Tests/ClockEntryWorkflowTests.cs","action":"Add","why":"Verify the integrated success and failure paths with SQLite."},
+    {"path":"src/PinkMachine19.TimeClock.Infrastructure/ClockEntryWorkflow.cs","action":"Add","why":"Compose domain validation and EF Core persistence."},
+    {"path":"tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryWorkflowTests.cs","action":"Add","why":"Verify the integrated success and failure paths with SQLite."},
     {"path":"site/data/sessions/session-34.json","action":"Add","why":"Publish the final lesson, lab, and quiz."}
   ],
   "commit": "session-34: integrate and verify the time entry workflow",

@@ -99,26 +99,26 @@
       "Run ServiceCompositionTests.cs and confirm EntryRecorder is the same instance within one scope but different across two scopes."
     ],
     "expectedBehavior": "Both test-double styles work correctly for their respective tests; Transient/Singleton/Scoped each demonstrate their documented, distinct behavior when resolved directly from a ServiceProvider.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "tests/TimeClock.Domain.Tests/EntryRecorderTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/EntryRecorderTests.cs",
       "action": "Verify",
       "why": "Confirm the real, hand-written RecordingRepository test double."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/PayrollServiceTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/PayrollServiceTests.cs",
       "action": "Verify",
       "why": "Confirm the real Moq-based test double, for contrast."
     },
     {
-      "path": "src/TimeClock.Domain/ServiceComposition.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/ServiceComposition.cs",
       "action": "Verify",
       "why": "Confirm the real AddScoped<EntryRecorder>() registration."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/ServiceCompositionTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ServiceCompositionTests.cs",
       "action": "Verify",
       "why": "Confirm the real scoped-vs-cross-scope instance assertions."
     },

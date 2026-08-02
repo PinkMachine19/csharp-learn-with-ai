@@ -99,16 +99,16 @@
       "Write down which of List<T>'s members (Add, this[int], Count) are and are not accessible through GetEmployeeClockEntries's declared return type without first calling .ToList()."
     ],
     "expectedBehavior": "foreach works directly on GetEmployeeClockEntries's result; indexing does not compile without first materializing with .ToList(); the materialized List<ClockEntry> supports indexing and Count.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/IClockEntryRepository.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/IClockEntryRepository.cs",
       "action": "Verify",
       "why": "Confirm the real IEnumerable<ClockEntry> return type on GetEmployeeClockEntries."
     },
     {
-      "path": "src/TimeClock.Domain/ClockEntryRepository.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryRepository.cs",
       "action": "Verify",
       "why": "Confirm the real Where-based implementation."
     },

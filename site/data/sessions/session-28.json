@@ -99,21 +99,21 @@
       "Write a test that cancels a CancellableEntrySource.LoadAsync call mid-delay and confirms OperationCanceledException is thrown -- then confirm the same cancellation approach has no effect on GetClockEntry."
     ],
     "expectedBehavior": "The build succeeds with 0 warnings and no pragma suppression; the app's printed total-hours line reflects the now-guaranteed ClockIn-then-Clockout ordering; CancellableEntrySource genuinely responds to cancellation while GetClockEntry does not.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release && dotnet run --project src/TimeClock.App/TimeClock.App.csproj --configuration Release --no-build"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release && dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.App/Program.cs",
+      "path": "src/PinkMachine19.TimeClock.App/Program.cs",
       "action": "Modify",
       "why": "Await clockEntryService.Clockout(1) and remove the now-unnecessary CS4014 pragma suppression."
     },
     {
-      "path": "src/TimeClock.Domain/IClockEntryRepository.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/IClockEntryRepository.cs",
       "action": "Verify",
       "why": "Confirm the real, decorative CancellationToken parameter on GetClockEntry."
     },
     {
-      "path": "src/TimeClock.Domain/CancellableEntrySource.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/CancellableEntrySource.cs",
       "action": "Verify",
       "why": "Confirm the new extension's genuinely functioning cancellation."
     },

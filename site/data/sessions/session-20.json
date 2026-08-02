@@ -57,12 +57,12 @@
       "Change IClockEntryRepository's registration from Singleton to Transient, rerun the app, and observe that ClockIn and Clockout now operate on two different empty lists -- explaining in writing why Singleton was the correct choice here."
     ],
     "expectedBehavior": "All constructor parameters are interfaces; the registration graph in Program.cs resolves PayrollService without error; PayrollServiceTests.cs passes; switching IClockEntryRepository to Transient breaks the app's total-hours calculation because ClockIn and Clockout no longer share state.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
-    {"path":"src/TimeClock.Domain/TimeClockService.cs","action":"Verify","why":"Confirm PayrollService's real two-interface constructor and the unused _employeeService field."},
-    {"path":"src/TimeClock.App/Program.cs","action":"Verify","why":"Confirm the real mixed Transient/Singleton registrations."},
-    {"path":"tests/TimeClock.Domain.Tests/PayrollServiceTests.cs","action":"Verify","why":"Confirm the unconfigured Mock<IEmployeeService> proves the dependency is currently inert."},
+    {"path":"src/PinkMachine19.TimeClock.Domain/TimeClockService.cs","action":"Verify","why":"Confirm PayrollService's real two-interface constructor and the unused _employeeService field."},
+    {"path":"src/PinkMachine19.TimeClock.App/Program.cs","action":"Verify","why":"Confirm the real mixed Transient/Singleton registrations."},
+    {"path":"tests/PinkMachine19.TimeClock.Domain.Tests/PayrollServiceTests.cs","action":"Verify","why":"Confirm the unconfigured Mock<IEmployeeService> proves the dependency is currently inert."},
     {"path":"site/data/sessions/session-19.json","action":"Add","why":"Publish synchronized lesson, lab, and quiz material."}
   ],
   "commit": "session-19: teach dependency direction and constructor injection",

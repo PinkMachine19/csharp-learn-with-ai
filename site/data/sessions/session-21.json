@@ -86,7 +86,7 @@
         "PayrollServiceTests.cs already proves this pipeline: two mocked shifts of 2 and 3 hours sum to exactly 5.0 through GetEmployeeClockEntries and CalculateTotalHours together.",
         "This session's lab writes a second, independent query (ClockEntryQueries.LongestFirst) using the same Where-then-project-and-aggregate shape, but ordered and filtered by a minimum-hours threshold instead."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
@@ -94,22 +94,22 @@
     "startingCondition": "Sessions 01–19 are complete and all existing tests pass.",
     "steps": [
       "Predict the successful path and one boundary or failure case.",
-      "Add src/TimeClock.Domain/ClockEntryQueries.cs with a narrow public contract.",
-      "Add tests/TimeClock.Domain.Tests/ClockEntryQueriesTests.cs for the prediction and boundary case.",
+      "Add src/PinkMachine19.TimeClock.Domain/ClockEntryQueries.cs with a narrow public contract.",
+      "Add tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryQueriesTests.cs for the prediction and boundary case.",
       "Run the focused tests and inspect the observed values or control flow.",
       "Run the full Release build and test suite."
     ],
     "expectedBehavior": "The new tests establish that Where filters, Select transforms, and OrderBy sequences elements while preserving a readable left-to-right pipeline; prior behavior remains unchanged.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/ClockEntryQueries.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryQueries.cs",
       "action": "Add",
       "why": "Provide the LongestFirst query built on the same Where-then-Sum shape as the real CalculateTotalHours."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/ClockEntryQueriesTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryQueriesTests.cs",
       "action": "Add",
       "why": "Verify the contract and its boundary case."
     },

@@ -75,7 +75,7 @@
     {
       "title": "An unhandled exception in a console app terminates the process",
       "paragraphs": [
-        "There is no global exception handler anywhere in TimeClock.App's real Program.cs. If an exception ever did reach it unhandled, .NET's default behavior for a console app is to print the exception type, message, and stack trace to stderr, then exit with a non-zero exit code.",
+        "There is no global exception handler anywhere in PinkMachine19.TimeClock.App's real Program.cs. If an exception ever did reach it unhandled, .NET's default behavior for a console app is to print the exception type, message, and stack trace to stderr, then exit with a non-zero exit code.",
         "This is different from what Session 34 will cover for the WebApi project: ASP.NET Core has its own exception-handling middleware pipeline that a console app's top-level statements simply do not have."
       ],
       "code": "// No try/catch anywhere in the real Program.cs -- an exception here would terminate the process\nvar result = payrollService.CalculateTotalHours(1, DateTime.Today.AddHours(-4), DateTime.Now.AddHours(4));"
@@ -99,21 +99,21 @@
       "Explain, in writing, why GetEmployeeClockEntries's ClockOut != null filter is what normally prevents this exception from surfacing in ordinary use."
     ],
     "expectedBehavior": "The unhandled InvalidOperationException is reproduced and its exact message confirmed; the using-block test confirms Dispose runs even when an exception is thrown inside the block.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/ClockEntry.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntry.cs",
       "action": "Verify",
       "why": "Confirm GetDuartion's real, unhandled exception path."
     },
     {
-      "path": "src/TimeClock.Domain/TimeClockService.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/TimeClockService.cs",
       "action": "Verify",
       "why": "Confirm PayrollService.CalculateTotalHours has no try/catch around its Sum call."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/ClockEntryTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryTests.cs",
       "action": "Modify",
       "why": "Add a test reproducing the real unhandled-exception path and a using-block Dispose guarantee test."
     },

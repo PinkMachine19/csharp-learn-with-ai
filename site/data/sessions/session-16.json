@@ -70,7 +70,7 @@
         "ISource<out T> { T Get(); } has exactly one member, and it only returns a T -- it never accepts a T as an argument anywhere.",
         "Because of that one-directional shape, the compiler allows ISource<Employee> to be used wherever ISource<object> is expected: anything you could do with an ISource<object> (call Get() and get back some object) still works when the object happens to be an Employee."
       ],
-      "code": "// src/TimeClock.Domain/VarianceExamples.cs\npublic interface ISource<out T> { T Get(); }\n\nISource<Employee> employeeSource = new SingleSource<Employee>(someEmployee);\nISource<object> widened = employeeSource;   // legal: covariance\nobject value = widened.Get();               // still just reads an Employee, typed as object"
+      "code": "// src/PinkMachine19.TimeClock.Domain/VarianceExamples.cs\npublic interface ISource<out T> { T Get(); }\n\nISource<Employee> employeeSource = new SingleSource<Employee>(someEmployee);\nISource<object> widened = employeeSource;   // legal: covariance\nobject value = widened.Get();               // still just reads an Employee, typed as object"
     },
     {
       "title": "in T: safe when a type only consumes T",
@@ -86,7 +86,7 @@
         "IClockEntryRepository's SaveClockEntry(ClockEntry) consumes a ClockEntry; GetClockEntry and GetEmployeeClockEntries produce ClockEntry values. A single interface mixing both directions over the same type parameter cannot be safely marked out or in -- the compiler would reject either annotation if attempted.",
         "This is not a gap in the real code -- IClockEntryRepository is not even generic over ClockEntry (ClockEntry is a fixed, concrete type in its signatures, not a type parameter). Variance only becomes a question once a type is generic and used consistently in one direction."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
@@ -99,16 +99,16 @@
       "Attempt to assign an ISink<Employee> to an ISink<object> variable and confirm the compiler rejects it."
     ],
     "expectedBehavior": "ISource<Employee> -> ISource<object> and ISink<object> -> ISink<Employee> both compile; the reverse of each does not.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/VarianceExamples.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/VarianceExamples.cs",
       "action": "Verify",
       "why": "Confirm the real ISource<out T>/ISink<in T> declarations and their implementations."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/VarianceExamplesTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/VarianceExamplesTests.cs",
       "action": "Verify",
       "why": "Confirm both variance directions are covered."
     },

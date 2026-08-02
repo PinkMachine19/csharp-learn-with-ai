@@ -99,16 +99,16 @@
       "Add tests for TryGetOpenEntry's true and false paths."
     ],
     "expectedBehavior": "TryGetOpenEntry returns true with entry assigned when an open entry exists, and false with entry null when it does not; the real GetClockEntry is unchanged.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/ClockEntryRepository.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryRepository.cs",
       "action": "Modify",
       "why": "Add the new TryGetOpenEntry method alongside the real, unmodified GetClockEntry."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/ClockEntryTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryTests.cs",
       "action": "Modify",
       "why": "Add coverage for TryGetOpenEntry's true and false paths."
     },

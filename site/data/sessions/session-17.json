@@ -99,21 +99,21 @@
       "Confirm Timesheet.Entries is read-only from the outside -- Entries.Add(...) should not compile."
     ],
     "expectedBehavior": "The solution builds and all tests pass after the private-field fix; Timesheet.Add succeeds for a matching entry and throws for a mismatched one; Entries cannot be mutated directly from outside Timesheet.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/ClockEntryRepository.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryRepository.cs",
       "action": "Modify",
       "why": "Change _clockEntries from public to private, closing the real encapsulation gap named in Session 11."
     },
     {
-      "path": "src/TimeClock.Domain/Timesheet.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/Timesheet.cs",
       "action": "Verify",
       "why": "Confirm the real composition and EmployeeId-matching invariant."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/TimesheetTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/TimesheetTests.cs",
       "action": "Verify",
       "why": "Confirm both the successful-add and mismatched-employee-throws cases."
     },

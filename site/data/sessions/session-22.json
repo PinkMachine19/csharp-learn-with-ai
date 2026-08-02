@@ -86,7 +86,7 @@
         "The tests use exact hour counts (3 + 4 = 7) so a wrong GroupBy key or a wrong Sum projection produces an immediately obvious wrong total, not a hard-to-spot rounding difference.",
         "This mirrors PayrollServiceTests.cs's own style: small, exact, easy-to-verify-by-hand shift lengths."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
@@ -94,22 +94,22 @@
     "startingCondition": "Sessions 01–20 are complete and all existing tests pass.",
     "steps": [
       "Predict the successful path and one boundary or failure case.",
-      "Add src/TimeClock.Domain/ClockEntryAnalytics.cs with a narrow public contract.",
-      "Add tests/TimeClock.Domain.Tests/ClockEntryAnalyticsTests.cs for the prediction and boundary case.",
+      "Add src/PinkMachine19.TimeClock.Domain/ClockEntryAnalytics.cs with a narrow public contract.",
+      "Add tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryAnalyticsTests.cs for the prediction and boundary case.",
       "Run the focused tests and inspect the observed values or control flow.",
       "Run the full Release build and test suite."
     ],
     "expectedBehavior": "The new tests establish that grouping partitions elements by key, joining correlates sources, and aggregation reduces many values into a result; prior behavior remains unchanged.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/ClockEntryAnalytics.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryAnalytics.cs",
       "action": "Add",
       "why": "Provide the GroupBy/Join multi-employee report extending PayrollService's real single-employee Sum projection."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/ClockEntryAnalyticsTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryAnalyticsTests.cs",
       "action": "Add",
       "why": "Verify the contract and its boundary case."
     },

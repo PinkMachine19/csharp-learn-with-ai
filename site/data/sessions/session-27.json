@@ -70,7 +70,7 @@
         "The real implementation is a plain foreach loop that awaits each load call before moving to the next id -- exactly the shape ClockEntryService.Clockout already uses for its single await _clockEntryRepository.GetClockEntry(employeeId) call, just repeated across a collection instead of called once.",
         "Total time for LoadSequentialAsync is roughly the sum of every individual load call's duration, because none of them overlap."
       ],
-      "code": "// src/TimeClock.Domain/EntryBatchLoader.cs -- real implementation\npublic static async Task<IReadOnlyList<ClockEntry>> LoadSequentialAsync(IEnumerable<int> ids, Func<int, Task<ClockEntry>> load)\n{\n    List<ClockEntry> results = [];\n    foreach (int id in ids) results.Add(await load(id));\n    return results;\n}"
+      "code": "// src/PinkMachine19.TimeClock.Domain/EntryBatchLoader.cs -- real implementation\npublic static async Task<IReadOnlyList<ClockEntry>> LoadSequentialAsync(IEnumerable<int> ids, Func<int, Task<ClockEntry>> load)\n{\n    List<ClockEntry> results = [];\n    foreach (int id in ids) results.Add(await load(id));\n    return results;\n}"
     },
     {
       "title": "LoadConcurrentAsync: every operation starts together",
@@ -99,16 +99,16 @@
       "Run the existing EntryBatchLoaderTests.cs and confirm both counter-based assertions pass."
     ],
     "expectedBehavior": "LoadSequentialAsync's total duration scales with the number of items; LoadConcurrentAsync's stays roughly constant regardless of item count, matching a single delay period.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/EntryBatchLoader.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/EntryBatchLoader.cs",
       "action": "Verify",
       "why": "Confirm the real LoadSequentialAsync and LoadConcurrentAsync implementations."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/EntryBatchLoaderTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/EntryBatchLoaderTests.cs",
       "action": "Verify",
       "why": "Confirm the existing counter-based proof of sequential-vs-concurrent behavior."
     },

@@ -99,11 +99,11 @@
       "Write, in one sentence, what Employee would need to implement for that call to become legal."
     ],
     "expectedBehavior": "Removing the constraint produces a compile error naming CompareTo as missing; calling Later with two Employee arguments produces a constraint-violation compile error; restoring the constraint returns the build to success.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/GenericRules.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/GenericRules.cs",
       "action": "Verify",
       "why": "Confirm the real constraint and its role in the method body."
     },

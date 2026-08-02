@@ -99,21 +99,21 @@
       "Write, in your own words, what execution order the missing await allows: does ClockIn, then Clockout's body, then CalculateTotalHours definitely happen in that order, or not?"
     ],
     "expectedBehavior": "The build produces a real CS4014 warning naming Program.cs's unawaited Clockout(1) call; your written explanation correctly identifies that the missing await means CalculateTotalHours can run before Clockout's body finishes.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release --no-build"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/ClockEntryService.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryService.cs",
       "action": "Verify",
       "why": "Confirm the real, correct await usage inside Clockout."
     },
     {
-      "path": "src/TimeClock.Domain/ClockEntryRepository.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryRepository.cs",
       "action": "Verify",
       "why": "Confirm GetClockEntry's fake-async shape: async keyword, no real asynchronous work."
     },
     {
-      "path": "src/TimeClock.App/Program.cs",
+      "path": "src/PinkMachine19.TimeClock.App/Program.cs",
       "action": "Verify",
       "why": "Confirm the real, uncorrected CS4014 warning on the unawaited Clockout(1) call."
     },

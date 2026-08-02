@@ -99,11 +99,11 @@
       "Run both tests and confirm the new test does not require any configuration on Mock<IEmployeeService> either."
     ],
     "expectedBehavior": "The original test still passes; the new zero-entries test passes with totalHours equal to 0.0; Mock<IEmployeeService> remains unconfigured in both tests.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "tests/TimeClock.Domain.Tests/PayrollServiceTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/PayrollServiceTests.cs",
       "action": "Modify",
       "why": "Add a second test for the zero-completed-entries boundary case."
     },

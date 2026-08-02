@@ -78,7 +78,7 @@
         "GenericRules.Later<T>(T left, T right) where T : IComparable<T> works for any type T that can compare itself to another T -- DateTime and int both implement IComparable<T> in the .NET base class library.",
         "Calling Later(entryA.ClockIn, entryB.ClockIn) lets the compiler infer T as DateTime from the argument types; calling Later(employeeA.EmployeeId, employeeB.EmployeeId) infers T as int. No explicit type argument is required at either call site."
       ],
-      "code": "// src/TimeClock.Domain/GenericRules.cs\npublic static T Later<T>(T left, T right) where T : IComparable<T> =>\n    left.CompareTo(right) >= 0 ? left : right;\n\n// Two closed forms generated from one open definition\nDateTime latest = GenericRules.Later(entryA.ClockIn, entryB.ClockIn);\nint higherId = GenericRules.Later(employeeA.EmployeeId, employeeB.EmployeeId);"
+      "code": "// src/PinkMachine19.TimeClock.Domain/GenericRules.cs\npublic static T Later<T>(T left, T right) where T : IComparable<T> =>\n    left.CompareTo(right) >= 0 ? left : right;\n\n// Two closed forms generated from one open definition\nDateTime latest = GenericRules.Later(entryA.ClockIn, entryB.ClockIn);\nint higherId = GenericRules.Later(employeeA.EmployeeId, employeeB.EmployeeId);"
     },
     {
       "title": "Why not just write two separate methods?",
@@ -86,7 +86,7 @@
         "A non-generic LaterDate(DateTime, DateTime) and LaterId(int, int) would duplicate the exact same >= 0 comparison logic twice, with only the type name different.",
         "Later<T> expresses that duplication as one piece of logic, parameterized over any comparable type -- this is the same motivation as IEnumerable<T> in Session 13: write the capability once, apply it to many concrete types."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
@@ -99,16 +99,16 @@
       "Explain, in writing, why that compile error is the constraint working as intended, not a bug."
     ],
     "expectedBehavior": "Later(DateTime, DateTime) and Later(int, int) both compile and return the correct result; Later(Employee, Employee) fails to compile with a constraint-violation error.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/GenericRules.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/GenericRules.cs",
       "action": "Verify",
       "why": "Confirm the real generic method and its IComparable<T> constraint."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/GenericRulesTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/GenericRulesTests.cs",
       "action": "Verify",
       "why": "Confirm coverage across at least two different closed generic types."
     },

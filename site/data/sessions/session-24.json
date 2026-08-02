@@ -100,21 +100,21 @@
       "Update the ClockEntry tests to assert on the new, more specific messages."
     ],
     "expectedBehavior": "Both exception messages now name the specific employee; all existing tests are updated to match and the full suite still passes.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/ClockEntry.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntry.cs",
       "action": "Modify",
       "why": "Add the employee id to ClockOutEmployee's exception message, per Step 46's proposed (not-yet-applied) improvement."
     },
     {
-      "path": "src/TimeClock.Domain/ClockEntryService.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryService.cs",
       "action": "Modify",
       "why": "Add the employee id to Clockout's exception message."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/ClockEntryTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryTests.cs",
       "action": "Modify",
       "why": "Assert on the new, more specific exception messages."
     },

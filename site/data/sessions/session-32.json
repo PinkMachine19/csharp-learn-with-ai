@@ -70,7 +70,7 @@
         "ClockEntryDataQueries.CompletedForEmployee returns IQueryable<ClockEntryEntity> -- db.ClockEntries.Where(...) builds a description of the filter as an expression tree, not a filtered list.",
         "Nothing has executed yet at the point CompletedForEmployee returns -- this mirrors Session 23's IEnumerable<ClockEntry> deferred execution, but the eventual translator is a database provider instead of the .NET runtime itself."
       ],
-      "code": "// src/TimeClock.Infrastructure/ClockEntryDataQueries.cs -- new extension\npublic static IQueryable<ClockEntryEntity> CompletedForEmployee(PayrollDbContext db, int employeeId) =>\n    db.ClockEntries.Where(entry => entry.EmployeeId == employeeId && entry.ClockOut != null);"
+      "code": "// src/PinkMachine19.TimeClock.Infrastructure/ClockEntryDataQueries.cs -- new extension\npublic static IQueryable<ClockEntryEntity> CompletedForEmployee(PayrollDbContext db, int employeeId) =>\n    db.ClockEntries.Where(entry => entry.EmployeeId == employeeId && entry.ClockOut != null);"
     },
     {
       "title": "ToListAsync: where the SQL actually runs",
@@ -78,7 +78,7 @@
         "MaterializeAsync's await query.ToListAsync(cancellationToken) is the real execution point -- EF Core's SQLite provider translates the expression tree into an actual SQL statement here, sends it to the database, and maps the returned rows back into ClockEntryEntity objects.",
         "The real, existing test proves this end to end: it opens a genuine (in-memory) SQLite connection, adds a completed entity, and confirms CompletedForEmployee plus MaterializeAsync together return exactly one row -- real provider translation, not a mock standing in for it."
       ],
-      "code": "// src/TimeClock.Infrastructure/ClockEntryDataQueries.cs\npublic static async Task<List<ClockEntryEntity>> MaterializeAsync(IQueryable<ClockEntryEntity> query, CancellationToken cancellationToken = default)\n{\n    List<ClockEntryEntity> rows = await query.ToListAsync(cancellationToken);   // real SQL executes here\n    return rows.OrderBy(entry => entry.ClockIn).ToList();\n}"
+      "code": "// src/PinkMachine19.TimeClock.Infrastructure/ClockEntryDataQueries.cs\npublic static async Task<List<ClockEntryEntity>> MaterializeAsync(IQueryable<ClockEntryEntity> query, CancellationToken cancellationToken = default)\n{\n    List<ClockEntryEntity> rows = await query.ToListAsync(cancellationToken);   // real SQL executes here\n    return rows.OrderBy(entry => entry.ClockIn).ToList();\n}"
     },
     {
       "title": "In-process versus database-side: the same principle, two execution targets",
@@ -86,12 +86,12 @@
         "Session 23's GetEmployeeClockEntries filters ClockEntry objects already sitting in .NET memory -- there is no translation step, because the filter IS C# code running directly.",
         "This session's CompletedForEmployee filters rows that may not even be loaded into .NET memory yet -- the filtering happens inside SQLite, and only the matching rows ever cross into .NET as ClockEntryEntity objects."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
     "objective": "Confirm CompletedForEmployee and MaterializeAsync's real deferred-to-a-provider execution using an in-memory SQLite database.",
-    "startingCondition": "ClockEntryDataQueries and PayrollDbContext already exist as real, new extensions in TimeClock.Infrastructure.",
+    "startingCondition": "ClockEntryDataQueries and PayrollDbContext already exist as real, new extensions in PinkMachine19.TimeClock.Infrastructure.",
     "steps": [
       "Open an in-memory SQLite connection and PayrollDbContext, and add one completed and one open ClockEntryEntity.",
       "Call CompletedForEmployee and confirm, before calling MaterializeAsync, that nothing has executed yet (the returned value is an IQueryable, not a List).",
@@ -99,16 +99,16 @@
       "Explain, in writing, what would need to be true for this same query to also work against a real (non-in-memory) SQLite or SQL Server database with no code changes."
     ],
     "expectedBehavior": "CompletedForEmployee returns an unexecuted IQueryable; MaterializeAsync's ToListAsync call is what actually executes the translated SQL and returns only the completed entity.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Infrastructure/ClockEntryDataQueries.cs",
+      "path": "src/PinkMachine19.TimeClock.Infrastructure/ClockEntryDataQueries.cs",
       "action": "Verify",
       "why": "Confirm the real IQueryable<ClockEntryEntity> query-building and ToListAsync materialization."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/ClockEntryDataQueriesTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryDataQueriesTests.cs",
       "action": "Verify",
       "why": "Confirm the real, SQLite-backed integration test."
     },

@@ -2,9 +2,9 @@
   "number": 33,
   "category": "Data access and application integration",
   "estimatedTime": "45 minutes",
-  "connection": "Session 30 covered Scoped lifetime, previewing ASP.NET Core's per-request scoping. This session studies the real Parm.Practice.WebApi/Program.cs scaffold, mirrored verbatim in TimeClock.Web/Program.cs: it calls AddControllers()/MapControllers() against zero controller classes. This session writes the first one.",
+  "connection": "Session 30 covered Scoped lifetime, previewing ASP.NET Core's per-request scoping. This session studies the real Parm.Practice.WebApi/Program.cs scaffold, mirrored verbatim in PinkMachine19.TimeClock.Web/Program.cs: it calls AddControllers()/MapControllers() against zero controller classes. This session writes the first one.",
   "objectives": [
-    "Read TimeClock.Web/Program.cs and confirm, by inspection, that AddControllers()/MapControllers() are wired up with no Controllers/ directory and no controller classes anywhere in the project -- a real, verified gap, not a hypothetical.",
+    "Read PinkMachine19.TimeClock.Web/Program.cs and confirm, by inspection, that AddControllers()/MapControllers() are wired up with no Controllers/ directory and no controller classes anywhere in the project -- a real, verified gap, not a hypothetical.",
     "Write ClockEntriesController, the project's first real controller, exposing an HTTP endpoint over the real IClockEntryService.",
     "Explain why a controller action's parameters and return type form a DTO boundary distinct from the domain's ClockEntry/Employee types.",
     "Confirm MapControllers() now has at least one real route to map, by calling the new endpoint."
@@ -67,10 +67,10 @@
     {
       "title": "The real, verified gap",
       "paragraphs": [
-        "TimeClock.Web/Program.cs mirrors Parm.Practice.WebApi/Program.cs verbatim: builder.Services.AddControllers(); wires up controller-related services, and app.MapControllers(); tells ASP.NET Core's routing to map any [ApiController]-attributed classes it discovers -- but there is no Controllers/ directory anywhere in the project, and zero such classes exist.",
-        "This is real and current, not a hypothetical scenario -- confirmed by inspecting both the real practice-07092026 repository and this course's own TimeClock.Web project before this session's lab."
+        "PinkMachine19.TimeClock.Web/Program.cs mirrors Parm.Practice.WebApi/Program.cs verbatim: builder.Services.AddControllers(); wires up controller-related services, and app.MapControllers(); tells ASP.NET Core's routing to map any [ApiController]-attributed classes it discovers -- but there is no Controllers/ directory anywhere in the project, and zero such classes exist.",
+        "This is real and current, not a hypothetical scenario -- confirmed by inspecting both the real practice-07092026 repository and this course's own PinkMachine19.TimeClock.Web project before this session's lab."
       ],
-      "code": "// src/TimeClock.Web/Program.cs -- real, mirrored verbatim from the source WebApi\nvar builder = WebApplication.CreateBuilder(args);\nbuilder.Services.AddControllers();\n\nbuilder.Services.AddSingleton<IClockEntryRepository, ClockEntryRepository>();\nbuilder.Services.AddSingleton<IEmployeeRepository, EmployeeRepositor>();\nbuilder.Services.AddSingleton<IClockEntryService, ClockEntryService>();\nbuilder.Services.AddSingleton<PayrollService>();\n\nvar app = builder.Build();\napp.MapControllers();   // maps nothing today -- zero controllers exist\napp.Run();"
+      "code": "// src/PinkMachine19.TimeClock.Web/Program.cs -- real, mirrored verbatim from the source WebApi\nvar builder = WebApplication.CreateBuilder(args);\nbuilder.Services.AddControllers();\n\nbuilder.Services.AddSingleton<IClockEntryRepository, ClockEntryRepository>();\nbuilder.Services.AddSingleton<IEmployeeRepository, EmployeeRepositor>();\nbuilder.Services.AddSingleton<IClockEntryService, ClockEntryService>();\nbuilder.Services.AddSingleton<PayrollService>();\n\nvar app = builder.Build();\napp.MapControllers();   // maps nothing today -- zero controllers exist\napp.Run();"
     },
     {
       "title": "ClockEntriesController: the first real controller",
@@ -78,7 +78,7 @@
         "A minimal controller action exposing the real, already-tested IClockEntryService.ClockIn over HTTP -- new code, but calling into logic Sessions 5 and 19 already built and tested.",
         "[ApiController] plus a route attribute is what makes this class discoverable by MapControllers(); nothing about IClockEntryService itself needs to change for this to work."
       ],
-      "code": "// New: TimeClock.Web/Controllers/ClockEntriesController.cs\n[ApiController]\n[Route(\"employees/{employeeId}/clock-in\")]\npublic sealed class ClockEntriesController(IClockEntryService clockEntryService) : ControllerBase\n{\n    [HttpPost]\n    public IActionResult ClockIn(int employeeId)\n    {\n        clockEntryService.ClockIn(employeeId);\n        return Accepted();\n    }\n}"
+      "code": "// New: PinkMachine19.TimeClock.Web/Controllers/ClockEntriesController.cs\n[ApiController]\n[Route(\"employees/{employeeId}/clock-in\")]\npublic sealed class ClockEntriesController(IClockEntryService clockEntryService) : ControllerBase\n{\n    [HttpPost]\n    public IActionResult ClockIn(int employeeId)\n    {\n        clockEntryService.ClockIn(employeeId);\n        return Accepted();\n    }\n}"
     },
     {
       "title": "The HTTP boundary is a separate step from the domain call",
@@ -86,12 +86,12 @@
         "Before ClockIn(int employeeId) ever runs, ASP.NET Core's model binding has already parsed employeeId out of the URL segment {employeeId} and converted it to an int -- a step Session 34 studies more closely when it can fail (a non-numeric segment, for instance).",
         "This is why controller actions are described as a boundary: everything on one side (HTTP requests, routing, model binding) is new to this session; everything on the other side (IClockEntryService, ClockEntry, the real domain) is unchanged from Sessions 5-29."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
     "objective": "Add ClockEntriesController as the real project's first controller, and confirm MapControllers() now routes a real HTTP request to it.",
-    "startingCondition": "TimeClock.Web/Program.cs already calls AddControllers()/MapControllers() with zero controllers, mirroring the real, current Parm.Practice.WebApi project exactly.",
+    "startingCondition": "PinkMachine19.TimeClock.Web/Program.cs already calls AddControllers()/MapControllers() with zero controllers, mirroring the real, current Parm.Practice.WebApi project exactly.",
     "steps": [
       "Confirm, by searching the project, that no Controllers/ directory or [ApiController] class currently exists.",
       "Add Controllers/ClockEntriesController.cs with a ClockIn action calling the real IClockEntryService.ClockIn.",
@@ -99,16 +99,16 @@
       "Confirm the underlying ClockEntryRepository now has a new open ClockEntry for that employee, proving the controller genuinely reached the real domain logic."
     ],
     "expectedBehavior": "Before the lab, no route exists for clocking in over HTTP. After adding ClockEntriesController, the POST request succeeds and a new open ClockEntry is created through the same real ClockEntryService used by the console app.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Web/Program.cs",
+      "path": "src/PinkMachine19.TimeClock.Web/Program.cs",
       "action": "Verify",
       "why": "Confirm the real, current AddControllers()/MapControllers() scaffold with zero controllers."
     },
     {
-      "path": "src/TimeClock.Web/Controllers/ClockEntriesController.cs",
+      "path": "src/PinkMachine19.TimeClock.Web/Controllers/ClockEntriesController.cs",
       "action": "Add",
       "why": "Write the project's first real controller, filling the gap MapControllers() has been waiting on."
     },
@@ -129,7 +129,7 @@
     {
       "prompt": "If PayrollService were resolved inside a new controller action today, without any other changes, what real bug from the source WebApi would surface?",
       "options": [
-        "The real, latent missing-IEmployeeService-registration bug -- PayrollService's constructor requires IEmployeeService, which TimeClock.Web/Program.cs (mirroring the real WebApi) never registers, so resolution would throw InvalidOperationException",
+        "The real, latent missing-IEmployeeService-registration bug -- PayrollService's constructor requires IEmployeeService, which PinkMachine19.TimeClock.Web/Program.cs (mirroring the real WebApi) never registers, so resolution would throw InvalidOperationException",
         "Nothing -- PayrollService resolves without issue in the WebApi host",
         "A compile error, not a runtime error"
       ],
@@ -163,5 +163,5 @@
     "How does keeping ClockEntriesController's action parameters narrow (just employeeId) protect it from becoming coupled to internal domain details that might change?"
   ],
   "whatBreaks": "Forgetting the [ApiController] attribute (or a valid route) on a new controller class means MapControllers() still will not discover it -- ASP.NET Core needs both the attribute and app.MapControllers() together to route requests to it. Calling PayrollService instead of IClockEntryService from a new controller action today would surface the real, still-unfixed missing-IEmployeeService-registration bug before Session 34 formally addresses it.",
-  "summary": "TimeClock.Web/Program.cs -- mirroring the real, current Parm.Practice.WebApi/Program.cs -- calls AddControllers()/MapControllers() against zero controller classes, a real and verified gap, not a hypothetical one. This session's lab writes ClockEntriesController, the project's first real controller, calling directly into the same real, already-tested IClockEntryService every earlier session built -- the HTTP boundary (routing, model binding) is new; the domain logic it reaches is not."
+  "summary": "PinkMachine19.TimeClock.Web/Program.cs -- mirroring the real, current Parm.Practice.WebApi/Program.cs -- calls AddControllers()/MapControllers() against zero controller classes, a real and verified gap, not a hypothetical one. This session's lab writes ClockEntriesController, the project's first real controller, calling directly into the same real, already-tested IClockEntryService every earlier session built -- the HTTP boundary (routing, model binding) is new; the domain logic it reaches is not."
 }

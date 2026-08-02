@@ -78,7 +78,7 @@
         "PayrollDbContext(DbContextOptions<PayrollDbContext> options) : DbContext(options) exposes DbSet<ClockEntryEntity> ClockEntries -- EF Core's queryable, trackable representation of a database table.",
         "ClockEntryEntity deliberately mirrors ClockEntry's real fields (EmployeeId, ClockIn, ClockOut) plus an Id primary key EF Core needs -- it is a separate, storage-shaped type, not a reuse of the domain's ClockEntry class."
       ],
-      "code": "// src/TimeClock.Infrastructure/TimeClockDbContext.cs -- new extension\npublic sealed class PayrollDbContext(DbContextOptions<PayrollDbContext> options) : DbContext(options)\n{\n    public DbSet<ClockEntryEntity> ClockEntries => Set<ClockEntryEntity>();\n}\n\npublic sealed class ClockEntryEntity\n{\n    public int Id { get; set; }\n    public int EmployeeId { get; set; }\n    public DateTime ClockIn { get; set; }\n    public DateTime? ClockOut { get; set; }\n}"
+      "code": "// src/PinkMachine19.TimeClock.Infrastructure/TimeClockDbContext.cs -- new extension\npublic sealed class PayrollDbContext(DbContextOptions<PayrollDbContext> options) : DbContext(options)\n{\n    public DbSet<ClockEntryEntity> ClockEntries => Set<ClockEntryEntity>();\n}\n\npublic sealed class ClockEntryEntity\n{\n    public int Id { get; set; }\n    public int EmployeeId { get; set; }\n    public DateTime ClockIn { get; set; }\n    public DateTime? ClockOut { get; set; }\n}"
     },
     {
       "title": "Why a separate entity, not ClockEntry itself",
@@ -86,12 +86,12 @@
         "ClockEntry's real constructor takes only employeeId and clockIn, and ClockOut has a private setter -- both deliberate domain invariants (Session 6-7). EF Core needs to construct and populate ClockEntryEntity freely (including an Id it generates), which would conflict with those same invariants if forced onto ClockEntry directly.",
         "Keeping them separate means ClockEntry's domain rules stay exactly as strict as Sessions 5-24 established, while ClockEntryEntity is free to be exactly as permissive as EF Core's mapping needs."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
     "objective": "Trace PayrollDbContext's real shape and confirm change tracking's Added state, using an in-memory SQLite database.",
-    "startingCondition": "PayrollDbContext and ClockEntryEntity already exist as a new extension in TimeClock.Infrastructure.",
+    "startingCondition": "PayrollDbContext and ClockEntryEntity already exist as a new extension in PinkMachine19.TimeClock.Infrastructure.",
     "steps": [
       "Open an in-memory SQLite connection and create a PayrollDbContext against it.",
       "Add a new ClockEntryEntity and check db.Entry(entity).State before calling SaveChangesAsync -- confirm it reports Added.",
@@ -99,16 +99,16 @@
       "Query db.ClockEntries.CountAsync() and confirm exactly one row was persisted."
     ],
     "expectedBehavior": "The entity's EntityState transitions from Added to Unchanged exactly when SaveChangesAsync is called; the row count reflects the real, persisted entity afterward.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Infrastructure/TimeClockDbContext.cs",
+      "path": "src/PinkMachine19.TimeClock.Infrastructure/TimeClockDbContext.cs",
       "action": "Verify",
       "why": "Confirm PayrollDbContext and ClockEntryEntity's real declarations."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/TimeClockDbContextTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/TimeClockDbContextTests.cs",
       "action": "Verify",
       "why": "Confirm the real EntityState-transition test."
     },

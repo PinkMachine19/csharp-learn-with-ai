@@ -86,7 +86,7 @@
         "GetEmployeeClockEntries's IEnumerable<ClockEntry> runs entirely in this process, in plain C#. Session 31-32's EF Core queries return IQueryable<ClockEntryEntity> instead: LINQ builds an expression tree that a database provider translates into SQL only when enumerated.",
         "Same deferred-until-enumerated principle, different execution target -- in-process C# versus a translated database query."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
@@ -94,22 +94,22 @@
     "startingCondition": "Sessions 01–21 are complete and all existing tests pass.",
     "steps": [
       "Predict the successful path and one boundary or failure case.",
-      "Add src/TimeClock.Domain/DeferredEntryQuery.cs with a narrow public contract.",
-      "Add tests/TimeClock.Domain.Tests/DeferredEntryQueryTests.cs for the prediction and boundary case.",
+      "Add src/PinkMachine19.TimeClock.Domain/DeferredEntryQuery.cs with a narrow public contract.",
+      "Add tests/PinkMachine19.TimeClock.Domain.Tests/DeferredEntryQueryTests.cs for the prediction and boundary case.",
       "Run the focused tests and inspect the observed values or control flow.",
       "Run the full Release build and test suite."
     ],
     "expectedBehavior": "The new tests establish that IEnumerable queries normally execute when enumerated, ToList materializes a snapshot, and IQueryable records an expression for a provider; prior behavior remains unchanged.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/DeferredEntryQuery.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/DeferredEntryQuery.cs",
       "action": "Add",
       "why": "Provide the DeferredEntryQuery.Completed example demonstrating IEnumerable<ClockEntry> deferred execution."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/DeferredEntryQueryTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/DeferredEntryQueryTests.cs",
       "action": "Add",
       "why": "Verify the contract and its boundary case."
     },
