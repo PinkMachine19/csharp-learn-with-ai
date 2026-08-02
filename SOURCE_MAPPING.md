@@ -170,3 +170,50 @@ matching) — see `REBUILD_STATUS.md` for the exact command and its real, curren
   made, per the task's explicit instruction not to push).
 
 See `REBUILD_STATUS.md` for exact validation commands and their real, current output.
+
+## Session 01/02 split (post-rebuild reorganization)
+
+After the rebuild pass documented above, original Session 1 ("Scaffolding the Solution: src,
+tests, and the .sln") was judged to be teaching two separate ideas at once — project
+scaffolding, and dependency-direction/architecture — and was split into two sessions so
+each has one primary idea, matching the course's ~40-minute-per-session budget. This is an
+**internal course reorganization**, not a re-derivation from `practice-07092026` or
+`csharp-refresher`; no new source-repo material was consulted for it beyond re-reading the
+real `.csproj` files already ported into this repository (`TimeClock.App.csproj`,
+`TimeClock.Infrastructure.csproj`, `TimeClock.Web.csproj`, `TimeClock.Domain.csproj`,
+`TimeClock.Domain.Tests.csproj`), which is what grounds the real dependency graph shown in
+new Session 02.
+
+- **New Session 01** keeps: what a solution/project is, `dotnet new` for `classlib`/
+  `console`/`xunit`, why `src/`/`tests/` exist, `dotnet sln add`, `dotnet build`. It also
+  gains a new section not present in the original session: scaffolding the standard,
+  purpose-named folder set (`Configuration`, `Constants`, `Dtos`, `Exceptions`,
+  `Extensions`, `Helpers`, `Interfaces`, `Mappings`, `Models`, `Options`, `Repositories`,
+  `Requests`, `Responses`, `Services`, `Validators`) into `src/TimeClock.Domain`,
+  `src/TimeClock.Infrastructure`, and `src/TimeClock.Web`, each with a tracked `README.md`
+  explaining its purpose (Git does not track empty directories). These folders and READMEs
+  were created for real in this repository as part of this reorganization — verified with
+  `dotnet build TimeClock.sln -c Release` and `dotnet test TimeClock.sln -c Release
+  --no-build`, both unchanged (0 warnings, 0 errors, 56/56 tests passing) — no C# code was
+  added, moved, or renamed.
+- **New Session 02** (new file, did not exist before) contains everything about project
+  references and dependency direction that was previously folded into original Session 1:
+  `dotnet add reference`, `ProjectReference`, why `TimeClock.App` references
+  `TimeClock.Domain` and not the reverse, and layering. It expands on the original
+  material rather than shortening it — it now also traces the *real* dependency graph
+  (`TimeClock.App`, `TimeClock.Infrastructure`, and `TimeClock.Web` each independently
+  reference `TimeClock.Domain`; `TimeClock.Domain.Tests` references all three; nothing
+  references back into `Domain`), which the original session did not do, and adds two new
+  SVG diagrams (`depgraph`, `layers` in `tools/build-site.mjs`) to illustrate it.
+- **Mechanical consequence:** every session from original Session 2 onward shifted up by
+  one (old Session 2 → new Session 3, ... old Session 34 → new Session 35). Every inline
+  `"Session N"` cross-reference inside `site/data/sessions/*.json` prose was updated to the
+  new numbering as part of this change. **The historical narrative earlier in this file,
+  and in `REBUILD_STATUS.md`'s dated rebuild-pass sections, still uses the pre-split
+  numbering that was current at the time that work was done** — e.g. "Session 27" in the
+  "Real bugs and which session fixes them" table above refers to what is now **Session 28**
+  (Cancellation and Asynchronous Exceptions); "Session 34" refers to what is now
+  **Session 35** (the integration capstone). This document's historical sections were left
+  as written rather than retroactively renumbered, consistent with how `COURSE_REBUILD_PLAN.md`
+  is preserved as a historical record elsewhere in this repository. For the current,
+  authoritative numbering, see `site/data/course-manifest.json`.

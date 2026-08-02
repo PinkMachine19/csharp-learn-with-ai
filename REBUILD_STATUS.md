@@ -4,6 +4,25 @@ This file reflects the real, independently re-verified state as of the final com
 rebuild pass. Nothing below is asserted without having actually run the referenced command
 in this session and reading its real output.
 
+## Post-rebuild update: Session 01/02 split (current, 35-session state)
+
+After the rebuild pass this file otherwise documents, original Session 1 was split into a
+narrowed Session 01 (scaffolding + standard project-folder organization) and a new
+Session 02 (project references and dependency direction, expanded with real dependency-graph
+and layering content). Every session after it shifted up by one. **The course is now 35
+sessions, not 34.** `site/data/course-manifest.json`'s `sessionCount` and `layers` ranges,
+and every `site/data/sessions/*.json` file's `number` field and in-prose `"Session N"`
+cross-references, were updated to match. See `SOURCE_MAPPING.md`'s "Session 01/02 split"
+section for full detail on what moved and what's new.
+
+**Everything below this point was written during the original rebuild pass and uses the
+pre-split numbering that was current at that time** (e.g. "Session 27" below means what is
+now Session 28; "Session 34" below means what is now Session 35). It was left as originally
+written rather than retroactively renumbered — treat it as a historical record of that pass,
+not as a live reference for current session numbers. `dotnet build`/`dotnet test` were
+re-verified after the split (0 warnings, 0 errors, 56/56 tests passing, unchanged from
+below) and `npm test` was re-verified against the new 35-session structure.
+
 - **Source repositories (read-only):** `C:\Users\azureuser\repos\practice-07092026` (real
   application code), `C:\Users\azureuser\repos\csharp-refresher` (real curriculum intent —
   `course-dashboard/data/syllabus.json`, `decisions.json`, `concepts.json`)

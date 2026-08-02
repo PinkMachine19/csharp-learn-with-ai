@@ -7,6 +7,12 @@
 > authoritative, current mapping and `REBUILD_STATUS.md` for honest current status. The site
 > architecture, generator, and validation tooling this plan describes (sections 21-22) were
 > reused as-is and remain accurate. Retained below for historical context only.
+>
+> **Also superseded:** the "34 sessions" figure below (and the 34-session curriculum list)
+> reflects the session count at the time this plan and the subsequent rebuild were written.
+> The course was later reorganized to 35 sessions by splitting the original Session 1 into
+> two sessions — see `SOURCE_MAPPING.md`'s "Session 01/02 split" section and
+> `site/data/course-manifest.json` for the current, authoritative structure.
 
 ## 1. Source repository assessment
 

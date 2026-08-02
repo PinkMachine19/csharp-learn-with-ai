@@ -6,7 +6,9 @@ This repository contains a professional, documentation-first course for developi
 
 ## Course status
 
-All 34 dependency-ordered sessions build, validate, and publish. The generated course contains lessons, labs, quizzes, accessible inline diagrams, and a cumulative TimeClock application -- a renamed, byte-faithful port of the real `practice-07092026` Employee/ClockEntry/PayrollService app, not an invented domain -- spanning C# foundations through ASP.NET Core and EF Core integration. 11 of 34 sessions are deep-rewritten against verified real source; the remaining 23 currently carry a verified mechanical rename onto the real domain's vocabulary without session-specific real-code grounding yet. See `SOURCE_MAPPING.md` and `REBUILD_STATUS.md` for the exact, honest per-session status.
+All 35 dependency-ordered sessions build, validate, and publish. The generated course contains lessons, labs, quizzes, accessible inline diagrams, and a cumulative TimeClock application -- a renamed, byte-faithful port of the real `practice-07092026` Employee/ClockEntry/PayrollService app, not an invented domain -- spanning C# foundations through ASP.NET Core and EF Core integration. 12 of 35 sessions are deep-rewritten against verified real source; the remaining 23 currently carry a verified mechanical rename onto the real domain's vocabulary without session-specific real-code grounding yet. See `SOURCE_MAPPING.md` and `REBUILD_STATUS.md` for the exact, honest per-session status.
+
+Original Session 1 ("Scaffolding the Solution") was later split into Session 01 (scaffolding + standard project-folder organization) and a new Session 02 (project references and dependency direction) — see `SOURCE_MAPPING.md`'s "Session 01/02 split" section for what moved where.
 
 ## Repository areas
 
