@@ -1,117 +1,122 @@
 {
   "number": 24,
-  "category": "query execution timing",
+  "category": "failure contracts",
   "estimatedTime": "40 minutes",
-  "connection": "Session 23 grouped and joined ClockEntry data. This session asks when a LINQ query actually runs, using GetEmployeeClockEntries's return type (IEnumerable<ClockEntry>, deferred) and Session 32-33's future EF Core queries (IQueryable<T>, deferred until a provider translates them) as the two real shapes this course uses.",
+  "connection": "Session 23 covered when LINQ queries execute. This session reads the real ClockEntryService.Clockout method as the app's live example of the throw-vs-return-null rule that decisions and step-046 of the source syllabus write down explicitly, even though the code itself predates the written rule.",
   "objectives": [
-    "Explain that GetEmployeeClockEntries returns an unevaluated query, not a materialized list -- the Where clause only runs when something enumerates the result.",
-    "Predict what happens if _clockEntries changes between calling GetEmployeeClockEntries and enumerating its result.",
-    "Use .ToList() to force immediate evaluation and capture a stable snapshot.",
-    "Distinguish IEnumerable<T> (executes locally, in-process) from IQueryable<T> (translated by a provider, as EF Core will do starting in Session 32)."
+    "State the project's real throw-vs-return rule: exceptions signal a broken invariant (double clock-out); nullable/return values signal an expected, everyday outcome (not currently clocked in).",
+    "Read GetClockEntry's ClockEntry? return type as the 'expected absence' half of the rule, and ClockOutEmployee's InvalidOperationException as the 'broken invariant' half.",
+    "Audit ClockEntryService.Clockout against the rule and confirm it already follows it, even though the rule itself was written down only after the code existed.",
+    "Improve an exception message to name the specific employee and violated invariant, per Step 46 substep 3."
   ],
   "visuals": [
     {
-      "diagram": "pipeline",
-      "title": "GetEmployeeClockEntries returns an unevaluated query",
-      "explanation": "IEnumerable<ClockEntry> is a promise, not a result -- the real Where clause has not run yet when GetEmployeeClockEntries returns."
+      "diagram": "invariant",
+      "title": "Two failure shapes, one rule",
+      "explanation": "GetClockEntry returns null for an expected 'not clocked in' case; ClockOutEmployee throws for a broken 'already clocked out' invariant."
     },
     {
-      "diagram": "call",
-      "title": ".Sum() is what actually triggers execution",
-      "explanation": "CalculateTotalHours's .Sum() call is the real point where GetEmployeeClockEntries's deferred query is finally enumerated."
+      "diagram": "branch",
+      "title": "Clockout branches on the nullable result",
+      "explanation": "ClockEntryService.Clockout checks clockEntry == null before calling ClockOutEmployee -- the nullable return forces this check to exist."
     },
     {
       "diagram": "return",
-      "title": ".ToList() forces a fixed snapshot",
-      "explanation": "DeferredEntryQuery.Completed(entries).ToList() materializes immediately -- later changes to entries will not affect the snapshot."
+      "title": "A caught exception should name what broke",
+      "explanation": "Step 46 asks for exception messages that identify the employee and the invariant, not just a generic failure."
     },
     {
-      "diagram": "invariant",
-      "title": "IQueryable defers to a provider, not just to enumeration",
-      "explanation": "Session 32-33's EF Core queries return IQueryable<ClockEntryEntity> -- the same deferred principle, translated to SQL instead of run in-process."
+      "diagram": "call",
+      "title": "The rule predates ASP.NET Core, on purpose",
+      "explanation": "Deciding throw-vs-return now means Session 33's HTTP status codes have an existing convention to align with instead of inventing one under pressure."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "When does GetEmployeeClockEntries's Where clause actually run?",
+      "prompt": "Why does GetClockEntry return ClockEntry? instead of throwing when an employee has no open entry?",
       "options": [
-        "When the returned IEnumerable<ClockEntry> is enumerated (a foreach, ToList, or Sum) -- not when GetEmployeeClockEntries itself is called",
-        "Immediately, inside the GetEmployeeClockEntries call",
-        "Never -- Where is evaluated at compile time"
+        "Not being clocked in is an expected, everyday outcome -- not a broken invariant, so it does not deserve an exception",
+        "ClockEntry cannot be constructed without an open entry existing first",
+        "Nullable return types are required by every repository method"
       ],
       "correct": 0,
-      "explanation": "IEnumerable's Where is deferred: calling GetEmployeeClockEntries builds a query description, and CalculateTotalHours's .Sum() is what actually walks _clockEntries and applies the filter."
+      "explanation": "This is the rule step-046 writes down: exceptions are for 'this should not be possible given the contract'; nullable returns are for expected outcomes."
     },
     {
-      "prompt": "If a new ClockEntry is added to _clockEntries after GetEmployeeClockEntries returns but before .Sum() enumerates it, what happens?",
+      "prompt": "Why does ClockOutEmployee throw InvalidOperationException instead of returning false when ClockOut is already set?",
       "options": [
-        "The new entry can be included in the sum, since the query re-reads the live list at enumeration time",
-        "The new entry is guaranteed to be excluded",
-        "An exception is thrown"
+        "Clocking out an already-closed entry violates ClockEntry's own invariant -- it should not be possible given the contract, so it throws",
+        "Exceptions are always preferred over return values in C#",
+        "ClockOutEmployee never fails"
       ],
       "correct": 0,
-      "explanation": "Deferred execution means the query is a live view over _clockEntries at the moment it is enumerated, not a snapshot taken when GetEmployeeClockEntries was called."
+      "explanation": "A double clock-out is exactly the 'broken invariant' half of the rule -- the entry's own contract says ClockOut can only be set once."
     },
     {
-      "prompt": "What does .ToList() do differently from just holding an IEnumerable<ClockEntry> reference?",
+      "prompt": "Was ClockEntryService.Clockout's real code written to match a pre-existing throw-vs-return rule, or the other way around?",
       "options": [
-        "It forces immediate enumeration and copies matching elements into a new List, fixed at that moment",
-        "It changes the Where clause's filtering logic",
-        "It converts the query into an IQueryable"
+        "The code came first; step-046 confirms the code already matches the rule and simply writes the rule down explicitly for the first time",
+        "The rule was written first and the code was generated from it",
+        "Neither -- the rule and the code are unrelated"
       ],
       "correct": 0,
-      "explanation": "ToList materializes: it runs the deferred query right now and returns a stable snapshot that later changes to the source will not affect."
+      "explanation": "Step 46's own notes say the code already follows the pattern -- what was missing was the written-down rule, not a code fix."
     }
   ],
   "concept": [
     {
-      "title": "GetEmployeeClockEntries returns a query, not a list",
+      "title": "The rule, stated once",
       "paragraphs": [
-        "The real method's return type is IEnumerable<ClockEntry> -- a promise of a sequence, not the sequence itself. The .Where() call inside it builds that promise but does not walk _clockEntries yet.",
-        "CalculateTotalHours is what actually triggers execution, because .Sum() has to enumerate every element to add it up."
+        "Exceptions are for 'this should not be possible given the contract' -- a double clock-out. Nullable or return values are for 'this is an expected, everyday outcome' -- no open entry to clock out of.",
+        "GetClockEntry already chose the nullable-return pattern; ClockOutEmployee already chose the exception pattern. Step 46's real contribution was writing that distinction down, not changing any code."
       ],
-      "code": "// Repositories/ClockEntryRepository.cs -- returns an unevaluated query\npublic IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate)\n{\n    return _clockEntries.Where(entry => /* ...three conditions... */ true);\n}\n\n// Services/PayrollService.cs -- .Sum() is what forces evaluation\nreturn clockEntries.Sum(x => x.GetDuartion().TotalHours);"
+      "code": "// Interfaces/IClockEntryRepository.cs\nTask<ClockEntry?> GetClockEntry(int employeeId, CancellationToken cancellationToken = default);\n\n// Models/ClockEntry.cs\npublic void ClockOutEmployee(DateTime clockOut)\n{\n    if (ClockOut != null)\n    {\n        throw new InvalidOperationException(\"Employee can only clock out once\");\n    }\n    ClockOut = clockOut;\n}"
     },
     {
-      "title": "ToList forces evaluation now",
+      "title": "Clockout is the audited example",
       "paragraphs": [
-        "DeferredEntryQuery.Completed returns an IEnumerable<ClockEntry> that has not run yet. Calling .ToList() on it walks _clockEntries immediately and returns a fixed List<ClockEntry> snapshot.",
-        "The difference is observable: if the source list changes after the deferred query was built but before it is enumerated, an un-materialized IEnumerable can see the change; a .ToList() snapshot cannot."
+        "ClockEntryService.Clockout checks the nullable result of GetClockEntry and throws its own InvalidOperationException if it is null -- the expected-absence case at the repository boundary becomes a broken-invariant-at-the-service-boundary the moment someone tries to clock out an employee who never clocked in.",
+        "This double layer is deliberate: 'no open entry' is a normal database-style lookup miss at the repository, but 'you asked to clock out someone who is not clocked in' is a caller error at the service boundary."
       ],
-      "code": "public static IEnumerable<ClockEntry> Completed(IEnumerable<ClockEntry> entries) =>\n    entries.Where(entry => entry.ClockOut is not null);\n\n// Caller decides when (or whether) to materialize:\nList<ClockEntry> snapshot = DeferredEntryQuery.Completed(entries).ToList();"
+      "code": "// Services/ClockEntryService.cs -- the real implementation\npublic async Task Clockout(int employeeId)\n{\n    ClockEntry? clockEntry = await _clockEntryRepository.GetClockEntry(employeeId);\n\n    if (clockEntry == null)\n    {\n        throw new InvalidOperationException(\"Employee is not currently clocked in \");\n    }\n\n    clockEntry.ClockOutEmployee(DateTime.Now);\n    _clockEntryRepository.SaveClockEntry(clockEntry);\n}"
     },
     {
-      "title": "IQueryable defers differently: to a provider, not just to enumeration",
+      "title": "A message should name what broke",
       "paragraphs": [
-        "GetEmployeeClockEntries's IEnumerable<ClockEntry> runs entirely in this process, in plain C#. Session 32-33's EF Core queries return IQueryable<ClockEntryEntity> instead: LINQ builds an expression tree that a database provider translates into SQL only when enumerated.",
-        "Same deferred-until-enumerated principle, different execution target -- in-process C# versus a translated database query."
+        "The real exception messages ('Employee can only clock out once', 'Employee is not currently clocked in ') name the rule but not the employee. Step 46 substep 3 proposes improving them to include the EmployeeId -- framed explicitly as a lab this course performs, since this exact improved message has not been applied to the real repository.",
+        "This is the one piece of this session's content that step-046 itself marks as goal/why prose without executed code -- treat it as inspiration for the lab, not as a claim about what the real source currently does."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "// Lab improvement -- NOT yet in the real source repository\nthrow new InvalidOperationException(\n    $\"Employee {EmployeeId} is already clocked out. A single entry cannot be closed twice.\");"
     }
   ],
   "lab": {
-    "objective": "Trace GetEmployeeClockEntries's deferred IEnumerable<ClockEntry> through CalculateTotalHours's .Sum() call, and confirm .ToList() produces a genuinely independent snapshot.",
-    "startingCondition": "Sessions 02–22 are complete and all existing tests pass.",
+    "objective": "Audit ClockEntryService.Clockout and ClockEntry.ClockOutEmployee against the throw-vs-return rule, then improve the real exception messages to name the employee, as a clearly-labeled lab extension.",
+    "startingCondition": "ClockEntry, IClockEntryRepository, and ClockEntryService already carry the real throw-vs-return behavior from Sessions 5-19.",
     "steps": [
-      "Predict the successful path and one boundary or failure case.",
-      "Add src/TimeClock.Domain/DeferredEntryQuery.cs with a narrow public contract.",
-      "Add tests/TimeClock.Domain.Tests/DeferredEntryQueryTests.cs for the prediction and boundary case.",
-      "Run the focused tests and inspect the observed values or control flow.",
-      "Run the full Release build and test suite."
+      "Write the throw-vs-return rule down in one sentence, before touching any code.",
+      "Check every branch in ClockIn and Clockout against that sentence and confirm both already comply.",
+      "Change ClockOutEmployee's exception message to include EmployeeId and the existing ClockOut timestamp.",
+      "Change Clockout's 'not currently clocked in' message to include the employeeId argument.",
+      "Update the ClockEntry tests to assert on the new, more specific messages."
     ],
-    "expectedBehavior": "The new tests establish that IEnumerable queries normally execute when enumerated, ToList materializes a snapshot, and IQueryable records an expression for a provider; prior behavior remains unchanged.",
+    "expectedBehavior": "Both exception messages now name the specific employee; all existing tests are updated to match and the full suite still passes.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/DeferredEntryQuery.cs",
-      "action": "Add",
-      "why": "Provide the DeferredEntryQuery.Completed example demonstrating IEnumerable<ClockEntry> deferred execution."
+      "path": "src/TimeClock.Domain/ClockEntry.cs",
+      "action": "Modify",
+      "why": "Add the employee id to ClockOutEmployee's exception message, per Step 46's proposed (not-yet-applied) improvement."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/DeferredEntryQueryTests.cs",
-      "action": "Add",
-      "why": "Verify the contract and its boundary case."
+      "path": "src/TimeClock.Domain/ClockEntryService.cs",
+      "action": "Modify",
+      "why": "Add the employee id to Clockout's exception message."
+    },
+    {
+      "path": "tests/TimeClock.Domain.Tests/ClockEntryTests.cs",
+      "action": "Modify",
+      "why": "Assert on the new, more specific exception messages."
     },
     {
       "path": "site/data/sessions/session-23.json",
@@ -119,52 +124,51 @@
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-23: teach deferred execution and materialization",
+  "commit": "session-23: teach validation results and exceptions",
   "review": [
-    "The public API states one coherent responsibility.",
-    "Dependencies and state changes are explicit.",
-    "The example remains deterministic and compact.",
-    "Tests cover success and a meaningful boundary.",
-    "No nullable warnings are introduced.",
-    "The complete suite passes."
+    "The throw-vs-return rule is written down in one sentence before any code changes.",
+    "GetClockEntry's nullable return type is preserved, not converted to an exception.",
+    "ClockOutEmployee still throws for a double clock-out, with a message naming the employee.",
+    "Clockout's null check against GetClockEntry is unchanged in structure, only in message detail.",
+    "The full test suite passes with updated message assertions."
   ],
   "postQuiz": [
     {
-      "prompt": "Why does CalculateTotalHours never need to call .ToList() on the result of GetEmployeeClockEntries?",
+      "prompt": "Why is 'employee not currently clocked in' modeled as an exception at the service layer but a null return at the repository layer?",
       "options": [
-        "It only enumerates the sequence once (inside .Sum()), so there is no benefit to materializing a separate snapshot first",
-        "IEnumerable<ClockEntry> cannot support .ToList()",
-        "GetEmployeeClockEntries already returns a List"
+        "A repository miss is a normal lookup outcome; a service-level attempt to clock out someone who is not clocked in is a caller error against the service's contract",
+        "The two layers use different versions of C#",
+        "Exceptions are only allowed in service classes"
       ],
       "correct": 0,
-      "explanation": "Materializing is worth the extra allocation when a sequence will be enumerated more than once, or when you need a stable snapshot -- CalculateTotalHours does neither."
+      "explanation": "The same 'no open entry' fact is expected at the data layer and a contract violation at the point someone tries to act on it."
     },
     {
-      "prompt": "What is the risk of enumerating the same un-materialized deferred query twice in a row (e.g. once to count, once to sum)?",
+      "prompt": "What would change if ClockOutEmployee returned false instead of throwing on a double clock-out?",
       "options": [
-        "The underlying Where/filter logic re-runs both times, which is wasted work and, for a database-backed IQueryable, a second round trip",
-        "The second enumeration always throws an exception",
-        "There is no risk; deferred queries are cached automatically after the first enumeration"
+        "Callers could silently ignore the failure, since C# does not force you to check a bool return value the way it forces you to handle a thrown exception",
+        "Nothing -- both approaches are functionally identical here",
+        "The method would no longer compile"
       ],
       "correct": 0,
-      "explanation": "Deferred execution means every enumeration re-runs the query from scratch -- exactly why Session 32-33's EF Core queries call .ToListAsync() once and reuse the materialized result."
+      "explanation": "This is exactly why the rule favors exceptions for broken invariants -- a silently-ignored bool return would let a double clock-out pass unnoticed."
     },
     {
-      "prompt": "Once Session 32 introduces IQueryable<ClockEntryEntity>, what changes about where the Where clause actually executes?",
+      "prompt": "Does step-046's proposed 'name the employee in the message' change already exist in the real source repository?",
       "options": [
-        "The database provider translates the Where clause into SQL and executes it in the database, not in this process",
-        "Nothing changes -- IQueryable behaves identically to IEnumerable",
-        "The Where clause runs at compile time instead of runtime"
+        "No -- step-046 documents it as unexecuted goal/why prose; this session's lab is what actually applies it",
+        "Yes, it was applied and verified on 2026-07-27",
+        "It cannot be determined from the source material"
       ],
       "correct": 0,
-      "explanation": "This is the concrete difference Session 33 explores: IEnumerable filters in-process C# objects; IQueryable's expression tree is translated and executed by the database provider."
+      "explanation": "The task brief is explicit that Step 46's proposed code has not been applied to the real repo -- this session's lab, not the real source, is where it happens."
     }
   ],
   "reflections": [
-    "Why does GetEmployeeClockEntries's deferred IEnumerable<ClockEntry> behave differently from a materialized List<ClockEntry> if _clockEntries changes between the call and the enumeration?",
-    "When would you deliberately call .ToList() on GetEmployeeClockEntries's result, even though CalculateTotalHours does not?",
-    "What concrete difference will Session 33 show between this session's in-process IEnumerable queries and EF Core's IQueryable queries?"
+    "Why did the real Clockout code already follow the throw-vs-return rule before that rule was ever written down?",
+    "What would you lose if every failure in ClockEntryService threw an exception, including 'not currently clocked in'?",
+    "How does naming the employee id in an exception message change what a caller can do with a caught exception?"
   ],
-  "whatBreaks": "Calling .ToList() unnecessarily inside GetEmployeeClockEntries would force evaluation before the caller decides what to do with the result, silently changing its behavior from a live view to a fixed snapshot. Enumerating a deferred query multiple times when the underlying provider is a database (Session 33) means multiple round trips, not one. Confusing IEnumerable's in-process execution with IQueryable's provider-translated execution leads to assuming SQL-level operations (like case-insensitive collation) that only IQueryable's translation actually provides.",
-  "summary": "GetEmployeeClockEntries returns an unevaluated IEnumerable<ClockEntry>; CalculateTotalHours's .Sum() is what actually triggers the Where clause. .ToList() forces immediate evaluation into a fixed snapshot. Session 32-33's EF Core IQueryable<T> defers the same way, but to a database provider instead of in-process enumeration."
+  "whatBreaks": "Converting GetClockEntry's nullable return into an exception would force every normal 'employee not clocked in yet' check to use a try/catch instead of a null check, for an outcome that is not actually exceptional. Removing ClockOutEmployee's exception entirely would let a double clock-out silently overwrite ClockOut, corrupting the recorded duration. Leaving exception messages generic (no employee id) makes a caught exception in a multi-employee batch operation useless for diagnosing which employee failed.",
+  "summary": "The real ClockEntryService.Clockout already follows the rule step-046 writes down explicitly: GetClockEntry's nullable return models an expected 'not clocked in' outcome, while ClockOutEmployee's exception models a broken 'already clocked out' invariant. This session's lab applies step-046's one unexecuted proposal -- naming the employee in both messages -- directly to the real files."
 }

@@ -1,116 +1,116 @@
 {
   "number": 12,
   "category": "Collections and generics",
-  "estimatedTime": "40 minutes",
-  "connection": "Session 11 covered equality. This session studies the real, public List<ClockEntry> _clockEntries field in ClockEntryRepository -- both how List<T> supports the repository's real operations, and why exposing that field publicly is a real, unfixed encapsulation smell worth naming now and revisiting in Session 18.",
+  "estimatedTime": "35 minutes",
+  "connection": "Session 11 studied ClockEntryRepository's List<ClockEntry>. This session studies EmployeeDirectory, a new extension that uses Dictionary<int, Employee> for O(1) lookup by EmployeeId and HashSet<string> for unique city tracking -- neither type appears in the real source, but both are the natural next step once a program needs more than one employee.",
   "objectives": [
-    "Identify ClockEntryRepository's real, public _clockEntries field and explain what capability that exposes to any caller, not just the repository's own methods.",
-    "Trace how SaveClockEntry (Add) and GetEmployeeClockEntries (Where, a LINQ extension method on IEnumerable<T>) both operate on the same underlying List<ClockEntry>.",
-    "Explain why List<T> was chosen here over an array: the repository does not know how many entries it will ever hold.",
-    "Enumerate _clockEntries with foreach and explain what a foreach loop actually calls behind the syntax."
+    "Explain why Dictionary<int, Employee> gives EmployeeDirectory faster lookup by EmployeeId than scanning a List<Employee> would.",
+    "Trace TryAdd's role in Dictionary<TKey,TValue>: what happens when Add is called with a key that already exists, versus TryAdd.",
+    "Explain why EmployeeDirectory's Cities field is a HashSet<string>, not a List<string> -- what guarantee a set provides that a list does not.",
+    "Predict TryFind's return value and out parameter for both a present and an absent EmployeeId."
   ],
   "visuals": [
     {
       "diagram": "blueprint",
-      "title": "List<ClockEntry> grows as ClockIn is called",
-      "explanation": "Every ClockIn call adds one more ClockEntry to _clockEntries -- the list's size is never fixed in advance."
-    },
-    {
-      "diagram": "pipeline",
-      "title": "Add appends; Where filters without removing",
-      "explanation": "SaveClockEntry calls _clockEntries.Add(entry); GetEmployeeClockEntries calls _clockEntries.Where(...), which reads the list without changing it."
+      "title": "Dictionary<int, Employee> keys by EmployeeId",
+      "explanation": "employees.TryAdd(employee.EmployeeId, employee) stores each Employee under its own id -- looking one up later means a direct key lookup, not scanning every entry."
     },
     {
       "diagram": "invariant",
-      "title": "public means any caller can bypass the repository's methods",
-      "explanation": "Because _clockEntries is a public field, code outside ClockEntryRepository could call _clockEntries.Clear() or .Add(...) directly, skipping SaveClockEntry entirely -- a real, unfixed encapsulation gap."
+      "title": "TryAdd refuses to overwrite an existing key",
+      "explanation": "employees.TryAdd(1, second) returns false if EmployeeId 1 is already present -- the original Employee stays in the dictionary, untouched."
     },
     {
       "diagram": "instances",
-      "title": "foreach is syntax over an enumerator",
-      "explanation": "The real leftover foreach(var clockentry in _clockEntries) { } in GetClockEntry compiles to repeated calls to an enumerator's MoveNext/Current, even though this particular loop body does nothing with each element."
+      "title": "HashSet<string> stores each city name once",
+      "explanation": "cities.Add(\"Springfield\") followed by cities.Add(\"Springfield\") again leaves Cities.Count unchanged -- a set silently ignores a duplicate add."
+    },
+    {
+      "diagram": "call",
+      "title": "TryFind mirrors the Try-pattern from Session 9",
+      "explanation": "bool TryFind(int employeeId, out Employee? employee) returns whether the id was found, with employee assigned either way."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Why does ClockEntryRepository use List<ClockEntry> instead of ClockEntry[]?",
+      "prompt": "Why does EmployeeDirectory use Dictionary<int, Employee> instead of List<Employee> for its main storage?",
       "options": [
-        "The repository has no way to know how many entries it will ever hold -- List<T> grows as SaveClockEntry adds more, which a fixed-size array cannot do without manual resizing",
-        "List<T> is required by the IClockEntryRepository interface",
-        "Arrays cannot hold reference types"
+        "Looking up an Employee by EmployeeId is a direct key lookup in a Dictionary, versus scanning every element in a List until a match is found",
+        "Dictionary is required by the Employee class",
+        "List<Employee> cannot hold more than a fixed number of items"
       ],
       "correct": 0,
-      "explanation": "An array's length is fixed at creation; a growing collection of unknown final size is exactly what List<T> is for."
+      "explanation": "A Dictionary trades a small amount of memory overhead for average constant-time lookup by key -- exactly the operation TryFind needs to perform quickly."
     },
     {
-      "prompt": "What does _clockEntries being a public field (not private) actually expose to code outside ClockEntryRepository?",
+      "prompt": "What does employees.TryAdd(1, secondEmployee) return if EmployeeId 1 is already stored?",
       "options": [
-        "Direct access to Add, Remove, Clear, and every other List<ClockEntry> member -- completely bypassing SaveClockEntry and any future validation it might contain",
-        "Nothing extra -- public fields behave identically to private ones",
-        "Only read access, never write access"
+        "false -- TryAdd never overwrites an existing key; the dictionary keeps the first Employee it was given for that id",
+        "true -- TryAdd always overwrites",
+        "It throws an exception"
       ],
       "correct": 0,
-      "explanation": "A public field grants full read/write access to the underlying list's entire API, not just the repository's intended SaveClockEntry/GetEmployeeClockEntries/GetClockEntry surface."
+      "explanation": "TryAdd is specifically designed to fail gracefully (returning false) on a duplicate key, rather than throwing (like Add would) or silently overwriting."
     },
     {
-      "prompt": "What does the real, leftover foreach(var clockentry in _clockEntries) { } inside GetClockEntry actually do?",
+      "prompt": "After cities.Add(\"Springfield\") twice in a row, what is Cities.Count?",
       "options": [
-        "It enumerates every entry and does nothing with each one -- a genuine, harmless-but-pointless leftover in the real source, kept intentionally as a 'spot the smell' artifact",
-        "It searches for the requested employeeId",
-        "It deletes completed entries"
+        "1 -- HashSet<string> silently ignores an Add call for a value it already contains",
+        "2 -- every Add call increases Count",
+        "0 -- duplicate adds clear the set"
       ],
       "correct": 0,
-      "explanation": "The loop body is empty in the real repository -- confirmed by reading Repositories/ClockEntryRepository.cs directly. It has no effect on the method's behavior."
+      "explanation": "A set's defining guarantee is that each distinct value appears at most once -- Add returns false on a duplicate but does not throw or change the set's contents."
     }
   ],
   "concept": [
     {
-      "title": "List<ClockEntry> is the repository's only storage",
+      "title": "Dictionary<int, Employee>: lookup by key, not by scanning",
       "paragraphs": [
-        "_clockEntries is declared public readonly List<ClockEntry> _clockEntries = new(); -- readonly means the field itself can never be reassigned to point at a different list, but the list's contents remain fully mutable through Add, Remove, Clear, and indexing.",
-        "Every real method on ClockEntryRepository -- SaveClockEntry, GetClockEntry, GetEmployeeClockEntries -- reads or writes this one list. There is no other storage anywhere in the class."
+        "EmployeeDirectory's private Dictionary<int, Employee> employees maps each EmployeeId directly to its Employee -- TryFind's employees.TryGetValue(employeeId, out employee) is a direct key lookup, with no need to inspect every stored Employee.",
+        "Add uses employees.TryAdd(employee.EmployeeId, employee), returning false (and adding nothing) if that EmployeeId is already present -- this is what makes Add's own return value meaningful as a duplicate-detection signal."
       ],
-      "code": "// Repositories/ClockEntryRepository.cs -- the real, complete storage\npublic readonly List<ClockEntry> _clockEntries = new();"
+      "code": "// src/TimeClock.Domain/EmployeeDirectory.cs\nprivate readonly Dictionary<int, Employee> employees = [];\n\npublic bool Add(Employee employee)\n{\n    if (!employees.TryAdd(employee.EmployeeId, employee)) return false;\n    if (!string.IsNullOrWhiteSpace(employee.Address.City)) cities.Add(employee.Address.City);\n    return true;\n}"
     },
     {
-      "title": "Add and Where operate on the same list, for different purposes",
+      "title": "HashSet<string>: membership, not order or count",
       "paragraphs": [
-        "SaveClockEntry's _clockEntries.Add(clockEntry) is List<T>'s own instance method -- it mutates the list in place, growing its Count by one.",
-        "GetEmployeeClockEntries's _clockEntries.Where(...) is a LINQ extension method available on any IEnumerable<T>, including List<T> -- it does not mutate anything; it returns a new, deferred query over the existing elements (Session 24)."
+        "cities is a HashSet<string>, chosen specifically because EmployeeDirectory only ever needs to answer 'which distinct cities are represented' -- not 'in what order were they added' or 'how many employees are in each city.'",
+        "Adding the same city twice (from two different employees) is expected and harmless: HashSet.Add returns false for the second call and the set's contents are unchanged."
       ],
-      "code": "// Real Add: mutates the list\npublic void SaveClockEntry(ClockEntry clockEntry) => _clockEntries.Add(clockEntry);\n\n// Real Where: reads the list, returns a query, does not mutate\npublic IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate) =>\n    _clockEntries.Where(entry => entry.EmployeeId == employeeId && entry.ClockOut != null\n        && entry.ClockIn >= startDate && entry.ClockIn <= endDate);"
+      "code": "private readonly HashSet<string> cities = new(StringComparer.OrdinalIgnoreCase);\n\n// Two employees, same city -- Cities.Count stays 1\ncities.Add(\"Springfield\");\ncities.Add(\"springfield\");   // ignored -- OrdinalIgnoreCase treats these as the same city (Session 10)"
     },
     {
-      "title": "A public field is a real, named smell, not a rewrite target today",
+      "title": "TryFind: the out-pattern from Session 9, applied to a real lookup",
       "paragraphs": [
-        "This session names the problem without fixing it: nothing stops calling code from writing repository._clockEntries.Clear() directly, deleting every clock entry without going through any method at all.",
-        "Session 18 (Encapsulation and Composition) is where this gets revisited as an explicit before/after -- this session's job is only to make sure you can see the gap clearly first."
+        "TryFind(int employeeId, out Employee? employee) reuses exactly the pattern Session 9 introduced with TryGetOpenEntry -- a bool result plus an out parameter, so callers can check 'was this employee found' without a nullable-return null check.",
+        "TryGetValue on Dictionary<TKey,TValue> is itself built on the same Try-pattern -- EmployeeDirectory's TryFind is a thin wrapper exposing that same idiom at the EmployeeDirectory level."
       ],
-      "code": "// Legal today, and a real problem -- nothing in ClockEntryRepository prevents this\nrepository._clockEntries.Clear();"
+      "code": "public bool TryFind(int employeeId, out Employee? employee) => employees.TryGetValue(employeeId, out employee);"
     }
   ],
   "lab": {
-    "objective": "Trace every real operation ClockEntryRepository performs on _clockEntries, and write a test that demonstrates the public field's real encapsulation gap.",
-    "startingCondition": "ClockEntryRepository already exists with its real public _clockEntries field and three real methods.",
+    "objective": "Exercise Dictionary-backed lookup and HashSet-backed uniqueness in EmployeeDirectory, confirming both with tests.",
+    "startingCondition": "EmployeeDirectory already exists with its real Dictionary<int, Employee> and HashSet<string> fields.",
     "steps": [
-      "List every method in ClockEntryRepository and identify which List<T> operation (Add, Where, FirstOrDefault, foreach) each one uses.",
-      "Write a test that directly manipulates repository._clockEntries (e.g. .Clear() or .Add(...)) from outside the class, and confirm it compiles and runs -- proving the field is genuinely public, not just documentation.",
-      "Predict what SaveClockEntry followed immediately by a direct _clockEntries.Clear() call does to a subsequent GetClockEntry lookup, then confirm it.",
-      "Write down, without changing any code yet, what a private field plus explicit methods would have prevented."
+      "Add two Employees with different EmployeeIds and confirm Count reflects both.",
+      "Attempt to Add a second Employee with an EmployeeId already present, and confirm Add returns false and Count does not increase.",
+      "Add two Employees whose Address.City differs only by case, and confirm Cities.Count is 1.",
+      "Call TryFind for a present and an absent EmployeeId, and confirm the bool result and out value in both cases."
     ],
-    "expectedBehavior": "The direct-manipulation test compiles and passes, demonstrating the field really is publicly writable; the prediction about Clear() erasing a just-saved entry is confirmed.",
+    "expectedBehavior": "Duplicate EmployeeId additions are rejected without throwing; differently-cased city names collapse to one entry; TryFind correctly reports found/not-found with the out parameter matching.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/ClockEntryRepository.cs",
+      "path": "src/TimeClock.Domain/EmployeeDirectory.cs",
       "action": "Verify",
-      "why": "Confirm the real public _clockEntries field and its three real consuming methods."
+      "why": "Confirm the real Dictionary<int, Employee> and HashSet<string> fields and their real methods."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/ClockEntryTests.cs",
-      "action": "Modify",
-      "why": "Add a test demonstrating direct external access to the public _clockEntries field."
+      "path": "tests/TimeClock.Domain.Tests/EmployeeDirectoryTests.cs",
+      "action": "Verify",
+      "why": "Confirm existing duplicate-key and case-insensitive-city coverage."
     },
     {
       "path": "site/data/sessions/session-11.json",
@@ -118,51 +118,51 @@
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-11: teach arrays lists and enumeration",
+  "commit": "session-11: teach dictionaries sets and lookup semantics",
   "review": [
-    "The real public _clockEntries field is read directly from source, not assumed.",
-    "Add and Where are correctly distinguished as mutating versus non-mutating list operations.",
-    "The encapsulation gap is named honestly as a real, currently-unfixed issue, not silently patched in this session.",
-    "The new test demonstrates the gap is real and reproducible, not hypothetical.",
+    "Dictionary<int, Employee>'s lookup-by-key behavior is explained in contrast to List<T>'s scan, not asserted without comparison.",
+    "TryAdd's refuse-on-duplicate behavior is demonstrated with a real, passing test.",
+    "HashSet<string>'s duplicate-add-is-a-no-op behavior is demonstrated alongside Session 10's OrdinalIgnoreCase choice.",
+    "TryFind is explicitly connected back to Session 9's Try-pattern rather than treated as an unrelated new idiom.",
     "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "If _clockEntries were changed from List<ClockEntry> to ClockEntry[], what would break first?",
+      "prompt": "If EmployeeDirectory used List<Employee> instead of Dictionary<int, Employee>, what would TryFind have to do differently?",
       "options": [
-        "SaveClockEntry's _clockEntries.Add(...) call -- arrays have no Add method; a fixed-size array cannot grow to accept new entries",
-        "GetEmployeeClockEntries's Where call -- arrays do not support LINQ",
-        "Nothing -- arrays and List<T> are interchangeable everywhere"
+        "Scan the list checking each Employee's EmployeeId until a match is found or the list ends -- an O(n) search instead of Dictionary's average O(1) key lookup",
+        "Nothing -- List<Employee> supports the exact same TryFind signature with no behavior change",
+        "TryFind would no longer be possible"
       ],
       "correct": 0,
-      "explanation": "Arrays support LINQ's Where perfectly well (they implement IEnumerable<T>), but they have no Add method -- List<T>'s growable capacity is specifically what SaveClockEntry depends on."
+      "explanation": "The performance and simplicity difference is the entire reason Dictionary was chosen -- a List-based TryFind is a linear search hidden behind the same-looking method signature."
     },
     {
-      "prompt": "What is the real, concrete risk of _clockEntries being public, beyond 'it looks untidy'?",
+      "prompt": "Why is cities.Add(\"Springfield\") safe to call every time an Employee is added, even for a city already present?",
       "options": [
-        "Any code anywhere in the same process that has a ClockEntryRepository reference can mutate its stored entries directly, bypassing whatever business rules SaveClockEntry might someday enforce",
-        "Public fields cause a measurable performance penalty",
-        "It prevents the repository from implementing IClockEntryRepository"
+        "HashSet<string>.Add is idempotent for values already present -- it returns false and changes nothing, rather than throwing or duplicating the entry",
+        "It is not safe -- calling Add on an existing value throws an exception",
+        "Add automatically renames duplicate entries"
       ],
       "correct": 0,
-      "explanation": "The real risk is behavioral: any future validation added to SaveClockEntry can be silently bypassed by code that mutates _clockEntries directly instead."
+      "explanation": "This is precisely why HashSet was chosen over List for Cities -- the caller never has to check 'is this city already here' before adding."
     },
     {
-      "prompt": "Does GetEmployeeClockEntries's Where call remove non-matching entries from _clockEntries?",
+      "prompt": "What would change about EmployeeDirectory.Add's duplicate-EmployeeId behavior if Dictionary's Add method were used instead of TryAdd?",
       "options": [
-        "No -- Where returns a new filtered view without modifying the underlying list at all; _clockEntries still contains every entry afterward",
-        "Yes -- Where permanently removes entries that do not match",
-        "Only entries where ClockOut is null are removed"
+        "Add(employee.EmployeeId, employee) would throw an ArgumentException on a duplicate key, instead of TryAdd's graceful false return -- EmployeeDirectory.Add would need a try/catch to match its current behavior",
+        "Nothing -- Add and TryAdd behave identically on a duplicate key",
+        "The dictionary would silently overwrite the existing entry"
       ],
       "correct": 0,
-      "explanation": "LINQ's Where is non-destructive by design -- this is part of why Session 24's deferred-execution discussion matters: querying never mutates the source."
+      "explanation": "Dictionary<TKey,TValue>.Add throws on a duplicate key; TryAdd was specifically chosen so EmployeeDirectory.Add can return false instead of needing exception handling for an expected, everyday outcome (Session 24's throw-vs-return rule, applied here)."
     }
   ],
   "reflections": [
-    "Why does this session deliberately not fix the public-field problem it identifies -- what would you lose by fixing it here instead of in Session 18?",
-    "What would you need to add to ClockEntryRepository to make _clockEntries.Add(...) impossible from outside the class, while keeping SaveClockEntry's own behavior unchanged?",
-    "Where else in this codebase might a similarly 'too-permissive' field or property be hiding?"
+    "Where else in this codebase might a List currently used for something a Dictionary would serve better, or vice versa?",
+    "Why does EmployeeDirectory.Add check the return value of TryAdd before deciding whether to add the city to Cities?",
+    "How does TryFind's Try-pattern connect back to what Session 9 taught about out parameters?"
   ],
-  "whatBreaks": "Directly clearing or mutating _clockEntries from outside ClockEntryRepository bypasses SaveClockEntry entirely, and would silently corrupt GetClockEntry/GetEmployeeClockEntries's results for any code that assumed only SaveClockEntry could add entries. Replacing List<ClockEntry> with a fixed-size array would break SaveClockEntry's Add call the moment more entries are saved than the array's original length allows.",
-  "summary": "List<ClockEntry> is ClockEntryRepository's entire storage: SaveClockEntry mutates it with Add, while GetEmployeeClockEntries and GetClockEntry read it with LINQ's Where and FirstOrDefault without changing it. The field's real public accessibility is a genuine, currently-unfixed encapsulation gap -- named honestly here, and revisited as an explicit fix in Session 18."
+  "whatBreaks": "Replacing TryAdd with Add in EmployeeDirectory.Add would turn a duplicate-EmployeeId scenario from a handled, expected outcome (false return) into an unhandled ArgumentException, violating the throw-vs-return distinction Session 24 establishes. Replacing HashSet<string> with List<string> for Cities would let the same city accumulate duplicate entries every time a new employee from that city is added, silently inflating Cities.Count. Removing StringComparer.OrdinalIgnoreCase from the HashSet constructor would let differently-cased city names count as distinct cities again.",
+  "summary": "EmployeeDirectory's Dictionary<int, Employee> gives TryFind fast lookup by EmployeeId, using TryAdd to reject duplicate keys gracefully instead of throwing. Its HashSet<string> Cities field guarantees each city name appears at most once, complementing Session 10's case-insensitive comparer choice. TryFind itself directly reuses the out-parameter Try-pattern Session 9 introduced."
 }

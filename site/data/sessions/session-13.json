@@ -1,116 +1,116 @@
 {
   "number": 13,
   "category": "Collections and generics",
-  "estimatedTime": "35 minutes",
-  "connection": "Session 12 studied ClockEntryRepository's List<ClockEntry>. This session studies EmployeeDirectory, a new extension that uses Dictionary<int, Employee> for O(1) lookup by EmployeeId and HashSet<string> for unique city tracking -- neither type appears in the real source, but both are the natural next step once a program needs more than one employee.",
+  "estimatedTime": "40 minutes",
+  "connection": "Session 12 covered Dictionary and HashSet. This session studies the real IEnumerable<ClockEntry> return type on GetEmployeeClockEntries (Step 44 of the source syllabus) and what the collection interface hierarchy above it -- IEnumerable<T>, ICollection<T>, IList<T> -- actually promises to callers.",
   "objectives": [
-    "Explain why Dictionary<int, Employee> gives EmployeeDirectory faster lookup by EmployeeId than scanning a List<Employee> would.",
-    "Trace TryAdd's role in Dictionary<TKey,TValue>: what happens when Add is called with a key that already exists, versus TryAdd.",
-    "Explain why EmployeeDirectory's Cities field is a HashSet<string>, not a List<string> -- what guarantee a set provides that a list does not.",
-    "Predict TryFind's return value and out parameter for both a present and an absent EmployeeId."
+    "Read GetEmployeeClockEntries's real return type, IEnumerable<ClockEntry>, and explain exactly what capability that promises callers: enumeration, nothing else.",
+    "Explain why GetEmployeeClockEntries does NOT return List<ClockEntry>, even though its implementation is built from one.",
+    "Place List<T> in the interface hierarchy it implements: IList<T>, which implements ICollection<T>, which implements IEnumerable<T>.",
+    "Predict what capabilities are lost by declaring a return type as IEnumerable<T> instead of the concrete List<T> the method happens to build internally."
   ],
   "visuals": [
     {
       "diagram": "blueprint",
-      "title": "Dictionary<int, Employee> keys by EmployeeId",
-      "explanation": "employees.TryAdd(employee.EmployeeId, employee) stores each Employee under its own id -- looking one up later means a direct key lookup, not scanning every entry."
+      "title": "The real signature promises only enumeration",
+      "explanation": "IEnumerable<ClockEntry> GetEmployeeClockEntries(...) -- callers can foreach over the result; nothing in the signature promises Count, indexing, or the ability to Add."
+    },
+    {
+      "diagram": "pipeline",
+      "title": "List<T> implements more than it exposes here",
+      "explanation": "_clockEntries.Where(...) returns something that is enumerable, built from a List<ClockEntry> internally -- but the method's declared return type hides the List-specific members from callers."
     },
     {
       "diagram": "invariant",
-      "title": "TryAdd refuses to overwrite an existing key",
-      "explanation": "employees.TryAdd(1, second) returns false if EmployeeId 1 is already present -- the original Employee stays in the dictionary, untouched."
+      "title": "The interface hierarchy is a chain of promises",
+      "explanation": "IList<T> extends ICollection<T> extends IEnumerable<T> -- each step up adds capability (indexing, then adding/removing, on top of plain enumeration)."
     },
     {
       "diagram": "instances",
-      "title": "HashSet<string> stores each city name once",
-      "explanation": "cities.Add(\"Springfield\") followed by cities.Add(\"Springfield\") again leaves Cities.Count unchanged -- a set silently ignores a duplicate add."
-    },
-    {
-      "diagram": "call",
-      "title": "TryFind mirrors the Try-pattern from Session 10",
-      "explanation": "bool TryFind(int employeeId, out Employee? employee) returns whether the id was found, with employee assigned either way."
+      "title": "Narrower return types communicate intent",
+      "explanation": "Returning IEnumerable<ClockEntry> tells callers 'treat this as read-only, enumerate it once' even though the concrete object underneath could support more."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Why does EmployeeDirectory use Dictionary<int, Employee> instead of List<Employee> for its main storage?",
+      "prompt": "Can a caller of GetEmployeeClockEntries call .Count on its return value directly, using only the declared IEnumerable<ClockEntry> type?",
       "options": [
-        "Looking up an Employee by EmployeeId is a direct key lookup in a Dictionary, versus scanning every element in a List until a match is found",
-        "Dictionary is required by the Employee class",
-        "List<Employee> cannot hold more than a fixed number of items"
+        "Not with a Count property -- IEnumerable<T> only guarantees enumeration; callers would need .Count() (the LINQ extension method, which itself enumerates) or to call .ToList() first for an indexable, countable collection",
+        "Yes -- IEnumerable<T> always exposes Count",
+        "No -- IEnumerable<T> cannot be enumerated at all"
       ],
       "correct": 0,
-      "explanation": "A Dictionary trades a small amount of memory overhead for average constant-time lookup by key -- exactly the operation TryFind needs to perform quickly."
+      "explanation": "IEnumerable<T>'s only member is GetEnumerator() -- Count, indexing, and Add all belong to interfaces further up the hierarchy (ICollection<T>, IList<T>) that GetEmployeeClockEntries's declared return type does not promise."
     },
     {
-      "prompt": "What does employees.TryAdd(1, secondEmployee) return if EmployeeId 1 is already stored?",
+      "prompt": "Why doesn't GetEmployeeClockEntries return List<ClockEntry>, even though .Where() is called on a List<ClockEntry> internally?",
       "options": [
-        "false -- TryAdd never overwrites an existing key; the dictionary keeps the first Employee it was given for that id",
-        "true -- TryAdd always overwrites",
-        "It throws an exception"
+        "Returning the narrower IEnumerable<ClockEntry> tells callers exactly what they may rely on (enumeration) without promising list-specific capabilities (indexing, Add, Remove) that might not remain true if the implementation changes later",
+        "IEnumerable<T> is required by C# for any LINQ query result",
+        "List<ClockEntry> cannot be returned from a method"
       ],
       "correct": 0,
-      "explanation": "TryAdd is specifically designed to fail gracefully (returning false) on a duplicate key, rather than throwing (like Add would) or silently overwriting."
+      "explanation": "This is a deliberate narrowing: the real implementation happens to use a List internally, but the interface promises only what callers actually need -- read-only enumeration."
     },
     {
-      "prompt": "After cities.Add(\"Springfield\") twice in a row, what is Cities.Count?",
+      "prompt": "Where does IList<T> sit relative to IEnumerable<T> in the standard collection interface hierarchy?",
       "options": [
-        "1 -- HashSet<string> silently ignores an Add call for a value it already contains",
-        "2 -- every Add call increases Count",
-        "0 -- duplicate adds clear the set"
+        "IList<T> extends ICollection<T>, which extends IEnumerable<T> -- each interface adds capability on top of the one below it",
+        "IList<T> and IEnumerable<T> are unrelated interfaces",
+        "IEnumerable<T> extends IList<T>"
       ],
       "correct": 0,
-      "explanation": "A set's defining guarantee is that each distinct value appears at most once -- Add returns false on a duplicate but does not throw or change the set's contents."
+      "explanation": "The hierarchy builds upward: plain enumeration (IEnumerable<T>), then add/remove/count (ICollection<T>), then indexing and insertion (IList<T>) -- List<T> implements all three."
     }
   ],
   "concept": [
     {
-      "title": "Dictionary<int, Employee>: lookup by key, not by scanning",
+      "title": "IEnumerable<ClockEntry> is a promise of enumeration, nothing more",
       "paragraphs": [
-        "EmployeeDirectory's private Dictionary<int, Employee> employees maps each EmployeeId directly to its Employee -- TryFind's employees.TryGetValue(employeeId, out employee) is a direct key lookup, with no need to inspect every stored Employee.",
-        "Add uses employees.TryAdd(employee.EmployeeId, employee), returning false (and adding nothing) if that EmployeeId is already present -- this is what makes Add's own return value meaningful as a duplicate-detection signal."
+        "The real GetEmployeeClockEntries signature is IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate) -- confirmed directly against Interfaces/IClockEntryRepository.cs.",
+        "A caller holding this return value can foreach over it, or chain further LINQ methods (.Sum(), .OrderBy(), etc., all defined as extension methods on IEnumerable<T>) -- but cannot index into it with [0] or ask for .Count as a property, because IEnumerable<T> itself declares neither."
       ],
-      "code": "// src/TimeClock.Domain/EmployeeDirectory.cs\nprivate readonly Dictionary<int, Employee> employees = [];\n\npublic bool Add(Employee employee)\n{\n    if (!employees.TryAdd(employee.EmployeeId, employee)) return false;\n    if (!string.IsNullOrWhiteSpace(employee.Address.City)) cities.Add(employee.Address.City);\n    return true;\n}"
+      "code": "// Interfaces/IClockEntryRepository.cs -- the real signature\nIEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate);"
     },
     {
-      "title": "HashSet<string>: membership, not order or count",
+      "title": "The implementation returns more than the interface promises",
       "paragraphs": [
-        "cities is a HashSet<string>, chosen specifically because EmployeeDirectory only ever needs to answer 'which distinct cities are represented' -- not 'in what order were they added' or 'how many employees are in each city.'",
-        "Adding the same city twice (from two different employees) is expected and harmless: HashSet.Add returns false for the second call and the set's contents are unchanged."
+        "ClockEntryRepository's real implementation is _clockEntries.Where(...) -- Where's actual runtime return type implements IEnumerable<ClockEntry> but is not a List<ClockEntry> at all; it is a compiler-generated iterator.",
+        "This is exactly why the interface, not the concrete implementation detail, is what callers should be written against: PayrollService.CalculateTotalHours never needed to know or care what concrete type Where actually returns."
       ],
-      "code": "private readonly HashSet<string> cities = new(StringComparer.OrdinalIgnoreCase);\n\n// Two employees, same city -- Cities.Count stays 1\ncities.Add(\"Springfield\");\ncities.Add(\"springfield\");   // ignored -- OrdinalIgnoreCase treats these as the same city (Session 11)"
+      "code": "// Repositories/ClockEntryRepository.cs -- returns something IEnumerable<ClockEntry>, not literally a List\npublic IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate)\n{\n    return _clockEntries.Where(entry => /* ...real filter... */ true);\n}"
     },
     {
-      "title": "TryFind: the out-pattern from Session 10, applied to a real lookup",
+      "title": "The hierarchy: IEnumerable<T>, ICollection<T>, IList<T>",
       "paragraphs": [
-        "TryFind(int employeeId, out Employee? employee) reuses exactly the pattern Session 10 introduced with TryGetOpenEntry -- a bool result plus an out parameter, so callers can check 'was this employee found' without a nullable-return null check.",
-        "TryGetValue on Dictionary<TKey,TValue> is itself built on the same Try-pattern -- EmployeeDirectory's TryFind is a thin wrapper exposing that same idiom at the EmployeeDirectory level."
+        "List<ClockEntry> (ClockEntryRepository's actual backing storage) implements IList<ClockEntry>, which implements ICollection<ClockEntry>, which implements IEnumerable<ClockEntry>.",
+        "Each step adds capability: IEnumerable<T> for foreach; ICollection<T> adds Count, Add, Remove, Contains; IList<T> adds indexing ([int]) and Insert/RemoveAt. GetEmployeeClockEntries deliberately exposes only the bottom rung."
       ],
-      "code": "public bool TryFind(int employeeId, out Employee? employee) => employees.TryGetValue(employeeId, out employee);"
+      "code": "List<ClockEntry> _clockEntries;      // implements IList<ClockEntry>\nIList<ClockEntry> asList = _clockEntries;          // indexing, Insert, RemoveAt\nICollection<ClockEntry> asCollection = _clockEntries; // Count, Add, Remove, Contains\nIEnumerable<ClockEntry> asEnumerable = _clockEntries; // foreach only -- what GetEmployeeClockEntries actually returns"
     }
   ],
   "lab": {
-    "objective": "Exercise Dictionary-backed lookup and HashSet-backed uniqueness in EmployeeDirectory, confirming both with tests.",
-    "startingCondition": "EmployeeDirectory already exists with its real Dictionary<int, Employee> and HashSet<string> fields.",
+    "objective": "Confirm GetEmployeeClockEntries's real IEnumerable<ClockEntry> contract and demonstrate what capabilities are and are not available through it.",
+    "startingCondition": "IClockEntryRepository and ClockEntryRepository already exist with the real GetEmployeeClockEntries signature and implementation.",
     "steps": [
-      "Add two Employees with different EmployeeIds and confirm Count reflects both.",
-      "Attempt to Add a second Employee with an EmployeeId already present, and confirm Add returns false and Count does not increase.",
-      "Add two Employees whose Address.City differs only by case, and confirm Cities.Count is 1.",
-      "Call TryFind for a present and an absent EmployeeId, and confirm the bool result and out value in both cases."
+      "Call GetEmployeeClockEntries and confirm foreach works directly on the result.",
+      "Attempt to index the result with [0] and confirm the compiler rejects it, given the declared IEnumerable<ClockEntry> type.",
+      "Call .ToList() on the result and confirm the resulting List<ClockEntry> DOES support indexing and .Count.",
+      "Write down which of List<T>'s members (Add, this[int], Count) are and are not accessible through GetEmployeeClockEntries's declared return type without first calling .ToList()."
     ],
-    "expectedBehavior": "Duplicate EmployeeId additions are rejected without throwing; differently-cased city names collapse to one entry; TryFind correctly reports found/not-found with the out parameter matching.",
+    "expectedBehavior": "foreach works directly on GetEmployeeClockEntries's result; indexing does not compile without first materializing with .ToList(); the materialized List<ClockEntry> supports indexing and Count.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/EmployeeDirectory.cs",
+      "path": "src/TimeClock.Domain/IClockEntryRepository.cs",
       "action": "Verify",
-      "why": "Confirm the real Dictionary<int, Employee> and HashSet<string> fields and their real methods."
+      "why": "Confirm the real IEnumerable<ClockEntry> return type on GetEmployeeClockEntries."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/EmployeeDirectoryTests.cs",
+      "path": "src/TimeClock.Domain/ClockEntryRepository.cs",
       "action": "Verify",
-      "why": "Confirm existing duplicate-key and case-insensitive-city coverage."
+      "why": "Confirm the real Where-based implementation."
     },
     {
       "path": "site/data/sessions/session-12.json",
@@ -118,51 +118,50 @@
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-12: teach dictionaries sets and lookup semantics",
+  "commit": "session-12: teach collection interfaces and ienumerable",
   "review": [
-    "Dictionary<int, Employee>'s lookup-by-key behavior is explained in contrast to List<T>'s scan, not asserted without comparison.",
-    "TryAdd's refuse-on-duplicate behavior is demonstrated with a real, passing test.",
-    "HashSet<string>'s duplicate-add-is-a-no-op behavior is demonstrated alongside Session 11's OrdinalIgnoreCase choice.",
-    "TryFind is explicitly connected back to Session 10's Try-pattern rather than treated as an unrelated new idiom.",
+    "GetEmployeeClockEntries's real signature is quoted directly from IClockEntryRepository.cs, not paraphrased.",
+    "The distinction between what the implementation returns and what the interface promises is demonstrated, not just asserted.",
+    "The IEnumerable<T>/ICollection<T>/IList<T> hierarchy is connected to List<T>'s real, concrete role as ClockEntryRepository's storage.",
     "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "If EmployeeDirectory used List<Employee> instead of Dictionary<int, Employee>, what would TryFind have to do differently?",
+      "prompt": "If PayrollService.CalculateTotalHours needed the count of an employee's clock entries as well as their sum, what would it need to do?",
       "options": [
-        "Scan the list checking each Employee's EmployeeId until a match is found or the list ends -- an O(n) search instead of Dictionary's average O(1) key lookup",
-        "Nothing -- List<Employee> supports the exact same TryFind signature with no behavior change",
-        "TryFind would no longer be possible"
+        "Call .ToList() on GetEmployeeClockEntries's result first (or use .Count(), the LINQ extension method, which re-enumerates), since IEnumerable<ClockEntry> alone has no Count property",
+        "Access ._clockEntries directly, since that already has Count",
+        "Nothing extra -- IEnumerable<T> already exposes Count"
       ],
       "correct": 0,
-      "explanation": "The performance and simplicity difference is the entire reason Dictionary was chosen -- a List-based TryFind is a linear search hidden behind the same-looking method signature."
+      "explanation": "IEnumerable<T> genuinely has no Count property -- LINQ's .Count() extension method is a substitute that works by enumerating, not a shortcut to a property that was already there."
     },
     {
-      "prompt": "Why is cities.Add(\"Springfield\") safe to call every time an Employee is added, even for a city already present?",
+      "prompt": "Why might ClockEntryRepository's internal choice of List<ClockEntry> change in the future (e.g. to a database-backed collection) without breaking PayrollService?",
       "options": [
-        "HashSet<string>.Add is idempotent for values already present -- it returns false and changes nothing, rather than throwing or duplicating the entry",
-        "It is not safe -- calling Add on an existing value throws an exception",
-        "Add automatically renames duplicate entries"
+        "PayrollService only depends on IEnumerable<ClockEntry> (via IClockEntryRepository's interface), never on List<ClockEntry> specifically -- any implementation that can produce an IEnumerable<ClockEntry> satisfies the contract",
+        "PayrollService directly references List<ClockEntry> in its own code",
+        "It cannot change without breaking PayrollService"
       ],
       "correct": 0,
-      "explanation": "This is precisely why HashSet was chosen over List for Cities -- the caller never has to check 'is this city already here' before adding."
+      "explanation": "This is the same principle Session 20 taught about depending on interfaces -- here it applies one level deeper, to the collection type returned by an interface member."
     },
     {
-      "prompt": "What would change about EmployeeDirectory.Add's duplicate-EmployeeId behavior if Dictionary's Add method were used instead of TryAdd?",
+      "prompt": "What is the real reason GetEmployeeClockEntries's declared return type matters, if the actual object at runtime could support more?",
       "options": [
-        "Add(employee.EmployeeId, employee) would throw an ArgumentException on a duplicate key, instead of TryAdd's graceful false return -- EmployeeDirectory.Add would need a try/catch to match its current behavior",
-        "Nothing -- Add and TryAdd behave identically on a duplicate key",
-        "The dictionary would silently overwrite the existing entry"
+        "It documents and enforces, at compile time, exactly what callers are allowed to assume -- protecting the implementation's freedom to change without callers noticing",
+        "Declared return types have no effect on what callers can do -- only the actual runtime type matters",
+        "It is purely a style preference with no functional consequence"
       ],
       "correct": 0,
-      "explanation": "Dictionary<TKey,TValue>.Add throws on a duplicate key; TryAdd was specifically chosen so EmployeeDirectory.Add can return false instead of needing exception handling for an expected, everyday outcome (Session 25's throw-vs-return rule, applied here)."
+      "explanation": "C#'s static typing means the compiler enforces the DECLARED type's members, not the runtime type's full capability -- this is precisely the mechanism that makes narrow interfaces protect implementation freedom."
     }
   ],
   "reflections": [
-    "Where else in this codebase might a List currently used for something a Dictionary would serve better, or vice versa?",
-    "Why does EmployeeDirectory.Add check the return value of TryAdd before deciding whether to add the city to Cities?",
-    "How does TryFind's Try-pattern connect back to what Session 10 taught about out parameters?"
+    "Why does GetEmployeeClockEntries's author choosing IEnumerable<ClockEntry> over List<ClockEntry> matter for anyone besides the method's own implementation?",
+    "What would you lose, as a caller, if every method in this codebase returned the most general possible type (object) instead of a specific interface?",
+    "Where else in this codebase does a method's declared return type deliberately hide more specific capability the implementation happens to have?"
   ],
-  "whatBreaks": "Replacing TryAdd with Add in EmployeeDirectory.Add would turn a duplicate-EmployeeId scenario from a handled, expected outcome (false return) into an unhandled ArgumentException, violating the throw-vs-return distinction Session 25 establishes. Replacing HashSet<string> with List<string> for Cities would let the same city accumulate duplicate entries every time a new employee from that city is added, silently inflating Cities.Count. Removing StringComparer.OrdinalIgnoreCase from the HashSet constructor would let differently-cased city names count as distinct cities again.",
-  "summary": "EmployeeDirectory's Dictionary<int, Employee> gives TryFind fast lookup by EmployeeId, using TryAdd to reject duplicate keys gracefully instead of throwing. Its HashSet<string> Cities field guarantees each city name appears at most once, complementing Session 11's case-insensitive comparer choice. TryFind itself directly reuses the out-parameter Try-pattern Session 10 introduced."
+  "whatBreaks": "Changing GetEmployeeClockEntries's declared return type to List<ClockEntry> would let callers start depending on list-specific members (indexing, Add) that the repository's author never intended to promise -- making a future change to the underlying storage a breaking change for those callers. Assuming IEnumerable<ClockEntry> supports indexing without first materializing it with .ToList() produces a compile error, not a runtime surprise -- exactly the kind of mistake the type system is built to catch early.",
+  "summary": "GetEmployeeClockEntries's real, verified return type is IEnumerable<ClockEntry> -- a promise of enumeration only, even though its actual implementation is built from a List<ClockEntry>. The standard IEnumerable<T> -> ICollection<T> -> IList<T> hierarchy explains exactly what capability each step adds, and why a method's declared interface type, not its concrete backing type, is what callers should be written against."
 }

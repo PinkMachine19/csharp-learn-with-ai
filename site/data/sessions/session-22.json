@@ -1,115 +1,115 @@
 {
   "number": 22,
-  "category": "query pipelines",
+  "category": "relational transformations",
   "estimatedTime": "40 minutes",
-  "connection": "Session 21 covered dependency injection. This session reads the real PayrollService.CalculateTotalHours line by line: a Where-shaped filter inside GetEmployeeClockEntries, feeding a Sum with an inline projection -- one LINQ pipeline split across two real methods.",
+  "connection": "Session 21 read PayrollService's single-employee Where-then-Sum pipeline. This session extends the same domain to many employees at once with GroupBy, and correlates the grouped totals back to employee names with Join -- a natural next step the real PayrollService does not (yet) need, since it only ever asks about one employeeId at a time.",
   "objectives": [
-    "Read GetEmployeeClockEntries as a Where pipeline: employeeId match, ClockOut not null, and a date range, all in one lambda.",
-    "Read CalculateTotalHours's .Sum(x => x.GetDuartion().TotalHours) as a projection and aggregation combined into a single call, not a separate Select stage.",
-    "Explain decision-0007: why the real code chose one combined LINQ call over three separate named pipeline stages.",
-    "Write a new query using the same Where-then-Sum-with-projection shape against ClockEntryQueries.cs."
+    "Use GroupBy to partition a mixed list of ClockEntry objects by EmployeeId, the same key CalculateTotalHours filters on for a single employee.",
+    "Reuse GetDuartion().TotalHours as the per-group Sum projection, exactly as PayrollService does for one employee.",
+    "Use Join to correlate a list of Employee objects with a list of computed WorkSummary totals by matching EmployeeId.",
+    "Explain why grouping many employees is a genuine extension beyond what the real PayrollService class currently does."
   ],
   "visuals": [
     {
+      "diagram": "branch",
+      "title": "GroupBy partitions by EmployeeId",
+      "explanation": "entries.GroupBy(entry => entry.EmployeeId) -- the same key CalculateTotalHours filters on for one employee, applied to every employee at once."
+    },
+    {
       "diagram": "pipeline",
-      "title": "GetEmployeeClockEntries filters, in one compound Where",
-      "explanation": "entry.EmployeeId == employeeId && entry.ClockOut != null && entry.ClockIn >= startDate && entry.ClockIn <= endDate -- three real AND-ed conditions in one lambda."
+      "title": "Each group sums with the real GetDuartion projection",
+      "explanation": "group.Sum(entry => (decimal)entry.GetDuartion().TotalHours) -- identical to PayrollService.CalculateTotalHours's own Sum lambda."
     },
     {
-      "diagram": "path",
-      "title": "CalculateTotalHours projects and aggregates in one Sum call",
-      "explanation": ".Sum(x => x.GetDuartion().TotalHours) -- decision-0007: no separate Select stage exists in the real code."
-    },
-    {
-      "diagram": "comparison",
-      "title": "TotalHours, not Hours",
-      "explanation": "TimeSpan.Hours truncates to a 0-23 component; TotalHours is the real, full duration CalculateTotalHours actually sums."
+      "diagram": "instances",
+      "title": "Join correlates two independent sequences by key",
+      "explanation": "employees.Join(summaries, e => e.EmployeeId, s => s.EmployeeId, ...) -- inner-join semantics: unmatched employees are silently excluded."
     },
     {
       "diagram": "return",
-      "title": "PayrollServiceTests.cs proves the pipeline end to end",
-      "explanation": "Two mocked shifts of 2 and 3 hours sum to exactly 5.0 through the real GetEmployeeClockEntries + CalculateTotalHours pipeline."
+      "title": "A genuine extension beyond the real PayrollService",
+      "explanation": "CalculateTotalHours only ever handles one employeeId; HoursByEmployee and EmployeeLabels answer a multi-employee question it does not."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "In the real GetEmployeeClockEntries, what does the .Where() lambda filter on?",
+      "prompt": "What does entries.GroupBy(e => e.EmployeeId) produce?",
       "options": [
-        "employeeId match, ClockOut not null, and ClockIn within the given date range -- all three conditions in one lambda",
-        "Only employeeId",
-        "Only whether ClockOut is null"
+        "One group per distinct EmployeeId, each group holding that employee's entries",
+        "A single flat list with duplicates removed",
+        "A dictionary keyed by ClockIn timestamp"
       ],
       "correct": 0,
-      "explanation": "The real method combines three AND-ed conditions in a single Where call, confirmed against Repositories/ClockEntryRepository.cs."
+      "explanation": "GroupBy partitions the sequence by the key selector -- every entry with the same EmployeeId lands in the same group."
     },
     {
-      "prompt": "Why does CalculateTotalHours use .Sum(x => x.GetDuartion().TotalHours) instead of a separate .Select(...).Sum() pipeline?",
+      "prompt": "How does HoursByEmployee turn each group into a total?",
       "options": [
-        "Both forms are valid LINQ; the real code chose the inline one-liner and never had a separate Select stage or GetCompletedDurations method (decision-0007)",
-        "C# does not allow chaining Select before Sum",
-        "GetDuartion cannot be called inside a Select"
+        "group.Sum(entry => (decimal)entry.GetDuartion().TotalHours) -- the exact same GetDuartion().TotalHours projection PayrollService uses for one employee",
+        "By calling PayrollService.CalculateTotalHours directly on the group",
+        "By counting the entries in the group"
       ],
       "correct": 0,
-      "explanation": "decision-0007 documents that the originally planned three-stage pipeline was never built -- the real code combines projection and aggregation in one Sum call."
+      "explanation": "The per-group Sum reuses the identical projection PayrollService.CalculateTotalHours already uses -- grouping just applies it to every employee's entries at once instead of one filtered subset."
     },
     {
-      "prompt": "Why does TotalHours matter more than Hours in this Sum call?",
+      "prompt": "What does employees.Join(summaries, e => e.EmployeeId, s => s.EmployeeId, ...) require of its two key selectors?",
       "options": [
-        "TimeSpan.Hours truncates to whole hours within a day, so a 26-hour shift would report 2, not 26; TotalHours reports the true total",
-        "TotalHours is required syntax for Sum",
-        "Hours and TotalHours are identical for this domain"
+        "Both keys must be the same type (int, here) so the join can match employees to summaries by EmployeeId",
+        "The two sequences must already be sorted",
+        "Join can only correlate sequences of the same element type"
       ],
       "correct": 0,
-      "explanation": "TimeSpan.Hours is the hours component (0-23) of the span, not the full duration -- using it here would silently corrupt payroll totals for any shift over 24 hours."
+      "explanation": "Join matches elements from two different sequences by comparing keys of the same type -- Employee.EmployeeId against WorkSummary.EmployeeId."
     }
   ],
   "concept": [
     {
-      "title": "Where filters with a compound condition",
+      "title": "GroupBy generalizes PayrollService's single-employee filter",
       "paragraphs": [
-        "GetEmployeeClockEntries filters _clockEntries with one Where call carrying three AND-ed conditions: the right employee, a completed entry, and inside the date range.",
-        "Reading it left to right: entries -> keep matching employeeId -> keep completed -> keep in range. No loop, no accumulator variable -- the pipeline is the whole method body."
+        "PayrollService.CalculateTotalHours only ever handles one employeeId per call, because GetEmployeeClockEntries filters to one employeeId before anything is summed.",
+        "ClockEntryAnalytics.HoursByEmployee answers a question PayrollService cannot: totals for every employee at once. GroupBy(entry => entry.EmployeeId) is the key that makes that possible without changing PayrollService itself."
       ],
-      "code": "// Repositories/ClockEntryRepository.cs -- the real implementation\npublic IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate)\n{\n    return _clockEntries.Where(entry =>\n        entry.EmployeeId == employeeId &&\n        entry.ClockOut != null &&\n        entry.ClockIn >= startDate &&\n        entry.ClockIn <= endDate);\n}"
+      "code": "// A new, clearly-labeled extension -- not present in the real PayrollService\npublic static IReadOnlyList<WorkSummary> HoursByEmployee(IEnumerable<ClockEntry> entries) => entries\n    .Where(entry => entry.ClockOut is not null)\n    .GroupBy(entry => entry.EmployeeId)\n    .Select(group => new WorkSummary(group.Key, group.Sum(entry => (decimal)entry.GetDuartion().TotalHours)))\n    .OrderBy(summary => summary.EmployeeId)\n    .ToList();"
     },
     {
-      "title": "Sum can project and aggregate in one call",
+      "title": "Join correlates two independent sequences by key",
       "paragraphs": [
-        "CalculateTotalHours does not call .Select() at all. The lambda passed to .Sum() -- x => x.GetDuartion().TotalHours -- both transforms each ClockEntry into a number of hours AND feeds it straight into the running total.",
-        "This is decision-0007 in the source project's decision log: the original plan was three separate methods (GetCompletedEntries, GetCompletedDurations, then Sum); the delivered code is two methods, with projection folded into the aggregation."
+        "EmployeeLabels takes a list of Employee objects and a list of WorkSummary totals -- two sequences with no direct reference to each other -- and correlates them by matching EmployeeId to EmployeeId.",
+        "This is the LINQ equivalent of a SQL inner join: only employees that appear in both sequences produce a result."
       ],
-      "code": "// Services/PayrollService.cs -- the real implementation\npublic double CalculateTotalHours(int employeeId, DateTime startDate, DateTime endDate)\n{\n    var clockEntries = _clockEntryRepository.GetEmployeeClockEntries(employeeId, startDate, endDate);\n    return clockEntries.Sum(x => x.GetDuartion().TotalHours);\n}"
+      "code": "public static IEnumerable<string> EmployeeLabels(IEnumerable<Employee> employees, IEnumerable<WorkSummary> summaries) =>\n    employees.Join(summaries, employee => employee.EmployeeId, summary => summary.EmployeeId,\n        (employee, summary) => $\"{employee.Name}: {summary.Hours:F1}\");"
     },
     {
-      "title": "Verify with the real, existing test",
+      "title": "Verify with deterministic, small totals",
       "paragraphs": [
-        "PayrollServiceTests.cs already proves this pipeline: two mocked shifts of 2 and 3 hours sum to exactly 5.0 through GetEmployeeClockEntries and CalculateTotalHours together.",
-        "This session's lab writes a second, independent query (ClockEntryQueries.LongestFirst) using the same Where-then-project-and-aggregate shape, but ordered and filtered by a minimum-hours threshold instead."
+        "The tests use exact hour counts (3 + 4 = 7) so a wrong GroupBy key or a wrong Sum projection produces an immediately obvious wrong total, not a hard-to-spot rounding difference.",
+        "This mirrors PayrollServiceTests.cs's own style: small, exact, easy-to-verify-by-hand shift lengths."
       ],
       "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
-    "objective": "Write a second LINQ query (ClockEntryQueries.LongestFirst) using the same Where-then-project-and-aggregate shape as the real CalculateTotalHours, filtered and ordered differently.",
-    "startingCondition": "Sessions 02–20 are complete and all existing tests pass.",
+    "objective": "Add a multi-employee report using GroupBy and Join, built on the exact same GetDuartion().TotalHours projection PayrollService.CalculateTotalHours already uses for one employee.",
+    "startingCondition": "Sessions 01–20 are complete and all existing tests pass.",
     "steps": [
       "Predict the successful path and one boundary or failure case.",
-      "Add src/TimeClock.Domain/ClockEntryQueries.cs with a narrow public contract.",
-      "Add tests/TimeClock.Domain.Tests/ClockEntryQueriesTests.cs for the prediction and boundary case.",
+      "Add src/TimeClock.Domain/ClockEntryAnalytics.cs with a narrow public contract.",
+      "Add tests/TimeClock.Domain.Tests/ClockEntryAnalyticsTests.cs for the prediction and boundary case.",
       "Run the focused tests and inspect the observed values or control flow.",
       "Run the full Release build and test suite."
     ],
-    "expectedBehavior": "The new tests establish that Where filters, Select transforms, and OrderBy sequences elements while preserving a readable left-to-right pipeline; prior behavior remains unchanged.",
+    "expectedBehavior": "The new tests establish that grouping partitions elements by key, joining correlates sources, and aggregation reduces many values into a result; prior behavior remains unchanged.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/ClockEntryQueries.cs",
+      "path": "src/TimeClock.Domain/ClockEntryAnalytics.cs",
       "action": "Add",
-      "why": "Provide the LongestFirst query built on the same Where-then-Sum shape as the real CalculateTotalHours."
+      "why": "Provide the GroupBy/Join multi-employee report extending PayrollService's real single-employee Sum projection."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/ClockEntryQueriesTests.cs",
+      "path": "tests/TimeClock.Domain.Tests/ClockEntryAnalyticsTests.cs",
       "action": "Add",
       "why": "Verify the contract and its boundary case."
     },
@@ -119,7 +119,7 @@
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-21: teach linq filtering projection and ordering",
+  "commit": "session-21: teach grouping joining and aggregation",
   "review": [
     "The public API states one coherent responsibility.",
     "Dependencies and state changes are explicit.",
@@ -130,41 +130,41 @@
   ],
   "postQuiz": [
     {
-      "prompt": "If you needed the list of raw hour values before summing them (for a histogram, say), what would you add to CalculateTotalHours's pipeline?",
+      "prompt": "Why does HoursByEmployee filter entry.ClockOut is not null before grouping, the same way GetEmployeeClockEntries does?",
       "options": [
-        "A .Select(x => x.GetDuartion().TotalHours) stage before .Sum(), separating projection from aggregation",
-        "Nothing -- Sum already exposes the intermediate values",
-        "A foreach loop, since LINQ cannot expose intermediate values"
+        "Grouping an open entry would still work, but summing it with GetDuartion() would throw -- the filter has to run before the Sum either way",
+        "GroupBy requires every entry to be completed",
+        "It has no effect on the result"
       ],
       "correct": 0,
-      "explanation": "This is exactly the three-stage pipeline decision-0007 says was originally planned but not needed for the single CalculateTotalHours caller -- it becomes worth adding once a second caller needs the intermediate values."
+      "explanation": "The same reasoning from Session 21 applies here: GetDuartion throws on an open entry, so filtering happens before, not after, aggregation."
     },
     {
-      "prompt": "Why does GetEmployeeClockEntries filter on ClockOut != null?",
+      "prompt": "If an Employee has no matching WorkSummary (no completed entries yet), what does Join produce for them?",
       "options": [
-        "An open (still-clocked-in) entry has no valid duration -- GetDuartion would throw if summed before completion",
-        "ClockOut is required by the LINQ Where method's signature",
-        "It has no effect; every entry always has ClockOut set"
+        "Nothing -- Join is an inner join, so an employee with no summary is silently excluded from the result",
+        "A summary with zero hours is created automatically",
+        "An exception is thrown"
       ],
       "correct": 0,
-      "explanation": "GetDuartion throws InvalidOperationException on an open entry; filtering ClockOut != null before the Sum call is what prevents that exception during payroll calculation."
+      "explanation": "LINQ's Join has inner-join semantics: only keys present in both sequences appear in the output. An employee with zero completed shifts never appears in summaries, so they are dropped, not zero-filled."
     },
     {
-      "prompt": "What would happen if GetEmployeeClockEntries's Where predicate dropped the date-range conditions?",
+      "prompt": "Is HoursByEmployee something the real PayrollService class currently needs?",
       "options": [
-        "CalculateTotalHours would sum every completed shift the employee ever worked, not just the requested period",
-        "The method would fail to compile",
-        "Nothing -- the date parameters are unused"
+        "No -- PayrollService.CalculateTotalHours only ever handles one employeeId; this is a genuine, clearly-labeled extension for a multi-employee report",
+        "Yes, it replaces CalculateTotalHours",
+        "Yes, it is required by IClockEntryRepository"
       ],
       "correct": 0,
-      "explanation": "The date-range conditions are real, load-bearing parts of the compound Where -- removing them silently changes what CalculateTotalHours reports."
+      "explanation": "This session builds on the real domain but adds new capability -- a payroll-summary-for-everyone report -- that the real, narrower PayrollService does not provide."
     }
   ],
   "reflections": [
-    "Why is a compound Where condition (three ANDs in one lambda) easier to reason about here than three separate filtering methods?",
-    "What would ClockEntryQueries.LongestFirst look like if it needed the intermediate hour values for something other than filtering?",
-    "Where else in this codebase could a Select-then-Sum split make a future second caller's job easier?"
+    "Why does grouping by EmployeeId reuse the exact same GetDuartion().TotalHours projection PayrollService already uses for one employee?",
+    "What would change about EmployeeLabels if two employees shared the same EmployeeId (a data integrity problem Join alone cannot catch)?",
+    "Where would a multi-employee report like this plug into the real application -- Program.cs, or a new WebApi endpoint from Session 33?"
   ],
-  "whatBreaks": "Removing the ClockOut != null condition from GetEmployeeClockEntries reintroduces GetDuartion's InvalidOperationException into CalculateTotalHours. Removing the date-range conditions makes CalculateTotalHours silently ignore its own startDate/endDate parameters. Splitting Sum's inline projection into a separate Select adds an intermediate allocation with no current caller that needs it -- a real but currently unnecessary refactor.",
-  "summary": "The real PayrollService.CalculateTotalHours is one Where-shaped filter (in GetEmployeeClockEntries) feeding one Sum call with an inline projection -- decision-0007 documents that this two-method, no-separate-Select shape was the delivered design, not the three-stage pipeline originally planned."
+  "whatBreaks": "Removing the ClockOut is not null filter reintroduces GetDuartion's InvalidOperationException into the Sum call. Removing OrderBy makes the grouped totals order non-deterministic across runs, which would make the tests flaky. Using a plain foreach loop instead of Join to correlate employees and summaries would require a manual dictionary lookup -- reintroducing exactly the accidental complexity Join and GroupBy remove.",
+  "summary": "GroupBy and Join extend PayrollService's real single-employee Sum pipeline to a multi-employee report: GroupBy partitions by EmployeeId using the same GetDuartion().TotalHours projection, and Join correlates the resulting totals back to employee names by matching EmployeeId across two independent sequences."
 }

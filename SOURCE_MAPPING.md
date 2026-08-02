@@ -270,6 +270,19 @@ was implemented. This is called out explicitly here, per the task's own instruct
 defensible, documented judgment call rather than pause for clarification on a genuine
 in-brief contradiction.
 
+**Correction (post-review):** on review, retiring session number 1 was the wrong call —
+a public course with no "Session 01," jumping straight from 00 to 02, reads as a bug to
+any visitor regardless of which internal instruction technically justified it. The gap was
+unnecessary in the first place: 0 fits before 1 without requiring any renumbering at all,
+since nothing was ever using slot 0 before. The fix: sessions 01–35 were restored verbatim
+(content, not just numbers) from the pre-Session-00 commit, session-36.json was deleted (its
+content is identical to the restored session-35.json), and the manifest/validator were
+updated for plain contiguous 0–35 numbering with a standard `prerequisite = number − 1`
+pattern throughout (session 1's prerequisite is simply `0`, no special case needed). The
+"mechanical consequences applied" section below describes the intermediate 0,2–36 state that
+existed briefly before this correction, kept here for an accurate history rather than
+silently rewritten.
+
 **Mechanical consequences applied:**
 - Every session file from `session-01.json` (34 through 01, in that descending order) shifted
   up by one, `session-01.json` → `session-02.json`, ..., `session-35.json` → `session-36.json`,

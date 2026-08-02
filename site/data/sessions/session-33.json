@@ -1,116 +1,116 @@
 {
   "number": 33,
   "category": "Data access and application integration",
-  "estimatedTime": "40 minutes",
-  "connection": "Session 24 studied GetEmployeeClockEntries's real IEnumerable<ClockEntry> deferred execution, entirely in-process. Session 32 introduced PayrollDbContext. This session studies ClockEntryDataQueries's IQueryable<ClockEntryEntity>, and the concrete difference between an in-process LINQ query and one a database provider translates and executes.",
+  "estimatedTime": "45 minutes",
+  "connection": "Session 30 covered Scoped lifetime, previewing ASP.NET Core's per-request scoping. This session studies the real Parm.Practice.WebApi/Program.cs scaffold, mirrored verbatim in TimeClock.Web/Program.cs: it calls AddControllers()/MapControllers() against zero controller classes. This session writes the first one.",
   "objectives": [
-    "Read ClockEntryDataQueries.CompletedForEmployee's real IQueryable<ClockEntryEntity> return type, and contrast it with GetEmployeeClockEntries's IEnumerable<ClockEntry> from Session 24.",
-    "Explain what 'the provider translates the query' means concretely: db.ClockEntries.Where(...) becomes a SQL WHERE clause, not an in-process filter loop.",
-    "Trace MaterializeAsync's real await query.ToListAsync(cancellationToken) as the point where the translated SQL actually executes against SQLite.",
-    "Predict what would happen if CompletedForEmployee's Where clause referenced a C# method with no SQL equivalent, and why that would fail only when the query is materialized, not when it is built."
+    "Read TimeClock.Web/Program.cs and confirm, by inspection, that AddControllers()/MapControllers() are wired up with no Controllers/ directory and no controller classes anywhere in the project -- a real, verified gap, not a hypothetical.",
+    "Write ClockEntriesController, the project's first real controller, exposing an HTTP endpoint over the real IClockEntryService.",
+    "Explain why a controller action's parameters and return type form a DTO boundary distinct from the domain's ClockEntry/Employee types.",
+    "Confirm MapControllers() now has at least one real route to map, by calling the new endpoint."
   ],
   "visuals": [
     {
-      "diagram": "pipeline",
-      "title": "IQueryable<T> builds an expression tree, not a filter loop",
-      "explanation": "db.ClockEntries.Where(entry => entry.EmployeeId == employeeId && entry.ClockOut != null) records what to filter, without running the filter in C# at all."
+      "diagram": "invariant",
+      "title": "The real, verified gap",
+      "explanation": "builder.Services.AddControllers(); ... app.MapControllers(); -- both real lines exist in Parm.Practice.WebApi/Program.cs today, with zero [ApiController] classes anywhere in the project for them to map."
     },
     {
       "diagram": "call",
-      "title": "The provider translates the expression into SQL",
-      "explanation": "EF Core's SQLite provider turns that same expression tree into a real SQL WHERE clause, sent to the database rather than evaluated by the .NET runtime."
+      "title": "A controller action is the missing piece",
+      "explanation": "[HttpPost] public IActionResult ClockIn(int employeeId) gives MapControllers() something real to route requests to -- the first controller this real project has ever had."
     },
     {
       "diagram": "return",
-      "title": "ToListAsync is where execution actually happens",
-      "explanation": "MaterializeAsync's await query.ToListAsync(cancellationToken) is the moment the translated SQL runs against the database and results come back as ClockEntryEntity objects."
+      "title": "The action's parameters are the HTTP boundary, not the domain boundary",
+      "explanation": "A controller action receives request data (route values, query strings, request bodies) -- it is not the same thing as calling IClockEntryService.ClockIn(int employeeId) directly from C# code."
     },
     {
-      "diagram": "invariant",
-      "title": "IEnumerable<T> (Session 24) never leaves the process; IQueryable<T> does",
-      "explanation": "GetEmployeeClockEntries's Where runs entirely in .NET's memory; CompletedForEmployee's Where is executed by SQLite, outside the .NET process boundary entirely."
+      "diagram": "pipeline",
+      "title": "One request, routed to one action, calling the real service",
+      "explanation": "POST /employees/1/clock-in -> ClockEntriesController.ClockIn(1) -> the real, unmodified IClockEntryService.ClockIn(1)."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "What is different about where db.ClockEntries.Where(...) actually executes, compared to Session 24's _clockEntries.Where(...)?",
+      "prompt": "Why does the real Parm.Practice.WebApi project currently have zero working HTTP endpoints, despite calling AddControllers() and MapControllers()?",
       "options": [
-        "db.ClockEntries.Where's expression tree is translated by EF Core's provider into SQL and executed inside the SQLite database itself; _clockEntries.Where runs entirely inside the .NET process, filtering objects already in memory",
-        "They execute identically -- IQueryable and IEnumerable behave the same way",
-        "db.ClockEntries.Where executes immediately, before MaterializeAsync is called"
+        "Those two calls only wire up the infrastructure FOR controllers -- MapControllers() maps whatever [ApiController]-attributed classes it finds, and the real project has never had any",
+        "AddControllers() and MapControllers() are broken in this version of ASP.NET Core",
+        "The project uses minimal APIs instead, which are incompatible with MapControllers()"
       ],
       "correct": 0,
-      "explanation": "This is the real, concrete difference Session 24 promised to revisit: IQueryable<T>'s deferred execution defers all the way to a database provider, not just to enumeration."
+      "explanation": "This is confirmed by inspecting the real project directly -- the DI/routing infrastructure is present and correctly configured; only the controllers themselves are missing."
     },
     {
-      "prompt": "When does CompletedForEmployee's Where clause actually run against the SQLite database?",
+      "prompt": "What does ClockEntriesController.ClockIn(int employeeId) actually call to perform the real work?",
       "options": [
-        "Only when MaterializeAsync calls query.ToListAsync(...) -- CompletedForEmployee itself only builds the query, without executing it",
-        "Immediately, inside CompletedForEmployee",
-        "Every time the ClockEntryEntity objects are read afterward"
+        "The real, unmodified IClockEntryService.ClockIn(int employeeId) -- the controller is a thin HTTP-facing wrapper around logic that already exists and is already tested",
+        "A new, duplicate implementation of the clock-in logic written specifically for the controller",
+        "PayrollService directly"
       ],
       "correct": 0,
-      "explanation": "ToListAsync is the real materialization point -- exactly the same deferred-until-enumerated principle from Session 24, applied here to database execution instead of in-process enumeration."
+      "explanation": "This is the whole point of Sessions 5-19's interface-based design: the controller is new, but the logic it calls into is the same real, already-tested ClockEntryService."
     },
     {
-      "prompt": "If CompletedForEmployee's Where clause called a C# method SQLite's provider cannot translate to SQL, when would that failure surface?",
+      "prompt": "Is a controller action's int employeeId parameter (bound from the URL) the same thing as calling IClockEntryService.ClockIn(employeeId) directly in C# code?",
       "options": [
-        "At ToListAsync -- when the provider actually attempts translation -- not when CompletedForEmployee itself builds the expression tree, since building it does not require the provider to understand it yet",
-        "Immediately when CompletedForEmployee is called",
-        "At compile time"
+        "Not exactly -- the controller parameter is bound from an HTTP request (route value, query string, or body) by ASP.NET Core's model binding, THEN passed to the real ClockIn method; the HTTP boundary and the domain method call are two distinct steps",
+        "Yes -- they are identical in every respect",
+        "No -- controller actions cannot call domain services at all"
       ],
       "correct": 0,
-      "explanation": "This is a real, subtle consequence of deferred, provider-translated execution: a query can be built successfully and only fail once the provider tries to turn it into SQL."
+      "explanation": "This distinction matters for Session 34's DTO/validation discussion: HTTP requests need explicit binding and validation before their values can be trusted as valid domain method arguments."
     }
   ],
   "concept": [
     {
-      "title": "IQueryable<T>: an expression tree, waiting for a provider",
+      "title": "The real, verified gap",
       "paragraphs": [
-        "ClockEntryDataQueries.CompletedForEmployee returns IQueryable<ClockEntryEntity> -- db.ClockEntries.Where(...) builds a description of the filter as an expression tree, not a filtered list.",
-        "Nothing has executed yet at the point CompletedForEmployee returns -- this mirrors Session 24's IEnumerable<ClockEntry> deferred execution, but the eventual translator is a database provider instead of the .NET runtime itself."
+        "TimeClock.Web/Program.cs mirrors Parm.Practice.WebApi/Program.cs verbatim: builder.Services.AddControllers(); wires up controller-related services, and app.MapControllers(); tells ASP.NET Core's routing to map any [ApiController]-attributed classes it discovers -- but there is no Controllers/ directory anywhere in the project, and zero such classes exist.",
+        "This is real and current, not a hypothetical scenario -- confirmed by inspecting both the real practice-07092026 repository and this course's own TimeClock.Web project before this session's lab."
       ],
-      "code": "// src/TimeClock.Infrastructure/ClockEntryDataQueries.cs -- new extension\npublic static IQueryable<ClockEntryEntity> CompletedForEmployee(PayrollDbContext db, int employeeId) =>\n    db.ClockEntries.Where(entry => entry.EmployeeId == employeeId && entry.ClockOut != null);"
+      "code": "// src/TimeClock.Web/Program.cs -- real, mirrored verbatim from the source WebApi\nvar builder = WebApplication.CreateBuilder(args);\nbuilder.Services.AddControllers();\n\nbuilder.Services.AddSingleton<IClockEntryRepository, ClockEntryRepository>();\nbuilder.Services.AddSingleton<IEmployeeRepository, EmployeeRepositor>();\nbuilder.Services.AddSingleton<IClockEntryService, ClockEntryService>();\nbuilder.Services.AddSingleton<PayrollService>();\n\nvar app = builder.Build();\napp.MapControllers();   // maps nothing today -- zero controllers exist\napp.Run();"
     },
     {
-      "title": "ToListAsync: where the SQL actually runs",
+      "title": "ClockEntriesController: the first real controller",
       "paragraphs": [
-        "MaterializeAsync's await query.ToListAsync(cancellationToken) is the real execution point -- EF Core's SQLite provider translates the expression tree into an actual SQL statement here, sends it to the database, and maps the returned rows back into ClockEntryEntity objects.",
-        "The real, existing test proves this end to end: it opens a genuine (in-memory) SQLite connection, adds a completed entity, and confirms CompletedForEmployee plus MaterializeAsync together return exactly one row -- real provider translation, not a mock standing in for it."
+        "A minimal controller action exposing the real, already-tested IClockEntryService.ClockIn over HTTP -- new code, but calling into logic Sessions 5 and 19 already built and tested.",
+        "[ApiController] plus a route attribute is what makes this class discoverable by MapControllers(); nothing about IClockEntryService itself needs to change for this to work."
       ],
-      "code": "// src/TimeClock.Infrastructure/ClockEntryDataQueries.cs\npublic static async Task<List<ClockEntryEntity>> MaterializeAsync(IQueryable<ClockEntryEntity> query, CancellationToken cancellationToken = default)\n{\n    List<ClockEntryEntity> rows = await query.ToListAsync(cancellationToken);   // real SQL executes here\n    return rows.OrderBy(entry => entry.ClockIn).ToList();\n}"
+      "code": "// New: TimeClock.Web/Controllers/ClockEntriesController.cs\n[ApiController]\n[Route(\"employees/{employeeId}/clock-in\")]\npublic sealed class ClockEntriesController(IClockEntryService clockEntryService) : ControllerBase\n{\n    [HttpPost]\n    public IActionResult ClockIn(int employeeId)\n    {\n        clockEntryService.ClockIn(employeeId);\n        return Accepted();\n    }\n}"
     },
     {
-      "title": "In-process versus database-side: the same principle, two execution targets",
+      "title": "The HTTP boundary is a separate step from the domain call",
       "paragraphs": [
-        "Session 24's GetEmployeeClockEntries filters ClockEntry objects already sitting in .NET memory -- there is no translation step, because the filter IS C# code running directly.",
-        "This session's CompletedForEmployee filters rows that may not even be loaded into .NET memory yet -- the filtering happens inside SQLite, and only the matching rows ever cross into .NET as ClockEntryEntity objects."
+        "Before ClockIn(int employeeId) ever runs, ASP.NET Core's model binding has already parsed employeeId out of the URL segment {employeeId} and converted it to an int -- a step Session 34 studies more closely when it can fail (a non-numeric segment, for instance).",
+        "This is why controller actions are described as a boundary: everything on one side (HTTP requests, routing, model binding) is new to this session; everything on the other side (IClockEntryService, ClockEntry, the real domain) is unchanged from Sessions 5-29."
       ],
       "code": "dotnet test TimeClock.sln --configuration Release"
     }
   ],
   "lab": {
-    "objective": "Confirm CompletedForEmployee and MaterializeAsync's real deferred-to-a-provider execution using an in-memory SQLite database.",
-    "startingCondition": "ClockEntryDataQueries and PayrollDbContext already exist as real, new extensions in TimeClock.Infrastructure.",
+    "objective": "Add ClockEntriesController as the real project's first controller, and confirm MapControllers() now routes a real HTTP request to it.",
+    "startingCondition": "TimeClock.Web/Program.cs already calls AddControllers()/MapControllers() with zero controllers, mirroring the real, current Parm.Practice.WebApi project exactly.",
     "steps": [
-      "Open an in-memory SQLite connection and PayrollDbContext, and add one completed and one open ClockEntryEntity.",
-      "Call CompletedForEmployee and confirm, before calling MaterializeAsync, that nothing has executed yet (the returned value is an IQueryable, not a List).",
-      "Call MaterializeAsync and confirm only the completed entity is returned -- the open one is correctly excluded by the translated SQL WHERE clause.",
-      "Explain, in writing, what would need to be true for this same query to also work against a real (non-in-memory) SQLite or SQL Server database with no code changes."
+      "Confirm, by searching the project, that no Controllers/ directory or [ApiController] class currently exists.",
+      "Add Controllers/ClockEntriesController.cs with a ClockIn action calling the real IClockEntryService.ClockIn.",
+      "Run the WebApi host and send a POST request to the new route, confirming a successful response.",
+      "Confirm the underlying ClockEntryRepository now has a new open ClockEntry for that employee, proving the controller genuinely reached the real domain logic."
     ],
-    "expectedBehavior": "CompletedForEmployee returns an unexecuted IQueryable; MaterializeAsync's ToListAsync call is what actually executes the translated SQL and returns only the completed entity.",
+    "expectedBehavior": "Before the lab, no route exists for clocking in over HTTP. After adding ClockEntriesController, the POST request succeeds and a new open ClockEntry is created through the same real ClockEntryService used by the console app.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Infrastructure/ClockEntryDataQueries.cs",
+      "path": "src/TimeClock.Web/Program.cs",
       "action": "Verify",
-      "why": "Confirm the real IQueryable<ClockEntryEntity> query-building and ToListAsync materialization."
+      "why": "Confirm the real, current AddControllers()/MapControllers() scaffold with zero controllers."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/ClockEntryDataQueriesTests.cs",
-      "action": "Verify",
-      "why": "Confirm the real, SQLite-backed integration test."
+      "path": "src/TimeClock.Web/Controllers/ClockEntriesController.cs",
+      "action": "Add",
+      "why": "Write the project's first real controller, filling the gap MapControllers() has been waiting on."
     },
     {
       "path": "site/data/sessions/session-32.json",
@@ -118,50 +118,50 @@
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-32: teach ef core queries in-memory versus database execution",
+  "commit": "session-32: teach aspnet core requests routing and dto boundaries",
   "review": [
-    "IQueryable<ClockEntryEntity>'s provider-translated execution is explicitly contrasted with Session 24's in-process IEnumerable<ClockEntry>.",
-    "ToListAsync is correctly identified as the real materialization point, not CompletedForEmployee itself.",
-    "The real, SQLite-backed integration test is used as evidence, not a mocked stand-in.",
-    "The full test suite passes."
+    "The real, current zero-controller gap is confirmed by inspection before any code is written, not assumed.",
+    "ClockEntriesController calls the real, unmodified IClockEntryService rather than duplicating its logic.",
+    "The HTTP boundary (model binding, routing) is explicitly distinguished from the domain method call it eventually makes.",
+    "The full test suite passes, and the new endpoint is confirmed working end to end."
   ],
   "postQuiz": [
     {
-      "prompt": "Why can CompletedForEmployee's exact same code work against SQLite in tests and (hypothetically) SQL Server in production, with zero changes?",
+      "prompt": "If PayrollService were resolved inside a new controller action today, without any other changes, what real bug from the source WebApi would surface?",
       "options": [
-        "IQueryable<T>'s expression tree is provider-agnostic -- each EF Core provider (SQLite, SQL Server, etc.) supplies its own translation from the same expression tree into that database's specific SQL dialect",
-        "It cannot -- the code would need to change for each database",
-        "SQLite and SQL Server use identical SQL syntax"
+        "The real, latent missing-IEmployeeService-registration bug -- PayrollService's constructor requires IEmployeeService, which TimeClock.Web/Program.cs (mirroring the real WebApi) never registers, so resolution would throw InvalidOperationException",
+        "Nothing -- PayrollService resolves without issue in the WebApi host",
+        "A compile error, not a runtime error"
       ],
       "correct": 0,
-      "explanation": "This portability is a real, specific benefit of IQueryable's deferred, provider-translated design -- the query-building code stays the same; only the provider registered in PayrollDbContext's options changes."
+      "explanation": "This is exactly the bug Session 34 discovers and fixes -- Session 33 deliberately used IClockEntryService, which IS fully registered, so this particular controller avoids the bug; Session 34 confronts it directly."
     },
     {
-      "prompt": "If GetEmployeeClockEntries (Session 24's real, in-process IEnumerable<ClockEntry> method) were changed to query a database instead, would its Where clause need to change?",
+      "prompt": "Why does ClockEntriesController.ClockIn accept int employeeId as a route parameter rather than, say, a full ClockEntry object in the request body?",
       "options": [
-        "Very likely yes -- IEnumerable<T>'s Where runs arbitrary C# in-process, which may not have a SQL equivalent, while IQueryable<T>'s Where must stay within expressions a database provider can translate",
-        "No -- IEnumerable and IQueryable queries are always interchangeable",
-        "Only the return type would need to change, never the Where clause"
+        "Clocking in only requires an identity (which employee); ClockEntry's ClockIn timestamp is set by the server (DateTime.Now, inside the real ClockEntryService.ClockIn), not supplied by the client -- the route parameter matches exactly what the operation actually needs from the caller",
+        "ASP.NET Core does not support request bodies",
+        "ClockEntry cannot be deserialized from JSON"
       ],
       "correct": 0,
-      "explanation": "This is exactly why ClockEntry's own GetEmployeeClockEntries staying IEnumerable-based (in-process) versus ClockEntryDataQueries's IQueryable-based (provider-translated) approach are genuinely different techniques, not interchangeable syntax."
+      "explanation": "This mirrors the real ClockEntryService.ClockIn(int employeeId) signature exactly -- the controller's parameter list is deliberately no wider than the domain method it calls."
     },
     {
-      "prompt": "What would happen if MaterializeAsync's OrderBy call ran before ToListAsync instead of after?",
+      "prompt": "Was writing ClockEntriesController itself a change to any existing, real, tested code?",
       "options": [
-        "It would likely still be translated into the SQL query's ORDER BY clause (executing in the database) rather than sorting an already-materialized in-memory list -- a meaningful difference for large result sets",
-        "Nothing would change -- OrderBy always executes in .NET regardless of placement",
-        "It would cause a compile error"
+        "No -- it is entirely new code; IClockEntryService, ClockEntryService, and every existing test remain completely unmodified",
+        "Yes -- IClockEntryService needed a new HTTP-specific method",
+        "Yes -- ClockEntry's constructor needed to change"
       ],
       "correct": 0,
-      "explanation": "Chaining OrderBy onto an IQueryable BEFORE materializing lets the database do the sorting; calling it after ToListAsync (as the real MaterializeAsync does) sorts in .NET memory instead -- a real, deliberate implementation choice worth noticing."
+      "explanation": "This is deliberate: the controller is additive, calling into the exact same real, already-verified domain logic every earlier session already tested."
     }
   ],
   "reflections": [
-    "Why does this session's CompletedForEmployee filter on the same three conditions (EmployeeId, ClockOut, date range logic) that the real, in-process GetEmployeeClockEntries also filters on, even though the execution mechanism is completely different?",
-    "What would you need to verify before trusting that a LINQ query written against IQueryable<ClockEntryEntity> will translate successfully to SQL, rather than failing at ToListAsync?",
-    "Where might mixing IEnumerable-style and IQueryable-style filtering in the same query accidentally force unwanted in-process execution?"
+    "Why did MapControllers() compile and run successfully for 31 sessions with zero controllers to map, without ever producing an error?",
+    "What would you need to add to ClockEntriesController for it to also expose Clockout and CalculateTotalHours over HTTP?",
+    "How does keeping ClockEntriesController's action parameters narrow (just employeeId) protect it from becoming coupled to internal domain details that might change?"
   ],
-  "whatBreaks": "Calling .ToList() (not .ToListAsync()) on an IQueryable<ClockEntryEntity> works but blocks the calling thread during the database round trip instead of yielding it back, losing the benefit of Session 27-29's async/await work. Filtering with a C# method the SQLite provider cannot translate would compile successfully (the expression tree builds fine) but throw only when ToListAsync attempts translation -- a failure that surfaces later than a Session 24-style in-process IEnumerable filter would.",
-  "summary": "ClockEntryDataQueries.CompletedForEmployee returns IQueryable<ClockEntryEntity> -- an expression tree a database provider translates into real SQL, only executed when MaterializeAsync calls ToListAsync. This is the same deferred-execution principle Session 24 established for GetEmployeeClockEntries's in-process IEnumerable<ClockEntry>, but here the eventual executor is SQLite itself, not the .NET runtime -- confirmed with a real, SQLite-backed integration test, not a mock."
+  "whatBreaks": "Forgetting the [ApiController] attribute (or a valid route) on a new controller class means MapControllers() still will not discover it -- ASP.NET Core needs both the attribute and app.MapControllers() together to route requests to it. Calling PayrollService instead of IClockEntryService from a new controller action today would surface the real, still-unfixed missing-IEmployeeService-registration bug before Session 34 formally addresses it.",
+  "summary": "TimeClock.Web/Program.cs -- mirroring the real, current Parm.Practice.WebApi/Program.cs -- calls AddControllers()/MapControllers() against zero controller classes, a real and verified gap, not a hypothetical one. This session's lab writes ClockEntriesController, the project's first real controller, calling directly into the same real, already-tested IClockEntryService every earlier session built -- the HTTP boundary (routing, model binding) is new; the domain logic it reaches is not."
 }

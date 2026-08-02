@@ -4,26 +4,37 @@ This file reflects the real, independently re-verified state as of the final com
 rebuild pass. Nothing below is asserted without having actually run the referenced command
 in this session and reading its real output.
 
-## Second post-rebuild update: Session 00 addition (current, 36-session state)
+## Third post-rebuild update: numbering correction (current, 36-session, contiguous 0–35 state)
+
+The Session 00 addition below initially retired session number 1, producing 0, then 2–36.
+On review that gap was reverted: it looked like a bug on a public site, and was unnecessary
+in the first place, since 0 fits before 1 without shifting anything. Sessions 01–35 were
+restored verbatim from the pre-Session-00 commit, the stray `session-36.json` was removed,
+and `course-manifest.json`/`tools/validate-site.mjs` now expect plain contiguous 0–35
+numbering with `prerequisite = number − 1` throughout (Session 1's prerequisite is `0`, no
+special case). Re-verified: `npm run build && npm run validate` (`Validated 114 HTML pages
+and 36 manifest sessions`), `dotnet build`/`dotnet test` unchanged (0 warnings, 56/56 tests),
+and browser-checked Session 01's navigation (`← Session 00` / `Session 02 →`) and the
+syllabus table's prerequisite column for sessions 00–02. See `SOURCE_MAPPING.md`'s "Session
+00 addition" section, "Correction (post-review)" paragraph, for full detail.
+
+## Second post-rebuild update: Session 00 addition (superseded numbering — see above)
 
 A new opening chapter, Session 00 ("Why Learn C# in 2026?"), was added ahead of what was
 Session 01. It is original orientation material — motivating why C# is worth learning
 alongside Python/JavaScript/TypeScript, before any code is written — and is **not** derived
 from `practice-07092026` or `csharp-refresher`; see `SOURCE_MAPPING.md`'s "Session 00
-addition" section for full detail, including the explicit decision to retire session number
-1 rather than reuse it (numbering is now 0, then 2 through 36).
+addition" section for full detail. (This section's numbering claims — "0, then 2 through 36"
+— were the intermediate state corrected above; kept for history.)
 
-Every session file from the prior 01–35 range shifted up by one to 02–36, exactly as the
-01/02 split shifted 02–34 to 03–35 before it. `course-manifest.json` gained a tenth
-curriculum layer ("Orientation and Context", session 00 only) ahead of the existing nine,
-each of which had its session range shifted by one to match. `npm run build && npm run
-validate` were re-verified against the new 36-session structure (`Validated 114 HTML pages
-and 36 manifest sessions`), and `dotnet build`/`dotnet test` were re-verified unchanged (0
-warnings, 0 errors, 56/56 tests passing) since this change adds no C# code. Session 00 was
-also browser-verified directly: all 11 lesson sections render, its 4 new accessible inline
-SVGs pass the same `role="img"`/`title`/`desc` contract as every other diagram, quiz/reveal
-interactions work, and session navigation correctly links Session 00 -> Session 02 -> Session
-03 with the syllabus page listing Session 00 first with prerequisite "None".
+`course-manifest.json` gained a tenth curriculum layer ("Orientation and Context", session 00
+only) ahead of the existing nine, each of which had its session range shifted to match.
+`npm run build && npm run validate` were verified against the (then) 36-session structure
+(`Validated 114 HTML pages and 36 manifest sessions`), and `dotnet build`/`dotnet test` were
+re-verified unchanged (0 warnings, 0 errors, 56/56 tests passing) since this change adds no
+C# code. Session 00 was also browser-verified directly: all 11 lesson sections render, its 4
+new accessible inline SVGs pass the same `role="img"`/`title`/`desc` contract as every other
+diagram, and quiz/reveal interactions work.
 
 **Everything from this point down was written before the Session 00 addition and still uses
 the pre-Session-00 numbering (35 sessions, 9 layers, sessions 01–35)** — left as originally

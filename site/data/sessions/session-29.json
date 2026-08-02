@@ -1,121 +1,111 @@
 {
   "number": 29,
-  "category": "Asynchronous programming",
-  "estimatedTime": "45 minutes",
-  "connection": "Session 27 identified, without fixing, Program.cs's real unawaited clockEntryService.Clockout(1) call and the CS4014 warning it produces. This session fixes it -- the real async/await bug this codebase has carried since Session 7 -- and studies cancellation through IClockEntryRepository.GetClockEntry's real, unused CancellationToken parameter alongside CancellableEntrySource, a new extension that actually uses one.",
+  "category": "test structure",
+  "estimatedTime": "40 minutes",
+  "connection": "Session 28 covered cancellation. This session studies the one real xUnit test in the source repository -- PayrollServiceTests.CalculateTotalHours_SumsDurationsOfCompletedEntries -- as a worked Arrange-Act-Assert example, including its unconfigured Mock<IEmployeeService>.",
   "objectives": [
-    "Fix the real CS4014 bug: add await to Program.cs's clockEntryService.Clockout(1) call and remove the pragma suppression, confirming the build is warning-free without it.",
-    "Explain why the fix changes CalculateTotalHours's printed total from a near-zero accident to a real, deterministic, non-trivial number of hours.",
-    "Read IClockEntryRepository.GetClockEntry's CancellationToken cancellationToken = default parameter and confirm, by reading ClockEntryRepository's real implementation, that it is never actually checked or passed anywhere.",
-    "Contrast that decorative token with CancellableEntrySource, a new extension whose CancellationToken is genuinely passed to Task.Delay and can actually cancel an in-flight operation."
+    "Identify the Arrange, Act, and Assert sections of the real PayrollServiceTests.cs, even though the source file has no comments marking them.",
+    "Explain why the test mocks IClockEntryRepository with a configured .Setup(...).Returns(...) but mocks IEmployeeService with no configuration at all.",
+    "Compute by hand why two shifts of 2 and 3 hours produce the asserted total of 5.0, tracing through GetEmployeeClockEntries and GetDuartion().",
+    "Write a second, independent test for a boundary case CalculateTotalHours does not yet cover, such as an employee with zero completed entries."
   ],
   "visuals": [
     {
-      "diagram": "call",
-      "title": "Before the fix: a race with an accidental near-correct answer",
-      "explanation": "clockEntryService.Clockout(1) without await lets Program.cs call CalculateTotalHours before Clockout's body has necessarily finished -- the near-zero total was luck, not correctness."
+      "diagram": "tests",
+      "title": "Arrange builds the scenario",
+      "explanation": "Two ClockEntry objects are constructed and clocked out, then a mocked repository is configured to return them for employee 1."
     },
     {
       "diagram": "pipeline",
-      "title": "After the fix: ClockIn, then Clockout, then the total, guaranteed in order",
-      "explanation": "await clockEntryService.Clockout(1); ensures Clockout's entire body -- including SaveClockEntry -- completes before CalculateTotalHours runs."
+      "title": "Act calls exactly one method",
+      "explanation": "CalculateTotalHours(1, DateTime.MinValue, DateTime.MaxValue) is the single call under test."
     },
     {
-      "diagram": "invariant",
-      "title": "A CancellationToken parameter is not automatically functional",
-      "explanation": "IClockEntryRepository.GetClockEntry accepts a CancellationToken but its real implementation never reads it -- passing one has no effect on the real GetClockEntry today."
+      "diagram": "comparison",
+      "title": "Assert checks one observable value",
+      "explanation": "Assert.Equal(5.0, totalHours, precision: 5) checks the sum, not any internal implementation detail."
     },
     {
       "diagram": "feedback",
-      "title": "CancellableEntrySource shows what a real, functioning token looks like",
-      "explanation": "await Task.Delay(latency, cancellationToken) genuinely observes cancellation -- a real contrast to GetClockEntry's decorative parameter."
+      "title": "An unconfigured mock is itself evidence",
+      "explanation": "Mock<IEmployeeService>() with no .Setup() calls proves, in the test's own structure, that PayrollService's IEmployeeService dependency is not exercised by this code path."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Why did Program.cs's unawaited Clockout(1) call produce a near-zero total-hours output rather than a clearly wrong one?",
+      "prompt": "Why does the real test configure repository.Setup(r => r.GetEmployeeClockEntries(1, DateTime.MinValue, DateTime.MaxValue)).Returns(...) with those exact arguments?",
       "options": [
-        "ClockIn and the fire-and-forget Clockout run essentially back-to-back with almost no real elapsed time between them, and if CalculateTotalHours runs before Clockout's SaveClockEntry completes, GetEmployeeClockEntries may find zero completed entries in the requested window -- a near-zero result was the accidental, not guaranteed, outcome",
-        "The total was always correct -- there was never a real bug",
-        "CalculateTotalHours has a rounding bug unrelated to await"
+        "Moq only returns the configured value when the mocked method is called with matching arguments -- CalculateTotalHours must call GetEmployeeClockEntries with exactly DateTime.MinValue and DateTime.MaxValue for the test to work",
+        "The arguments are arbitrary and any values would work",
+        "DateTime.MinValue and DateTime.MaxValue are required by xUnit"
       ],
       "correct": 0,
-      "explanation": "This is the real, documented consequence of the CS4014 warning -- Session 27 identified it; this session fixes it and explains exactly why the output changes."
+      "explanation": "Moq's Setup matches by argument value -- the test's Act call and the Setup's expected arguments must agree for the stub to fire."
     },
     {
-      "prompt": "After adding await to clockEntryService.Clockout(1), what does Program.cs now guarantee about the order of operations?",
+      "prompt": "Why is employeeService a Mock<IEmployeeService>() with no .Setup() calls at all?",
       "options": [
-        "ClockIn completes, then Clockout's entire body (including the real SaveClockEntry call inside it) completes, THEN CalculateTotalHours runs -- removing the race entirely",
-        "Nothing changes -- await has no effect on execution order here",
-        "ClockIn and Clockout now run concurrently instead of the reverse"
+        "PayrollService's constructor requires an IEmployeeService argument to exist, but CalculateTotalHours never calls any of its members, so no behavior needs to be configured",
+        "IEmployeeService cannot be mocked",
+        "The test is incomplete and missing required setup"
       ],
       "correct": 0,
-      "explanation": "await is precisely what removes the race: the calling code cannot proceed past the awaited call until it has genuinely finished."
+      "explanation": "This is the real, deliberate shape of the test -- it proves the dependency is currently unused by simply never telling the mock what to do."
     },
     {
-      "prompt": "Does passing a real, non-default CancellationToken to the current GetClockEntry implementation actually let you cancel an in-flight lookup?",
+      "prompt": "2 hours + 3 hours = 5.0 -- which two real method calls produce those numbers?",
       "options": [
-        "No -- the real ClockEntryRepository.GetClockEntry implementation never reads or checks its cancellationToken parameter anywhere in its body; passing one has no observable effect today",
-        "Yes -- every async method automatically respects any CancellationToken passed to it",
-        "Only if the lookup takes longer than one second"
+        "GetDuartion().TotalHours on each of the two mocked ClockEntry objects, summed by CalculateTotalHours's .Sum() call",
+        "PayrollService.CalculateTotalHours hardcodes 5.0 for testing",
+        "The Mock<IClockEntryRepository> computes the sum internally"
       ],
       "correct": 0,
-      "explanation": "This is confirmed by reading the real source directly -- the parameter exists in the signature (the only CancellationToken in the whole codebase) but is unused, decorative."
+      "explanation": "Each ClockEntry's real GetDuartion() computes ClockOut - ClockIn; CalculateTotalHours's real Sum call adds the two TotalHours values together."
     }
   ],
   "concept": [
     {
-      "title": "The fix: one keyword, and a warning that stops needing suppression",
+      "title": "Arrange: two real ClockEntry objects, one mocked repository",
       "paragraphs": [
-        "The real bug is exactly as small as it looks: clockEntryService.Clockout(1); becomes await clockEntryService.Clockout(1);. No other line in Program.cs needs to change.",
-        "The #pragma warning disable CS4014 / restore pair this course added around the real bug (to keep TreatWarningsAsErrors from failing the build while the bug was still being taught) is removed entirely once the fix is in place -- the build is warning-free without needing to suppress anything."
+        "The real test constructs two genuine ClockEntry objects and clocks each one out -- no test double stands in for ClockEntry itself, only for IClockEntryRepository and IEmployeeService.",
+        "Mocking only the interfaces PayrollService depends on, while using the real domain objects those interfaces return, is what makes this an effective unit test of PayrollService specifically."
       ],
-      "code": "// Before -- the real, long-standing bug, kept intentionally through Session 27\n#pragma warning disable CS4014\nclockEntryService.Clockout(1);\n#pragma warning restore CS4014\n\n// After -- the fix\nawait clockEntryService.Clockout(1);"
+      "code": "// tests/.../PayrollServiceTests.cs -- Arrange\nvar firstShift = new ClockEntry(1, At(9));\nfirstShift.ClockOutEmployee(At(11)); // 2 hours\n\nvar secondShift = new ClockEntry(1, At(13));\nsecondShift.ClockOutEmployee(At(16)); // 3 hours\n\nvar repository = new Mock<IClockEntryRepository>();\nrepository.Setup(r => r.GetEmployeeClockEntries(1, DateTime.MinValue, DateTime.MaxValue))\n    .Returns(new[] { firstShift, secondShift });\n\nvar employeeService = new Mock<IEmployeeService>();   // deliberately unconfigured"
     },
     {
-      "title": "Why the printed total changes -- and becomes trustworthy",
+      "title": "Act: one call, matching the test's own naming",
       "paragraphs": [
-        "Before the fix, CalculateTotalHours's near-zero output only happened to look plausible; it was one possible outcome of an actual race condition, not a guaranteed one.",
-        "After the fix, ClockIn's SaveClockEntry and Clockout's ClockOutEmployee-then-SaveClockEntry are both guaranteed complete before CalculateTotalHours reads GetEmployeeClockEntries -- the printed total now reliably reflects the real (tiny, since ClockIn and Clockout still happen almost instantly) elapsed time between the two calls."
+        "The method name -- CalculateTotalHours_SumsDurationsOfCompletedEntries -- states the single behavior under test before the Act line is even read.",
+        "PayrollService is constructed with both mocked dependencies, in the same order as its real constructor: employeeService first, then repository."
       ],
-      "code": "clockEntryService.ClockIn(1);\nawait clockEntryService.Clockout(1);\nvar result = payrollService.CalculateTotalHours(1, DateTime.Today.AddHours(-4), DateTime.Now.AddHours(4));\nConsole.WriteLine($\"Total hours worked: {result}\");"
+      "code": "var payrollService = new PayrollService(employeeService.Object, repository.Object);\n\n// Act\nvar totalHours = payrollService.CalculateTotalHours(1, DateTime.MinValue, DateTime.MaxValue);"
     },
     {
-      "title": "A decorative token versus a real one",
+      "title": "Assert: one observable value, with an explicit precision",
       "paragraphs": [
-        "GetClockEntry's CancellationToken cancellationToken = default is the only CancellationToken anywhere in this codebase's real, ported source -- and it is never read inside the method body. Passing CancellationToken.None or a token that is already cancelled produces identical behavior today.",
-        "CancellableEntrySource -- a new extension -- shows what a genuinely functioning token looks like: await Task.Delay(latency, cancellationToken) actually observes cancellation and throws OperationCanceledException if the token fires before the delay completes."
+        "Assert.Equal(5.0, totalHours, precision: 5) compares totalHours to 5.0 to five decimal places -- appropriate for a double built from TimeSpan.TotalHours arithmetic, which can carry tiny floating-point error.",
+        "Nothing in the Assert checks whether IEmployeeService was called -- if it becomes used by a future change to CalculateTotalHours, this test's unconfigured mock would need real Setup calls, and this test's silence about it would itself be a signal to update the test."
       ],
-      "code": "// Real, decorative -- confirmed unused inside the method body\nTask<ClockEntry?> GetClockEntry(int employeeId, CancellationToken cancellationToken = default);\n\n// New extension -- a genuinely functioning token\npublic async Task<ClockEntry> LoadAsync(int employeeId, CancellationToken cancellationToken)\n{\n    await Task.Delay(latency, cancellationToken);   // actually observes cancellation\n    ...\n}"
+      "code": "// Assert\nAssert.Equal(5.0, totalHours, precision: 5);"
     }
   ],
   "lab": {
-    "objective": "Fix Program.cs's real CS4014 bug, confirm the total-hours output changes, and demonstrate the difference between GetClockEntry's decorative token and CancellableEntrySource's real one.",
-    "startingCondition": "Program.cs still has the real, pragma-suppressed unawaited Clockout(1) call from Sessions 6-26; CancellableEntrySource already exists as a real, functioning-cancellation extension.",
+    "objective": "Trace the real PayrollServiceTests.cs by hand, then add a second test covering an employee with zero completed entries.",
+    "startingCondition": "PayrollServiceTests.cs already contains the real, single test from the source repository.",
     "steps": [
-      "Add await to clockEntryService.Clockout(1) in Program.cs and remove the #pragma warning disable/restore CS4014 pair.",
-      "Build the solution and confirm it is warning-free with no suppression needed.",
-      "Run the app before and after the fix (or compare against Session 27's recorded output) and explain the difference in the printed total.",
-      "Write a test that cancels a CancellableEntrySource.LoadAsync call mid-delay and confirms OperationCanceledException is thrown -- then confirm the same cancellation approach has no effect on GetClockEntry."
+      "Compute firstShift and secondShift's durations by hand from the At(hour) helper and confirm they are 2 and 3 hours.",
+      "Trace repository.Setup's arguments against the Act line's arguments and confirm they match exactly.",
+      "Add a new [Fact] that configures GetEmployeeClockEntries to return an empty array and asserts CalculateTotalHours returns 0.0.",
+      "Run both tests and confirm the new test does not require any configuration on Mock<IEmployeeService> either."
     ],
-    "expectedBehavior": "The build succeeds with 0 warnings and no pragma suppression; the app's printed total-hours line reflects the now-guaranteed ClockIn-then-Clockout ordering; CancellableEntrySource genuinely responds to cancellation while GetClockEntry does not.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release && dotnet run --project src/TimeClock.App/TimeClock.App.csproj --configuration Release --no-build"
+    "expectedBehavior": "The original test still passes; the new zero-entries test passes with totalHours equal to 0.0; Mock<IEmployeeService> remains unconfigured in both tests.",
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.App/Program.cs",
+      "path": "tests/TimeClock.Domain.Tests/PayrollServiceTests.cs",
       "action": "Modify",
-      "why": "Await clockEntryService.Clockout(1) and remove the now-unnecessary CS4014 pragma suppression."
-    },
-    {
-      "path": "src/TimeClock.Domain/IClockEntryRepository.cs",
-      "action": "Verify",
-      "why": "Confirm the real, decorative CancellationToken parameter on GetClockEntry."
-    },
-    {
-      "path": "src/TimeClock.Domain/CancellableEntrySource.cs",
-      "action": "Verify",
-      "why": "Confirm the new extension's genuinely functioning cancellation."
+      "why": "Add a second test for the zero-completed-entries boundary case."
     },
     {
       "path": "site/data/sessions/session-28.json",
@@ -123,51 +113,50 @@
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-28: teach cancellation and asynchronous exceptions",
+  "commit": "session-28: teach unit tests and arrange act assert",
   "review": [
-    "Program.cs's await fix is the exact, minimal change (add await, remove the pragma pair) -- no other lines are touched.",
-    "The build is confirmed warning-free without any suppression after the fix.",
-    "GetClockEntry's CancellationToken is confirmed decorative by reading its real implementation, not assumed.",
-    "CancellableEntrySource's genuinely functioning cancellation is demonstrated with a real test, contrasting directly with GetClockEntry.",
-    "The full test suite passes."
+    "The new test follows the same Arrange-Act-Assert shape as the real, existing test.",
+    "Mock<IEmployeeService> remains unconfigured, consistent with PayrollService's real, unused dependency.",
+    "The new test's assertion checks one observable value, matching the existing test's style.",
+    "Both tests pass together, and the full suite remains green."
   ],
   "postQuiz": [
     {
-      "prompt": "Why was it correct for Sessions 6 through 25 to keep Program.cs's Clockout(1) call unawaited, rather than fixing it immediately when it was first introduced?",
+      "prompt": "If CalculateTotalHours were changed to call _employeeService.RenameService somewhere, what would happen to the existing PayrollServiceTests.cs test as written today?",
       "options": [
-        "The bug is real, observable, and pedagogically useful exactly as-is -- fixing it only once async/await (Session 27) and cancellation (this session) have been properly taught lets learners understand WHY it's a bug, not just that it is one",
-        "It was an oversight that should have been fixed in Session 7",
-        "Unawaited async calls are actually correct C# and never need fixing"
+        "It would likely throw, since Mock<IEmployeeService>() with no setup returns default/null behavior for any called member -- the test would need a real .Setup() added",
+        "Nothing -- Moq automatically implements every member with sensible behavior",
+        "The test would automatically update itself"
       ],
       "correct": 0,
-      "explanation": "This mirrors the real source repository's own history: the bug exists in production-adjacent code precisely because understanding why it matters requires the async/await knowledge this course builds up to across Sessions 26-28."
+      "explanation": "An unconfigured mock is not a no-op stand-in for every possible future call -- it only behaves correctly for the calls the test author anticipated."
     },
     {
-      "prompt": "If GetClockEntry's CancellationToken parameter started being genuinely checked (e.g. with cancellationToken.ThrowIfCancellationRequested()), what real behavior would change for existing callers?",
+      "prompt": "Why does the test use At(9), At(11), At(13), At(16) instead of DateTime.Now for the shift times?",
       "options": [
-        "Existing callers passing the default token would see no change at all, since a default CancellationToken is never in a cancelled state -- only callers who explicitly pass and trigger a real token would newly observe OperationCanceledException",
-        "Every existing call to GetClockEntry would immediately start throwing",
-        "The method's return type would need to change"
+        "Deterministic, fixed timestamps make the expected duration (2 hours, 3 hours) exact and reproducible on every test run",
+        "DateTime.Now cannot be used inside a Mock setup",
+        "At() is required by xUnit's [Fact] attribute"
       ],
       "correct": 0,
-      "explanation": "This is exactly why adding real cancellation support to an existing method is usually a safe, additive change -- default(CancellationToken) callers are unaffected."
+      "explanation": "A test that depended on DateTime.Now would have a different 'now' every run -- fixed offsets from DateTime.Today keep the math exact and repeatable."
     },
     {
-      "prompt": "What is the real, functional difference in this codebase between a CancellationToken parameter that exists but is unused, and one that is genuinely checked?",
+      "prompt": "What would a new test for 'an employee with one still-open (not clocked out) entry' need to configure differently?",
       "options": [
-        "The unused one (GetClockEntry's) has zero effect on the method's behavior no matter what token is passed; the checked one (CancellableEntrySource's) can genuinely stop the operation early via OperationCanceledException",
-        "There is no real difference -- both behave identically",
-        "The checked one always runs faster"
+        "GetEmployeeClockEntries would need to return only completed entries -- matching the real repository's own ClockOut != null filter -- so the open entry should simply not appear in the mocked return value",
+        "The test would need to catch an exception from CalculateTotalHours",
+        "PayrollService would need a different constructor"
       ],
       "correct": 0,
-      "explanation": "This is the entire teaching point of contrasting the two: a CancellationToken parameter's mere presence in a signature proves nothing about whether cancellation actually works."
+      "explanation": "The real GetEmployeeClockEntries already filters out open entries before PayrollService ever sees them -- the mock should reproduce that same real filtering behavior, not rely on CalculateTotalHours to filter again."
     }
   ],
   "reflections": [
-    "Why does fixing Program.cs's real bug in Session 29 (rather than Session 27, where it was first identified) feel like the right pedagogical placement now that you understand cancellation?",
-    "Where else in this codebase might a parameter exist in a signature without being genuinely used, the way GetClockEntry's CancellationToken is?",
-    "What would you need to change about ClockEntryRepository for GetClockEntry's CancellationToken to become genuinely functional?"
+    "Why is an unconfigured Mock<IEmployeeService> itself evidence about PayrollService's current behavior, not just an incomplete test?",
+    "What would you need to change about this test if PayrollService's constructor parameter order were swapped?",
+    "How does testing against interfaces (IClockEntryRepository, IEmployeeService) rather than concrete classes make this test possible without an EF Core database?"
   ],
-  "whatBreaks": "Reverting Program.cs's await fix reintroduces the real race condition between Clockout's completion and CalculateTotalHours's read of GetEmployeeClockEntries, along with the real CS4014 warning that would then need re-suppressing to keep the build warning-free. Assuming GetClockEntry's CancellationToken parameter provides genuine cancellation support (because the parameter exists) would lead to writing cancellation-dependent code around a method that currently cannot honor it.",
-  "summary": "Program.cs's real, long-standing unawaited Clockout(1) call is fixed here, in the session where async/await and cancellation are both fully in scope: adding await removes the race that made CalculateTotalHours's near-zero output an accident rather than a guarantee, and the CS4014 pragma suppression is removed along with the bug it was protecting. GetClockEntry's CancellationToken parameter is confirmed, by reading its real implementation, to be entirely decorative -- a real contrast to CancellableEntrySource's genuinely functioning one."
+  "whatBreaks": "Configuring Mock<IEmployeeService> with unnecessary .Setup() calls would not break the test, but it would misrepresent the real dependency as used when it is not -- exactly the kind of drift Session 20's dead-dependency discussion warns about. Using DateTime.Now instead of the fixed At(hour) helper would make the expected duration nondeterministic. Asserting on an internal field instead of the public totalHours return value would couple the test to PayrollService's implementation instead of its contract.",
+  "summary": "PayrollServiceTests.cs is the source repository's one real xUnit test: Arrange builds two genuine ClockEntry shifts behind a configured Mock<IClockEntryRepository>, Act calls CalculateTotalHours once, and Assert checks the single resulting total -- while its unconfigured Mock<IEmployeeService> is itself proof that PayrollService's second dependency is not yet exercised."
 }

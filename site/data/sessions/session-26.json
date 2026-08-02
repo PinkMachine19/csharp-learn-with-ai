@@ -1,121 +1,121 @@
 {
   "number": 26,
-  "category": "Errors and resource management",
+  "category": "task-based work",
   "estimatedTime": "40 minutes",
-  "connection": "Session 25 established the real throw-vs-return rule. This session traces a real exception's full propagation path -- GetDuartion's InvalidOperationException, uncaught anywhere between ClockEntry and Program.cs -- and studies IDisposable/using through the real database connections Sessions 31-32's tests already open.",
+  "connection": "Session 25 covered exception propagation. This session reads the real, correct async/await example in the source app -- ClockEntryService.Clockout -- and previews the real bug in Program.cs that Session 28 fixes: Clockout(1) called with no await.",
   "objectives": [
-    "Trace GetDuartion's real InvalidOperationException from where it is thrown up through PayrollService.CalculateTotalHours to Program.cs, and identify that nothing in that path catches it.",
-    "Explain what 'unhandled exception' means concretely for this console app: the process terminates and prints a stack trace, since Program.cs never wraps its calls in try/catch.",
-    "Explain what using (or await using) guarantees for a SqliteConnection or PayrollDbContext, even if an exception is thrown partway through the code block.",
-    "Identify a real await using PayrollDbContext db = new(options); statement in the test suite and explain what would leak without it."
+    "Explain why Task<ClockEntry?> represents an operation that may complete later, and why 'async' alone does not guarantee a new thread is used.",
+    "Read ClockEntryService.Clockout as a correct await example: it awaits GetClockEntry before branching on the result.",
+    "Read ClockEntryRepository.GetClockEntry as a 'fake async' anti-pattern: an async method whose body is entirely synchronous, wrapped in Task.FromResult.",
+    "Identify, without yet fixing, the real CS4014 warning in Program.cs: clockEntryService.Clockout(1) called with no await."
   ],
   "visuals": [
     {
+      "diagram": "pipeline",
+      "title": "await suspends, it does not block",
+      "explanation": "Clockout awaits GetClockEntry and only continues once the Task completes -- the calling thread is not blocked while waiting."
+    },
+    {
       "diagram": "call",
-      "title": "An exception propagates up, unchanged, until something catches it",
-      "explanation": "GetDuartion throws inside ClockEntry; CalculateTotalHours does not catch it; Program.cs does not catch it either -- the exception reaches the very top of the call stack unmodified."
-    },
-    {
-      "diagram": "branch",
-      "title": "No catch means the process terminates",
-      "explanation": "dotnet run for a console app with an unhandled exception prints the exception's stack trace to stderr and exits with a non-zero code -- there is no generic 'error page' the way a web app might have."
-    },
-    {
-      "diagram": "invariant",
-      "title": "using guarantees Dispose runs, exception or not",
-      "explanation": "await using SqliteConnection connection = new(...) ensures the connection is closed even if an exception is thrown between opening it and the end of the block."
+      "title": "async does not promise a thread",
+      "explanation": "GetClockEntry is declared async but its body -- a debug loop, an empty foreach, then Task.FromResult(...) -- never actually leaves the calling thread."
     },
     {
       "diagram": "return",
-      "title": "IDisposable is a contract for releasing unmanaged resources",
-      "explanation": "SqliteConnection and DbContext both implement IDisposable/IAsyncDisposable because they hold real, external resources (a database connection) that the garbage collector alone cannot reliably clean up promptly."
+      "title": "A Task can represent already-completed work",
+      "explanation": "Task.FromResult wraps a value that is already known, producing a completed Task -- there is no real asynchronous operation underneath it."
+    },
+    {
+      "diagram": "feedback",
+      "title": "An un-awaited Task keeps running unobserved",
+      "explanation": "Program.cs calls Clockout(1) without await -- the method starts, but Program.cs moves on to CalculateTotalHours before Clockout necessarily finishes."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "If GetDuartion throws InvalidOperationException on an open entry, and PayrollService.CalculateTotalHours never catches it, what happens when Program.cs calls CalculateTotalHours?",
+      "prompt": "Does ClockEntryRepository.GetClockEntry's async keyword mean it runs on a background thread?",
       "options": [
-        "The exception propagates unchanged all the way out of CalculateTotalHours, out of Program.cs's top-level statements, and terminates the process with an unhandled-exception stack trace",
-        "The exception is silently swallowed and CalculateTotalHours returns 0",
-        "The compiler prevents this code from ever throwing"
+        "No -- its body executes synchronously (a debug loop, an empty foreach, then a lookup) and Task.FromResult wraps an already-computed result; no real asynchronous work happens",
+        "Yes -- async always schedules work on the thread pool",
+        "It depends on the CancellationToken passed in"
       ],
       "correct": 0,
-      "explanation": "Nothing in the real call chain -- ClockEntry, PayrollService, or Program.cs -- catches this exception, so it propagates all the way to the runtime's default unhandled-exception behavior."
+      "explanation": "This is the real 'fake async' pattern in ClockEntryRepository.cs -- async and Task.FromResult do not by themselves create concurrency."
     },
     {
-      "prompt": "What does await using SqliteConnection connection = new(...) guarantee that a plain SqliteConnection connection = new(...) (without using) does not?",
+      "prompt": "What does ClockEntryService.Clockout do with the Task returned by GetClockEntry?",
       "options": [
-        "connection.DisposeAsync() runs automatically at the end of the block, even if an exception is thrown partway through -- releasing the underlying database connection either way",
-        "The connection opens faster",
-        "The connection cannot throw exceptions"
+        "It awaits it before checking whether the result is null",
+        "It ignores it and checks a different variable",
+        "It calls .Result on it synchronously"
       ],
       "correct": 0,
-      "explanation": "using (and await using) compiles to a try/finally under the hood -- Dispose/DisposeAsync is guaranteed to run in the finally, regardless of whether the try block completed normally or threw."
+      "explanation": "await ClockEntryRepository.GetClockEntry(employeeId) is the real, correct usage this session studies before Session 28 studies the broken one."
     },
     {
-      "prompt": "Why do SqliteConnection and DbContext implement IDisposable/IAsyncDisposable at all?",
+      "prompt": "What is different about clockEntryService.Clockout(1) in Program.cs, compared to the await inside Clockout itself?",
       "options": [
-        "They hold real external resources (an open database connection) that need explicit, timely release -- the garbage collector would eventually clean them up, but not promptly or deterministically enough for a resource this expensive",
-        "IDisposable is required by every C# class",
-        "It is purely a style convention with no functional purpose"
+        "Program.cs calls Clockout(1) with no await at all -- a real, uncorrected CS4014 warning",
+        "Program.cs awaits it exactly like Clockout does internally",
+        "Clockout cannot be called from Program.cs"
       ],
       "correct": 0,
-      "explanation": "IDisposable exists specifically for exactly this category of resource -- something external to the .NET managed heap that benefits from prompt, deterministic release."
+      "explanation": "This is the real bug: the method itself awaits correctly internally, but its caller in Program.cs does not await the call."
     }
   ],
   "concept": [
     {
-      "title": "Tracing GetDuartion's real, unhandled exception",
+      "title": "A correct await, inside Clockout",
       "paragraphs": [
-        "The path is real and short: ClockEntry.GetDuartion throws InvalidOperationException(\"Employee has not clcoked out yet\") if ClockOut is null; PayrollService.CalculateTotalHours calls .Sum(x => x.GetDuartion().TotalHours) with no try/catch around it; Program.cs calls CalculateTotalHours with no try/catch either.",
-        "This is not a bug this course is inventing -- it is the real, current shape of the codebase, verified by reading all three files. GetEmployeeClockEntries's real ClockOut != null filter is what normally prevents this from happening in practice, by excluding open entries before Sum ever sees them."
+        "ClockEntryService.Clockout is async Task, and its first line awaits _clockEntryRepository.GetClockEntry(employeeId) before doing anything else with the result.",
+        "This is the shape this session wants you to recognize: await suspends Clockout's own execution until the Task completes, then the method resumes with a real ClockEntry? value to branch on."
       ],
-      "code": "// Models/ClockEntry.cs\npublic TimeSpan GetDuartion()\n{\n    if (ClockOut == null)\n    {\n        throw new InvalidOperationException(\"Employee has not clcoked out yet\");\n    }\n    return ClockOut.Value - ClockIn;\n}"
+      "code": "// Services/ClockEntryService.cs -- the real, correct implementation\npublic async Task Clockout(int employeeId)\n{\n    ClockEntry? clockEntry = await _clockEntryRepository.GetClockEntry(employeeId);\n    if (clockEntry == null)\n    {\n        throw new InvalidOperationException(\"Employee is not currently clocked in \");\n    }\n    clockEntry.ClockOutEmployee(DateTime.Now);\n    _clockEntryRepository.SaveClockEntry(clockEntry);\n}"
     },
     {
-      "title": "An unhandled exception in a console app terminates the process",
+      "title": "A 'fake async' method, one layer down",
       "paragraphs": [
-        "There is no global exception handler anywhere in TimeClock.App's real Program.cs. If an exception ever did reach it unhandled, .NET's default behavior for a console app is to print the exception type, message, and stack trace to stderr, then exit with a non-zero exit code.",
-        "This is different from what Session 35 will cover for the WebApi project: ASP.NET Core has its own exception-handling middleware pipeline that a console app's top-level statements simply do not have."
+        "GetClockEntry is declared async Task<ClockEntry?>, but nothing inside it actually awaits an I/O operation or yields control. It runs a leftover debug loop, an empty foreach, then wraps a synchronous FirstOrDefault lookup in Task.FromResult.",
+        "This is real, uncorrected code -- kept intentionally as a 'spot the smell' artifact. A caller awaiting this method does get suspended-and-resumed semantics from await's perspective, but there is no actual asynchronous work happening underneath."
       ],
-      "code": "// No try/catch anywhere in the real Program.cs -- an exception here would terminate the process\nvar result = payrollService.CalculateTotalHours(1, DateTime.Today.AddHours(-4), DateTime.Now.AddHours(4));"
+      "code": "// Repositories/ClockEntryRepository.cs -- the real implementation\npublic async Task<ClockEntry?> GetClockEntry(int employeeId, CancellationToken cancellationToken = default)\n{\n    for (int i = 0; i < 10; i++) { Console.WriteLine(i); }   // leftover debug loop, real\n    foreach (var clockEntry in _clockEntries) { }              // empty foreach, real\n\n    return await Task.FromResult(\n        _clockEntries.FirstOrDefault(entry =>\n            entry.EmployeeId == employeeId && entry.ClockOut is null));\n}"
     },
     {
-      "title": "using/await using: Dispose runs no matter what",
+      "title": "Program.cs previews the bug Session 28 fixes",
       "paragraphs": [
-        "The real integration tests already do this: await using SqliteConnection connection = new(\"Data Source=:memory:\"); and await using PayrollDbContext db = new(options); both guarantee the connection and context are disposed at the end of their block, exception or not.",
-        "Without using, an exception thrown between opening the connection and the end of the method would skip whatever cleanup code came after it -- leaving the connection open until the garbage collector eventually, non-deterministically, finalizes it."
+        "clockEntryService.Clockout(1) in Program.cs is called with no await, despite Clockout being async Task -- a real CS4014 warning ('because this call is not awaited, execution of the current method continues before the call is completed').",
+        "This session only asks you to find and explain the warning, not fix it -- Session 28 (Cancellation and Asynchronous Exceptions) is where the fix and its consequences for CalculateTotalHours's near-zero output are worked through."
       ],
-      "code": "// tests/.../ClockEntryWorkflowTests.cs -- real, existing usage\nawait using SqliteConnection connection = new(\"Data Source=:memory:\");\nawait connection.OpenAsync();\n...\nawait using PayrollDbContext db = new(options);\nawait db.Database.EnsureCreatedAsync();\n// Both connection and db are disposed automatically at the end of this method, even on failure."
+      "code": "// Program.cs -- the real, uncorrected bug\nclockEntryService.ClockIn(1);\nclockEntryService.Clockout(1);   // CS4014: not awaited\nvar result = payrollService.CalculateTotalHours(1, DateTime.Today.AddHours(-4), DateTime.Now.AddHours(4));"
     }
   ],
   "lab": {
-    "objective": "Reproduce GetDuartion's real unhandled exception end to end, and confirm using/await using's guaranteed cleanup by deliberately throwing inside a using block.",
-    "startingCondition": "ClockEntry.GetDuartion, PayrollService.CalculateTotalHours, and the real SQLite-based integration tests already exist.",
+    "objective": "Trace await through Clockout and GetClockEntry, and locate (without fixing) the real CS4014 warning in Program.cs.",
+    "startingCondition": "ClockEntryService.Clockout, ClockEntryRepository.GetClockEntry, and Program.cs already exist with their real, uncorrected implementations.",
     "steps": [
-      "Call CalculateTotalHours in a way that includes an open (not clocked out) entry in the date range, and confirm the real, unhandled InvalidOperationException propagates out of the call.",
-      "Wrap that same call in a try/catch in a throwaway test and confirm you can observe the exact real exception message.",
-      "Write a small test that opens a using SqliteConnection, throws an exception inside the block, and confirms (via a flag or mock) that Dispose still ran.",
-      "Explain, in writing, why GetEmployeeClockEntries's ClockOut != null filter is what normally prevents this exception from surfacing in ordinary use."
+      "Add a Console.WriteLine immediately before and after the await inside Clockout, and observe the order of output relative to GetClockEntry's own debug loop.",
+      "Read GetClockEntry line by line and identify which parts are genuinely asynchronous (none) versus synchronous work wrapped in Task.FromResult.",
+      "Build the solution and read the real CS4014 compiler warning text for clockEntryService.Clockout(1) in Program.cs.",
+      "Write, in your own words, what execution order the missing await allows: does ClockIn, then Clockout's body, then CalculateTotalHours definitely happen in that order, or not?"
     ],
-    "expectedBehavior": "The unhandled InvalidOperationException is reproduced and its exact message confirmed; the using-block test confirms Dispose runs even when an exception is thrown inside the block.",
-    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
+    "expectedBehavior": "The build produces a real CS4014 warning naming Program.cs's unawaited Clockout(1) call; your written explanation correctly identifies that the missing await means CalculateTotalHours can run before Clockout's body finishes.",
+    "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/ClockEntry.cs",
+      "path": "src/TimeClock.Domain/ClockEntryService.cs",
       "action": "Verify",
-      "why": "Confirm GetDuartion's real, unhandled exception path."
+      "why": "Confirm the real, correct await usage inside Clockout."
     },
     {
-      "path": "src/TimeClock.Domain/TimeClockService.cs",
+      "path": "src/TimeClock.Domain/ClockEntryRepository.cs",
       "action": "Verify",
-      "why": "Confirm PayrollService.CalculateTotalHours has no try/catch around its Sum call."
+      "why": "Confirm GetClockEntry's fake-async shape: async keyword, no real asynchronous work."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/ClockEntryTests.cs",
-      "action": "Modify",
-      "why": "Add a test reproducing the real unhandled-exception path and a using-block Dispose guarantee test."
+      "path": "src/TimeClock.App/Program.cs",
+      "action": "Verify",
+      "why": "Confirm the real, uncorrected CS4014 warning on the unawaited Clockout(1) call."
     },
     {
       "path": "site/data/sessions/session-25.json",
@@ -123,50 +123,51 @@
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-25: teach exception propagation idisposable and using",
+  "commit": "session-25: teach tasks threads and awaitable work",
   "review": [
-    "GetDuartion's real exception path is traced through all three real files (ClockEntry, PayrollService, Program.cs), not asserted abstractly.",
-    "The console app's real lack of a global exception handler is contrasted honestly with what Session 35's WebApi will need.",
-    "using/await using's Dispose guarantee is demonstrated with a real, deliberately-throwing test, not just described.",
-    "The full test suite passes."
+    "Clockout's internal await is read correctly as suspend-and-resume, not as thread creation.",
+    "GetClockEntry's async keyword is not mistaken for guaranteed concurrency.",
+    "The real CS4014 warning is located and explained, not silently fixed in this session.",
+    "The debug-loop and empty-foreach cruft in GetClockEntry are identified, not silently removed.",
+    "The full test suite still passes -- no code was changed yet."
   ],
   "postQuiz": [
     {
-      "prompt": "Why doesn't GetEmployeeClockEntries's real filter (ClockOut != null) fully eliminate the possibility of GetDuartion throwing inside CalculateTotalHours?",
+      "prompt": "If GetClockEntry's Task.FromResult call were replaced with a real database call (Session 31's EF Core work), what would change about Clockout's own code?",
       "options": [
-        "It eliminates it for THAT specific call path -- but any other code that calls GetDuartion directly on an open ClockEntry (bypassing GetEmployeeClockEntries's filter) would still trigger the same real exception",
-        "It does fully eliminate the possibility everywhere in the codebase",
-        "GetDuartion cannot be called on an open entry -- the compiler prevents it"
+        "Nothing in Clockout itself -- it already awaits GetClockEntry correctly, so a genuinely asynchronous implementation underneath is a drop-in replacement",
+        "Clockout would need to add its own await keyword for the first time",
+        "Clockout would need to become synchronous"
       ],
       "correct": 0,
-      "explanation": "The filter protects one specific call path, not GetDuartion itself -- GetDuartion's own guard clause is what actually protects it universally, which is exactly why Session 8 studied that guard clause directly."
+      "explanation": "This is exactly why Clockout's correct await matters: the caller-side contract does not change when the callee becomes genuinely asynchronous instead of fake-asynchronous."
     },
     {
-      "prompt": "What would you need to add to Program.cs for an unhandled exception from CalculateTotalHours to be caught and handled gracefully instead of terminating the process?",
+      "prompt": "Why does this session stop short of fixing Program.cs's missing await on Clockout(1)?",
       "options": [
-        "A try/catch block around the call, or a broader pattern like a global unhandled-exception handler -- neither currently exists in the real Program.cs",
-        "Nothing -- Program.cs already handles this",
-        "async/await, since only asynchronous exceptions can be caught"
+        "Session 28 (Cancellation and Asynchronous Exceptions) is where the fix and its effect on CalculateTotalHours's output are worked through in depth",
+        "The bug cannot be fixed in C#",
+        "Program.cs does not actually contain this bug"
       ],
       "correct": 0,
-      "explanation": "This is a genuine, currently-true gap in the real console app -- there is no exception handling anywhere in Program.cs today."
+      "explanation": "This session is about recognizing await's real behavior first; Session 28 and Session 35 are where the bug is actually corrected."
     },
     {
-      "prompt": "If a using block's Dispose call itself throws an exception, what happens to an exception that was already being thrown from inside the block?",
+      "prompt": "What is the real, observable evidence that GetClockEntry does no genuine asynchronous work?",
       "options": [
-        "This is a genuinely subtle edge case (Dispose exceptions during unwinding) -- in the common case relevant to this codebase's SqliteConnection/DbContext usage, Dispose completing without its own exception is what actually happens, so the original exception propagates normally",
-        "The original exception is always silently discarded",
-        "The program always crashes immediately with no information"
+        "Its entire body -- the debug loop, the empty foreach, and the FirstOrDefault lookup -- runs synchronously before Task.FromResult wraps an already-known value",
+        "It returns void instead of Task",
+        "It has no CancellationToken parameter"
       ],
       "correct": 0,
-      "explanation": "This session focuses on the common, real case (Dispose succeeding) rather than the rarer double-fault scenario -- worth naming as a known edge case without needing to solve it here."
+      "explanation": "Task.FromResult wraps a value that is already computed -- there is no I/O or yield point anywhere in the method for real concurrency to occur."
     }
   ],
   "reflections": [
-    "Why does this session trace a real exception path instead of inventing a hypothetical one?",
-    "What would change about Program.cs's behavior if it wrapped its ClockIn/Clockout/CalculateTotalHours sequence in a single try/catch?",
-    "Where else in this codebase (beyond the SQLite tests) might a resource benefit from using/await using that doesn't currently have it?"
+    "Why does await in Clockout still work correctly even though GetClockEntry never truly runs asynchronously underneath it?",
+    "What does the real CS4014 warning tell you that a successful, warning-free build would not?",
+    "Which of GetClockEntry's real code smells (the debug loop, the empty foreach, the fake async) would you flag first in a code review, and why?"
   ],
-  "whatBreaks": "Calling GetDuartion on an open ClockEntry anywhere outside GetEmployeeClockEntries's filtered path reproduces the real, unhandled InvalidOperationException -- and because Program.cs has no try/catch, that would terminate the console app. Forgetting using/await using around a SqliteConnection or PayrollDbContext would leave the connection open if an exception occurred mid-method, relying on non-deterministic garbage collection to eventually release it instead of a guaranteed, immediate Dispose call.",
-  "summary": "GetDuartion's real InvalidOperationException propagates unchanged through PayrollService.CalculateTotalHours and Program.cs, because none of the three catches it -- a real, currently-true fact about this console app, not a hypothetical. using and await using (already at work in the real SQLite integration tests) guarantee Dispose/DisposeAsync runs at the end of a block regardless of whether an exception was thrown inside it, which is exactly why SqliteConnection and DbContext -- both real, external-resource-holding types -- are always opened inside one."
+  "whatBreaks": "Removing the await inside Clockout would make it return a Task immediately, before GetClockEntry's result is known -- clockEntry would never be checked for null correctly. Leaving GetClockEntry's fake-async pattern in place is harmless today only because nothing is genuinely asynchronous yet; it becomes a real bug the moment Session 31 swaps in a genuinely async EF Core call and callers still assume synchronous-speed completion. Ignoring the real CS4014 warning in Program.cs is exactly what lets ClockIn and Clockout race against CalculateTotalHours, producing the near-zero total-hours output Session 35 investigates.",
+  "summary": "ClockEntryService.Clockout is the app's one correct async/await example: it awaits GetClockEntry before branching. GetClockEntry itself is real 'fake async' -- an async signature over entirely synchronous work. Program.cs's real, unawaited Clockout(1) call previews the bug Session 28 and Session 35 fix."
 }

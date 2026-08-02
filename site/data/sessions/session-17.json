@@ -1,116 +1,121 @@
 {
   "number": 17,
-  "category": "Collections and generics",
-  "estimatedTime": "35 minutes",
-  "connection": "Session 16 studied a type constraint on a generic method. This session studies a different kind of generic type parameter behavior -- variance -- using ISource<out T> and ISink<in T>, two new, small interfaces built specifically to make covariance and contravariance observable, since nothing in the real domain's own interfaces uses either.",
+  "category": "Object-oriented design",
+  "estimatedTime": "40 minutes",
+  "connection": "Session 11 named ClockEntryRepository's public _clockEntries field as a real, unfixed encapsulation gap and promised to revisit it here. This session fixes it, and studies Timesheet -- a new extension composing Employee and List<ClockEntry> -- as a contrast in deliberate composition.",
   "objectives": [
-    "Explain what out on ISource<out T> permits: treating an ISource<Employee> as an ISource<object> safely.",
-    "Explain what in on ISink<in T> permits: treating an ISink<object> as an ISink<Employee> safely.",
-    "Predict, and confirm, which of the two assignments (ISource<Employee> to ISource<object>, or the reverse) compiles.",
-    "Explain why neither IClockEntryRepository nor IClockEntryService uses variance annotations -- their type parameters, where they exist, don't create a supertype/subtype relationship that variance would apply to."
+    "Fix ClockEntryRepository's real public _clockEntries field: make it private, and confirm every existing caller still compiles using only SaveClockEntry/GetClockEntry/GetEmployeeClockEntries.",
+    "Contrast that fix with ClockEntry's own ClockOut property, which was already correctly encapsulated (get with a private set) from the very first session.",
+    "Read Timesheet as composition: it owns an Employee and a List<ClockEntry>, and enforces (via Add) that every ClockEntry actually belongs to its Employee.",
+    "Explain why Timesheet.Add throws rather than silently ignoring a mismatched EmployeeId."
   ],
   "visuals": [
     {
-      "diagram": "call",
-      "title": "out permits widening the output type",
-      "explanation": "ISource<Employee> source = ...; ISource<object> widened = source; -- legal because ISource<out T> only ever produces (returns) a T, never accepts one."
-    },
-    {
-      "diagram": "branch",
-      "title": "in permits narrowing the input type",
-      "explanation": "ISink<object> sink = ...; ISink<Employee> narrowed = sink; -- legal because ISink<in T> only ever accepts (consumes) a T as a parameter, never returns one."
-    },
-    {
       "diagram": "invariant",
-      "title": "The direction of data flow decides which variance is safe",
-      "explanation": "A type that only produces T can safely be treated as producing something less specific (object); a type that only consumes T can safely be treated as consuming something more specific."
+      "title": "Before: any caller could bypass SaveClockEntry",
+      "explanation": "public readonly List<ClockEntry> _clockEntries let external code call repository._clockEntries.Clear() directly -- a real gap identified in Session 11."
     },
     {
-      "diagram": "type",
-      "title": "Real repository interfaces have no supertype/subtype relationship to vary over",
-      "explanation": "IClockEntryRepository is not generic over Employee/object the way ISource<T> is -- there is no ClockEntry-vs-object substitution question for variance to answer there."
+      "diagram": "call",
+      "title": "After: only the repository's own methods can touch storage",
+      "explanation": "Making _clockEntries private forces every interaction through SaveClockEntry, GetClockEntry, and GetEmployeeClockEntries -- exactly the surface IClockEntryRepository already promises."
+    },
+    {
+      "diagram": "blueprint",
+      "title": "ClockEntry.ClockOut was already encapsulated correctly",
+      "explanation": "public DateTime? ClockOut { get; private set; } has been this way since Session 6 -- only ClockOutEmployee can change it, which is why Session 17 is a repository fix, not a ClockEntry fix."
+    },
+    {
+      "diagram": "instances",
+      "title": "Timesheet composes an Employee and a List<ClockEntry>",
+      "explanation": "Timesheet does not inherit from either type -- it owns one Employee and a private list of that employee's ClockEntry objects, exposed only as IReadOnlyList<ClockEntry>."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Given ISource<Employee> employeeSource = new SingleSource<Employee>(someEmployee);, does ISource<object> objectSource = employeeSource; compile?",
+      "prompt": "What real, external capability does making ClockEntryRepository's _clockEntries field private remove?",
       "options": [
-        "Yes -- ISource<out T> is covariant: because it only ever returns a T (via Get()), an ISource<Employee> can safely stand in anywhere an ISource<object> is expected",
-        "No -- generic interfaces never allow this kind of assignment",
-        "Only if Employee is sealed"
+        "Direct access to _clockEntries.Clear(), .Add(...), or indexing from any code outside ClockEntryRepository -- the exact bypass Session 11 identified as a real, unfixed gap",
+        "The ability to call GetEmployeeClockEntries",
+        "Nothing observable changes"
       ],
       "correct": 0,
-      "explanation": "out T marks ISource as covariant in T specifically because Get() only produces a T -- there is no method that could misuse the wider object type to insert something Employee-incompatible."
+      "explanation": "This is precisely the fix Session 11 promised: private forces every interaction through the repository's own three methods, closing the bypass without changing any of IClockEntryRepository's public contract."
     },
     {
-      "prompt": "Given ISink<object> objectSink = new CountingSink<object>();, does ISink<Employee> employeeSink = objectSink; compile?",
+      "prompt": "Why was ClockEntry.ClockOut never a similar problem, even though it is also a mutable piece of state?",
       "options": [
-        "Yes -- ISink<in T> is contravariant: because it only ever accepts a T (via Add(T)), an ISink<object> can safely stand in anywhere an ISink<Employee> is expected, since it can accept an Employee (an object) just fine",
-        "No -- this direction never compiles",
-        "Only if Employee overrides Equals"
+        "ClockOut has always had a private setter (public DateTime? ClockOut { get; private set; }) -- only ClockOutEmployee, a method on ClockEntry itself, can ever change it; there was never a public-field-style bypass to begin with",
+        "ClockOut is a value type and therefore automatically safe",
+        "ClockOut is read-only and can never change"
       ],
       "correct": 0,
-      "explanation": "in T marks ISink as contravariant specifically because Add only consumes a T -- an ISink<object> is willing to accept anything, including an Employee, so it satisfies an ISink<Employee> contract."
+      "explanation": "This is a genuinely different situation from _clockEntries -- ClockEntry got its encapsulation right from Session 6; the repository's field is what needed the fix."
     },
     {
-      "prompt": "Why doesn't IClockEntryRepository use out or in anywhere?",
+      "prompt": "Why does Timesheet.Add throw ArgumentException when given a ClockEntry whose EmployeeId doesn't match the Timesheet's own Employee?",
       "options": [
-        "Its members mix production and consumption of ClockEntry (SaveClockEntry takes one in; GetClockEntry/GetEmployeeClockEntries return them) -- a type that both produces and consumes T cannot safely be marked variant in either direction",
-        "IClockEntryRepository is not a generic interface",
-        "Variance only applies to interfaces with exactly one method"
+        "A Timesheet's whole reason for existing is grouping one employee's entries together -- silently accepting a mismatched entry would corrupt that invariant without any visible sign of the mistake",
+        "ArgumentException is required by every Add method in C#",
+        "It has no real reason -- it is arbitrary"
       ],
-      "correct": 1,
-      "explanation": "IClockEntryRepository is a plain, non-generic interface -- ClockEntry is a concrete parameter/return type throughout, not a type parameter T. There is nothing to mark out or in."
+      "correct": 0,
+      "explanation": "This mirrors Session 24's throw-vs-return rule: adding another employee's entry to this Timesheet is a broken caller expectation, not an expected everyday outcome, so it throws rather than silently ignoring the mismatch."
     }
   ],
   "concept": [
     {
-      "title": "out T: safe when a type only produces T",
+      "title": "Fixing the real encapsulation gap",
       "paragraphs": [
-        "ISource<out T> { T Get(); } has exactly one member, and it only returns a T -- it never accepts a T as an argument anywhere.",
-        "Because of that one-directional shape, the compiler allows ISource<Employee> to be used wherever ISource<object> is expected: anything you could do with an ISource<object> (call Get() and get back some object) still works when the object happens to be an Employee."
+        "The fix is one word: public readonly List<ClockEntry> _clockEntries becomes private readonly List<ClockEntry> _clockEntries. Every existing real method (SaveClockEntry, GetClockEntry, GetEmployeeClockEntries) is a member of the same class, so none of them need to change.",
+        "Every caller outside ClockEntryRepository -- ClockEntryService, PayrollService, every test -- was already going through the interface's three methods, never the field directly, so this fix is observable only in that the old bypass (repository._clockEntries.Clear()) now fails to compile."
       ],
-      "code": "// src/TimeClock.Domain/VarianceExamples.cs\npublic interface ISource<out T> { T Get(); }\n\nISource<Employee> employeeSource = new SingleSource<Employee>(someEmployee);\nISource<object> widened = employeeSource;   // legal: covariance\nobject value = widened.Get();               // still just reads an Employee, typed as object"
+      "code": "// Before -- Session 11's real, verified gap\npublic readonly List<ClockEntry> _clockEntries = new();\n\n// After -- the fix\nprivate readonly List<ClockEntry> _clockEntries = new();"
     },
     {
-      "title": "in T: safe when a type only consumes T",
+      "title": "Contrast: ClockEntry.ClockOut was correct from the start",
       "paragraphs": [
-        "ISink<in T> { void Add(T item); } has exactly one member, and it only accepts a T -- it never returns one.",
-        "Because it never hands a T back out, an ISink<object> (which can Add any object at all) can stand in for an ISink<Employee> (which only ever needs to Add Employee objects) -- accepting a wider type is always safe when nothing depends on getting a narrower type back."
+        "ClockEntry's constructor and ClockOutEmployee have not changed since Session 6 -- ClockOut's private setter already prevented exactly the kind of external bypass _clockEntries just had.",
+        "Seeing both the correct original design (ClockEntry) and the real gap that needed fixing (ClockEntryRepository) side by side is what makes 'encapsulation' concrete instead of abstract."
       ],
-      "code": "public interface ISink<in T> { void Add(T item); }\n\nISink<object> objectSink = new CountingSink<object>();\nISink<Employee> narrowed = objectSink;      // legal: contravariance\nnarrowed.Add(someEmployee);                 // objectSink.Add ultimately runs, accepting the Employee fine"
+      "code": "public DateTime? ClockOut { get; private set; }   // correct since Session 6 -- never needed fixing"
     },
     {
-      "title": "Real repository interfaces are neither -- and that's expected",
+      "title": "Timesheet: composition with an enforced invariant",
       "paragraphs": [
-        "IClockEntryRepository's SaveClockEntry(ClockEntry) consumes a ClockEntry; GetClockEntry and GetEmployeeClockEntries produce ClockEntry values. A single interface mixing both directions over the same type parameter cannot be safely marked out or in -- the compiler would reject either annotation if attempted.",
-        "This is not a gap in the real code -- IClockEntryRepository is not even generic over ClockEntry (ClockEntry is a fixed, concrete type in its signatures, not a type parameter). Variance only becomes a question once a type is generic and used consistently in one direction."
+        "Timesheet owns an Employee (assigned once, in its constructor) and a private List<ClockEntry> exposed only as IReadOnlyList<ClockEntry> -- callers can read Entries but cannot Add to it directly; they must go through Timesheet.Add.",
+        "Add's real check -- entry.EmployeeId != Employee.EmployeeId -- is what keeps every entry in Entries genuinely belonging to this Timesheet's Employee, for the lifetime of the object."
       ],
-      "code": "dotnet test TimeClock.sln --configuration Release"
+      "code": "public sealed class Timesheet\n{\n    private readonly List<ClockEntry> entries = [];\n    public Timesheet(Employee employee) => Employee = employee ?? throw new ArgumentNullException(nameof(employee));\n    public Employee Employee { get; }\n    public IReadOnlyList<ClockEntry> Entries => entries;\n\n    public void Add(ClockEntry entry)\n    {\n        ArgumentNullException.ThrowIfNull(entry);\n        if (entry.EmployeeId != Employee.EmployeeId)\n            throw new ArgumentException(\"The entry belongs to another employee.\", nameof(entry));\n        entries.Add(entry);\n    }\n}"
     }
   ],
   "lab": {
-    "objective": "Confirm ISource<out T>'s covariant assignment and ISink<in T>'s contravariant assignment compile, and confirm the reverse direction of each does not.",
-    "startingCondition": "ISource<T>, ISink<T>, SingleSource<T>, and CountingSink<T> already exist with their real variance annotations.",
+    "objective": "Make ClockEntryRepository's _clockEntries field private, confirm the whole solution still builds, and exercise Timesheet's composition invariant.",
+    "startingCondition": "ClockEntryRepository's _clockEntries field is still public, as in the real source repository; Timesheet already exists with its real composition and Add invariant.",
     "steps": [
-      "Assign an ISource<Employee> to an ISource<object> variable and confirm it compiles.",
-      "Attempt to assign an ISource<object> to an ISource<Employee> variable and confirm the compiler rejects it.",
-      "Assign an ISink<object> to an ISink<Employee> variable and confirm it compiles.",
-      "Attempt to assign an ISink<Employee> to an ISink<object> variable and confirm the compiler rejects it."
+      "Change _clockEntries from public to private in ClockEntryRepository.cs.",
+      "Build the whole solution and confirm nothing outside ClockEntryRepository referenced the field directly (it should not have).",
+      "Write a Timesheet, add one matching ClockEntry successfully, then attempt to add a ClockEntry with a different EmployeeId and confirm ArgumentException is thrown.",
+      "Confirm Timesheet.Entries is read-only from the outside -- Entries.Add(...) should not compile."
     ],
-    "expectedBehavior": "ISource<Employee> -> ISource<object> and ISink<object> -> ISink<Employee> both compile; the reverse of each does not.",
+    "expectedBehavior": "The solution builds and all tests pass after the private-field fix; Timesheet.Add succeeds for a matching entry and throws for a mismatched one; Entries cannot be mutated directly from outside Timesheet.",
     "validation": "dotnet build TimeClock.sln --configuration Release && dotnet test TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/TimeClock.Domain/VarianceExamples.cs",
-      "action": "Verify",
-      "why": "Confirm the real ISource<out T>/ISink<in T> declarations and their implementations."
+      "path": "src/TimeClock.Domain/ClockEntryRepository.cs",
+      "action": "Modify",
+      "why": "Change _clockEntries from public to private, closing the real encapsulation gap named in Session 11."
     },
     {
-      "path": "tests/TimeClock.Domain.Tests/VarianceExamplesTests.cs",
+      "path": "src/TimeClock.Domain/Timesheet.cs",
       "action": "Verify",
-      "why": "Confirm both variance directions are covered."
+      "why": "Confirm the real composition and EmployeeId-matching invariant."
+    },
+    {
+      "path": "tests/TimeClock.Domain.Tests/TimesheetTests.cs",
+      "action": "Verify",
+      "why": "Confirm both the successful-add and mismatched-employee-throws cases."
     },
     {
       "path": "site/data/sessions/session-16.json",
@@ -118,50 +123,51 @@
       "why": "Publish synchronized lesson, lab, and quiz material."
     }
   ],
-  "commit": "session-16: teach variance at api boundaries",
+  "commit": "session-16: teach encapsulation and composition",
   "review": [
-    "Both variance directions are demonstrated with actual assignments, not just described in prose.",
-    "The reverse (invalid) direction of each is confirmed to genuinely fail to compile, not merely asserted.",
-    "IClockEntryRepository's lack of variance annotations is explained honestly, connecting back to its real, mixed-direction, non-generic signature shape.",
+    "The _clockEntries field is private, and every existing real method still compiles unchanged.",
+    "No caller outside ClockEntryRepository referenced the field directly before or after the fix.",
+    "ClockEntry.ClockOut's already-correct encapsulation is used as a contrast, not silently ignored.",
+    "Timesheet's Add invariant is demonstrated with both a passing and a throwing case.",
     "The full test suite passes."
   ],
   "postQuiz": [
     {
-      "prompt": "Could IEnumerable<T> (Session 14) be marked out T, the way ISource<T> is?",
+      "prompt": "Why did fixing _clockEntries's visibility require no changes to IClockEntryRepository or any of its three method signatures?",
       "options": [
-        "Yes -- IEnumerable<T> is actually declared IEnumerable<out T> in .NET, for the same reason as ISource<T>: it only ever produces T values (via GetEnumerator/Current), never accepts them",
-        "No -- IEnumerable<T> cannot be variant",
-        "Only for value types"
+        "The interface never exposed the field in the first place -- SaveClockEntry, GetClockEntry, and GetEmployeeClockEntries were always the intended public surface; only the field's accidental public visibility needed correcting",
+        "IClockEntryRepository was also changed as part of the fix",
+        "It required changes to every class implementing IClockEntryRepository"
       ],
       "correct": 0,
-      "explanation": "This is a real fact about the .NET base class library, not just this course's example -- IEnumerable<out T>'s real covariance is exactly why IEnumerable<ClockEntry> could be assigned to an IEnumerable<object> variable if needed."
+      "explanation": "This is exactly why the fix is small and safe -- the intended contract (the interface) was already correct; only an implementation detail (the field's visibility) needed to catch up to it."
     },
     {
-      "prompt": "Why would attempting to add an out T marker to ISink<T> (making it ISink<out T>) fail to compile?",
+      "prompt": "Could Timesheet have used inheritance (Timesheet : Employee) instead of composition (Timesheet owning an Employee) to associate an employee with their entries?",
       "options": [
-        "Add(T item) takes T as an input parameter -- out (covariance) requires T to appear only in output positions, and a parameter is an input position",
-        "out T is only valid on interfaces with more than one member",
-        "It would compile, but behave unpredictably at runtime"
+        "No -- a Timesheet is not a kind of Employee (inheritance's 'is-a' relationship doesn't hold); it HAS an Employee, which is exactly what composition ('has-a') models",
+        "Yes -- inheritance and composition are interchangeable here",
+        "Only if Employee were declared abstract"
       ],
       "correct": 0,
-      "explanation": "C# actually enforces this at compile time: an out type parameter cannot appear in an input (parameter) position anywhere in the interface -- the compiler catches the mismatch between the requested variance and the interface's real shape."
+      "explanation": "This is the classic is-a versus has-a distinction: Timesheet has an Employee and a list of that employee's entries -- it is not itself a more specific kind of Employee."
     },
     {
-      "prompt": "If IClockEntryRepository someday became generic (say, IRepository<T> shared across ClockEntry and Employee), could it be marked out T?",
+      "prompt": "What would happen if Timesheet.Entries returned List<ClockEntry> instead of IReadOnlyList<ClockEntry>?",
       "options": [
-        "No -- as long as it has a method like Save(T item) that accepts a T as a parameter, it cannot be covariant; consuming and producing the same type parameter in one interface rules out both variance directions",
-        "Yes, automatically, once it becomes generic",
-        "Only if T is a value type"
+        "Callers could call Entries.Add(...) or Entries.Clear() directly, bypassing Timesheet.Add's EmployeeId-matching check entirely -- reintroducing the exact kind of bypass Session 17 just fixed in ClockEntryRepository",
+        "Nothing would change -- List<T> and IReadOnlyList<T> expose identical members",
+        "The code would fail to compile"
       ],
       "correct": 0,
-      "explanation": "This is the same structural reason IClockEntryRepository has no variance today -- any interface that both takes T in and hands T back out cannot be safely marked variant in either direction."
+      "explanation": "IReadOnlyList<T> deliberately omits Add/Remove/Clear -- returning the narrower interface is what protects Timesheet's own invariant, the same principle Session 13 covered for GetEmployeeClockEntries."
     }
   ],
   "reflections": [
-    "Why did this session need a new, purpose-built pair of interfaces (ISource<T>/ISink<T>) instead of finding variance already at work in the real domain?",
-    "Where in the .NET base class library (beyond IEnumerable<out T>) have you seen a variance-annotated generic interface, now that you know what to look for?",
-    "If Employee eventually implemented some IEmployeeLike interface, what would need to be true about ISource<Employee> for it to also be usable as an ISource<IEmployeeLike>?"
+    "Why did this exact same kind of bug (a public field bypassing intended validation) not exist anywhere in ClockEntry itself?",
+    "What would you check for, in a code review, to catch a class exposing a mutable field the way ClockEntryRepository originally did?",
+    "How does Timesheet's IReadOnlyList<ClockEntry> return type connect back to Session 13's discussion of interface-level promises?"
   ],
-  "whatBreaks": "Attempting to declare ISource<T> as out T while also giving it a method that accepts a T parameter would fail to compile -- the compiler enforces that out type parameters appear only in output positions. Assigning an ISource<object> to an ISource<Employee> variable (the unsafe direction) correctly fails to compile, because nothing guarantees every object produced by that source is actually an Employee.",
-  "summary": "ISource<out T> is safely covariant because its one member only produces T; ISource<Employee> can stand in for ISource<object> as a result. ISink<in T> is safely contravariant because its one member only consumes T; ISink<object> can stand in for ISink<Employee>. IClockEntryRepository has no variance annotations because its real methods both consume ClockEntry (SaveClockEntry) and produce it (GetClockEntry, GetEmployeeClockEntries) -- a shape variance cannot safely apply to, and (more fundamentally) because it isn't generic over ClockEntry at all."
+  "whatBreaks": "Leaving _clockEntries public keeps the real bypass Session 11 identified: any code with a ClockEntryRepository reference can clear or directly mutate stored entries, invalidating anything SaveClockEntry might someday enforce. Changing Timesheet.Entries to return the mutable List<ClockEntry> directly would let callers add entries without EmployeeId validation, reintroducing the same class of bug in a different class.",
+  "summary": "ClockEntryRepository's real public _clockEntries field -- named as a gap in Session 11 -- is fixed here by making it private, with no change required to IClockEntryRepository or any of its three real methods. ClockEntry.ClockOut's private setter shows what correct encapsulation looked like from the start. Timesheet demonstrates composition: it owns an Employee and a list of that employee's entries, and Add enforces that every entry actually belongs to it."
 }
