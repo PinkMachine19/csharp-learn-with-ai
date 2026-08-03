@@ -218,7 +218,7 @@ function labPage(session, content) { return page({title:`Lab ${String(session.nu
   <p class="subtitle">Session ${String(session.number).padStart(2,"0")} lab</p>
   <h1>${escapeHtml(content.lab.objective)}</h1>
   <p class="subtitle">Starting condition: ${escapeHtml(content.lab.startingCondition)}</p>
-  ${content.lab.steps.map((step, index)=>`<div class="step"><div class="step-num">${index+1}</div><div class="step-body">${escapeHtml(step)}</div></div>`).join("")}
+  ${content.lab.steps.map((step, index)=>{ const detail = typeof step === "string" ? { text: step } : step; return `<div class="step"><div class="step-num">${index+1}</div><div class="step-body"><p>${escapeHtml(detail.text)}</p>${detail.code ? `<pre><code>${escapeHtml(detail.code)}</code></pre>` : ""}</div></div>`; }).join("")}
   <h2>Expected behavior</h2>
   <p>${escapeHtml(content.lab.expectedBehavior)}</p>
   <h2>Validation</h2>
