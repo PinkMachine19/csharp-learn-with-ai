@@ -27,8 +27,9 @@
   ],
   "lab": {
     "objective": "Calculate and display the difference between scheduled and recorded hours using typed numeric variables.",
-    "startingCondition": "The console displays a completed eight-hour entry and all seven domain tests pass.",
+    "startingCondition": "Session 02 is finished. Return to the real csharp-learn-with-ai repository; do not remain in csharp-learn-with-ai-practice. The real repository provides an existing console application at src/PinkMachine19.TimeClock.App/Program.cs that displays a completed eight-hour entry, and all seven domain tests pass.",
     "steps": [
+      {"text":"If your terminal is still in the practice workspace, return to the real repository and open the existing console entry point.","code":"cd ../csharp-learn-with-ai\ncode src/PinkMachine19.TimeClock.App/Program.cs"},
       "Predict the values of scheduledHours, recordedHours, and varianceHours before editing.",
       "Declare scheduledHours as decimal with a value of 7.5m.",
       "Convert entry.GetDuartion().TotalHours to decimal and assign it to recordedHours.",

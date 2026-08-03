@@ -47,24 +47,24 @@
     {"title":"Git tracks files, not folders — so every folder gets a .gitkeep","paragraphs":["Git's index stores blobs (file contents) and trees (directory listings that point at blobs), never a directory entry with nothing inside it. An empty Validators/ folder can sit on your disk for weeks, but the moment you git add . and commit, nothing gets recorded for it — there's no file to point at. Clone the repository fresh, or check out that commit somewhere else, and Validators/ simply isn't there.","The fix is the smallest possible tracked file: an empty .gitkeep. There is nothing special about that filename as far as git itself is concerned — git has no built-in concept of a 'keep this empty folder' marker. .gitkeep is purely a naming convention the community settled on, popularized by early Git tooling, so that anyone reading a diff or a directory listing immediately recognizes the file's only purpose is to hold the folder open. (Some teams use a one-line README.md instead, so the placeholder also documents the folder's purpose — that's a reasonable choice too, but it's a different, dual-purpose decision. This course sticks to a plain, empty .gitkeep: the folder's purpose is explained where a student can actually find it — in this lesson — rather than duplicated into fifteen tiny files that would immediately go stale the moment real code arrives and nobody remembers to delete them.)","The lab contains the folder-creation and .gitkeep commands as copyable blocks."]}
   ],
   "lab": {
-    "objective": "Reproduce TimeClock's project layout from scratch with the dotnet CLI, then scaffold the standard purpose-named folders and .gitkeep placeholders the real projects will grow into.",
-    "startingCondition": "The repository already contains a working PinkMachine19.TimeClock.sln with PinkMachine19.TimeClock.Domain, PinkMachine19.TimeClock.App, PinkMachine19.TimeClock.Infrastructure, PinkMachine19.TimeClock.Web, and PinkMachine19.TimeClock.Domain.Tests. You will rebuild all five projects from nothing in a separate scratch folder, then return to the real repository and create only the standard folders and .gitkeep placeholders there.",
+    "objective": "Create a persistent TimeClock practice solution with the dotnet CLI, then scaffold the standard purpose-named folders and .gitkeep placeholders the real projects will grow into.",
+    "startingCondition": "The repository already contains a completed reference implementation, so running dotnet new over its projects would overwrite real course code. You will create csharp-learn-with-ai-practice beside the repository and keep it for Session 02. Then you will return to the real repository and add only the empty purpose-named folders there.",
     "steps": [
       {
-        "text": "In a new empty scratch folder outside this repository, create the classic .sln solution. The -f sln flag matters: current SDKs otherwise default to the newer .slnx format.",
-        "code": "dotnet new sln -n PinkMachine19.TimeClock -f sln"
+        "text": "From the real repository root, move to its parent, create a clearly named persistent practice workspace beside it, and create the classic .sln solution there. Keep this folder after the lab because Session 02 continues using it.",
+        "code": "cd ..\nmkdir -p csharp-learn-with-ai-practice\ncd csharp-learn-with-ai-practice\ndotnet new sln -n PinkMachine19.TimeClock -f sln"
       },
       {
         "text": "Create all four source projects and the xUnit test project. Domain and Infrastructure are both class libraries; App is a console application; Web is an ASP.NET Core host.",
         "code": "dotnet new classlib -o src/PinkMachine19.TimeClock.Domain\ndotnet new console -o src/PinkMachine19.TimeClock.App\ndotnet new classlib -o src/PinkMachine19.TimeClock.Infrastructure\ndotnet new web -o src/PinkMachine19.TimeClock.Web\ndotnet new xunit -o tests/PinkMachine19.TimeClock.Domain.Tests"
       },
       {
-        "text": "Add all five projects to the solution, then confirm the scratch solution builds with zero errors.",
+        "text": "Add all five projects to the solution, then confirm the persistent practice solution builds with zero errors.",
         "code": "dotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\ndotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj\ndotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.Infrastructure/PinkMachine19.TimeClock.Infrastructure.csproj\ndotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj\ndotnet sln PinkMachine19.TimeClock.sln add tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj\ndotnet build PinkMachine19.TimeClock.sln"
       },
       {
-        "text": "From the real repository root, list its projects and compare all five paths with the scratch solution. The names and directory depth should match.",
-        "code": "dotnet sln PinkMachine19.TimeClock.sln list"
+        "text": "Return to the real repository, list its projects, and compare all five paths with the practice solution. The names and directory depth should match.",
+        "code": "cd ../csharp-learn-with-ai\ndotnet sln PinkMachine19.TimeClock.sln list"
       },
       {
         "text": "Stay in the real repository for the remaining steps. Infrastructure and Web already exist here as projects; now create purpose-named folders inside those existing project directories.",
@@ -79,7 +79,7 @@
         "code": "dotnet build PinkMachine19.TimeClock.sln -c Release\ndotnet test PinkMachine19.TimeClock.sln -c Release --no-build"
       }
     ],
-    "expectedBehavior": "Your scratch solution builds all five projects with zero errors, matching every project path in the real repository. Back in the real repository, all 15 standard folders exist under the correct already-existing project, each containing a tracked, empty .gitkeep file. The Release build and tests still succeed exactly as they did before the folders were added.",
+    "expectedBehavior": "The sibling csharp-learn-with-ai-practice workspace remains on disk and builds all five projects with zero errors, matching every project path in the real repository. Back in the real repository, all 15 standard folders exist under the correct already-existing project, each containing a tracked, empty .gitkeep file. The Release build and tests still succeed exactly as they did before the folders were added.",
     "validation": "dotnet build PinkMachine19.TimeClock.sln -c Release && dotnet test PinkMachine19.TimeClock.sln -c Release --no-build"
   },
   "expectedFiles": [
@@ -102,8 +102,8 @@
   ],
   "commit": "session-01: scaffold the solution with dotnet new and dotnet sln add, then organize projects into standard folders",
   "review": [
-    "The scratch solution builds all five projects without errors.",
-    "The scratch project list matches all five real repository projects at the same relative paths.",
+    "The persistent practice solution builds all five projects without errors and remains available for Session 02.",
+    "The practice project list matches all five real repository projects at the same relative paths.",
     "Every standard folder exists under the project it conceptually belongs to (Domain, Infrastructure, or Web), not scattered arbitrarily.",
     "Every one of the 15 folders contains a tracked, empty .gitkeep file.",
     "dotnet build PinkMachine19.TimeClock.sln -c Release and dotnet test PinkMachine19.TimeClock.sln -c Release --no-build both still succeed after adding the folders.",
