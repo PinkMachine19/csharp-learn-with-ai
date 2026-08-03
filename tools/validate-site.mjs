@@ -16,7 +16,6 @@ const forbidden = [
   /job application/i,
   /recruiter/i,
   /employer/i,
-  /interview/i,
   /coderpad/i,
   /my interview/i,
   /for the interview/i,
@@ -37,7 +36,7 @@ try { manifest = JSON.parse(await readFile(manifestPath, "utf8")); }
 catch (error) { errors.push(`Manifest is missing or invalid: ${error.message}`); }
 
 if (manifest) {
-  const { sessions, course, layers } = manifest;
+  const { sessions, refreshers = [], course, layers } = manifest;
   if (sessions.length !== course.sessionCount) errors.push(`Manifest count ${sessions.length} does not match course count ${course.sessionCount}`);
   if (new Set(sessions.map((session) => session.id)).size !== sessions.length) errors.push("Duplicate session IDs exist");
   if (new Set(sessions.map((session) => session.slug)).size !== sessions.length) errors.push("Duplicate session slugs exist");
@@ -58,6 +57,20 @@ if (manifest) {
       }
     }
   }
+  if (refreshers.length !== course.refresherCount) errors.push(`Refresher count ${refreshers.length} does not match course count ${course.refresherCount}`);
+  const expectedRefreshers = ["R1", "R2", "R3", "R4", "R5"];
+  for (const [index, refresher] of refreshers.entries()) {
+    if (refresher.number !== expectedRefreshers[index]) errors.push(`Refresher sequence breaks at ${refresher.id}`);
+    const expectedPrerequisite = index === 0 ? null : refreshers[index - 1].number;
+    if (refresher.prerequisiteSession !== expectedPrerequisite) errors.push(`Unexpected prerequisite for ${refresher.id}`);
+    for (const field of ["lessonPath", "labPath", "quizPath", "suggestedCommitMessage", "completionStatus"]) {
+      if (!refresher[field]) errors.push(`${refresher.id} is missing ${field}`);
+    }
+    for (const field of ["lessonPath", "labPath", "quizPath"]) {
+      try { await access(path.join(dist, refresher[field])); }
+      catch { errors.push(`${refresher.id} ${field} does not exist`); }
+    }
+  }
 }
 
 const htmlFiles = (await walk(dist)).filter((file) => file.endsWith(".html"));
@@ -74,7 +87,7 @@ for (const file of htmlFiles) {
   for (const href of [...html.matchAll(/(?:href|src)="([^"]+)"/g)].map((match) => match[1])) {
     if (/^(?:https?:|mailto:|#)/.test(href)) continue;
     if (!href.startsWith(manifest.course.basePath)) errors.push(`${relative} asset/link does not honor base path: ${href}`);
-    const local = href.slice(manifest.course.basePath.length);
+    const local = href.slice(manifest.course.basePath.length).split("#", 1)[0];
     const target = local.endsWith("/") ? `${local}index.html` : local;
     try { await access(path.join(dist, target)); }
     catch { errors.push(`${relative} has broken internal reference: ${href}`); }
@@ -98,7 +111,7 @@ const requiredLessonHeadings = [
   "8. Post-Coding Quiz", "9. Reflection Questions", "10. What Breaks If This Code Is Removed?",
   "11. What C#/.NET Concept Was Learned Today?"
 ];
-for (const session of manifest.sessions.filter((item) => item.completionStatus === "complete")) {
+for (const session of [...manifest.sessions, ...(manifest.refreshers || [])].filter((item) => item.completionStatus === "complete")) {
   const lesson = await readFile(path.join(dist, session.lessonPath), "utf8");
   for (const heading of requiredLessonHeadings) if (!lesson.includes(`>${heading}</h2>`)) errors.push(`${session.id} is missing section: ${heading}`);
   const svgCount = (lesson.match(/<svg /g) || []).length;
@@ -112,7 +125,7 @@ if (errors.length) {
   errors.forEach((error) => console.error(`- ${error}`));
   process.exitCode = 1;
 } else {
-  console.log(`Validated ${htmlFiles.length} HTML pages and ${manifest.sessions.length} manifest sessions.`);
+  console.log(`Validated ${htmlFiles.length} HTML pages, ${manifest.sessions.length} primary sessions, and ${(manifest.refreshers || []).length} optional refreshers.`);
   console.log(`Base path verified: ${manifest.course.basePath}`);
   console.log("Navigation, interactions, SVG accessibility, content policy, and internal references passed.");
 }

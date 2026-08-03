@@ -16,6 +16,12 @@ const sessionContent = new Map(await Promise.all(contentFiles.filter((name) => n
   const content = JSON.parse(await readFile(path.join(contentDirectory, name), "utf8"));
   return [content.number, content];
 })));
+const refresherDirectory = path.join(site, "data", "refreshers");
+const refresherFiles = await readdir(refresherDirectory).catch(() => []);
+const refresherContent = new Map(await Promise.all(refresherFiles.filter((name) => name.endsWith(".json")).map(async (name) => {
+  const content = JSON.parse(await readFile(path.join(refresherDirectory, name), "utf8"));
+  return [content.number, content];
+})));
 const sessions = raw.sessions.map(([number, slug, title, layerId, prerequisite, migrationSource]) => {
   const padded = String(number).padStart(2, "0");
   const content = sessionContent.get(number);
@@ -37,7 +43,29 @@ const sessions = raw.sessions.map(([number, slug, title, layerId, prerequisite, 
     completionStatus: sessionContent.has(number) ? "complete" : "planned"
   };
 });
-const manifest = { ...raw, course: { ...raw.course, basePath }, sessions };
+const refresherSessions = raw.refreshers.map(([number, slug, title, prerequisite, migrationSource]) => {
+  const content = refresherContent.get(number);
+  const route = number.toLowerCase();
+  return {
+    number,
+    id: `refresher-${route}`,
+    slug,
+    title,
+    curriculumLayer: "Optional Modern C# Refresher",
+    layerId: "refresher",
+    prerequisiteSession: prerequisite,
+    lessonPath: `refreshers/${route}/index.html`,
+    labPath: `refreshers/labs/${route}.html`,
+    quizPath: `refreshers/quizzes/${route}.html`,
+    filesExpectedToChange: content ? content.expectedFiles.map((file) => file.path) : [],
+    validationCommand: "npm test",
+    suggestedCommitMessage: content?.commit || `refresher-${route}: ${title.toLowerCase()}`,
+    migrationSource,
+    completionStatus: refresherContent.has(number) ? "complete" : "planned",
+    isSupplemental: true
+  };
+});
+const manifest = { ...raw, course: { ...raw.course, basePath, refresherCount: refresherSessions.length }, sessions, refreshers: refresherSessions };
 
 await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
@@ -48,6 +76,8 @@ const plannedCount = sessions.length - completeCount;
 const statusBadge = (session) => session.completionStatus === "complete" ? `<span class="badge badge-complete">Complete</span>` : `<span class="badge badge-locked">Planned</span>`;
 
 const syllabusRows = sessions.map((session) => `<tr><td><span class="badge badge-layer">${String(session.number).padStart(2,"0")}</span></td><td>${session.completionStatus === "complete" ? `<a href="${url(session.lessonPath.replace("index.html", ""))}"><strong>${escapeHtml(session.title)}</strong></a>` : `<strong>${escapeHtml(session.title)}</strong>`}<br><small style="color:var(--text-muted)">${escapeHtml(session.curriculumLayer)}</small></td><td>${session.prerequisiteSession !== null && session.prerequisiteSession !== undefined ? `Session ${String(session.prerequisiteSession).padStart(2,"0")}` : "None"}</td><td>${statusBadge(session)}</td></tr>`).join("");
+const refresherRows = refresherSessions.map((session) => `<tr><td><span class="badge badge-refresher">${session.number}</span></td><td><a href="${url(session.lessonPath.replace("index.html", ""))}"><strong>${escapeHtml(session.title)}</strong></a></td><td>${session.prerequisiteSession || "Start anywhere"}</td><td><span class="badge badge-optional">Optional</span></td></tr>`).join("");
+const refresherCards = refresherSessions.map((session) => `<a class="nav-card refresher-card" href="${url(session.lessonPath.replace("index.html", ""))}"><div class="nav-card-title"><span class="badge badge-refresher">${session.number}</span> ${escapeHtml(session.title)}</div><div class="nav-card-desc">Supplemental reference · safe to skip</div></a>`).join("");
 const navGrid = `<div class="nav-grid">
   <a class="nav-card" href="${url("syllabus/")}"><div class="nav-card-title">Syllabus</div><div class="nav-card-desc">The dependency-ordered course path, one row per session.</div></a>
   <a class="nav-card" href="${url("sessions/")}"><div class="nav-card-title">Sessions</div><div class="nav-card-desc">All ${sessions.length} sessions grouped by curriculum layer.</div></a>
@@ -120,6 +150,10 @@ const syllabus = page({ title: "Syllabus", active: "syllabus", description: "The
   <div class="table-wrap"><table><thead><tr><th>Layer</th><th>Topic</th><th>Sessions</th></tr></thead><tbody>${layerRows}</tbody></table></div>
   <h2>Syllabus</h2>
   <div class="table-wrap"><table><thead><tr><th>Session</th><th>Topic</th><th>Prerequisite</th><th>Status</th></tr></thead><tbody>${syllabusRows}</tbody></table></div>
+  <section class="refresher-track" aria-labelledby="modern-csharp-refresher">
+    <div class="refresher-banner"><span class="refresher-icon" aria-hidden="true">↻</span><div><p class="refresher-kicker">Optional supplemental track</p><h2 id="modern-csharp-refresher">Modern C# Refresher</h2><p>Version history, language features, production syntax, and interview refreshers. This track is independent of the TimeClock application path and can be skipped without blocking any main session.</p></div></div>
+    <div class="table-wrap refresher-table"><table><thead><tr><th>Ref</th><th>Topic</th><th>Suggested order</th><th>Status</th></tr></thead><tbody>${refresherRows}</tbody></table></div>
+  </section>
 </div></main>` });
 
 const sessionsByLayer = raw.layers.map((layer) => ({ layer, items: sessions.filter((session) => session.layerId === layer.id) }));
@@ -130,6 +164,7 @@ const sessionsIndex = page({ title: "Sessions", active: "sessions", description:
   <h1>Sessions</h1>
   <p class="subtitle">One conceptual slice at a time — each completed session combines visual previews, prediction, explanation, a focused lab, review, and reflection.</p>
   ${sessionsIndexBody}
+  <section class="refresher-track" aria-labelledby="refresher-sessions-heading"><div class="refresher-banner"><span class="refresher-icon" aria-hidden="true">↻</span><div><p class="refresher-kicker">Optional supplemental track</p><h2 id="refresher-sessions-heading">Modern C# Refresher</h2><p>Use these independently for interview preparation or to catch up on language features. They do not change the primary course prerequisites.</p></div></div><div class="nav-grid">${refresherCards}</div></section>
 </div></main>` });
 
 const quizzes = page({ title: "Quizzes", active: "quizzes", description: "Prediction and observation quizzes", body: `<main id="main-content"><div class="container">
@@ -161,6 +196,14 @@ for (const [number, content] of sessionContent) {
     writeRoute(session.quizPath, quizPage(session, content))
   );
 }
+for (const [number, content] of refresherContent) {
+  const session = refresherSessions.find((item) => item.number === number);
+  sessionRoutes.push(
+    writeRoute(session.lessonPath, sessionPage(session, content, refresherSessions)),
+    writeRoute(session.labPath, labPage(session, content)),
+    writeRoute(session.quizPath, quizPage(session, content))
+  );
+}
 
 await Promise.all([
   writeRoute("index.html", syllabus),
@@ -174,7 +217,7 @@ await Promise.all([
   ...sessionRoutes
 ]);
 
-console.log(`Built ${sessions.length}-session course foundation at ${dist}`);
+console.log(`Built ${sessions.length} primary sessions and ${refresherSessions.length} optional refreshers at ${dist}`);
 console.log(`Base path: ${basePath}`);
 
 function normalizeBase(value) { return `/${value.split("/").filter(Boolean).join("/")}/`.replace("//", "/"); }
@@ -185,15 +228,20 @@ function navLink(id, label, href, active) { return `<a${active === id ? ' class=
 function page({ title, active, description, body, sessionWidgets }) { const widgetStyles = sessionWidgets ? `<link rel="stylesheet" href="${url("assets/notes-widget.css")}"><link rel="stylesheet" href="${url("assets/bookmark-widget.css")}"><link rel="stylesheet" href="${url("assets/shortcuts-widget.css")}">` : ""; const widgetScripts = sessionWidgets ? `<script defer src="${url("assets/notes-widget.js")}"></script><script defer src="${url("assets/bookmark-widget.js")}"></script><script defer src="${url("assets/shortcuts-widget.js")}"></script>` : ""; const documentTitle = title === raw.course.title ? title : `${title} | ${raw.course.title}`; return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="${escapeHtml(description)}"><meta name="theme-color" content="#0d1117"><title>${escapeHtml(documentTitle)}</title><link rel="stylesheet" href="${url("assets/styles.css")}">${widgetStyles}<script defer src="${url("assets/app.js")}"></script>${widgetScripts}</head><body><a class="skip-link" href="#main-content">Skip to content</a><nav aria-label="Primary navigation"><div class="container"><a href="${url("")}" class="brand${active === "home" || active === "syllabus" ? " active" : ""}" aria-label="C#/.NET Learn with AI home">C# Learn with AI</a>${navLink("home","Home","",active)}${navLink("syllabus","Syllabus","syllabus/",active)}${navLink("sessions","Sessions","sessions/",active)}${navLink("quizzes","Quizzes","quizzes/",active)}${navLink("labs","Labs","labs/",active)}</div></nav><details class="academy-project-status" aria-label="Project status" open><summary><strong>Project Status</strong><span class="academy-project-status-hint">Click to collapse</span></summary><p>This course is part of an evolving personal engineering library. AI assisted with drafting and organization, but every lesson is intended to be reviewed, validated, and improved over time as I work through the material myself. Draft content should be treated as work in progress until marked as validated.</p></details>${body}<footer><div class="container"><div><strong>C#/.NET Learn with AI</strong><p>A Practical C# and .NET Refresher</p></div><a href="${url("syllabus/")}">View the course map</a></div></footer></body></html>`; }
 function interactionDemo() { return `<div class="card quiz-card" data-quiz><p class="quiz-label">Interaction preview</p><h2>Which statement best describes what a useful pre-coding question should do?</h2><div class="answers"><label><input type="radio" name="demo" value="a"> Check whether syntax was memorized</label><label><input type="radio" name="demo" value="b"> Reveal a misconception by asking for a prediction</label><label><input type="radio" name="demo" value="c"> Introduce an unrelated advanced feature</label></div><button class="btn" type="button" data-check-answer data-correct="b">Check answer</button><p class="quiz-feedback" role="status" aria-live="polite"></p></div><div class="reveal-card"><button type="button" aria-expanded="false"><span>Why prediction comes first</span><small>Reveal explanation</small></button><div hidden><p>A prediction makes the learner commit to a mental model. The observed result can then confirm or correct that model.</p></div></div>`; }
 
-function sessionPage(session, content) {
+function sessionPage(session, content, track = sessions) {
   const padded = String(session.number).padStart(2, "0");
-  const position = sessions.indexOf(session);
-  const previous = position > 0 ? sessions[position - 1] : null;
-  const next = position < sessions.length - 1 ? sessions[position + 1] : null;
-  const prevLink = previous && previous.completionStatus === "complete" ? `<a href="${url(previous.lessonPath.replace("index.html", ""))}">← Session ${String(previous.number).padStart(2,"0")}</a>` : `<span>No previous session</span>`;
-  const nextLink = next ? (next.completionStatus === "complete" ? `<a href="${url(next.lessonPath.replace("index.html", ""))}">Session ${String(next.number).padStart(2,"0")} →</a>` : `<a href="${url("sessions/")}">Session ${String(next.number).padStart(2,"0")} (planned) →</a>`) : `<span>No next session</span>`;
-  return page({ title: `Session ${padded} — ${session.title}`, active: "sessions", description: content.connection, sessionWidgets: true, body: `<main id="main-content"><div class="container">
-    <div style="margin-bottom:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;"><span class="badge badge-layer">Layer ${layersById.get(session.layerId).number}</span><span class="badge badge-current">Session ${padded}</span><span style="color:var(--text-muted); font-size:12px;">${escapeHtml(content.category)}</span></div>
+  const position = track.indexOf(session);
+  const previous = position > 0 ? track[position - 1] : null;
+  const next = position < track.length - 1 ? track[position + 1] : null;
+  const label = session.isSupplemental ? `Refresher ${session.number}` : `Session ${padded}`;
+  const previousLabel = previous ? (previous.isSupplemental ? `Refresher ${previous.number}` : `Session ${String(previous.number).padStart(2,"0")}`) : "";
+  const nextLabel = next ? (next.isSupplemental ? `Refresher ${next.number}` : `Session ${String(next.number).padStart(2,"0")}`) : "";
+  const prevLink = previous && previous.completionStatus === "complete" ? `<a href="${url(previous.lessonPath.replace("index.html", ""))}">← ${previousLabel}</a>` : session.isSupplemental ? `<a href="${url("syllabus/#modern-csharp-refresher")}">← Refresher index</a>` : `<span>No previous session</span>`;
+  const nextLink = next ? (next.completionStatus === "complete" ? `<a href="${url(next.lessonPath.replace("index.html", ""))}">${nextLabel} →</a>` : `<a href="${url("sessions/")}">${nextLabel} (planned) →</a>`) : session.isSupplemental ? `<a href="${url("syllabus/#modern-csharp-refresher")}">Refresher index →</a>` : `<span>No next session</span>`;
+  const trackBadge = session.isSupplemental ? `<span class="badge badge-optional">Optional refresher</span>` : `<span class="badge badge-layer">Layer ${layersById.get(session.layerId).number}</span>`;
+  const optionalBanner = session.isSupplemental ? `<div class="refresher-notice"><strong>Optional reference:</strong> This session is not a prerequisite for the TimeClock application path. Use it when you need a modern C# reminder or interview review.</div>` : "";
+  return page({ title: `${label} — ${session.title}`, active: "sessions", description: content.connection, sessionWidgets: true, body: `<main id="main-content" class="${session.isSupplemental ? "refresher-page" : ""}"><div class="container">
+    ${optionalBanner}<div style="margin-bottom:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">${trackBadge}<span class="badge ${session.isSupplemental ? "badge-refresher" : "badge-current"}">${label}</span><span style="color:var(--text-muted); font-size:12px;">${escapeHtml(content.category)}</span></div>
     <h1>${escapeHtml(session.title)}</h1>
     <p class="subtitle">${escapeHtml(content.connection)}</p>
     <div class="alert alert-info"><strong>Estimated time:</strong> ${escapeHtml(content.estimatedTime)}</div>
@@ -214,8 +262,8 @@ function sessionPage(session, content) {
     <p style="margin-top:24px;" aria-label="Session navigation">${prevLink} &nbsp;·&nbsp; <a href="${url("syllabus/")}">Syllabus</a> &nbsp;·&nbsp; ${nextLink}</p>
   </div></main>` });
 }
-function labPage(session, content) { return page({title:`Lab ${String(session.number).padStart(2,"0")} — ${session.title}`,active:"labs",description:content.lab.objective,body:`<main id="main-content"><div class="container">
-  <p class="subtitle">Session ${String(session.number).padStart(2,"0")} lab</p>
+function labPage(session, content) { const label = session.isSupplemental ? `Refresher ${session.number}` : `Session ${String(session.number).padStart(2,"0")}`; return page({title:`${label} Lab — ${session.title}`,active:"labs",description:content.lab.objective,body:`<main id="main-content"><div class="container">
+  <p class="subtitle">${label} lab</p>
   <h1>${escapeHtml(content.lab.objective)}</h1>
   <p class="subtitle">Starting condition: ${escapeHtml(content.lab.startingCondition)}</p>
   ${content.lab.steps.map((step, index)=>{ const detail = typeof step === "string" ? { text: step } : step; return `<div class="step"><div class="step-num">${index+1}</div><div class="step-body"><p>${escapeHtml(detail.text)}</p>${detail.code ? `<pre><code>${escapeHtml(detail.code)}</code></pre>` : ""}</div></div>`; }).join("")}
@@ -225,10 +273,10 @@ function labPage(session, content) { return page({title:`Lab ${String(session.nu
   <pre><code>${escapeHtml(content.lab.validation)}</code></pre>
   <h2>Commit</h2>
   <div class="alert alert-success"><code>${escapeHtml(content.commit)}</code></div>
-  <p><a href="${url(session.lessonPath.replace("index.html", ""))}">Return to Session ${String(session.number).padStart(2,"0")}</a></p>
+  <p><a href="${url(session.lessonPath.replace("index.html", ""))}">Return to ${label}</a></p>
 </div></main>`}); }
-function quizPage(session, content) { return page({title:`Quiz ${String(session.number).padStart(2,"0")} — ${session.title}`,active:"quizzes",description:`Session ${session.number} quizzes`,body:`<main id="main-content"><div class="container">
-  <p class="subtitle">Session ${String(session.number).padStart(2,"0")}</p>
+function quizPage(session, content) { const label = session.isSupplemental ? `Refresher ${session.number}` : `Session ${String(session.number).padStart(2,"0")}`; return page({title:`${label} Quiz — ${session.title}`,active:"quizzes",description:`${label} quizzes`,body:`<main id="main-content"><div class="container">
+  <p class="subtitle">${label}</p>
   <h1>Prediction and observation quizzes</h1>
   <p class="subtitle">Score at least ${raw.course.advancementThreshold}% and read every explanation.</p>
   <h2>Before coding</h2>${renderQuiz(`${session.id}-quiz-pre`,content.preQuiz)}

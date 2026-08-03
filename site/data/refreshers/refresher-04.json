@@ -1,0 +1,67 @@
+{
+  "number": "R4",
+  "category": "Optional Modern C# refresher",
+  "estimatedTime": "45 minutes",
+  "connection": "Modern C# makes state reasoning visible. Pattern matching describes the shapes a value may take; nullable reference types let compiler flow analysis warn when one of those shapes may be null.",
+  "objectives": [
+    "Read type, property, relational, logical, list, and null patterns.",
+    "Choose switch expressions or statements based on clarity.",
+    "Explain nullable annotations separately from runtime null checks.",
+    "Use flow analysis, guards, and null-aware operators deliberately.",
+    "Avoid using the null-forgiving operator as a substitute for proof."
+  ],
+  "visuals": [
+    {"diagram":"switch","title":"Patterns describe cases by shape","explanation":"A switch can branch on type, properties, relationships, list structure, and null state—not only exact constants."},
+    {"diagram":"branch","title":"Order moves from specific to general","explanation":"Earlier arms should capture narrower cases before a discard pattern catches everything else."},
+    {"diagram":"nullable","title":"A nullable annotation describes possibility","explanation":"string? says null is allowed; string says callers and implementers should preserve non-null intent."},
+    {"diagram":"flowstate","title":"Checks refine compiler knowledge","explanation":"After a successful null or type pattern, the compiler narrows the value's flow state for that branch."}
+  ],
+  "preQuiz": [
+    {"prompt":"Does string? create a different runtime CLR type from string?","options":["Yes","No — it adds compile-time nullable intent and analysis","Only on Linux"],"correct":1,"explanation":"Nullable reference annotations primarily guide the compiler and tooling."},
+    {"prompt":"What does value is { Length: > 0 } test?","options":["A property pattern requiring a positive Length","A constructor call","A generic constraint"],"correct":0,"explanation":"Property and relational patterns compose into a readable shape test."},
+    {"prompt":"What does ! mean in name!.Length?","options":["It proves name cannot be null","It suppresses a nullable warning at that expression","It performs a runtime null check"],"correct":1,"explanation":"The null-forgiving operator changes compiler analysis, not runtime behavior."}
+  ],
+  "concept": [
+    {"title":"1. Pattern matching is structured branching","paragraphs":["Patterns combine a test with optional extraction. A type pattern can both verify a runtime type and introduce a correctly typed variable.","Modern switch expressions are concise when each case maps one input shape to one value."]},
+    {"title":"2. Common pattern families","paragraphs":["Constant and null patterns match exact states. Type and declaration patterns narrow runtime types. Property patterns inspect members. Relational and logical patterns compose ranges and conditions.","Positional patterns use deconstruction. List patterns inspect sequence shape, including slices. Use only the complexity the decision actually needs."]},
+    {"title":"3. Exhaustiveness is design feedback","paragraphs":["A switch expression should account for every meaningful input. The discard arm, _, is a fallback—not permission to ignore a new business case.","When a closed set changes, compiler warnings can reveal switches that need review."]},
+    {"title":"4. Nullable reference types model intent","paragraphs":["string means the design intends a value; string? means absence is allowed. The annotation changes warnings and API communication, not the runtime's ability to hold null.","Enable nullable analysis consistently so annotations remain meaningful across project boundaries."]},
+    {"title":"5. Flow analysis follows evidence","paragraphs":["After if (name is not null), name is known non-null in that branch. Throw helpers, argument guards, pattern checks, and recognized attributes can also refine state.","The compiler is conservative. If it cannot prove safety, change the structure or provide truthful annotations rather than scattering !."]},
+    {"title":"6. Null-aware operators have different jobs","paragraphs":["?. stops member access when the receiver is null. ?? supplies a fallback. ??= assigns only when null. is null and is not null are explicit tests.","Choose operators that preserve domain meaning. An empty string is not automatically a valid substitute for a missing name."]},
+    {"title":"7. Production migration strategy","paragraphs":["For older codebases, enable nullable analysis in controlled scopes, fix public contracts first, then move inward. Warnings expose uncertainty that may already exist.","Do not promise non-null merely to silence warnings. Validate construction paths, database materialization, serializers, and framework callbacks."]}
+  ],
+  "lab": {
+    "objective": "Write a small classifier that combines nullable flow analysis with property and relational patterns.",
+    "startingCondition": "Use an isolated scratch console project.",
+    "steps": [
+      {"text":"Create the scratch project.","code":"mkdir -p exercises/refreshers/r4\ndotnet new console -o exercises/refreshers/r4"},
+      {"text":"Add this classifier to Program.cs.","code":"static string Classify(string? name, double? hours) => (name, hours) switch\n{\n    (null or \"\", _) => \"missing employee\",\n    (_, null) => \"open entry\",\n    (_, < 0) => \"invalid duration\",\n    (_, > 12) => \"long shift\",\n    _ => \"completed shift\"\n};\n\nConsole.WriteLine(Classify(\"Avery\", 8));"},
+      "Explain why each arm is ordered before the discard arm.",
+      {"text":"Run and confirm the completed-shift path.","code":"dotnet run --project exercises/refreshers/r4"},
+      "Add calls for null name, null hours, negative hours, and 13 hours; predict each result first.",
+      "Confirm the program needs no null-forgiving operator."
+    ],
+    "expectedBehavior": "The classifier returns one clear result for each nullable and relational case without unsafe dereferencing or warning suppression.",
+    "validation": "dotnet run --project exercises/refreshers/r4 | grep -q 'completed shift'"
+  },
+  "expectedFiles": [{"path":"exercises/refreshers/r4/Program.cs","action":"Add","why":"Create an isolated patterns and nullability refresher."}],
+  "commit": "refresher-r4: practice pattern matching and nullable flow",
+  "review": [
+    "Specific cases appear before the discard arm.",
+    "Nullable annotations match actual allowed states.",
+    "Every dereference follows compiler-visible evidence.",
+    "No ! operator hides an unresolved design question."
+  ],
+  "postQuiz": [
+    {"prompt":"What is the best use of a discard arm?","options":["A deliberate fallback after meaningful cases","The first arm in every switch","A replacement for validation"],"correct":0,"explanation":"The fallback should be intentional and reviewed when the input domain grows."},
+    {"prompt":"Why can nullable warnings reveal real bugs?","options":["They identify paths where the compiler cannot prove a reference is non-null","They add runtime exceptions","They disallow optional data"],"correct":0,"explanation":"The analysis surfaces uncertainty in existing control flow and contracts."},
+    {"prompt":"Which operator supplies a fallback value?","options":["?.","??","!"],"correct":1,"explanation":"The null-coalescing operator evaluates its right side when the left side is null."}
+  ],
+  "reflections": [
+    "Which null states in your current codebase are meaningful domain states?",
+    "When does a switch expression become harder to read than a statement?",
+    "What proof would let you remove one null-forgiving operator from production code?"
+  ],
+  "whatBreaks": "Skipping R4 does not affect the main tutorial. You lose a focused guide for reading modern branching syntax and maintaining truthful nullability contracts.",
+  "summary": "Pattern matching expresses decisions in terms of value shape: type, properties, relationships, sequence structure, and null state. Nullable reference types document whether absence is allowed and let compiler flow analysis track evidence through branches. Production code benefits when patterns remain readable, switch cases are deliberate, annotations tell the truth, and null-forgiving suppression is rare and justified."
+}

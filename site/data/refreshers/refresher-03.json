@@ -1,0 +1,67 @@
+{
+  "number": "R3",
+  "category": "Optional Modern C# refresher",
+  "estimatedTime": "40 minutes",
+  "connection": "This optional refresher compresses the async mental model into one reference: Task represents unfinished work, await suspends the method without blocking its thread, and cancellation and exceptions remain part of the API contract.",
+  "objectives": [
+    "Explain the difference between asynchronous work and parallel CPU work.",
+    "Trace an async method before and after await.",
+    "Choose Task, Task<T>, ValueTask<T>, or async streams deliberately.",
+    "Propagate cancellation and observe asynchronous exceptions.",
+    "Recognize sync-over-async and fire-and-forget hazards."
+  ],
+  "visuals": [
+    {"diagram":"path","title":"An async method has a before-await and after-await path","explanation":"The method runs synchronously until incomplete awaited work causes it to yield; it resumes when that work completes."},
+    {"diagram":"return","title":"Task represents eventual completion","explanation":"Task carries completion, failure, or cancellation; Task<T> also carries a result."},
+    {"diagram":"feedback","title":"Cancellation is cooperative","explanation":"A caller requests cancellation, each layer propagates the token, and operations choose where to observe it."},
+    {"diagram":"comparison","title":"Concurrency is not automatically parallelism","explanation":"Async improves waiting efficiency. Parallelism uses multiple cores for CPU work; the two can overlap but solve different problems."}
+  ],
+  "preQuiz": [
+    {"prompt":"What happens when await sees an incomplete Task?","options":["It blocks the current thread until completion","It arranges continuation and returns control to the caller","It creates a new operating-system thread"],"correct":1,"explanation":"Await is non-blocking coordination; it does not promise a new thread."},
+    {"prompt":"Where is an exception from an async Task normally observed?","options":["When the Task is awaited","Only in the debugger","At compile time"],"correct":0,"explanation":"Await unwraps and rethrows the stored exception."},
+    {"prompt":"What is the main role of CancellationToken?","options":["Forcefully terminate a thread","Carry a cooperative cancellation request","Set a timeout automatically"],"correct":1,"explanation":"Operations must propagate and observe the request."}
+  ],
+  "concept": [
+    {"title":"1. Async is about waiting efficiently","paragraphs":["Network, file, database, and timer operations spend time waiting. Blocking a thread during that wait wastes a limited resource.","Async APIs let the thread do other work and resume the method after completion."]},
+    {"title":"2. Task is the contract","paragraphs":["Task means eventual completion; Task<T> means eventual completion with a T result. Faulted tasks hold exceptions, and canceled tasks represent cooperative cancellation.","async changes how a method body is compiled. await consumes an awaitable; neither keyword alone creates parallel work."]},
+    {"title":"3. Trace the method in two phases","paragraphs":["Everything before the first incomplete await runs immediately. At the await, the method records what remains and returns an incomplete Task.","When the operation finishes, execution resumes after await. Local variables and try/catch behavior continue as if the method had paused."]},
+    {"title":"4. Await all meaningful work","paragraphs":["Dropping a Task can hide failures and allow the caller to continue before the operation finishes. async void should normally be limited to event handlers.","Use Task.WhenAll for independent operations that should run concurrently. Use sequential awaits when ordering or resource limits matter."]},
+    {"title":"5. Cancellation belongs end to end","paragraphs":["Accept a CancellationToken when callers need control, pass it to every supporting operation, and avoid replacing it with CancellationToken.None.","Cancellation is not failure in the same sense as a bug. Callers should be able to distinguish requested cancellation from faults."]},
+    {"title":"6. Exceptions keep their normal shape","paragraphs":["Place try/catch around the await whose failure you can handle. Exceptions thrown before and after await are captured by the returned Task and rethrown to an awaiting caller.","Do not catch Exception only to log and pretend success. Preserve the failure contract."]},
+    {"title":"7. Production hazards","paragraphs":["Avoid .Result and .Wait() in asynchronous call paths; they block and can contribute to deadlocks or thread starvation.","ValueTask<T> can reduce allocations in specialized high-throughput APIs but adds usage constraints. Prefer Task<T> unless measurement justifies the complexity.","IAsyncEnumerable<T> streams values over time and is useful when materializing the entire result would be expensive."]}
+  ],
+  "lab": {
+    "objective": "Create and trace a cancellable asynchronous workflow without changing TimeClock.",
+    "startingCondition": "Use an isolated scratch console project.",
+    "steps": [
+      {"text":"Create the scratch project.","code":"mkdir -p exercises/refreshers/r3\ndotnet new console -o exercises/refreshers/r3"},
+      {"text":"Use this small workflow in Program.cs.","code":"using CancellationTokenSource cts = new(TimeSpan.FromSeconds(1));\n\ntry\n{\n    await Task.Delay(TimeSpan.FromSeconds(5), cts.Token);\n    Console.WriteLine(\"completed\");\n}\ncatch (OperationCanceledException)\n{\n    Console.WriteLine(\"canceled\");\n}"},
+      "Predict which line runs and explain where the method yields.",
+      {"text":"Run the project and confirm cancellation is observed.","code":"dotnet run --project exercises/refreshers/r3"},
+      "Change the delay to 100 milliseconds and predict the new result before rerunning.",
+      "Write one sentence explaining why this is asynchronous but not CPU parallelism."
+    ],
+    "expectedBehavior": "The first run prints canceled; after shortening the delay it prints completed. The notes identify the yield point and cancellation path.",
+    "validation": "dotnet run --project exercises/refreshers/r3 | grep -Eq '^(canceled|completed)$'"
+  },
+  "expectedFiles": [{"path":"exercises/refreshers/r3/Program.cs","action":"Add","why":"Create an isolated async/cancellation refresher."}],
+  "commit": "refresher-r3: trace async await cancellation and exceptions",
+  "review": [
+    "Every started Task is awaited or deliberately returned.",
+    "The cancellation token reaches the cancellable operation.",
+    "Cancellation and failure are not silently converted into success.",
+    "No .Result, .Wait(), or unnecessary Task.Run is used."
+  ],
+  "postQuiz": [
+    {"prompt":"When should Task.WhenAll be preferred?","options":["For independent asynchronous operations that may overlap","For every loop","To make one database query faster"],"correct":0,"explanation":"WhenAll coordinates already-started independent operations; it does not make dependent work independent."},
+    {"prompt":"Why is async void risky?","options":["It cannot use await","Callers cannot await its completion or normally observe its exceptions","It always runs in parallel"],"correct":1,"explanation":"Task-returning methods expose completion and failure to callers."},
+    {"prompt":"What does await do with a faulted Task?","options":["Ignores the fault","Rethrows the stored exception at the await point","Converts it to cancellation"],"correct":1,"explanation":"This preserves familiar try/catch flow across asynchronous boundaries."}
+  ],
+  "reflections": [
+    "Where have you seen fire-and-forget work cause a production bug?",
+    "Which operations in your normal applications are I/O-bound rather than CPU-bound?",
+    "What does a well-designed cancellation contract promise to callers?"
+  ],
+  "whatBreaks": "Skipping R3 does not block TimeClock. You lose a compact review of the Task lifecycle and the most common production async failure modes.",
+  "summary": "Async code coordinates waiting without blocking threads. Task and Task<T> expose completion, results, faults, and cancellation. await splits a method into before-and-after phases while preserving ordinary control flow. Reliable production code awaits meaningful work, propagates CancellationToken, observes exceptions, avoids sync-over-async, and uses concurrency only when operations are genuinely independent."
+}

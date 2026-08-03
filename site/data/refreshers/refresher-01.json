@@ -1,0 +1,70 @@
+{
+  "number": "R1",
+  "category": "Optional Modern C# refresher",
+  "estimatedTime": "40 minutes",
+  "connection": "This optional track is separate from the TimeClock tutorial. Start here when returning to C# after several years or when interview questions refer to a feature by language version.",
+  "objectives": [
+    "Explain why modern C# code can look different while still using the same object-oriented foundations.",
+    "Associate major production features with the C# version that introduced them.",
+    "Relate language versions to target frameworks and installed SDKs.",
+    "Distinguish stable released features from preview features.",
+    "Read an unfamiliar feature as a newer expression of an older programming idea."
+  ],
+  "visuals": [
+    {"diagram":"path","title":"Versions form a timeline, not separate languages","explanation":"C# evolves cumulatively. New syntax is added while older classes, methods, interfaces, and control flow remain valid."},
+    {"diagram":"layers","title":"Features accumulate on stable foundations","explanation":"Generics, LINQ, async, records, and modern patterns layer onto the language rather than replacing its core model."},
+    {"diagram":"stack","title":"Language, SDK, runtime, and framework are related but different","explanation":"The compiler accepts language syntax; the SDK supplies tooling; the target framework determines the default supported language version and available APIs."},
+    {"diagram":"comparison","title":"Version labels explain syntax availability","explanation":"A feature can be valid C# but unavailable to a project using an older compiler or target framework."}
+  ],
+  "preQuiz": [
+    {"prompt":"A project targets .NET 8 and does not set LangVersion. Which C# version does it normally use?","options":["C# 8","C# 12","Always the newest preview"],"correct":1,"explanation":"The default language version follows the target framework; .NET 8 defaults to C# 12."},
+    {"prompt":"Does learning records make classes obsolete?","options":["Yes","No — records add value-oriented data modeling while classes remain appropriate for identity and mutable behavior","Only in web projects"],"correct":1,"explanation":"New features expand the design vocabulary; they do not erase earlier constructs."},
+    {"prompt":"What is safest for production code?","options":["Set LangVersion to preview everywhere","Use the language version supported by the project's target framework unless there is a deliberate reason to change it","Copy syntax until the compiler accepts it"],"correct":1,"explanation":"Framework, SDK, compiler, and team support should move deliberately together."}
+  ],
+  "concept": [
+    {"title":"1. Read the timeline in eras","paragraphs":["C# versions are easier to remember as capability eras than as trivia.","The early language established classes, interfaces, delegates, properties, exceptions, and generics. Later releases made data querying, asynchronous work, null safety, and concise modeling first-class language experiences."]},
+    {"title":"2. C# 1–3: the durable base","paragraphs":["C# 1 established the managed, object-oriented language. C# 2 added generics, nullable value types, anonymous methods, and iterators.","C# 3 added lambda expressions, extension methods, anonymous types, expression trees, and LINQ. Much of modern .NET still rests on this group of features."]},
+    {"title":"3. C# 4–7: interoperability and expressive control flow","paragraphs":["C# 4 added dynamic binding and improved COM interoperability. C# 5 introduced async and await.","C# 6 added null-conditional access, expression-bodied members, string interpolation, and using static. C# 7 expanded tuples, local functions, out variables, ref features, and the first major wave of pattern matching."]},
+    {"title":"4. C# 8–10: safer, clearer application code","paragraphs":["C# 8 introduced nullable reference types, async streams, ranges and indices, switch expressions, property patterns, and using declarations.","C# 9 added records, init-only setters, top-level statements, and target-typed new. C# 10 added global usings, file-scoped namespaces, record structs, and improvements to lambdas and interpolated strings."]},
+    {"title":"5. C# 11–12: intent at construction time","paragraphs":["C# 11 added required members, raw string literals, list patterns, generic math support through static abstract interface members, and several ref-safety improvements.","C# 12 added primary constructors for classes and structs, collection expressions, default lambda parameters, type aliases for more kinds of types, and inline arrays."]},
+    {"title":"6. C# 13–14: library and performance-oriented refinement","paragraphs":["C# 13 added params collections, updated lock support, partial properties and indexers, and expanded safe uses of ref-like types.","C# 14 is the released language paired with .NET 10. It includes extension members, null-conditional assignment, field-backed properties, stronger Span conversions, and additional partial members.","Later preview features should be treated as preview until the project deliberately adopts their supporting SDK and risk profile."]},
+    {"title":"7. Target framework chooses the default","paragraphs":["A modern SDK can compile several language versions, but a project's target framework determines its normal default. .NET 8 maps to C# 12, .NET 9 to C# 13, and .NET 10 to C# 14.","Avoid setting LangVersion to latest merely to chase syntax. Builds should remain reproducible across developer machines and CI."]},
+    {"title":"8. Use versions as a lookup tool","paragraphs":["In production, the useful question is rarely 'Can I recite every feature in C# 10?' It is 'What feature am I reading, which toolchain supports it, and what older idea does it express?'","That mindset turns the version history into a map instead of an interview memorization contest."]}
+  ],
+  "lab": {
+    "objective": "Create a one-page C# version map you can use during code review or interview preparation.",
+    "startingCondition": "No TimeClock application changes are required. Work only in a supplemental notes folder.",
+    "steps": [
+      {"text":"Create the refresher notes folder and timeline file.","code":"mkdir -p docs/refreshers\ntouch docs/refreshers/csharp-version-map.md"},
+      "Add headings for C# 1–3, 4–7, 8–10, 11–12, and 13–14.",
+      "Under each heading, list three features you are likely to encounter in production code.",
+      "Mark the first version for generics, LINQ, async/await, nullable reference types, records, required members, primary constructors, and collection expressions.",
+      "Add a short note explaining the .NET 8/C# 12, .NET 9/C# 13, and .NET 10/C# 14 defaults.",
+      "Circle or tag three features you want to revisit in R2–R5."
+    ],
+    "expectedBehavior": "The version map is concise, groups features into memorable eras, and distinguishes language versions from target frameworks.",
+    "validation": "test -s docs/refreshers/csharp-version-map.md && test $(grep -c '^## ' docs/refreshers/csharp-version-map.md) -ge 5"
+  },
+  "expectedFiles": [
+    {"path":"docs/refreshers/csharp-version-map.md","action":"Add","why":"Create a personal modern C# timeline reference."}
+  ],
+  "commit": "refresher-r1: add a modern C# language-version map",
+  "review": [
+    "The map groups versions by capability rather than listing every minor change.",
+    "Every requested milestone is assigned to the correct first major version.",
+    "Released C# 14 features are not confused with later previews.",
+    "The target-framework defaults are stated separately from feature descriptions."
+  ],
+  "postQuiz": [
+    {"prompt":"Which release introduced LINQ and lambda expressions?","options":["C# 2","C# 3","C# 8"],"correct":1,"explanation":"C# 3 introduced the language pieces that make LINQ's fluent query style possible."},
+    {"prompt":"Which pairing is correct?","options":["C# 9 — records and init setters","C# 11 — async/await","C# 12 — nullable reference types"],"correct":0,"explanation":"Records and init-only setters arrived in C# 9; async/await arrived in C# 5; nullable reference types arrived in C# 8."},
+    {"prompt":"Why might valid C# 14 syntax fail in another project?","options":["C# syntax changes by operating system","That project may use an older SDK, compiler, target framework, or explicit language version","C# 14 works only in console apps"],"correct":1,"explanation":"Feature availability depends on the project's toolchain and language-version configuration."}
+  ],
+  "reflections": [
+    "Which feature changed how you write C# most significantly?",
+    "Which modern feature have you seen but not yet used confidently?",
+    "Why is recognizing a feature often more useful than memorizing its release number?"
+  ],
+  "whatBreaks": "Skipping this refresher does not break the TimeClock path. You only lose a compact map for recognizing when syntax entered the language and which toolchain supports it.",
+  "summary": "C# evolves cumulatively. Generics arrived in C# 2; lambdas and LINQ in C# 3; async/await in C# 5; nullable reference types in C# 8; records and init in C# 9; required members in C# 11; primary constructors and collection expressions in C# 12; and newer library-oriented refinements in C# 13–14. Target frameworks select sensible default language versions, so production adoption should move with the supported SDK and build environment."
+}

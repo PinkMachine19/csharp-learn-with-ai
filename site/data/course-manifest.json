@@ -59,5 +59,12 @@
     [33,"aspnet-core-requests-routing-and-dtos","ASP.NET Core Requests, Routing, and DTO Boundaries","integration",32,"049–053"],
     [34,"validation-logging-and-api-errors","Validation, Logging, and API Error Responses","integration",33,"054–056, 062"],
     [35,"integrated-workflow-and-end-to-end-verification","Integrated Workflow and End-to-End Verification","integration",34,"040–044, 061, 065"]
+  ],
+  "refreshers": [
+    ["R1","csharp-evolution-and-language-milestones","C# Evolution & Language Milestones",null,"official C# language history and production-oriented refresher"],
+    ["R2","generics-lambdas-and-linq","Generics, Lambdas & LINQ","R1","supplemental synthesis of Sessions 14–15 and 21–23"],
+    ["R3","async-await-refresher","async/await Refresher","R2","supplemental synthesis of Sessions 26–28"],
+    ["R4","pattern-matching-and-nullable-reference-types","Pattern Matching & Nullable Reference Types","R3","supplemental modern C# production reference"],
+    ["R5","records-modern-construction-and-collection-expressions","Records, Modern Construction & Collection Expressions","R4","supplemental C# 9–13 production reference"]
   ]
 }

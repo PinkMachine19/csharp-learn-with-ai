@@ -11,8 +11,10 @@
 
   function detectLessonId() {
     var path = window.location.pathname.replace(/\\/g, '/');
-    var sessionMatch = path.match(/\/sessions\/(session-\d{2})\//i);
+    var sessionMatch = path.match(/\/sessions\/(session-\d{2}(?:\.\d+)?)\//i);
     if (sessionMatch) return sessionMatch[1].toLowerCase();
+    var refresherMatch = path.match(/\/refreshers\/(r\d+)\//i);
+    if (refresherMatch) return 'refresher-' + refresherMatch[1].toLowerCase();
     return null;
   }
 

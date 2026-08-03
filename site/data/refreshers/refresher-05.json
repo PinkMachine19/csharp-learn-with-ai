@@ -1,0 +1,69 @@
+{
+  "number": "R5",
+  "category": "Optional Modern C# refresher",
+  "estimatedTime": "45 minutes",
+  "connection": "The final optional refresher covers the compact syntax common in current production C#: records, init and required members, primary constructors, collection expressions, and several nearby features that reduce ceremony without removing design responsibility.",
+  "objectives": [
+    "Choose records or classes based on value semantics versus identity and behavior.",
+    "Distinguish init-only assignment from deep immutability.",
+    "Use required members and primary constructors to communicate construction needs.",
+    "Read collection expressions and spread elements.",
+    "Recognize other modern production syntax without adopting it mechanically."
+  ],
+  "visuals": [
+    {"diagram":"blueprint","title":"Records make value-oriented data concise","explanation":"Records synthesize value equality and nondestructive copying, which suits messages and snapshots."},
+    {"diagram":"initializer","title":"init and required shape construction","explanation":"init limits assignment to construction; required tells callers which members must be supplied."},
+    {"diagram":"constructor","title":"Primary constructors put parameters beside the type","explanation":"Parameters are available throughout the type body, but they are not automatically properties."},
+    {"diagram":"expression","title":"Collection expressions focus on elements","explanation":"Square-bracket syntax can create supported collection targets and spread existing sequences with two dots."}
+  ],
+  "preQuiz": [
+    {"prompt":"What behavior do records provide by default that ordinary classes do not?","options":["Database persistence","Value-based equality","Thread safety"],"correct":1,"explanation":"Record equality compares the declared value components."},
+    {"prompt":"Does init make a List<T> property deeply immutable?","options":["Yes","No — it limits property assignment, but the referenced list may still mutate","Only in records"],"correct":1,"explanation":"Immutability must be reasoned about through the whole object graph."},
+    {"prompt":"Does a primary-constructor parameter automatically become a public property on a class?","options":["Yes","No","Only when marked required"],"correct":1,"explanation":"Unlike positional record parameters, class primary-constructor parameters are parameters available in the body."}
+  ],
+  "concept": [
+    {"title":"1. Records express value semantics","paragraphs":["Use a record when two instances with the same components should normally compare equal: messages, commands, DTO-like snapshots, and results are common examples.","Use a class when identity, encapsulated mutation, lifecycle, or framework behavior is central. The keyword does not replace design judgment."]},
+    {"title":"2. with creates a modified copy","paragraphs":["A with expression performs nondestructive mutation: it copies a record and changes selected members in the new value.","The copy is shallow. Referenced mutable objects can still be shared between the original and copy."]},
+    {"title":"3. init controls the assignment window","paragraphs":["An init accessor allows assignment during object construction and prevents later property reassignment through normal code.","It does not freeze a mutable object stored in the property. Prefer immutable component types when deep immutability matters."]},
+    {"title":"4. required shifts feedback to construction","paragraphs":["A required member tells callers they must initialize it. This improves compile-time feedback for object initializers and framework-created models.","required does not validate content. A required string can still be empty, so constructors, guards, and validation remain useful."]},
+    {"title":"5. Primary constructors reduce ceremony","paragraphs":["C# 12 allows primary constructors on classes and structs. Parameters are in scope throughout the type body and can initialize members or participate in methods.","Promote a parameter to an explicit property when it belongs to the public state. Avoid hiding important invariants in overly compressed declarations."]},
+    {"title":"6. Collection expressions describe contents","paragraphs":["Collection expressions use [ ] with a target type, for example int[] values = [1, 2, 3]. The compiler builds an appropriate supported collection.","A spread element such as [..first, 9, ..second] inserts elements from existing sequences. The syntax is concise, but allocation and target-type behavior still matter."]},
+    {"title":"7. Other modern syntax seen in production","paragraphs":["File-scoped namespaces and global usings reduce repeated structure. Target-typed new and target-typed conditional expressions use context to omit redundant type names.","Raw string literals simplify JSON, SQL, regex, and templates. Using declarations shorten disposal scopes. Index/range syntax, switch expressions, list patterns, and interpolated-string handlers appear frequently in modern libraries.","C# 13–14 add more specialized features such as params collections, updated lock support, extension members, null-conditional assignment, field-backed properties, and stronger Span integration. Adopt them when they clarify real code and your supported toolchain allows them."]},
+    {"title":"8. Concision has a budget","paragraphs":["Modern syntax should remove noise, not remove meaning. A compact declaration is successful when its invariants, ownership, and mutability remain obvious.","During review, ask what the syntax guarantees, what it merely suggests, and what still requires runtime validation."]}
+  ],
+  "lab": {
+    "objective": "Model a small immutable work summary using records, required/init members, a primary constructor, and collection expressions.",
+    "startingCondition": "Use an isolated scratch console project targeting a toolchain that supports C# 12 or newer.",
+    "steps": [
+      {"text":"Create the scratch project.","code":"mkdir -p exercises/refreshers/r5\ndotnet new console -o exercises/refreshers/r5"},
+      {"text":"Add these modern data shapes to Program.cs.","code":"record WorkSummary(int EmployeeId, decimal Hours);\n\nsealed class Report(string title)\n{\n    public required DateOnly Date { get; init; }\n    public string Title { get; } = title;\n}\n\nWorkSummary first = new(1, 8m);\nWorkSummary revised = first with { Hours = 7.5m };\nWorkSummary[] summaries = [first, revised];\nReport report = new(\"Daily hours\") { Date = DateOnly.FromDateTime(DateTime.Today) };\n\nConsole.WriteLine($\"{report.Title}: {summaries.Length}\");"},
+      "Identify which type uses value equality and which property is required during construction.",
+      "Explain why the Report primary-constructor parameter is copied into a property instead of automatically becoming one.",
+      {"text":"Run and confirm that two summaries are reported.","code":"dotnet run --project exercises/refreshers/r5"},
+      "Add a third collection using spread syntax, then explain whether any contained objects are deep-copied."
+    ],
+    "expectedBehavior": "The program prints Daily hours: 2, and the notes accurately distinguish equality, construction requirements, property exposure, and shallow copying.",
+    "validation": "dotnet run --project exercises/refreshers/r5 | grep -q 'Daily hours: 2'"
+  },
+  "expectedFiles": [{"path":"exercises/refreshers/r5/Program.cs","action":"Add","why":"Create an isolated modern-construction syntax refresher."}],
+  "commit": "refresher-r5: practice records modern construction and collections",
+  "review": [
+    "The record is used for value-oriented data rather than automatic fashion.",
+    "required and init are not described as runtime validation or deep immutability.",
+    "The primary-constructor parameter becomes public state only through an explicit property.",
+    "Collection-expression target types and spread behavior are understood.",
+    "Modern syntax makes the example clearer rather than merely shorter."
+  ],
+  "postQuiz": [
+    {"prompt":"What kind of copy does a record with-expression normally perform for referenced members?","options":["Deep copy","Shallow copy","No copy"],"correct":1,"explanation":"The new record can still share referenced mutable objects with the original."},
+    {"prompt":"What does required guarantee?","options":["The caller supplies the member during construction","The value passes business validation","The object is immutable"],"correct":0,"explanation":"required improves construction-time compiler feedback but does not validate meaning."},
+    {"prompt":"What does .. mean inside a collection expression?","options":["Range slicing only","Spread the elements of another sequence","Create a nullable collection"],"correct":1,"explanation":"Spread inserts elements from an existing sequence into the new collection expression."}
+  ],
+  "reflections": [
+    "Which data types in your current system would benefit from value equality?",
+    "Where could required improve caller feedback without replacing validation?",
+    "Which modern syntax feature improves readability for your team, and which risks becoming too compressed?"
+  ],
+  "whatBreaks": "Skipping R5 does not affect the TimeClock tutorial. You lose a compact production reference for the construction and data-shape syntax introduced across C# 9–14.",
+  "summary": "Records provide value semantics and with-based shallow copying. init limits property reassignment to construction, while required makes caller obligations visible without replacing validation. Primary constructors reduce ceremony but do not automatically create class properties. Collection expressions and spread syntax describe collection contents concisely. Modern C# also includes file-scoped namespaces, global usings, raw strings, target typing, list patterns, params collections, extension members, field-backed properties, and Span-oriented improvements—tools to adopt when they clarify supported production code."
+}

@@ -1,0 +1,68 @@
+{
+  "number": "R2",
+  "category": "Optional Modern C# refresher",
+  "estimatedTime": "45 minutes",
+  "connection": "This optional reference connects three features that often appear together in production: generics describe reusable type-safe shapes, lambdas package behavior, and LINQ composes that behavior into data pipelines.",
+  "objectives": [
+    "Explain what type parameters preserve that object-based APIs lose.",
+    "Read common generic constraints without treating them as ceremony.",
+    "Translate a lambda into its input, body, and return value.",
+    "Trace a LINQ pipeline through filtering, projection, ordering, and aggregation.",
+    "Recognize deferred execution and intentional materialization."
+  ],
+  "visuals": [
+    {"diagram":"type","title":"A type parameter preserves one shape across many types","explanation":"List<T> is one collection design whose element type remains known to the compiler."},
+    {"diagram":"signature","title":"Constraints state required capabilities","explanation":"A constraint narrows which types are valid and tells generic code which operations are safe."},
+    {"diagram":"expression","title":"A lambda is a small value representing behavior","explanation":"Parameters enter on the left; an expression or statement body produces the behavior on the right."},
+    {"diagram":"pipeline","title":"LINQ composes transformations","explanation":"A source flows through operators such as Where, Select, OrderBy, and Sum."}
+  ],
+  "preQuiz": [
+    {"prompt":"What does List<Employee> preserve that ArrayList does not?","options":["The compile-time element type","The database table name","Automatic thread safety"],"correct":0,"explanation":"Generic collections preserve element types and avoid routine casts."},
+    {"prompt":"In entry => entry.ClockOut != null, what is entry?","options":["A namespace","The lambda parameter","The final query result"],"correct":1,"explanation":"The left side names the value supplied to the lambda for each evaluation."},
+    {"prompt":"When does an IEnumerable LINQ query commonly execute?","options":["Always when declared","When enumerated or materialized","Only during compilation"],"correct":1,"explanation":"Many LINQ operators build a deferred query that executes later."}
+  ],
+  "concept": [
+    {"title":"1. Generics keep type information","paragraphs":["A generic type or method uses a placeholder such as T while preserving the actual type at each call site.","List<Employee> and List<ClockEntry> reuse one collection design without reducing every item to object or requiring casts."]},
+    {"title":"2. Constraints describe capabilities","paragraphs":["where T : class requires a reference type; where T : struct requires a non-nullable value type; where T : new() requires a public parameterless constructor.","Interface and base-class constraints say the generic algorithm needs specific behavior. Constraints should follow real operations the code performs."]},
+    {"title":"3. Lambdas make behavior composable","paragraphs":["A lambda can be an expression, such as x => x.EmployeeId, or a statement block with several lines.","The compiler converts it to a compatible delegate—or to an expression tree when an API such as IQueryable needs a data representation of the expression."]},
+    {"title":"4. Read LINQ left to right","paragraphs":["Where keeps matching elements. Select changes each element's shape. OrderBy determines sequence. GroupBy creates groups. Sum, Count, Any, First, and Single produce answers.","Name the type after every stage. That habit catches most confusing LINQ mistakes before execution."]},
+    {"title":"5. IEnumerable and IQueryable are different promises","paragraphs":["IEnumerable<T> executes .NET iteration logic. IQueryable<T> captures an expression that a provider may translate, commonly into SQL.","A method that works in memory may not be translatable by a database provider. Keep provider boundaries visible."]},
+    {"title":"6. Deferred execution is useful and observable","paragraphs":["A deferred query can see source changes made before enumeration. Re-enumerating can repeat work.","ToList, ToArray, and similar operators materialize a snapshot. Materialize when you need stable results, one-time execution, or a clear provider boundary—not by reflex."]},
+    {"title":"7. Production readability beats one-line cleverness","paragraphs":["A fluent pipeline is valuable when each stage has one clear job. Split complicated predicates, name intermediate results, and avoid hidden repeated enumeration.","LINQ is not automatically faster or clearer than a loop. Choose the form that communicates the operation and performance expectations."]}
+  ],
+  "lab": {
+    "objective": "Build a compact generics/lambda/LINQ reference using a small in-memory clock-entry example.",
+    "startingCondition": "Use a temporary scratch console project; do not change TimeClock application code.",
+    "steps": [
+      {"text":"Create a scratch console project.","code":"mkdir -p exercises/refreshers/r2\ndotnet new console -o exercises/refreshers/r2"},
+      {"text":"Replace Program.cs with a ClockEntry record, a typed list, and a pipeline that keeps completed entries, projects durations, and sums hours.","code":"record ClockEntry(int EmployeeId, double? Hours);\n\nList<ClockEntry> entries = [new(1, 8), new(1, null), new(2, 6)];\n\ndouble total = entries\n    .Where(entry => entry.EmployeeId == 1 && entry.Hours is not null)\n    .Select(entry => entry.Hours!.Value)\n    .Sum();\n\nConsole.WriteLine(total);"},
+      "Before running, write the type produced after Where, after Select, and after Sum.",
+      {"text":"Run the example and confirm the total is 8.","code":"dotnet run --project exercises/refreshers/r2"},
+      "Change the query variable so it is stored before Sum. Explain whether it is deferred and where execution occurs."
+    ],
+    "expectedBehavior": "The scratch program prints 8, and the notes correctly identify the generic element type, lambda roles, pipeline shapes, and execution point.",
+    "validation": "dotnet run --project exercises/refreshers/r2 | grep -q '^8$'"
+  },
+  "expectedFiles": [
+    {"path":"exercises/refreshers/r2/Program.cs","action":"Add","why":"Create an isolated typed LINQ pipeline refresher."}
+  ],
+  "commit": "refresher-r2: practice generics lambdas and LINQ as one pipeline",
+  "review": [
+    "The collection remains strongly typed from source to result.",
+    "Each lambda's parameter and return value can be explained.",
+    "The pipeline contains no unnecessary materialization.",
+    "The execution point is identified correctly."
+  ],
+  "postQuiz": [
+    {"prompt":"What does Select do?","options":["Filters elements","Transforms each element into another shape","Forces parallel execution"],"correct":1,"explanation":"Select is projection: one input element becomes one output value."},
+    {"prompt":"Why can IQueryable reject ordinary-looking C# code?","options":["Its provider may be unable to translate the expression","Generics do not work with databases","Lambdas require async"],"correct":0,"explanation":"IQueryable providers translate expression trees and support only operations they understand."},
+    {"prompt":"When is ToList useful?","options":["At every pipeline stage","When a stable materialized snapshot or provider boundary is intentional","Only for arrays"],"correct":1,"explanation":"Materialization is a semantic and performance choice."}
+  ],
+  "reflections": [
+    "Which LINQ operator do you most often misuse or overuse?",
+    "When would a loop communicate intent better than a pipeline?",
+    "How do generic constraints improve both compiler feedback and API documentation?"
+  ],
+  "whatBreaks": "Skipping R2 does not affect the enterprise path. You lose a consolidated reference for reading type-safe APIs and fluent data pipelines under interview pressure.",
+  "summary": "Generics preserve type information while reusing algorithms and data structures. Constraints state the capabilities generic code requires. Lambdas package behavior into delegate-compatible values, and LINQ composes those values into readable transformations. The key production distinctions are the type after each stage, IEnumerable versus IQueryable, deferred execution versus materialization, and clarity versus cleverness."
+}
