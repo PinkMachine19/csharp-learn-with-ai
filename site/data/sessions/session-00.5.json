@@ -1,0 +1,84 @@
+{
+  "number": "00.5",
+  "category": "Product context and requirements",
+  "estimatedTime": "40 minutes",
+  "connection": "Session 00 explained why C# belongs in your toolbelt. Before Session 01 creates solutions and projects, this session introduces the product those projects will serve: a small TimeClock application that records work and totals completed hours.",
+  "objectives": [
+    "Explain the real problem the TimeClock application solves without referring to its implementation.",
+    "Identify the people and system roles that create or consume time-clock information.",
+    "Separate functional requirements from quality expectations, scope boundaries, and non-goals.",
+    "Walk through the current clock-in, clock-out, duration, and total-hours use cases.",
+    "Use the course's business vocabulary consistently: employee, clock entry, clock in, clock out, completed entry, duration, and reporting period.",
+    "Distinguish behavior available today from incomplete or future-facing product surfaces."
+  ],
+  "visuals": [
+    {"diagram":"product","title":"The product turns a work interval into completed hours","explanation":"The essential journey is intentionally small: an employee clocks in, later clocks out, and the completed interval can contribute hours to a total."},
+    {"diagram":"actors","title":"One person records time; another process consumes the result","explanation":"The product identifies the employee whose work creates clock entries. A payroll-oriented reporting process consumes completed entries to calculate total hours for a date range."},
+    {"diagram":"boundary","title":"A clear boundary prevents invented requirements","explanation":"Clocking and hour totals are current scope. Scheduling, pay rates, wages, approvals, leave, authentication, and similar workforce features are not implemented and are not silently treated as requirements."},
+    {"diagram":"vocabulary","title":"Shared words become shared meaning","explanation":"Employee, clock entry, clock in, clock out, duration, and reporting period recur throughout the course. Learning the vocabulary first makes later class and method names easier to understand."}
+  ],
+  "preQuiz": [
+    {"prompt":"Before choosing classes or projects, what should you understand first?","options":["Which folder names are most popular in .NET","What problem the product solves, who uses it, and which outcomes matter","Which database the application will eventually use"],"correct":1,"explanation":"Architecture is easier to judge after the problem, users, vocabulary, and boundaries are clear."},
+    {"prompt":"If a time-clock application records hours, must it also calculate wages and taxes?","options":["Yes — all time systems must be full payroll systems","No — recording completed work intervals and totaling hours can be a useful, smaller product boundary","Yes — otherwise ClockEntry cannot exist"],"correct":1,"explanation":"The real application totals hours but contains no pay rates, tax rules, or wage calculation. Those features should not be invented."},
+    {"prompt":"Which statement describes a functional requirement?","options":["The code should be maintainable","An employee can complete an open clock entry by clocking out","The application should use four projects"],"correct":1,"explanation":"A functional requirement describes observable product behavior. Maintainability is a quality goal; project count is a design choice."}
+  ],
+  "concept": [
+    {"title":"1. The product in one sentence","paragraphs":["TimeClock records when an employee starts and finishes work, then uses completed entries to report hours for a selected period.","That sentence defines the product more accurately than a list of technologies. It says what useful outcome exists before saying how the code produces it."]},
+    {"title":"2. Who uses the information?","paragraphs":["The employee is the person identified by an EmployeeId and the person whose work creates clock entries.","A payroll-oriented reporting process consumes completed entries. It asks for one employee's entries inside a date range and totals their durations.","The current product does not include login accounts, manager approvals, or a finished web experience. Those are not current users or workflows just because a larger workforce product might have them."]},
+    {"title":"3. Business goals","paragraphs":["The first goal is reliable capture: preserve the start and end of a work interval for the correct employee.","The second goal is a useful result: turn completed intervals into durations and total those hours for a reporting period.","The third goal is understandable behavior. Invalid actions—such as completing the same entry twice—must not quietly corrupt the recorded time."]},
+    {"title":"4. Functional requirements","paragraphs":["The current product supports a deliberately small set of behaviors:"],"list":[
+      {"term":"Identify an employee","text":"Associate work with an integer EmployeeId."},
+      {"term":"Clock in","text":"Create and save an open clock entry with a start time."},
+      {"term":"Find open work","text":"Retrieve the employee's current entry when it has not been completed."},
+      {"term":"Clock out","text":"Record an end time once; a second completion is rejected."},
+      {"term":"Calculate duration","text":"Subtract clock-in from clock-out only after the entry is complete."},
+      {"term":"Select a period","text":"Retrieve completed entries for one employee inside a start/end range."},
+      {"term":"Total hours","text":"Add the durations of those completed entries."},
+      {"term":"Rename an employee","text":"The small Employee model also supports changing its name."}
+    ]},
+    {"title":"5. Quality expectations","paragraphs":["There is no formal performance or availability target, so this lesson does not invent one. It does reveal practical quality expectations.","Time data should remain consistent: an open entry has no clock-out, a completed entry has one, and completed work should belong to the correct employee.","Invalid actions should fail clearly rather than silently changing or misreporting recorded time."]},
+    {"title":"6. Scope and non-goals","paragraphs":["Current scope is employee identity, clock entries, completion, duration, retaining recorded entries, and total-hours calculation.","Not implemented: scheduling, shifts, breaks, overtime policy, pay rates, wages, taxes, leave, approvals, authentication, authorization, notifications, and multi-company tenancy.","A finished web experience is future work, not a current feature students should assume already exists."]},
+    {"title":"7. A user journey","paragraphs":["An employee starts work and the system records an open clock entry. Later, the employee clocks out and the entry becomes complete.","When hours are needed, the system selects that employee's completed entries inside a requested period. It calculates each duration and adds them together.","That short journey is the thread running through the course. Later lessons give each part of the journey a clear software responsibility."]},
+    {"title":"8. Vocabulary to carry forward","paragraphs":["An Employee is the person whose time is recorded. A ClockEntry is one work interval. ClockIn begins it; ClockOut completes it. Duration is the elapsed time between those moments. A reporting period is the date range used when selecting entries. Total hours is the sum of completed durations.","These words are not decoration. In Session 00.6, they become clues for finding models, behavior, and relationships."]}
+  ],
+  "lab": {
+    "objective": "Write a one-page product brief that describes the real TimeClock behavior, boundary, and vocabulary without discussing classes, projects, frameworks, or databases.",
+    "startingCondition": "You have read this session and can inspect the repository, but you are not changing application code.",
+    "steps": [
+      {"text":"Create a product brief in the docs folder.","code":"touch docs/timeclock-product-brief.md"},
+      "Add a heading named ## Problem and explain in two or three sentences why recording completed work intervals is useful.",
+      "Add ## Users and Outcomes. Name the employee and the payroll-oriented consumer, then state what each needs from the product.",
+      "Add ## Current Use Cases. List clock in, clock out, calculate duration, select completed entries for a period, and total hours.",
+      "Add ## Scope and Non-Goals. State what is included, then explicitly exclude at least five features that the real application does not implement.",
+      "Add ## Vocabulary and define Employee, ClockEntry, completed entry, duration, reporting period, and total hours in your own words.",
+      "Read the brief once and remove any sentence that prescribes a class, project, database, endpoint, or framework. This document describes what and why—not how."
+    ],
+    "expectedBehavior": "docs/timeclock-product-brief.md is concise, matches the implemented product, distinguishes current scope from non-goals, and contains no invented enterprise features or implementation design.",
+    "validation": "test -s docs/timeclock-product-brief.md && test $(grep -c '^## ' docs/timeclock-product-brief.md) -ge 5"
+  },
+  "expectedFiles": [
+    {"path":"site/data/sessions/session-00.5.json","action":"Add","why":"Publish the product overview and requirements session."},
+    {"path":"docs/timeclock-product-brief.md","action":"Add","why":"Capture the student's implementation-free understanding of the product."}
+  ],
+  "commit": "session-00.5: document the verified TimeClock product boundary and requirements",
+  "review": [
+    "The brief explains what TimeClock does before mentioning software design.",
+    "Every listed use case belongs to the verified current product boundary.",
+    "Non-goals are clearly excluded rather than described as hidden current features.",
+    "The Web API is not presented as complete; its usable endpoints remain later work.",
+    "Core vocabulary is defined consistently and in the student's own words.",
+    "The brief stays short enough to use as a design reference."
+  ],
+  "postQuiz": [
+    {"prompt":"Which is the best one-sentence description of the current product?","options":["A complete workforce-management platform","A system that records employee work intervals and totals completed hours for a period","An ASP.NET Core API for manager approvals"],"correct":1,"explanation":"That statement matches the verified behavior without adding unimplemented features or prescribing technology."},
+    {"prompt":"Why is 'calculate employee wages' excluded from the current requirements?","options":["C# cannot calculate money","The product totals time but has no pay rates, wage rules, or tax behavior","Payroll and time tracking can never coexist"],"correct":1,"explanation":"Requirements should describe the actual product. Totaling hours does not imply wage calculation."},
+    {"prompt":"An entry has a clock-in time but no clock-out time. What business state is it in?","options":["Open and not yet safe to use for a completed duration","Deleted","Approved for payroll"],"correct":0,"explanation":"The domain treats ClockOut as optional until completion, and duration calculation rejects an open entry."}
+  ],
+  "reflections": [
+    "Which requirement would be easiest to misunderstand if the vocabulary were not defined first?",
+    "Why is naming non-goals useful even for a product this small?",
+    "Which quality expectation matters most when a clock entry changes from open to complete?"
+  ],
+  "whatBreaks": "Removing this product context leaves every later technical choice floating without a reason. Students may mistake TimeClock for a generic demo, invent features that are not present, or memorize project names without knowing which business outcome each project eventually supports. The code may still compile, but the curriculum loses the answer to the most important question: what are we building, and why?",
+  "summary": "TimeClock is a small application for recording employee work intervals and totaling completed hours for a reporting period. Its current behavior covers employee identity, clock in, clock out, duration, period-based selection, and total hours. Scheduling, pay rates, wages, approvals, authentication, and a finished HTTP API are not current features. These verified requirements and shared terms provide the business context that Session 00.6 will translate into models, behavior, relationships, and responsibilities."
+}

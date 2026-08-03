@@ -1,0 +1,81 @@
+{
+  "number": "00.6",
+  "category": "Domain modeling and design context",
+  "estimatedTime": "45 minutes",
+  "connection": "Session 00.5 defined what TimeClock must do. This session turns that language into a first design: nouns suggest models, verbs suggest behavior, relationships suggest boundaries, and responsibilities explain why Session 01 will create several projects instead of one pile of files.",
+  "objectives": [
+    "Read a requirement and mark business nouns, verbs, rules, and outcomes.",
+    "Map verified nouns such as employee and clock entry to candidate domain models.",
+    "Map verified verbs such as clock in, clock out, save, retrieve, and total to behavior or use cases.",
+    "Describe the relationships among Employee, ClockEntry, Timesheet, and WorkSummary without inventing database details.",
+    "Assign one clear responsibility to a model, service, repository contract, application host, infrastructure component, or test project.",
+    "Explain how the business naturally produces the Domain, App, Infrastructure, Web, and Tests boundaries introduced in Session 01."
+  ],
+  "visuals": [
+    {"diagram":"nouns","title":"Business nouns are model candidates","explanation":"Employee and clock entry appear repeatedly in requirements. That repetition is evidence that the domain needs explicit concepts for them—not proof that every noun must become a class."},
+    {"diagram":"verbs","title":"Business verbs reveal behavior","explanation":"Clock in, clock out, retrieve, save, and total describe work the system must perform. Some behavior belongs on a model; coordination across objects usually belongs in a service or use case."},
+    {"diagram":"relationships","title":"Relationships add meaning to isolated models","explanation":"An employee can have many clock entries. Completed entries contribute durations to a work summary. EmployeeId is the link used by the current implementation."},
+    {"diagram":"architecture","title":"Project boundaries follow responsibilities","explanation":"Business rules form the Domain. A runnable workflow needs App. Storage details need Infrastructure. HTTP delivery needs Web. Tests verify behavior across those boundaries."}
+  ],
+  "preQuiz": [
+    {"prompt":"A requirement says, 'Clock out the employee's open entry.' Which words are the strongest design clues?","options":["Clock out is a verb; employee and entry are nouns; open describes state","Every word should become a class","The sentence only tells us which database table to create"],"correct":0,"explanation":"Nouns, verbs, and state words help discover concepts and behavior before technology is chosen."},
+    {"prompt":"Should every business noun automatically become a C# class?","options":["Yes — one noun always equals one class","No — nouns are candidates that must earn a responsibility in the model","No — domain models should contain only methods"],"correct":1,"explanation":"Domain modeling is interpretation, not mechanical grammar conversion. A useful model represents meaningful state or behavior."},
+    {"prompt":"Why might storage live outside the core domain rules?","options":["Because domain code cannot use collections","So clocking and duration rules do not depend on one storage technology","Because every solution must have exactly five projects"],"correct":1,"explanation":"The business rule should remain understandable and testable whether entries live in memory, EF Core, or another store."}
+  ],
+  "concept": [
+    {"title":"1. Start with one requirement","paragraphs":["Consider: 'An employee clocks out, completing the open clock entry so its duration can contribute to total hours.'","Employee and clock entry are nouns. Clocks out, completing, and contribute are verbs. Open and completed are states. Total hours is an outcome.","That small reading exercise already exposes most of the design without mentioning C# syntax."]},
+    {"title":"2. Nouns suggest domain models","paragraphs":["Employee is a stable business identity with an EmployeeId, name, and address. ClockEntry represents one interval with ClockIn and an optional ClockOut.","Address is a supporting value attached to Employee. Timesheet is a course extension that groups one Employee with that employee's entries. WorkSummary is another small outcome model containing EmployeeId and Hours.","These are candidates because they carry business meaning. A word such as 'system' does not need its own model merely because it appears in a sentence."]},
+    {"title":"3. Verbs suggest behavior and use cases","paragraphs":["Clock in creates an open ClockEntry. Clock out finds that entry and completes it. Get duration asks a completed entry for elapsed time. Calculate total hours selects completed entries for a period and sums their durations.","Rename changes an Employee. Save and retrieve describe persistence collaboration rather than time-clock rules themselves.","The important question is not only 'what method name do I need?' It is 'which object has enough information and authority to own this behavior?'"],"list":[
+      {"term":"ClockEntry","text":"Owns its clock-out state and duration behavior."},
+      {"term":"ClockEntryService","text":"Coordinates clock-in/clock-out work with a repository."},
+      {"term":"PayrollService","text":"Coordinates period selection and total-hours calculation."},
+      {"term":"Repository contract","text":"Describes saving and retrieving entries without deciding the storage technology."}
+    ]},
+    {"title":"4. Relationships reveal rules","paragraphs":["One employee can have many clock entries. The current implementation connects them through EmployeeId rather than an object reference on ClockEntry.","A Timesheet keeps an Employee and entries together and rejects an entry belonging to another employee. This is a useful course extension, not part of the original small source application.","A WorkSummary is produced from completed work. It is an outcome, not the owner of clock-in or clock-out behavior."]},
+    {"title":"5. Responsibilities come before folders","paragraphs":["ClockEntry should protect clock-entry state. A service should coordinate a use case. A repository should hide how entries are stored. A host should start the application and connect dependencies. Tests should prove observable behavior.","When one class tries to own all five jobs, a change to storage, delivery, or startup can disturb business rules. Separating responsibilities makes each part easier to understand and test.","This does not mean every responsibility needs a new project immediately. It means the boundaries should follow reasons to change, not arbitrary folder fashion."]},
+    {"title":"6. Requirements lead to architecture","paragraphs":["The Domain project exists because employee, clock-entry, duration, and total-hours rules should stand on their own. The App project exists because a console workflow needs an executable starting point.","Infrastructure exists because EF Core persistence is a technical detail added around the domain. Web exists as the HTTP-facing host, although its controllers are future course work. Tests exist because rules and collaborations need executable evidence.","That produces the mental model Session 01 will scaffold: a solution lists projects; each project owns a responsibility; source and test folders organize those projects."]},
+    {"title":"7. Architecture is a consequence, not decoration","paragraphs":["The repository is not split into Domain, App, Infrastructure, Web, and Tests because those names look professional. Each boundary answers a pressure found in the requirements: rules, execution, storage, delivery, and verification change for different reasons.","A smaller application could begin with fewer projects. This course shows the boundaries explicitly because later sessions study each responsibility and the dependency direction between them."]},
+    {"title":"8. Stay honest about the current design","paragraphs":["The original TimeClock source is small and rough. The course intentionally preserves typos, a hardcoded employee repository, in-memory storage, incomplete dependency registration, and a Web host with no controllers so later sessions can diagnose real problems.","EF Core workflows, Timesheet, WorkSummary, and several other types are labeled extensions created for teaching. They grow from the same verified requirements, but they are not presented as features that existed in the original application.","Good design context explains both what is present and what remains unfinished."]}
+  ],
+  "lab": {
+    "objective": "Translate the verified product brief into a compact domain-model worksheet before creating any C# projects or classes.",
+    "startingCondition": "docs/timeclock-product-brief.md exists from Session 00.5, or you can use Session 00.5's verified requirements directly. No application code changes are required.",
+    "steps": [
+      {"text":"Create the domain-model worksheet.","code":"touch docs/timeclock-domain-model.md"},
+      "Add ## Requirement Sentence and copy one short requirement about completing an open clock entry and totaling hours.",
+      "Add ## Nouns to Models. Map Employee, ClockEntry, Address, Timesheet, and WorkSummary to one-sentence responsibilities. Mark Timesheet and WorkSummary as course extensions.",
+      "Add ## Verbs to Behavior. Map clock in, clock out, calculate duration, select by period, total hours, save, and retrieve to the model, service, or repository contract that should own each behavior.",
+      "Add ## Relationships. State that one employee can have many clock entries, EmployeeId links them in the current design, and only completed entries contribute durations.",
+      "Add ## Project Responsibilities. Give Domain, App, Infrastructure, Web, and Tests exactly one short responsibility each. Mark Web controllers as future work.",
+      "Add ## Dependency Reasoning. Explain why domain rules should not depend on EF Core, console startup, HTTP routing, or xUnit.",
+      "Review every proposed model and boundary. Remove anything justified only by 'most enterprise applications have one.'"
+    ],
+    "expectedBehavior": "docs/timeclock-domain-model.md traces verified requirements into models, behavior, relationships, and project responsibilities without adding fictional product features or writing implementation code.",
+    "validation": "test -s docs/timeclock-domain-model.md && test $(grep -c '^## ' docs/timeclock-domain-model.md) -ge 6"
+  },
+  "expectedFiles": [
+    {"path":"site/data/sessions/session-00.6.json","action":"Add","why":"Publish the requirements-to-domain-model bridge session."},
+    {"path":"docs/timeclock-domain-model.md","action":"Add","why":"Capture the student's domain and responsibility analysis before coding."}
+  ],
+  "commit": "session-00.6: derive the TimeClock domain model from verified requirements",
+  "review": [
+    "Every model traces back to a named requirement or business term.",
+    "Every major verb has an owner with a clear reason for that ownership.",
+    "The worksheet distinguishes domain behavior from persistence and delivery details.",
+    "Relationships state how EmployeeId connects employees and entries in the current design.",
+    "Course extensions and future Web work are labeled honestly.",
+    "No boundary is justified only by convention or the desire to look enterprise-ready."
+  ],
+  "postQuiz": [
+    {"prompt":"Why does ClockEntry own clock-out state and duration behavior?","options":["It already has the clock-in and clock-out information needed to protect that state","All behavior must live on models","Services are not allowed to use DateTime"],"correct":0,"explanation":"Behavior belongs close to the state and rules it needs. Services coordinate broader use cases around that model."},
+    {"prompt":"What requirement pressure most directly justifies a repository contract?","options":["Entries must be saved and retrieved without making business rules depend on one storage mechanism","Every interface needs a repository","The Web project requires SQL"],"correct":0,"explanation":"Persistence is necessary collaboration, but its technology should not define clocking and duration rules."},
+    {"prompt":"Why will Session 01 create multiple projects?","options":["Because .NET refuses to build one-project applications","Because verified responsibilities—rules, execution, storage, delivery, and testing—have different reasons to change","Because every noun needs a project"],"correct":1,"explanation":"The architecture follows responsibilities discovered in the product, not an arbitrary project-count rule."}
+  ],
+  "reflections": [
+    "Which business verb was hardest to assign to one owner, and what tradeoff did you consider?",
+    "How would the design become harder to change if ClockEntry itself opened a database connection?",
+    "Which project boundary now feels inevitable from the requirements, and which one still feels like preparation for later growth?"
+  ],
+  "whatBreaks": "Removing this bridge makes Session 01's architecture look ceremonial: students see project names and folders without seeing the pressures that created them. Models become nouns copied into classes, services become generic dumping grounds, repositories look like mandatory ceremony, and project boundaries are memorized instead of reasoned about. The application can still compile, but the student loses the ability to derive a design from a new set of requirements.",
+  "summary": "Requirements contain design clues. Business nouns suggest candidate models; verbs suggest behavior and use cases; states and relationships reveal rules; and different responsibilities create boundaries. In TimeClock, Employee and ClockEntry carry business meaning, ClockEntry protects completion and duration, services coordinate clocking and total-hours use cases, repository contracts separate storage, hosts provide execution and delivery, and tests verify behavior. Session 01 now follows naturally: it will scaffold the solution and projects that give those responsibilities a physical home."
+}

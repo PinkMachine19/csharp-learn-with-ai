@@ -2,7 +2,7 @@
   "number": 1,
   "category": "Tooling and project structure",
   "estimatedTime": "45 minutes",
-  "connection": "Every later session assumes you already understand how PinkMachine19.TimeClock.sln, src/, and tests/ came to exist. This session scaffolds that layout yourself with the dotnet CLI, then goes one step further: a real solution is not just projects, it is folders inside those projects, each with one job. You build both.",
+  "connection": "Session 00.6 identified the responsibilities TimeClock needs: business rules, execution, storage, delivery, and verification. This session gives those responsibilities a physical home by scaffolding PinkMachine19.TimeClock.sln, src/, tests/, and the purpose-named folders inside their projects with the dotnet CLI.",
   "objectives": [
     "Explain what a solution (.sln) is and what a project (.csproj) is, and how the two relate.",
     "Distinguish a console application, a class library, and an xUnit test project by what each one produces.",

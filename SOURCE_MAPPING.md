@@ -405,3 +405,30 @@ correctly reads Session 00 → Session 02 → Session 03 (and Session 02's "prev
 back to Session 00), and the syllabus page lists Session 00 first with the new "Orientation
 and Context" layer and prerequisite "None." A full `grep` across `site/data/sessions/*.json`
 for stray `"Session N"` references outside the valid 0/2–36 range came back empty.
+
+## Sessions 00.5 and 00.6 addition
+
+Session 00.5 ("Product Overview & Requirements") and Session 00.6 ("From Requirements to
+Domain Model") were inserted between Session 00 and Session 01 without renumbering the
+existing integer-numbered sessions. Their provenance is the verified source mapping in this
+document plus direct review of the current destination code and tests.
+
+- Session 00.5 limits current product behavior to employee identity, clock in, clock out,
+  completed duration, period-based entry selection, total hours, and employee rename. It
+  explicitly excludes scheduling, pay rates, wages, taxes, leave, approvals, authentication,
+  authorization, notifications, multi-company tenancy, and a finished Web experience.
+- Session 00.6 derives `Employee`, `ClockEntry`, `Address`, service/use-case behavior,
+  repository contracts, and project responsibilities from those requirements. `Timesheet`,
+  `WorkSummary`, EF Core persistence, and the incomplete Web host are labeled with the same
+  original-source/course-extension/future-work distinctions used elsewhere in this file.
+- Four accessible inline SVG kinds per session were added to `tools/build-site.mjs`; no PNGs,
+  external images, or C# application changes were introduced.
+- The manifest now contains 38 sessions in this prerequisite order: 00 → 00.5 → 00.6 →
+  01–35. Validation now checks each prerequisite against the previous manifest entry rather
+  than assuming every session number is an integer.
+
+Verification: the site build generated 120 HTML pages; all 38 manifest sessions passed the
+existing navigation, interaction, SVG accessibility, content-policy, and internal-reference
+checks. Both new sessions were browser-reviewed against a local build. The pinned .NET SDK
+10.0.302 was unavailable in the verification environment, so the unchanged C# solution was
+not rebuilt during this documentation-only update.

@@ -42,11 +42,10 @@ if (manifest) {
   if (new Set(sessions.map((session) => session.id)).size !== sessions.length) errors.push("Duplicate session IDs exist");
   if (new Set(sessions.map((session) => session.slug)).size !== sessions.length) errors.push("Duplicate session slugs exist");
   if (layers.length !== 10) errors.push(`Expected 10 curriculum layers, found ${layers.length}`);
+  const expectedNumbers = [0, "00.5", "00.6", ...Array.from({ length: 35 }, (_, index) => index + 1)];
   for (const [index, session] of sessions.entries()) {
-    // Session numbering is contiguous starting at 0 (the orientation session).
-    const expected = index;
-    if (session.number !== expected) errors.push(`Session sequence breaks at ${session.id}`);
-    const expectedPrerequisite = index === 0 ? null : expected - 1;
+    if (session.number !== expectedNumbers[index]) errors.push(`Session sequence breaks at ${session.id}`);
+    const expectedPrerequisite = index === 0 ? null : sessions[index - 1].number;
     if (session.prerequisiteSession !== expectedPrerequisite) errors.push(`Unexpected prerequisite for ${session.id}`);
     for (const field of ["lessonPath", "labPath", "quizPath", "validationCommand", "suggestedCommitMessage", "migrationSource", "completionStatus"]) {
       if (!session[field]) errors.push(`${session.id} is missing ${field}`);

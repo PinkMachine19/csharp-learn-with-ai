@@ -4,6 +4,21 @@ This file reflects the real, independently re-verified state as of the final com
 rebuild pass. Nothing below is asserted without having actually run the referenced command
 in this session and reading its real output.
 
+## Fifth post-rebuild update: product and domain-model orientation (current)
+
+Two pre-coding sessions now bridge course motivation into Session 01: Session 00.5,
+"Product Overview & Requirements," and Session 00.6, "From Requirements to Domain Model."
+The current sequence is 00 → 00.5 → 00.6 → 01–35 (38 sessions total). Both sessions are
+grounded in the verified `Employee`/`ClockEntry`/`PayrollService` application and explicitly
+separate original behavior, course extensions, future Web work, and non-goals. They add no C#
+application code. `npm run build` and `npm run validate` pass against 120 generated HTML pages
+and 38 manifest sessions. Browser review confirmed four accessible SVG mental models, six quiz
+cards, complete lesson structure, and correct previous/next navigation for each new session.
+
+The .NET build/test verification could not be repeated in this environment because the
+repository pins SDK 10.0.302 and the available SDKs are 6.0.428, 8.0.423, and 9.0.201. The
+curriculum change does not modify the solution, projects, or C# source.
+
 ## Fourth post-rebuild update: PinkMachine19 company-prefix convention (current)
 
 Every project, `.csproj`, the `.sln`, and every namespace/`using` directive was renamed
