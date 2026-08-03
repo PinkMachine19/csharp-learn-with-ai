@@ -2,7 +2,7 @@
   "number": 12,
   "category": "Collections and generics",
   "estimatedTime": "35 minutes",
-  "connection": "Session 11 studied ClockEntryRepository's List<ClockEntry>. This session studies EmployeeDirectory, a new extension that uses Dictionary<int, Employee> for O(1) lookup by EmployeeId and HashSet<string> for unique city tracking -- neither type appears in the real source, but both are the natural next step once a program needs more than one employee.",
+  "connection": "Employee exists, and ClockEntryRepository demonstrates List storage. Employees still have no production lookup component. Create an in-memory EmployeeRepository with dictionary lookup and deliberate name uniqueness.",
   "objectives": [
     "Explain why Dictionary<int, Employee> gives EmployeeDirectory faster lookup by EmployeeId than scanning a List<Employee> would.",
     "Trace TryAdd's role in Dictionary<TKey,TValue>: what happens when Add is called with a key that already exists, versus TryAdd.",
@@ -90,41 +90,40 @@
     }
   ],
   "lab": {
-    "objective": "Exercise Dictionary-backed lookup and HashSet-backed uniqueness in EmployeeDirectory, confirming both with tests.",
-    "startingCondition": "EmployeeDirectory already exists with its real Dictionary<int, Employee> and HashSet<string> fields.",
+    "objective": "Create an in-memory EmployeeRepository with dictionary lookup and deliberate name uniqueness.",
+    "startingCondition": "Employee exists, and ClockEntryRepository demonstrates List storage. Employees still have no production lookup component.",
     "steps": [
-      "Add two Employees with different EmployeeIds and confirm Count reflects both.",
-      "Attempt to Add a second Employee with an EmployeeId already present, and confirm Add returns false and Count does not increase.",
-      "Add two Employees whose Address.City differs only by case, and confirm Cities.Count is 1.",
-      "Call TryFind for a present and an absent EmployeeId, and confirm the bool result and out value in both cases."
+      "Create EmployeeRepository with Dictionary<int, Employee> for identity lookup.",
+      "Use HashSet<string> with an explicit comparer to enforce the chosen name-uniqueness rule.",
+      "Add employees and reject duplicate IDs or names with clear messages.",
+      "Retrieve an employee by ID from App and print the result.",
+      "Build and preserve the earlier clock-entry workflow."
     ],
-    "expectedBehavior": "Duplicate EmployeeId additions are rejected without throwing; differently-cased city names collapse to one entry; TryFind correctly reports found/not-found with the out parameter matching.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "Production has requirement-driven List, Dictionary, and HashSet use with no collection chosen merely for demonstration.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/EmployeeDirectory.cs",
-      "action": "Verify",
-      "why": "Confirm the real Dictionary<int, Employee> and HashSet<string> fields and their real methods."
-    },
-    {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/EmployeeDirectoryTests.cs",
-      "action": "Verify",
-      "why": "Confirm existing duplicate-key and case-insensitive-city coverage."
-    },
-    {
-      "path": "site/data/sessions/session-11.json",
+      "path": "src/PinkMachine19.TimeClock.Domain/EmployeeRepository.cs",
       "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "why": "Provide employee lookup and uniqueness."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.App/Program.cs",
+      "action": "Modify",
+      "why": "Exercise employee storage."
+    },
+    {
+      "path": "site/data/sessions/session-12.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-11: teach dictionaries sets and lookup semantics",
   "review": [
-    "Dictionary<int, Employee>'s lookup-by-key behavior is explained in contrast to List<T>'s scan, not asserted without comparison.",
-    "TryAdd's refuse-on-duplicate behavior is demonstrated with a real, passing test.",
-    "HashSet<string>'s duplicate-add-is-a-no-op behavior is demonstrated alongside Session 10's OrdinalIgnoreCase choice.",
-    "TryFind is explicitly connected back to Session 9's Try-pattern rather than treated as an unrelated new idiom.",
-    "The full test suite passes."
+    "The lab uses production because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -164,5 +163,14 @@
     "How does TryFind's Try-pattern connect back to what Session 9 taught about out parameters?"
   ],
   "whatBreaks": "Replacing TryAdd with Add in EmployeeDirectory.Add would turn a duplicate-EmployeeId scenario from a handled, expected outcome (false return) into an unhandled ArgumentException, violating the throw-vs-return distinction Session 24 establishes. Replacing HashSet<string> with List<string> for Cities would let the same city accumulate duplicate entries every time a new employee from that city is added, silently inflating Cities.Count. Removing StringComparer.OrdinalIgnoreCase from the HashSet constructor would let differently-cased city names count as distinct cities again.",
-  "summary": "EmployeeDirectory's Dictionary<int, Employee> gives TryFind fast lookup by EmployeeId, using TryAdd to reject duplicate keys gracefully instead of throwing. Its HashSet<string> Cities field guarantees each city name appears at most once, complementing Session 10's case-insensitive comparer choice. TryFind itself directly reuses the out-parameter Try-pattern Session 9 introduced."
+  "summary": "EmployeeDirectory's Dictionary<int, Employee> gives TryFind fast lookup by EmployeeId, using TryAdd to reject duplicate keys gracefully instead of throwing. Its HashSet<string> Cities field guarantees each city name appears at most once, complementing Session 10's case-insensitive comparer choice. TryFind itself directly reuses the out-parameter Try-pattern Session 9 introduced.",
+  "learningEnvironment": "production",
+  "buildState": {
+    "creates": [
+      "EmployeeRepository"
+    ],
+    "extends": [
+      "employee lookup and uniqueness"
+    ]
+  }
 }

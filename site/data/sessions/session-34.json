@@ -2,7 +2,7 @@
   "number": 34,
   "category": "Data access and application integration",
   "estimatedTime": "45 minutes",
-  "connection": "Session 33 added the WebApi's first real controller, using IClockEntryService (fully registered). This session confronts the real, latent bug in the same DI container: PayrollService requires IEmployeeService, which PinkMachine19.TimeClock.Web/Program.cs -- mirroring the real Parm.Practice.WebApi/Program.cs -- never registers.",
+  "connection": "Session 33 created a working clock-entry endpoint and complete service registration. Invalid requests still lack a deliberate HTTP contract. Add API validation, structured logging, and consistent error responses around the existing endpoint.",
   "objectives": [
     "Reproduce the real bug directly: attempt to resolve PayrollService from PinkMachine19.TimeClock.Web's real DI container and observe the InvalidOperationException it throws.",
     "Read WebApiRegistrationTests.cs, which already proves this exact failure (and its one-line fix) without needing a running web host.",
@@ -65,65 +65,73 @@
   ],
   "concept": [
     {
-      "title": "Reproducing the real bug without a running host",
+      "title": "Validate at the HTTP boundary",
       "paragraphs": [
-        "WebApiRegistrationTests.cs mirrors PinkMachine19.TimeClock.Web/Program.cs's exact real registrations (minus IEmployeeService) against a plain ServiceCollection, then calls provider.GetRequiredService<PayrollService>() and asserts it throws.",
-        "This is deliberately NOT a full ASP.NET Core integration test -- reproducing just the DI registration graph is enough to prove the bug exists, and is fast enough to run on every build."
-      ],
-      "code": "// tests/.../WebApiRegistrationTests.cs -- real, already-existing test\n[Fact]\npublic void Real_WebApi_registrations_cannot_resolve_PayrollService()\n{\n    using ServiceProvider provider = RealWebApiRegistrationsWithoutEmployeeService().BuildServiceProvider();\n\n    InvalidOperationException exception = Assert.Throws<InvalidOperationException>(\n        () => provider.GetRequiredService<PayrollService>());\n\n    Assert.Contains(\"IEmployeeService\", exception.Message);\n}"
+        "Request validation rejects malformed or incomplete wire data before calling the domain service. Domain invariants still protect the model when callers bypass HTTP.",
+        "The two layers answer different questions and should not duplicate every rule."
+      ]
     },
     {
-      "title": "The fix: one registration, confirmed by the second real test",
+      "title": "Translate known failures consistently",
       "paragraphs": [
-        "Adding services.AddSingleton<IEmployeeService, EmployeeService>() -- matching the pattern every other real registration in Program.cs already follows -- is the complete fix.",
-        "The second real test proves it: the exact same registration graph, plus that one line, resolves PayrollService successfully."
-      ],
-      "code": "// tests/.../WebApiRegistrationTests.cs -- the real fix, proven by the second test\n[Fact]\npublic void Registering_IEmployeeService_fixes_the_resolution()\n{\n    ServiceCollection services = RealWebApiRegistrationsWithoutEmployeeService();\n    services.AddSingleton<IEmployeeService, EmployeeService>();   // the real fix\n\n    using ServiceProvider provider = services.BuildServiceProvider();\n    PayrollService payrollService = provider.GetRequiredService<PayrollService>();\n\n    Assert.NotNull(payrollService);\n}"
+        "A known conflict such as clocking in twice should become a deliberate status and error shape. Unexpected exceptions remain server failures and should be logged once at the boundary.",
+        "Controllers should not contain duplicated try/catch blocks for every endpoint."
+      ]
     },
     {
-      "title": "A startup failure is a different category than a business-rule failure",
+      "title": "Structured logs carry searchable context",
       "paragraphs": [
-        "Session 24 established throw-vs-return for expected domain outcomes (like 'not currently clocked in') versus broken invariants (like a double clock-out). This bug is neither -- it is a configuration error, discovered only when something tries to construct PayrollService for the first time.",
-        "In a real ASP.NET Core host, an unresolvable DI dependency typically surfaces as an unhandled exception during request handling (or even at startup, if resolved eagerly) -- worth logging clearly, since a generic 500 response gives an API consumer no useful signal about what actually went wrong."
+        "Log named values such as EmployeeId and operation outcome rather than building one long string.",
+        "Do not log secrets or turn expected validation failures into noisy stack traces."
       ],
-      "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+      "code": "logger.LogInformation(\"Clock-in completed for employee {EmployeeId}\", employeeId);"
     }
   ],
   "lab": {
-    "objective": "Confirm the real WebApiRegistrationTests.cs failure and fix, then apply the same fix to PinkMachine19.TimeClock.Web/Program.cs itself and verify a controller can now resolve PayrollService.",
-    "startingCondition": "PinkMachine19.TimeClock.Web/Program.cs still does not register IEmployeeService, matching the real, current Parm.Practice.WebApi/Program.cs exactly; WebApiRegistrationTests.cs already demonstrates both the failure and the fix against a plain ServiceCollection.",
+    "objective": "Add API validation, structured logging, and consistent error responses around the existing endpoint.",
+    "startingCondition": "Session 33 created a working clock-entry endpoint and complete service registration. Invalid requests still lack a deliberate HTTP contract.",
     "steps": [
-      "Run WebApiRegistrationTests.cs and confirm both tests pass as written (one proving the failure, one proving the fix) against the isolated ServiceCollection.",
-      "Add a controller action that resolves PayrollService (via constructor injection) and confirm, by running the host, that it throws the same real InvalidOperationException.",
-      "Add builder.Services.AddSingleton<IEmployeeService, EmployeeService>(); to PinkMachine19.TimeClock.Web/Program.cs.",
-      "Re-run the host and confirm the controller action now resolves PayrollService successfully and returns a real result."
+      "Reference Web from Domain.Tests so the permanent suite can host integration tests.",
+      "Add request validation for actual clock-in input requirements.",
+      "Translate known domain failures to consistent API error responses at the Web boundary.",
+      "Add structured logs with stable event context and no sensitive data.",
+      "Add Web integration tests for success, validation failure, and domain conflict, then run the full suite."
     ],
-    "expectedBehavior": "Before the fix, resolving PayrollService from the running WebApi host throws InvalidOperationException naming IEmployeeService; after adding the one-line registration, resolution succeeds.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "The endpoint returns predictable success and error contracts and emits structured diagnostic logs.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/WebApiRegistrationTests.cs",
-      "action": "Verify",
-      "why": "Confirm the real, existing proof of both the bug and its fix."
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj",
+      "action": "Modify",
+      "why": "Reference Web for integration testing."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Web/Validators/ClockInRequestValidator.cs",
+      "action": "Add",
+      "why": "Validate request input."
     },
     {
       "path": "src/PinkMachine19.TimeClock.Web/Program.cs",
       "action": "Modify",
-      "why": "Add the missing IEmployeeService registration, applying the real fix to the actual WebApi host."
+      "why": "Configure errors and logging."
     },
     {
-      "path": "site/data/sessions/session-33.json",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntriesApiTests.cs",
       "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "why": "Verify HTTP behavior."
+    },
+    {
+      "path": "site/data/sessions/session-34.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-33: teach validation logging and api error responses",
   "review": [
-    "The real bug is reproduced directly (both via the existing fast unit test and, in the lab, via the actual running host), not just described.",
-    "The fix matches the exact registration pattern every other real dependency in Program.cs already follows.",
-    "The distinction between a startup/configuration failure and Session 24's domain-level throw-vs-return rule is stated explicitly.",
-    "The full test suite passes, including both real WebApiRegistrationTests.cs cases."
+    "The lab uses mixed because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -163,5 +171,15 @@
     "How does resolving this bug change your confidence in the rest of PinkMachine19.TimeClock.Web/Program.cs's registrations -- would you want to write a similar test for each one?"
   ],
   "whatBreaks": "Leaving IEmployeeService unregistered means any future controller action that resolves PayrollService (directly or via a dependency chain) throws InvalidOperationException at the moment of resolution -- a real, silent trap for anyone who adds a new endpoint without knowing this gap exists. Registering EmployeeService with the wrong lifetime (say, Scoped instead of matching the other Singleton registrations) would still fix the immediate resolution failure but introduce the same kind of lifetime-mismatch question Session 30 studied.",
-  "summary": "PinkMachine19.TimeClock.Web/Program.cs -- mirroring the real, current Parm.Practice.WebApi/Program.cs -- never registers IEmployeeService, even though PayrollService's constructor requires it; resolving PayrollService throws InvalidOperationException as a result. WebApiRegistrationTests.cs already proves both the failure and its one-line fix without a running web host; this session's lab applies that same fix to the real Program.cs, and distinguishes this startup/configuration failure from Session 24's domain-level throw-vs-return rule."
+  "summary": "PinkMachine19.TimeClock.Web/Program.cs -- mirroring the real, current the TimeClock Web project/Program.cs -- never registers IEmployeeService, even though PayrollService's constructor requires it; resolving PayrollService throws InvalidOperationException as a result. WebApiRegistrationTests.cs already proves both the failure and its one-line fix without a running web host; this session's lab applies that same fix to the real Program.cs, and distinguishes this startup/configuration failure from Session 24's domain-level throw-vs-return rule.",
+  "learningEnvironment": "mixed",
+  "buildState": {
+    "creates": [],
+    "extends": [
+      "API validation",
+      "logging",
+      "error responses",
+      "web tests"
+    ]
+  }
 }

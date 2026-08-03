@@ -99,6 +99,8 @@ tr:hover td { background: rgba(255, 255, 255, 0.02); }
 .refresher-card .nav-card-title { color: #bc8cff; }
 .refresher-notice { margin-bottom: 20px; padding: 14px 16px; border: 1px solid rgba(188,140,255,0.45); border-left: 4px solid #bc8cff; border-radius: var(--radius); background: rgba(188,140,255,0.08); color: var(--text-muted); font-size: 13px; }
 .refresher-notice strong { color: #bc8cff; }
+.build-state { border-left: 4px solid var(--accent); background: var(--surface-2); border-radius: var(--radius); padding: 10px 14px; margin: 0 0 16px; color: var(--text-muted); font-size: 13px; line-height: 1.6; }
+.build-state strong { color: var(--text); }
 .refresher-page h2 { color: #bc8cff; }
 .refresher-page .visual-art svg :is(rect, circle, ellipse, path, line, polyline, polygon) { stroke: #bc8cff; }
 .refresher-page .visual-art svg marker path { fill: #bc8cff; }

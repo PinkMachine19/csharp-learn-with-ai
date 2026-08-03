@@ -2,7 +2,7 @@
   "number": 31,
   "category": "Data access and application integration",
   "estimatedTime": "45 minutes",
-  "connection": "Session 30 covered DI lifetimes. EF Core does not exist anywhere in the real practice-07092026 source -- ClockEntryRepository's real storage is a plain in-memory List<ClockEntry>. This session studies PayrollDbContext, a new, clearly-labeled extension giving IClockEntryRepository a genuine database-backed alternative implementation.",
+  "connection": "Domain repository contracts and in-memory implementations are complete. Infrastructure references Domain but still contains only its template placeholder. Add EF Core persistence to Infrastructure without moving storage concerns into Domain.",
   "objectives": [
     "Explain the real gap this session fills: the source app's real ClockEntryRepository has no persistence beyond an in-memory list that is discarded when the process exits.",
     "Read PayrollDbContext : DbContext as this codebase's first genuinely framework-required inheritance, previewed in Session 19.",
@@ -13,7 +13,7 @@
     {
       "diagram": "invariant",
       "title": "The real gap: no persistence beyond one process's lifetime",
-      "explanation": "ClockEntryRepository's real _clockEntries list exists only in memory -- restarting Parm.Practice.ConsoleApplication loses every clocked-in employee. PayrollDbContext fills this real, unaddressed gap."
+      "explanation": "ClockEntryRepository's real _clockEntries list exists only in memory -- restarting the cumulative TimeClock application loses every clocked-in employee. PayrollDbContext fills this real, unaddressed gap."
     },
     {
       "diagram": "blueprint",
@@ -37,10 +37,10 @@
       "options": [
         "All of it is lost -- ClockEntryRepository's real storage is an in-memory List<ClockEntry> with no persistence to disk or a database",
         "It is automatically saved to a local file",
-        "Nothing -- the real repository already uses EF Core"
+        "Nothing -- the learner solution already uses EF Core"
       ],
       "correct": 0,
-      "explanation": "This is a real, verified gap in practice-07092026 -- confirmed by reading Repositories/ClockEntryRepository.cs, which has no persistence mechanism at all."
+      "explanation": "This is a real, verified gap in cumulative learner solution -- confirmed by reading Repositories/ClockEntryRepository.cs, which has no persistence mechanism at all."
     },
     {
       "prompt": "Why must PayrollDbContext be declared as a class that inherits from DbContext, rather than just implementing an interface?",
@@ -67,8 +67,8 @@
     {
       "title": "A real gap, honestly named",
       "paragraphs": [
-        "Nothing in practice-07092026 persists a ClockEntry anywhere beyond process memory. Every employee's clock-in and clock-out history is gone the moment the console app exits.",
-        "This session does not claim EF Core already exists in the real source -- it builds PayrollDbContext specifically because that gap is real, and giving IClockEntryRepository a second, database-backed implementation is the natural next step once the gap is visible."
+        "Nothing in cumulative learner solution persists a ClockEntry anywhere beyond process memory. Every employee's clock-in and clock-out history is gone the moment the console app exits.",
+        "This session does not claim EF Core already exists in the production code -- it builds PayrollDbContext specifically because that gap is real, and giving IClockEntryRepository a second, database-backed implementation is the natural next step once the gap is visible."
       ],
       "code": "// The real gap, confirmed by reading the source directly\npublic class ClockEntryRepository : IClockEntryRepository\n{\n    public readonly List<ClockEntry> _clockEntries = new();   // in-memory only -- gone on process exit\n}"
     },
@@ -90,40 +90,65 @@
     }
   ],
   "lab": {
-    "objective": "Trace PayrollDbContext's real shape and confirm change tracking's Added state, using an in-memory SQLite database.",
-    "startingCondition": "PayrollDbContext and ClockEntryEntity already exist as a new extension in PinkMachine19.TimeClock.Infrastructure.",
+    "objective": "Add EF Core persistence to Infrastructure without moving storage concerns into Domain.",
+    "startingCondition": "Domain repository contracts and in-memory implementations are complete. Infrastructure references Domain but still contains only its template placeholder.",
     "steps": [
-      "Open an in-memory SQLite connection and create a PayrollDbContext against it.",
-      "Add a new ClockEntryEntity and check db.Entry(entity).State before calling SaveChangesAsync -- confirm it reports Added.",
-      "Call SaveChangesAsync and check db.Entry(entity).State again -- confirm it now reports Unchanged.",
-      "Query db.ClockEntries.CountAsync() and confirm exactly one row was persisted."
+      "Delete Infrastructure/Class1.cs, add EF Core packages to Infrastructure, add SQLite support to Domain.Tests, and reference Infrastructure from Domain.Tests.",
+      "Create TimeClockDbContext and a persistence entity shaped for storage.",
+      "Create mapping between the persistence entity and Domain ClockEntry rather than adding EF attributes to Domain.",
+      "Implement an EF-backed repository behind the existing Domain contract.",
+      "Add an in-memory SQLite test for Added and persisted states."
     ],
-    "expectedBehavior": "The entity's EntityState transitions from Added to Unchanged exactly when SaveChangesAsync is called; the row count reflects the real, persisted entity afterward.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "Infrastructure persists entries through EF Core while Domain remains storage-agnostic.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
+      "path": "src/PinkMachine19.TimeClock.Infrastructure/Class1.cs",
+      "action": "Delete",
+      "why": "Remove the infrastructure template placeholder."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Infrastructure/PinkMachine19.TimeClock.Infrastructure.csproj",
+      "action": "Modify",
+      "why": "Add EF Core packages."
+    },
+    {
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj",
+      "action": "Modify",
+      "why": "Reference Infrastructure and add SQLite test support."
+    },
+    {
       "path": "src/PinkMachine19.TimeClock.Infrastructure/TimeClockDbContext.cs",
-      "action": "Verify",
-      "why": "Confirm PayrollDbContext and ClockEntryEntity's real declarations."
+      "action": "Add",
+      "why": "Define EF persistence."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Infrastructure/ClockEntryEntity.cs",
+      "action": "Add",
+      "why": "Represent stored clock entries."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Infrastructure/EfClockEntryRepository.cs",
+      "action": "Add",
+      "why": "Implement the domain repository contract."
     },
     {
       "path": "tests/PinkMachine19.TimeClock.Domain.Tests/TimeClockDbContextTests.cs",
-      "action": "Verify",
-      "why": "Confirm the real EntityState-transition test."
+      "action": "Add",
+      "why": "Verify persistence."
     },
     {
-      "path": "site/data/sessions/session-30.json",
-      "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "path": "site/data/sessions/session-31.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-30: teach ef core context entities and tracking",
   "review": [
-    "The real gap (no persistence in the source app) is stated honestly, not assumed away.",
-    "PayrollDbContext's inheritance from DbContext is explained as framework-required, connecting back to Session 19's preview.",
-    "ClockEntryEntity's separateness from ClockEntry is justified by real, specific domain invariants (constructor shape, private setter), not asserted as a generic best practice.",
-    "The full test suite passes."
+    "The lab uses production because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -163,5 +188,13 @@
     "Where else in this codebase might a domain type's strict invariants make it a poor fit for direct use as a persistence entity?"
   ],
   "whatBreaks": "Constructing ClockEntryEntity with EF Core's usual pattern (a parameterless constructor plus property setters) would fail if attempted against ClockEntry directly, since ClockEntry's real constructor requires employeeId and clockIn and ClockOut cannot be set from outside ClockOutEmployee. Skipping SaveChangesAsync after Add leaves the entity tracked as Added but never actually written to the database -- a common source of 'why didn't my data save' bugs when the two steps are conflated.",
-  "summary": "The real practice-07092026 source has no persistence beyond an in-memory List<ClockEntry> -- a genuine, verified gap. PayrollDbContext : DbContext is this codebase's first framework-required inheritance (previewed in Session 19), and ClockEntryEntity is a deliberately separate, storage-shaped type -- not a reuse of ClockEntry -- because ClockEntry's real domain invariants (constructor shape, private ClockOut setter) would conflict with how EF Core needs to construct and populate entities."
+  "summary": "The real cumulative learner solution has no persistence beyond an in-memory List<ClockEntry> -- a genuine, verified gap. PayrollDbContext : DbContext is this codebase's first framework-required inheritance (previewed in Session 19), and ClockEntryEntity is a deliberately separate, storage-shaped type -- not a reuse of ClockEntry -- because ClockEntry's real domain invariants (constructor shape, private ClockOut setter) would conflict with how EF Core needs to construct and populate entities.",
+  "learningEnvironment": "production",
+  "buildState": {
+    "creates": [
+      "TimeClockDbContext",
+      "ClockEntryEntity"
+    ],
+    "extends": []
+  }
 }

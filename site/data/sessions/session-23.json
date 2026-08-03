@@ -2,7 +2,7 @@
   "number": 23,
   "category": "query execution timing",
   "estimatedTime": "40 minutes",
-  "connection": "Session 22 grouped and joined ClockEntry data. This session asks when a LINQ query actually runs, using GetEmployeeClockEntries's return type (IEnumerable<ClockEntry>, deferred) and Session 31-32's future EF Core queries (IQueryable<T>, deferred until a provider translates them) as the two real shapes this course uses.",
+  "connection": "Session 21 introduced production IEnumerable-based LINQ queries. The test project exists but contains only its template placeholder. Use permanent tests to prove deferred query behavior and materialized snapshot behavior.",
   "objectives": [
     "Explain that GetEmployeeClockEntries returns an unevaluated query, not a materialized list -- the Where clause only runs when something enumerates the result.",
     "Predict what happens if _clockEntries changes between calling GetEmployeeClockEntries and enumerating its result.",
@@ -90,43 +90,40 @@
     }
   ],
   "lab": {
-    "objective": "Trace GetEmployeeClockEntries's deferred IEnumerable<ClockEntry> through CalculateTotalHours's .Sum() call, and confirm .ToList() produces a genuinely independent snapshot.",
-    "startingCondition": "Sessions 01–21 are complete and all existing tests pass.",
+    "objective": "Use permanent tests to prove deferred query behavior and materialized snapshot behavior.",
+    "startingCondition": "Session 21 introduced production IEnumerable-based LINQ queries. The test project exists but contains only its template placeholder.",
     "steps": [
-      "Predict the successful path and one boundary or failure case.",
-      "Add src/PinkMachine19.TimeClock.Domain/DeferredEntryQuery.cs with a narrow public contract.",
-      "Add tests/PinkMachine19.TimeClock.Domain.Tests/DeferredEntryQueryTests.cs for the prediction and boundary case.",
-      "Run the focused tests and inspect the observed values or control flow.",
-      "Run the full Release build and test suite."
+      "Delete UnitTest1.cs and create DeferredExecutionTests.cs in Domain.Tests.",
+      "Arrange a mutable source and build a query without enumerating it.",
+      "Mutate the source, enumerate, and assert that deferred execution observes the change.",
+      "Materialize a second query with ToList, mutate the source again, and assert the snapshot remains unchanged.",
+      "Run the focused tests and then the full suite."
     ],
-    "expectedBehavior": "The new tests establish that IEnumerable queries normally execute when enumerated, ToList materializes a snapshot, and IQueryable records an expression for a provider; prior behavior remains unchanged.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "Tests—not console output—prove deferred execution and snapshot independence.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/DeferredEntryQuery.cs",
-      "action": "Add",
-      "why": "Provide the DeferredEntryQuery.Completed example demonstrating IEnumerable<ClockEntry> deferred execution."
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/UnitTest1.cs",
+      "action": "Delete",
+      "why": "Replace the template with meaningful verification."
     },
     {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/DeferredEntryQueryTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/DeferredExecutionTests.cs",
       "action": "Add",
-      "why": "Verify the contract and its boundary case."
+      "why": "Verify query timing through assertions."
     },
     {
-      "path": "site/data/sessions/session-22.json",
-      "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "path": "site/data/sessions/session-23.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-22: teach deferred execution and materialization",
   "review": [
-    "The public API states one coherent responsibility.",
-    "Dependencies and state changes are explicit.",
-    "The example remains deterministic and compact.",
-    "Tests cover success and a meaningful boundary.",
-    "No nullable warnings are introduced.",
-    "The complete suite passes."
+    "The lab uses tests because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -166,5 +163,12 @@
     "What concrete difference will Session 32 show between this session's in-process IEnumerable queries and EF Core's IQueryable queries?"
   ],
   "whatBreaks": "Calling .ToList() unnecessarily inside GetEmployeeClockEntries would force evaluation before the caller decides what to do with the result, silently changing its behavior from a live view to a fixed snapshot. Enumerating a deferred query multiple times when the underlying provider is a database (Session 32) means multiple round trips, not one. Confusing IEnumerable's in-process execution with IQueryable's provider-translated execution leads to assuming SQL-level operations (like case-insensitive collation) that only IQueryable's translation actually provides.",
-  "summary": "GetEmployeeClockEntries returns an unevaluated IEnumerable<ClockEntry>; CalculateTotalHours's .Sum() is what actually triggers the Where clause. .ToList() forces immediate evaluation into a fixed snapshot. Session 31-32's EF Core IQueryable<T> defers the same way, but to a database provider instead of in-process enumeration."
+  "summary": "GetEmployeeClockEntries returns an unevaluated IEnumerable<ClockEntry>; CalculateTotalHours's .Sum() is what actually triggers the Where clause. .ToList() forces immediate evaluation into a fixed snapshot. Session 31-32's EF Core IQueryable<T> defers the same way, but to a database provider instead of in-process enumeration.",
+  "learningEnvironment": "tests",
+  "buildState": {
+    "creates": [
+      "deferred-execution tests"
+    ],
+    "extends": []
+  }
 }

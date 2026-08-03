@@ -2,7 +2,7 @@
   "number": 27,
   "category": "Asynchronous programming",
   "estimatedTime": "40 minutes",
-  "connection": "Session 26 identified (but did not fix) Program.cs's real unawaited Clockout(1) call. This session studies EntryBatchLoader's real LoadSequentialAsync versus LoadConcurrentAsync -- a new extension showing what running several async operations one-at-a-time versus all-at-once actually looks like, since the real Clockout is always called for exactly one employee at a time.",
+  "connection": "Production uses async for repository boundaries. The product has no verified requirement to batch-load entries concurrently. Compare sequential and concurrent asynchronous flow in ScratchPad without adding an unrequired batch loader to production.",
   "objectives": [
     "Trace LoadSequentialAsync's real await load(id) inside a foreach loop, and explain why each iteration waits for the previous one to finish before starting.",
     "Trace LoadConcurrentAsync's real Task.WhenAll(ids.Select(load)), and explain why every load call starts before any of them necessarily finishes.",
@@ -65,65 +65,59 @@
   ],
   "concept": [
     {
-      "title": "LoadSequentialAsync: one operation, then the next",
+      "title": "Sequential flow starts the next operation later",
       "paragraphs": [
-        "The real implementation is a plain foreach loop that awaits each load call before moving to the next id -- exactly the shape ClockEntryService.Clockout already uses for its single await _clockEntryRepository.GetClockEntry(employeeId) call, just repeated across a collection instead of called once.",
-        "Total time for LoadSequentialAsync is roughly the sum of every individual load call's duration, because none of them overlap."
+        "Awaiting one operation before creating the next is appropriate when order or dependency matters.",
+        "The ScratchPad experiment uses controlled delays so start order is visible without changing production behavior."
       ],
-      "code": "// src/PinkMachine19.TimeClock.Domain/EntryBatchLoader.cs -- real implementation\npublic static async Task<IReadOnlyList<ClockEntry>> LoadSequentialAsync(IEnumerable<int> ids, Func<int, Task<ClockEntry>> load)\n{\n    List<ClockEntry> results = [];\n    foreach (int id in ids) results.Add(await load(id));\n    return results;\n}"
+      "code": "await LoadAsync(1);\nawait LoadAsync(2);"
     },
     {
-      "title": "LoadConcurrentAsync: every operation starts together",
+      "title": "Concurrent flow starts independent work together",
       "paragraphs": [
-        "ids.Select(load) calls load once per id, starting every operation before Task.WhenAll begins waiting -- the operations overlap in time instead of running one after another.",
-        "Total time for LoadConcurrentAsync is roughly the duration of the SLOWEST individual load call, not the sum of all of them, because they all run concurrently rather than one at a time."
+        "Create both tasks first, then await Task.WhenAll when the operations are independent and safe to overlap.",
+        "Concurrency is a design decision, not an automatic benefit of writing async."
       ],
-      "code": "public static async Task<IReadOnlyList<ClockEntry>> LoadConcurrentAsync(IEnumerable<int> ids, Func<int, Task<ClockEntry>> load) =>\n    await Task.WhenAll(ids.Select(load));"
+      "code": "Task first = LoadAsync(1);\nTask second = LoadAsync(2);\nawait Task.WhenAll(first, second);"
     },
     {
-      "title": "The real test proves the difference with counters, not timing guesses",
+      "title": "Measure behavior, not wall-clock guesses",
       "paragraphs": [
-        "EntryBatchLoaderTests's sequential test tracks an active counter, incrementing before each load call and decrementing after, then asserts the observed maximum never exceeded 1.",
-        "The concurrent test uses a TaskCompletionSource as a gate every load call awaits, then asserts all load calls had already started (incrementing a started counter) before any of them are allowed to complete -- proving concurrency directly, not by guessing at timing."
-      ],
-      "code": "// tests/.../EntryBatchLoaderTests.cs -- real assertions\nawait EntryBatchLoader.LoadSequentialAsync(new[] { 1, 2 }, Load);\nAssert.Equal(1, maximum);   // sequential: never more than one in flight\n\nawait Task.Yield();\nAssert.Equal(2, started);   // concurrent: both started before either completed"
+        "The experiment records starts and completions. Tests or controlled gates are more reliable than assuming a specific number of milliseconds.",
+        "Production remains single-operation because no batch requirement exists yet."
+      ]
     }
   ],
   "lab": {
-    "objective": "Run both LoadSequentialAsync and LoadConcurrentAsync against a controlled, artificially-delayed load function and confirm their real timing difference directly.",
-    "startingCondition": "EntryBatchLoader already exists with both real methods; EntryBatchLoaderTests already exists with its real active/maximum and started/gate assertions.",
+    "objective": "Compare sequential and concurrent asynchronous flow in ScratchPad without adding an unrequired batch loader to production.",
+    "startingCondition": "Production uses async for repository boundaries. The product has no verified requirement to batch-load entries concurrently.",
     "steps": [
-      "Write a load function with an artificial Task.Delay, and time how long LoadSequentialAsync takes for three ids.",
-      "Time how long LoadConcurrentAsync takes for the same three ids and the same delayed load function.",
-      "Confirm LoadConcurrentAsync's total time is close to one delay period, while LoadSequentialAsync's is close to three delay periods.",
-      "Run the existing EntryBatchLoaderTests.cs and confirm both counter-based assertions pass."
+      "Create AsyncFlowExperiments.cs in ScratchPad.",
+      "Use two controlled delayed operations and record start/completion order.",
+      "Run them sequentially with two awaits, then concurrently with Task.WhenAll.",
+      "Predict order and elapsed behavior before each run.",
+      "Preserve the experiment and leave production APIs unchanged."
     ],
-    "expectedBehavior": "LoadSequentialAsync's total duration scales with the number of items; LoadConcurrentAsync's stays roughly constant regardless of item count, matching a single delay period.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "ScratchPad demonstrates sequencing versus concurrency without fictional TimeClock batching.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/EntryBatchLoader.cs",
-      "action": "Verify",
-      "why": "Confirm the real LoadSequentialAsync and LoadConcurrentAsync implementations."
-    },
-    {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/EntryBatchLoaderTests.cs",
-      "action": "Verify",
-      "why": "Confirm the existing counter-based proof of sequential-vs-concurrent behavior."
-    },
-    {
-      "path": "site/data/sessions/session-26.json",
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/AsyncFlowExperiments.cs",
       "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "why": "Preserve the concurrency comparison outside production."
+    },
+    {
+      "path": "site/data/sessions/session-27.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-26: teach sequential and concurrent asynchronous flow",
   "review": [
-    "LoadSequentialAsync and LoadConcurrentAsync's real implementations are quoted directly, not paraphrased.",
-    "The real test's counter-based proof (not a timing guess) is used as the primary evidence for the sequential-vs-concurrent claim.",
-    "Clockout's real lack of a sequential-vs-concurrent decision is explained honestly as the reason this session needed a new example.",
-    "The full test suite passes."
+    "The lab uses scratchpad because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -163,5 +157,12 @@
     "How does EntryBatchLoaderTests's counter-based proof give you more confidence than simply timing the two methods and comparing durations?"
   ],
   "whatBreaks": "Changing LoadSequentialAsync's foreach loop to start every load call before awaiting any of them would turn it into a concurrent implementation in disguise, breaking the real active/maximum test's assertion that at most one operation is ever in flight. Changing LoadConcurrentAsync to await each load call individually inside its Select callback (instead of collecting Tasks for WhenAll) would make it behave like LoadSequentialAsync instead, breaking the real started/gate test's assertion that all operations start together.",
-  "summary": "EntryBatchLoader's real LoadSequentialAsync awaits each operation before starting the next, keeping at most one in flight at a time -- proven by the real test's active/maximum counter, not just asserted. LoadConcurrentAsync starts every operation immediately via Task.WhenAll, proven by the real test's started-count/gate assertion. ClockEntryService.Clockout never faced this choice, because it always processes exactly one employee -- which is exactly why this session needed a new, purpose-built example."
+  "summary": "EntryBatchLoader's real LoadSequentialAsync awaits each operation before starting the next, keeping at most one in flight at a time -- proven by the real test's active/maximum counter, not just asserted. LoadConcurrentAsync starts every operation immediately via Task.WhenAll, proven by the real test's started-count/gate assertion. ClockEntryService.Clockout never faced this choice, because it always processes exactly one employee -- which is exactly why this session needed a new, purpose-built example.",
+  "learningEnvironment": "scratchpad",
+  "buildState": {
+    "creates": [],
+    "extends": [
+      "sequential-versus-concurrent async experiment"
+    ]
+  }
 }

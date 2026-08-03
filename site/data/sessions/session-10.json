@@ -2,7 +2,7 @@
   "number": 10,
   "category": "Memory and type behavior",
   "estimatedTime": "40 minutes",
-  "connection": "Session 9 covered ref/out/in. This session contrasts ClockEntry and Employee's default reference equality with WorkSummary's real record value equality (introduced in Session 22), and looks at where string comparison rules actually matter in this codebase.",
+  "connection": "Production contains Employee, Address, and ClockEntry. The product needs a compact employee-hours result but does not have one yet. Add the production WorkSummary result model, then compare its value equality with ClockEntry identity in ScratchPad.",
   "objectives": [
     "Predict, and then confirm, that two separately-constructed ClockEntry objects with identical EmployeeId/ClockIn/ClockOut are NOT equal by default -- neither ClockEntry nor Employee overrides Equals.",
     "Confirm that two WorkSummary records with the same EmployeeId and Hours ARE equal, because record types generate value-based equality automatically.",
@@ -67,7 +67,7 @@
     {
       "title": "ClockEntry and Employee: reference equality, by default and by choice",
       "paragraphs": [
-        "ClockEntry and Employee are both plain class declarations with no Equals override anywhere in the real source. That means == and .Equals() compare object identity: are these two variables pointing at the very same object?",
+        "ClockEntry and Employee are both plain class declarations with no Equals override anywhere in the production code. That means == and .Equals() compare object identity: are these two variables pointing at the very same object?",
         "This is a real, verified fact about the actual repository, not an assumption -- reading Models/ClockEntry.cs and Models/Employee.cs directly confirms neither type overrides equality members."
       ],
       "code": "ClockEntry first = new(1, DateTime.Today);\nClockEntry second = new(1, DateTime.Today);\n\nConsole.WriteLine(first.Equals(second)); // false -- two different objects, same field values"
@@ -90,50 +90,43 @@
     }
   ],
   "lab": {
-    "objective": "Confirm ClockEntry's reference equality and WorkSummary's record value equality with executable tests, and explain EmployeeDirectory's explicit string comparer choice.",
-    "startingCondition": "ClockEntry, WorkSummary, and EmployeeDirectory already exist with their real declarations.",
+    "objective": "Add the production WorkSummary result model, then compare its value equality with ClockEntry identity in ScratchPad.",
+    "startingCondition": "Production contains Employee, Address, and ClockEntry. The product needs a compact employee-hours result but does not have one yet.",
     "steps": [
-      "Write a test constructing two ClockEntry objects with identical arguments and assert they are NOT equal.",
-      "Write a test constructing two WorkSummary records with identical arguments and assert they ARE equal.",
-      "Temporarily remove StringComparer.OrdinalIgnoreCase from EmployeeDirectory's cities field and observe a previously-passing uniqueness test start to fail.",
-      "Restore the comparer and confirm the test passes again."
+      "Create WorkSummary as an immutable record containing EmployeeId and Hours.",
+      "Add a Session 10 ScratchPad section that creates two equal WorkSummary values and two separate ClockEntry objects.",
+      "Predict == and Equals results before running.",
+      "Add one string comparison with an explicit StringComparison choice.",
+      {
+        "text": "Run ScratchPad, build, and test.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+      }
     ],
-    "expectedBehavior": "Two ClockEntry objects with equal field values are unequal by default; two equal-valued WorkSummary records are equal; removing OrdinalIgnoreCase breaks the case-insensitive city-uniqueness test.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "WorkSummary becomes a real production result type, while ScratchPad preserves the equality comparison.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntry.cs",
-      "action": "Verify",
-      "why": "Confirm no Equals override exists -- reference equality is the real, current behavior."
-    },
-    {
       "path": "src/PinkMachine19.TimeClock.Domain/WorkSummary.cs",
-      "action": "Verify",
-      "why": "Confirm the real record declaration and its generated value equality."
-    },
-    {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryTests.cs",
-      "action": "Modify",
-      "why": "Add a test asserting two field-identical ClockEntry objects are unequal."
-    },
-    {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/WorkSummaryTests.cs",
-      "action": "Verify",
-      "why": "Confirm the existing record-equality test."
-    },
-    {
-      "path": "site/data/sessions/session-09.json",
       "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "why": "Represent a calculated employee-hours result."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs",
+      "action": "Modify",
+      "why": "Compare equality semantics without adding production-only diagnostics."
+    },
+    {
+      "path": "site/data/sessions/session-10.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-09: teach strings records structs and equality",
   "review": [
-    "ClockEntry's lack of an Equals override is confirmed by reading the real file, not assumed.",
-    "WorkSummary's record-generated equality is demonstrated with a real, passing test.",
-    "EmployeeDirectory's explicit StringComparer.OrdinalIgnoreCase choice is explained as deliberate, not default behavior.",
-    "The full test suite passes, including the new ClockEntry inequality test."
+    "The lab uses mixed because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -173,5 +166,14 @@
     "Where else in this codebase might case-insensitive string comparison matter, beyond EmployeeDirectory's city set?"
   ],
   "whatBreaks": "Assuming ClockEntry has value equality (because it superficially looks like a simple data holder) would lead to bugs anywhere code tries to deduplicate or compare ClockEntry objects by field value instead of by reference. Removing WorkSummary's record declaration in favor of class would silently break any test or code that currently relies on WorkSummary equality by value, including the real HoursByEmployee grouping test from Session 22. Removing EmployeeDirectory's StringComparer.OrdinalIgnoreCase would let differently-cased city names silently multiply instead of being treated as one city.",
-  "summary": "class gives you reference equality unless you explicitly override it -- confirmed true for both the real ClockEntry and Employee. record gives you value equality automatically, which is exactly why WorkSummary (Session 22's grouping result) compares equal across separately-constructed instances with the same values. String comparison is ordinal and case-sensitive by default; EmployeeDirectory's StringComparer.OrdinalIgnoreCase is a deliberate, visible choice to treat city names case-insensitively."
+  "summary": "class gives you reference equality unless you explicitly override it -- confirmed true for both the real ClockEntry and Employee. record gives you value equality automatically, which is exactly why WorkSummary (Session 22's grouping result) compares equal across separately-constructed instances with the same values. String comparison is ordinal and case-sensitive by default; EmployeeDirectory's StringComparer.OrdinalIgnoreCase is a deliberate, visible choice to treat city names case-insensitively.",
+  "learningEnvironment": "mixed",
+  "buildState": {
+    "creates": [
+      "WorkSummary"
+    ],
+    "extends": [
+      "equality experiment using production values"
+    ]
+  }
 }

@@ -2,7 +2,7 @@
   "number": 24,
   "category": "failure contracts",
   "estimatedTime": "40 minutes",
-  "connection": "Session 23 covered when LINQ queries execute. This session reads the real ClockEntryService.Clockout method as the app's live example of the throw-vs-return-null rule that decisions and step-046 of the source syllabus write down explicitly, even though the code itself predates the written rule.",
+  "connection": "ClockEntry and services implement valid workflows. Invalid IDs, duplicate completion, and open-entry duration need consistent documented behavior. Add precise production validation and domain exceptions, then verify invalid behavior with tests.",
   "objectives": [
     "State the project's real throw-vs-return rule: exceptions signal a broken invariant (double clock-out); nullable/return values signal an expected, everyday outcome (not currently clocked in).",
     "Read GetClockEntry's ClockEntry? return type as the 'expected absence' half of the rule, and ClockOutEmployee's InvalidOperationException as the 'broken invariant' half.",
@@ -40,7 +40,7 @@
         "Nullable return types are required by every repository method"
       ],
       "correct": 0,
-      "explanation": "This is the rule step-046 writes down: exceptions are for 'this should not be possible given the contract'; nullable returns are for expected outcomes."
+      "explanation": "This is the rule the requirement review writes down: exceptions are for 'this should not be possible given the contract'; nullable returns are for expected outcomes."
     },
     {
       "prompt": "Why does ClockOutEmployee throw InvalidOperationException instead of returning false when ClockOut is already set?",
@@ -55,7 +55,7 @@
     {
       "prompt": "Was ClockEntryService.Clockout's real code written to match a pre-existing throw-vs-return rule, or the other way around?",
       "options": [
-        "The code came first; step-046 confirms the code already matches the rule and simply writes the rule down explicitly for the first time",
+        "The code came first; the requirement review confirms the code already matches the rule and simply writes the rule down explicitly for the first time",
         "The rule was written first and the code was generated from it",
         "Neither -- the rule and the code are unrelated"
       ],
@@ -83,54 +83,52 @@
     {
       "title": "A message should name what broke",
       "paragraphs": [
-        "The real exception messages ('Employee can only clock out once', 'Employee is not currently clocked in ') name the rule but not the employee. Step 46 substep 3 proposes improving them to include the EmployeeId -- framed explicitly as a lab this course performs, since this exact improved message has not been applied to the real repository.",
-        "This is the one piece of this session's content that step-046 itself marks as goal/why prose without executed code -- treat it as inspiration for the lab, not as a claim about what the real source currently does."
+        "The real exception messages ('Employee can only clock out once', 'Employee is not currently clocked in ') name the rule but not the employee. Step 46 substep 3 proposes improving them to include the EmployeeId -- framed explicitly as a lab this course performs, since this exact improved message has not been applied to the learner solution.",
+        "This is the one piece of this session's content that the requirement review itself marks as goal/why prose without executed code -- treat it as inspiration for the lab, not as a claim about what the production code currently does."
       ],
-      "code": "// Lab improvement -- NOT yet in the real source repository\nthrow new InvalidOperationException(\n    $\"Employee {EmployeeId} is already clocked out. A single entry cannot be closed twice.\");"
+      "code": "// Lab improvement -- NOT yet in the production code\nthrow new InvalidOperationException(\n    $\"Employee {EmployeeId} is already clocked out. A single entry cannot be closed twice.\");"
     }
   ],
   "lab": {
-    "objective": "Audit ClockEntryService.Clockout and ClockEntry.ClockOutEmployee against the throw-vs-return rule, then improve the real exception messages to name the employee, as a clearly-labeled lab extension.",
-    "startingCondition": "ClockEntry, IClockEntryRepository, and ClockEntryService already carry the real throw-vs-return behavior from Sessions 5-19.",
+    "objective": "Add precise production validation and domain exceptions, then verify invalid behavior with tests.",
+    "startingCondition": "ClockEntry and services implement valid workflows. Invalid IDs, duplicate completion, and open-entry duration need consistent documented behavior.",
     "steps": [
-      "Write the throw-vs-return rule down in one sentence, before touching any code.",
-      "Check every branch in ClockIn and Clockout against that sentence and confirm both already comply.",
-      "Change ClockOutEmployee's exception message to include EmployeeId and the existing ClockOut timestamp.",
-      "Change Clockout's 'not currently clocked in' message to include the employeeId argument.",
-      "Update the ClockEntry tests to assert on the new, more specific messages."
+      "List each invalid condition and decide whether it is caller validation, a domain invariant, or an expected not-found result.",
+      "Improve ClockEntry and service guards with precise exception types and messages.",
+      "Do not catch exceptions merely to hide them.",
+      "Add focused tests for each changed invalid path.",
+      "Run App's valid workflow and the full test suite."
     ],
-    "expectedBehavior": "Both exception messages now name the specific employee; all existing tests are updated to match and the full suite still passes.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "Valid workflows remain unchanged, invalid states fail precisely, and tests document the contract.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
       "path": "src/PinkMachine19.TimeClock.Domain/ClockEntry.cs",
       "action": "Modify",
-      "why": "Add the employee id to ClockOutEmployee's exception message, per Step 46's proposed (not-yet-applied) improvement."
+      "why": "Enforce domain invariants."
     },
     {
       "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryService.cs",
       "action": "Modify",
-      "why": "Add the employee id to Clockout's exception message."
+      "why": "Handle expected collaboration outcomes."
     },
     {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryTests.cs",
-      "action": "Modify",
-      "why": "Assert on the new, more specific exception messages."
-    },
-    {
-      "path": "site/data/sessions/session-23.json",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryValidationTests.cs",
       "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "why": "Verify invalid behavior."
+    },
+    {
+      "path": "site/data/sessions/session-24.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-23: teach validation results and exceptions",
   "review": [
-    "The throw-vs-return rule is written down in one sentence before any code changes.",
-    "GetClockEntry's nullable return type is preserved, not converted to an exception.",
-    "ClockOutEmployee still throws for a double clock-out, with a message naming the employee.",
-    "Clockout's null check against GetClockEntry is unchanged in structure, only in message detail.",
-    "The full test suite passes with updated message assertions."
+    "The lab uses mixed because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -154,14 +152,14 @@
       "explanation": "This is exactly why the rule favors exceptions for broken invariants -- a silently-ignored bool return would let a double clock-out pass unnoticed."
     },
     {
-      "prompt": "Does step-046's proposed 'name the employee in the message' change already exist in the real source repository?",
+      "prompt": "Does the requirement review's proposed 'name the employee in the message' change already exist in the production code?",
       "options": [
-        "No -- step-046 documents it as unexecuted goal/why prose; this session's lab is what actually applies it",
+        "No -- the requirement review documents it as unexecuted goal/why prose; this session's lab is what actually applies it",
         "Yes, it was applied and verified on 2026-07-27",
         "It cannot be determined from the source material"
       ],
       "correct": 0,
-      "explanation": "The task brief is explicit that Step 46's proposed code has not been applied to the real repo -- this session's lab, not the real source, is where it happens."
+      "explanation": "The task brief is explicit that Step 46's proposed code has not been applied to the real repo -- this session's lab, not the production code, is where it happens."
     }
   ],
   "reflections": [
@@ -170,5 +168,13 @@
     "How does naming the employee id in an exception message change what a caller can do with a caught exception?"
   ],
   "whatBreaks": "Converting GetClockEntry's nullable return into an exception would force every normal 'employee not clocked in yet' check to use a try/catch instead of a null check, for an outcome that is not actually exceptional. Removing ClockOutEmployee's exception entirely would let a double clock-out silently overwrite ClockOut, corrupting the recorded duration. Leaving exception messages generic (no employee id) makes a caught exception in a multi-employee batch operation useless for diagnosing which employee failed.",
-  "summary": "The real ClockEntryService.Clockout already follows the rule step-046 writes down explicitly: GetClockEntry's nullable return models an expected 'not clocked in' outcome, while ClockOutEmployee's exception models a broken 'already clocked out' invariant. This session's lab applies step-046's one unexecuted proposal -- naming the employee in both messages -- directly to the real files."
+  "summary": "The real ClockEntryService.Clockout already follows the rule the requirement review writes down explicitly: GetClockEntry's nullable return models an expected 'not clocked in' outcome, while ClockOutEmployee's exception models a broken 'already clocked out' invariant. This session's lab applies the requirement review's one unexecuted proposal -- naming the employee in both messages -- directly to the real files.",
+  "learningEnvironment": "mixed",
+  "buildState": {
+    "creates": [],
+    "extends": [
+      "domain validation",
+      "exception tests"
+    ]
+  }
 }

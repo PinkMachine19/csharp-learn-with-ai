@@ -2,7 +2,7 @@
   "number": 16,
   "category": "Collections and generics",
   "estimatedTime": "35 minutes",
-  "connection": "Session 15 studied a type constraint on a generic method. This session studies a different kind of generic type parameter behavior -- variance -- using ISource<out T> and ISink<in T>, two new, small interfaces built specifically to make covariance and contravariance observable, since nothing in the real domain's own interfaces uses either.",
+  "connection": "ScratchPad contains numeric, flow, method, parameter, equality, and generic experiments. No TimeClock production boundary benefits naturally from custom variance interfaces. Add a self-contained covariance and contravariance experiment to ScratchPad.",
   "objectives": [
     "Explain what out on ISource<out T> permits: treating an ISource<Employee> as an ISource<object> safely.",
     "Explain what in on ISink<in T> permits: treating an ISink<object> as an ISink<Employee> safely.",
@@ -27,7 +27,7 @@
     },
     {
       "diagram": "type",
-      "title": "Real repository interfaces have no supertype/subtype relationship to vary over",
+      "title": "learner solution interfaces have no supertype/subtype relationship to vary over",
       "explanation": "IClockEntryRepository is not generic over Employee/object the way ISource<T> is -- there is no ClockEntry-vs-object substitution question for variance to answer there."
     }
   ],
@@ -81,7 +81,7 @@
       "code": "public interface ISink<in T> { void Add(T item); }\n\nISink<object> objectSink = new CountingSink<object>();\nISink<Employee> narrowed = objectSink;      // legal: contravariance\nnarrowed.Add(someEmployee);                 // objectSink.Add ultimately runs, accepting the Employee fine"
     },
     {
-      "title": "Real repository interfaces are neither -- and that's expected",
+      "title": "learner solution interfaces are neither -- and that's expected",
       "paragraphs": [
         "IClockEntryRepository's SaveClockEntry(ClockEntry) consumes a ClockEntry; GetClockEntry and GetEmployeeClockEntries produce ClockEntry values. A single interface mixing both directions over the same type parameter cannot be safely marked out or in -- the compiler would reject either annotation if attempted.",
         "This is not a gap in the real code -- IClockEntryRepository is not even generic over ClockEntry (ClockEntry is a fixed, concrete type in its signatures, not a type parameter). Variance only becomes a question once a type is generic and used consistently in one direction."
@@ -90,40 +90,38 @@
     }
   ],
   "lab": {
-    "objective": "Confirm ISource<out T>'s covariant assignment and ISink<in T>'s contravariant assignment compile, and confirm the reverse direction of each does not.",
-    "startingCondition": "ISource<T>, ISink<T>, SingleSource<T>, and CountingSink<T> already exist with their real variance annotations.",
+    "objective": "Add a self-contained covariance and contravariance experiment to ScratchPad.",
+    "startingCondition": "ScratchPad contains numeric, flow, method, parameter, equality, and generic experiments. No TimeClock production boundary benefits naturally from custom variance interfaces.",
     "steps": [
-      "Assign an ISource<Employee> to an ISource<object> variable and confirm it compiles.",
-      "Attempt to assign an ISource<object> to an ISource<Employee> variable and confirm the compiler rejects it.",
-      "Assign an ISink<object> to an ISink<Employee> variable and confirm it compiles.",
-      "Attempt to assign an ISink<Employee> to an ISink<object> variable and confirm the compiler rejects it."
+      "Create VarianceExperiments.cs in ScratchPad.",
+      "Define producer and consumer interfaces with out and in annotations.",
+      "Write the allowed assignment directions and predict why they are safe.",
+      "Keep reverse-direction examples commented with the compiler error they would cause.",
+      {
+        "text": "Run ScratchPad and ensure earlier experiments still compile.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"
+      }
     ],
-    "expectedBehavior": "ISource<Employee> -> ISource<object> and ISink<object> -> ISink<Employee> both compile; the reverse of each does not.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "Variance is observable without introducing artificial production abstractions.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/VarianceExamples.cs",
-      "action": "Verify",
-      "why": "Confirm the real ISource<out T>/ISink<in T> declarations and their implementations."
-    },
-    {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/VarianceExamplesTests.cs",
-      "action": "Verify",
-      "why": "Confirm both variance directions are covered."
-    },
-    {
-      "path": "site/data/sessions/session-15.json",
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/VarianceExperiments.cs",
       "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "why": "Preserve an isolated variance experiment."
+    },
+    {
+      "path": "site/data/sessions/session-16.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-15: teach variance at api boundaries",
   "review": [
-    "Both variance directions are demonstrated with actual assignments, not just described in prose.",
-    "The reverse (invalid) direction of each is confirmed to genuinely fail to compile, not merely asserted.",
-    "IClockEntryRepository's lack of variance annotations is explained honestly, connecting back to its real, mixed-direction, non-generic signature shape.",
-    "The full test suite passes."
+    "The lab uses scratchpad because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -163,5 +161,12 @@
     "If Employee eventually implemented some IEmployeeLike interface, what would need to be true about ISource<Employee> for it to also be usable as an ISource<IEmployeeLike>?"
   ],
   "whatBreaks": "Attempting to declare ISource<T> as out T while also giving it a method that accepts a T parameter would fail to compile -- the compiler enforces that out type parameters appear only in output positions. Assigning an ISource<object> to an ISource<Employee> variable (the unsafe direction) correctly fails to compile, because nothing guarantees every object produced by that source is actually an Employee.",
-  "summary": "ISource<out T> is safely covariant because its one member only produces T; ISource<Employee> can stand in for ISource<object> as a result. ISink<in T> is safely contravariant because its one member only consumes T; ISink<object> can stand in for ISink<Employee>. IClockEntryRepository has no variance annotations because its real methods both consume ClockEntry (SaveClockEntry) and produce it (GetClockEntry, GetEmployeeClockEntries) -- a shape variance cannot safely apply to, and (more fundamentally) because it isn't generic over ClockEntry at all."
+  "summary": "ISource<out T> is safely covariant because its one member only produces T; ISource<Employee> can stand in for ISource<object> as a result. ISink<in T> is safely contravariant because its one member only consumes T; ISink<object> can stand in for ISink<Employee>. IClockEntryRepository has no variance annotations because its real methods both consume ClockEntry (SaveClockEntry) and produce it (GetClockEntry, GetEmployeeClockEntries) -- a shape variance cannot safely apply to, and (more fundamentally) because it isn't generic over ClockEntry at all.",
+  "learningEnvironment": "scratchpad",
+  "buildState": {
+    "creates": [],
+    "extends": [
+      "variance experiment"
+    ]
+  }
 }

@@ -1,15 +1,197 @@
 {
-  "number": 6,"category":"Object foundations","estimatedTime":"40 minutes","connection":"Methods now organize behavior. This session introduces classes as definitions for objects that keep related state and rules together, using the real Employee and ClockEntry models from the source application.",
-  "objectives":["Distinguish a class definition from an object instance.","Use a constructor to establish required state.","Read properties as named parts of an object's public state.","Implement ClockIn end to end: construct a ClockEntry and persist it through a repository."],
-  "visuals":[{"diagram":"blueprint","title":"A class defines a shape","explanation":"Employee and ClockEntry describe available construction, state, and behavior; each new expression creates a distinct instance."},{"diagram":"constructor","title":"Construction establishes required state","explanation":"ClockEntry's constructor takes only employeeId and clockIn -- there is no ClockOut parameter, because a freshly created entry is always open."},{"diagram":"property","title":"Properties expose named state","explanation":"EmployeeId, ClockIn, and ClockOut let callers read meaningful state; ClockOut has a private setter so only ClockOutEmployee can change it."},{"diagram":"instances","title":"Instances keep independent values","explanation":"Two ClockEntry objects follow the same class definition but hold different employee ids and timestamps."}],
-  "preQuiz":[{"prompt":"What does new ClockEntry(employeeId, DateTime.Now) produce?","options":["A class definition","A ClockEntry object reference with ClockOut left null","A completed shift"],"correct":1,"explanation":"new invokes the constructor; the real constructor only sets EmployeeId and ClockIn, so ClockOut stays null (open)."},{"prompt":"Why does the real ClockEntry constructor have no ClockOut parameter?","options":["A newly created entry is always open, and only ClockOutEmployee is allowed to close it later","ClockOut is not a real property","DateTime cannot be passed twice"],"correct":0,"explanation":"Clock In only ever needs who and when; the domain expresses \"currently on the clock\" as ClockOut being null, not as a placeholder value."},{"prompt":"If two ClockEntry objects exist for the same employee on different days, does changing one change the other?","options":["Yes","No","Only if ClockOut is set"],"correct":1,"explanation":"They are separate instances with independent property values."}],
-  "concept":[{"title":"Classes define; objects exist","paragraphs":["ClockEntry is a class: a reusable definition. entry is a variable whose value refers to one ClockEntry object.","Keeping that vocabulary precise prevents confusion between changing a definition and creating an instance."],"code":"public class ClockEntry\n{\n    public int EmployeeId { get; }\n    public DateTime ClockIn { get; }\n    public DateTime? ClockOut { get; private set; }\n\n    public ClockEntry(int employeeId, DateTime clockIn)\n    {\n        EmployeeId = employeeId;\n        ClockIn = clockIn;\n        // ClockOut is left null on purpose -- that is what \"open\" means.\n    }\n}"},{"title":"Constructors establish invariants","paragraphs":["The real ClockEntry constructor does no validation at all -- it simply assigns EmployeeId and ClockIn. The invariant it protects is structural, not a range check: there is no way to construct an entry that already has a ClockOut value, because the constructor never accepts one.","This is a deliberate, minimal design. Compare it with Employee's constructor, which is equally simple: it assigns EmployeeId, Name, and Address with no validation either."],"code":"public Employee(int employeeId, string name, Address address)\n{\n    EmployeeId = employeeId;\n    Name = name;\n    Address = address;\n}"},{"title":"Properties communicate intent","paragraphs":["EmployeeId and ClockIn are get-only: set once by the constructor, readable forever after. ClockOut is get-with-a-private-setter: readable by anyone, but only ClockEntry itself (through ClockOutEmployee) can change it.","ClockEntryService.ClockIn uses exactly this shape: it builds a new ClockEntry and hands it to the repository -- a pure create, with no existing record to look up."],"code":"// Services/ClockEntryService.cs -- the real ClockIn implementation\npublic void ClockIn(int employeeId)\n{\n    var entry = new ClockEntry(employeeId, DateTime.Now);\n    _clockEntryRepository.SaveClockEntry(entry);\n}"}],
-  "lab":{"objective":"Implement ClockEntryService.ClockIn end to end, matching the real source repository (Parm.Practice.ConsoleApplication) substep by substep, and wire it into Program.cs through DI.","startingCondition":"ClockEntry, Employee, Address, IClockEntryRepository, IClockEntryService, ClockEntryRepository, and ClockEntryService already exist in PinkMachine19.TimeClock.Domain with the real signatures. Program.cs does not yet call ClockIn.","steps":["Read ClockEntry's constructor and confirm it takes exactly employeeId and clockIn, with no way to pass ClockOut in.","Confirm IClockEntryService declares void ClockIn(int employeeId).","Confirm ClockEntryService.ClockIn constructs new ClockEntry(employeeId, DateTime.Now).","Confirm ClockIn calls _clockEntryRepository.SaveClockEntry(entry) immediately after constructing it -- an entry that is built but never saved does not exist as far as the rest of the app is concerned.","Register IClockEntryRepository/ClockEntryRepository and IClockEntryService/ClockEntryService in Program.cs's ServiceCollection.","Resolve IClockEntryService from the provider, call ClockIn(1), and print a confirmation line."],"expectedBehavior":"Running the console app calls ClockIn(1) and results in exactly one ClockEntry in the repository's in-memory list with ClockOut still null.","validation":"dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release && dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release --no-build"},
-  "expectedFiles":[{"path":"src/PinkMachine19.TimeClock.Domain/ClockEntry.cs","action":"Verify","why":"Confirm the real two-parameter constructor and the private ClockOut setter."},{"path":"src/PinkMachine19.TimeClock.Domain/ClockEntryService.cs","action":"Verify","why":"Confirm ClockIn constructs and saves in two lines, matching the real source."},{"path":"src/PinkMachine19.TimeClock.App/Program.cs","action":"Verify","why":"Confirm ClockIn is resolved through DI and called for employee 1."},{"path":"site/data/sessions/session-05.json","action":"Add","why":"Publish synchronized lesson materials."}],
-  "commit":"session-05: teach classes objects properties and constructors",
-  "review":["ClockEntry and Employee each have one clear responsibility.","Required values enter through the constructor with no partially-built state possible.","ClockOut is only ever changed through ClockOutEmployee, never assigned directly.","ClockIn constructs, then immediately saves -- no dangling unsaved entry.","Application output and tests match the lesson."],
-  "postQuiz":[{"prompt":"Why does ClockEntryService.ClockIn call SaveClockEntry immediately after construction?","options":["A constructed-but-unsaved ClockEntry has no observable effect on the rest of the app","SaveClockEntry validates the constructor arguments","Save is required by the C# language"],"correct":0,"explanation":"The repository's in-memory list is the only place other code can find the entry later; skipping Save makes the method look complete while doing nothing observable."},{"prompt":"What would happen if ClockOut had a public setter instead of a private one?","options":["Any code anywhere could set ClockOut directly, bypassing ClockOutEmployee's \"can only clock out once\" check","Nothing -- private and public setters behave identically","The class would fail to compile"],"correct":0,"explanation":"A private setter keeps the only legal way to close an entry inside ClockOutEmployee, which is exactly the guard Session 24 exercises."},{"prompt":"What do the ClockEntry constructor's two parameters establish?","options":["Every future test class design","Which employee and when they started -- nothing else, because nothing else is knowable yet","The database connection string"],"correct":1,"explanation":"Clock In only ever needs who and when; there is nothing else to construct with at that point in time."}],
-  "reflections":["Why does the real ClockEntry constructor accept no ClockOut parameter at all, rather than one that defaults to null?","What would break elsewhere in the domain if ClockIn defaulted to DateTime.MinValue instead of always requiring DateTime.Now?","How is an object different from the variable that refers to it?"],
-  "whatBreaks":"Removing the private setter on ClockOut lets any code close an entry without going through ClockOutEmployee's guard, silently breaking the \"can only clock out once\" invariant Session 24 tests. Removing SaveClockEntry from ClockIn makes the method compile and run with no observable effect. Removing constructor assignment for EmployeeId or ClockIn breaks the non-null guarantee those properties depend on.",
-  "summary":"A class defines construction, state, and behavior. ClockEntry's constructor establishes only what Clock In can know at that moment -- who and when -- and leaves ClockOut null on purpose; ClockEntryService.ClockIn constructs, then saves, completing the real substeps from Step 42 of the source project."
+  "number": 6,
+  "category": "Object foundations",
+  "estimatedTime": "40 minutes",
+  "connection": "The solution and ScratchPad experiments exist, but Domain still contains only the class-library template. This is the first session that adds TimeClock business code. Create the first production domain models—Address, Employee, and ClockEntry—from the verified product vocabulary.",
+  "objectives": [
+    "Distinguish a class definition from an object instance.",
+    "Use a constructor to establish required state.",
+    "Read properties as named parts of an object's public state.",
+    "Implement ClockIn end to end: construct a ClockEntry and persist it through a repository."
+  ],
+  "visuals": [
+    {
+      "diagram": "blueprint",
+      "title": "A class defines a shape",
+      "explanation": "Employee and ClockEntry describe available construction, state, and behavior; each new expression creates a distinct instance."
+    },
+    {
+      "diagram": "constructor",
+      "title": "Construction establishes required state",
+      "explanation": "ClockEntry's constructor takes only employeeId and clockIn -- there is no ClockOut parameter, because a freshly created entry is always open."
+    },
+    {
+      "diagram": "property",
+      "title": "Properties expose named state",
+      "explanation": "EmployeeId, ClockIn, and ClockOut let callers read meaningful state; ClockOut has a private setter so only ClockOutEmployee can change it."
+    },
+    {
+      "diagram": "instances",
+      "title": "Instances keep independent values",
+      "explanation": "Two ClockEntry objects follow the same class definition but hold different employee ids and timestamps."
+    }
+  ],
+  "preQuiz": [
+    {
+      "prompt": "What does new ClockEntry(employeeId, DateTime.Now) produce?",
+      "options": [
+        "A class definition",
+        "A ClockEntry object reference with ClockOut left null",
+        "A completed shift"
+      ],
+      "correct": 1,
+      "explanation": "new invokes the constructor; the real constructor only sets EmployeeId and ClockIn, so ClockOut stays null (open)."
+    },
+    {
+      "prompt": "Why does the real ClockEntry constructor have no ClockOut parameter?",
+      "options": [
+        "A newly created entry is always open, and only ClockOutEmployee is allowed to close it later",
+        "ClockOut is not a real property",
+        "DateTime cannot be passed twice"
+      ],
+      "correct": 0,
+      "explanation": "Clock In only ever needs who and when; the domain expresses \"currently on the clock\" as ClockOut being null, not as a placeholder value."
+    },
+    {
+      "prompt": "If two ClockEntry objects exist for the same employee on different days, does changing one change the other?",
+      "options": [
+        "Yes",
+        "No",
+        "Only if ClockOut is set"
+      ],
+      "correct": 1,
+      "explanation": "They are separate instances with independent property values."
+    }
+  ],
+  "concept": [
+    {
+      "title": "Classes define; objects exist",
+      "paragraphs": [
+        "ClockEntry is a class: a reusable definition. entry is a variable whose value refers to one ClockEntry object.",
+        "Keeping that vocabulary precise prevents confusion between changing a definition and creating an instance."
+      ],
+      "code": "public class ClockEntry\n{\n    public int EmployeeId { get; }\n    public DateTime ClockIn { get; }\n    public DateTime? ClockOut { get; private set; }\n\n    public ClockEntry(int employeeId, DateTime clockIn)\n    {\n        EmployeeId = employeeId;\n        ClockIn = clockIn;\n        // ClockOut is left null on purpose -- that is what \"open\" means.\n    }\n}"
+    },
+    {
+      "title": "Constructors establish invariants",
+      "paragraphs": [
+        "The real ClockEntry constructor does no validation at all -- it simply assigns EmployeeId and ClockIn. The invariant it protects is structural, not a range check: there is no way to construct an entry that already has a ClockOut value, because the constructor never accepts one.",
+        "This is a deliberate, minimal design. Compare it with Employee's constructor, which is equally simple: it assigns EmployeeId, Name, and Address with no validation either."
+      ],
+      "code": "public Employee(int employeeId, string name, Address address)\n{\n    EmployeeId = employeeId;\n    Name = name;\n    Address = address;\n}"
+    },
+    {
+      "title": "Properties communicate intent",
+      "paragraphs": [
+        "EmployeeId and ClockIn are get-only: set once by the constructor, readable forever after. ClockOut is get-with-a-private-setter: readable by anyone, but only ClockEntry itself (through ClockOutEmployee) can change it.",
+        "ClockEntryService.ClockIn uses exactly this shape: it builds a new ClockEntry and hands it to the repository -- a pure create, with no existing record to look up."
+      ],
+      "code": "// Services/ClockEntryService.cs -- the real ClockIn implementation\npublic void ClockIn(int employeeId)\n{\n    var entry = new ClockEntry(employeeId, DateTime.Now);\n    _clockEntryRepository.SaveClockEntry(entry);\n}"
+    }
+  ],
+  "lab": {
+    "objective": "Create the first production domain models—Address, Employee, and ClockEntry—from the verified product vocabulary.",
+    "startingCondition": "The solution and ScratchPad experiments exist, but Domain still contains only the class-library template. This is the first session that adds TimeClock business code.",
+    "steps": [
+      "Delete the template Class1.cs from Domain.",
+      "Create Address.cs with the address values required by the product brief.",
+      "Create Employee.cs with identity, name, and address state established by its constructor.",
+      "Create ClockEntry.cs with EmployeeId and ClockIn established by its constructor; do not add clock-out rules yet.",
+      "In App/Program.cs, construct one Employee and one open ClockEntry and print their initial state.",
+      {
+        "text": "Build, run App, and test the scaffold.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+      }
+    ],
+    "expectedBehavior": "The production application creates and displays its first employee and open clock entry; no service or persistence code exists yet.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+  },
+  "expectedFiles": [
+    {
+      "path": "src/PinkMachine19.TimeClock.Domain/Class1.cs",
+      "action": "Delete",
+      "why": "Remove the class-library placeholder when real domain models arrive."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Domain/Address.cs",
+      "action": "Add",
+      "why": "Represent an employee address."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Domain/Employee.cs",
+      "action": "Add",
+      "why": "Represent an employee."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntry.cs",
+      "action": "Add",
+      "why": "Represent an employee clock-in."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.App/Program.cs",
+      "action": "Modify",
+      "why": "Exercise the first production models."
+    },
+    {
+      "path": "site/data/sessions/session-06.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
+    }
+  ],
+  "commit": "session-05: teach classes objects properties and constructors",
+  "review": [
+    "The lab uses production because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
+  ],
+  "postQuiz": [
+    {
+      "prompt": "Why does ClockEntryService.ClockIn call SaveClockEntry immediately after construction?",
+      "options": [
+        "A constructed-but-unsaved ClockEntry has no observable effect on the rest of the app",
+        "SaveClockEntry validates the constructor arguments",
+        "Save is required by the C# language"
+      ],
+      "correct": 0,
+      "explanation": "The repository's in-memory list is the only place other code can find the entry later; skipping Save makes the method look complete while doing nothing observable."
+    },
+    {
+      "prompt": "What would happen if ClockOut had a public setter instead of a private one?",
+      "options": [
+        "Any code anywhere could set ClockOut directly, bypassing ClockOutEmployee's \"can only clock out once\" check",
+        "Nothing -- private and public setters behave identically",
+        "The class would fail to compile"
+      ],
+      "correct": 0,
+      "explanation": "A private setter keeps the only legal way to close an entry inside ClockOutEmployee, which is exactly the guard Session 24 exercises."
+    },
+    {
+      "prompt": "What do the ClockEntry constructor's two parameters establish?",
+      "options": [
+        "Every future test class design",
+        "Which employee and when they started -- nothing else, because nothing else is knowable yet",
+        "The database connection string"
+      ],
+      "correct": 1,
+      "explanation": "Clock In only ever needs who and when; there is nothing else to construct with at that point in time."
+    }
+  ],
+  "reflections": [
+    "Why does the real ClockEntry constructor accept no ClockOut parameter at all, rather than one that defaults to null?",
+    "What would break elsewhere in the domain if ClockIn defaulted to DateTime.MinValue instead of always requiring DateTime.Now?",
+    "How is an object different from the variable that refers to it?"
+  ],
+  "whatBreaks": "Removing the private setter on ClockOut lets any code close an entry without going through ClockOutEmployee's guard, silently breaking the \"can only clock out once\" invariant Session 24 tests. Removing SaveClockEntry from ClockIn makes the method compile and run with no observable effect. Removing constructor assignment for EmployeeId or ClockIn breaks the non-null guarantee those properties depend on.",
+  "summary": "A class defines construction, state, and behavior. ClockEntry's constructor establishes only what Clock In can know at that moment -- who and when -- and leaves ClockOut null on purpose; ClockEntryService.ClockIn constructs, then saves, completing the real substeps from Step 42 of the source project.",
+  "learningEnvironment": "production",
+  "buildState": {
+    "creates": [
+      "Address",
+      "Employee",
+      "ClockEntry"
+    ],
+    "extends": [
+      "App demonstration"
+    ]
+  }
 }

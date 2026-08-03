@@ -1,5 +1,23 @@
 # Rebuild Status
 
+## Zero-to-N curriculum refactor (current)
+
+The primary course now treats the learner workspace as cumulative rather than asking students
+to edit a completed reference implementation. Session 01 creates six permanent projects:
+Domain, App, Infrastructure, Web, ScratchPad, and Domain.Tests. Every later lab declares its
+learning environment and cumulative build step. Production requirements are implemented in
+production, assertion-shaped behavior is verified in the permanent test suite, and isolated
+language experiments are preserved in ScratchPad.
+
+`site/data/build-sequence.json` records the complete creation order. Site validation rejects
+prebuilt/disposable-workspace assumptions, production changes in ScratchPad-only sessions,
+ScratchPad changes in production-only sessions, and Modify/Delete actions for files no earlier
+session created.
+
+The generated site currently validates 39 primary sessions, 5 optional refreshers, and 138 HTML
+pages. The repository's pinned .NET 10.0.302 SDK is unavailable in this environment, so the new
+ScratchPad project and solution entry were structurally inspected but not compiled locally.
+
 This file reflects the real, independently re-verified state as of the final commit in this
 rebuild pass. Nothing below is asserted without having actually run the referenced command
 in this session and reading its real output.

@@ -2,7 +2,7 @@
   "number": 25,
   "category": "Errors and resource management",
   "estimatedTime": "40 minutes",
-  "connection": "Session 24 established the real throw-vs-return rule. This session traces a real exception's full propagation path -- GetDuartion's InvalidOperationException, uncaught anywhere between ClockEntry and Program.cs -- and studies IDisposable/using through the real database connections Sessions 30-31's tests already open.",
+  "connection": "Session 24 added tested production exceptions. No TimeClock resource currently requires a custom IDisposable implementation. Trace production exception propagation and preserve a separate ScratchPad resource-cleanup experiment.",
   "objectives": [
     "Trace GetDuartion's real InvalidOperationException from where it is thrown up through PayrollService.CalculateTotalHours to Program.cs, and identify that nothing in that path catches it.",
     "Explain what 'unhandled exception' means concretely for this console app: the process terminates and prints a stack trace, since Program.cs never wraps its calls in try/catch.",
@@ -90,45 +90,40 @@
     }
   ],
   "lab": {
-    "objective": "Reproduce GetDuartion's real unhandled exception end to end, and confirm using/await using's guaranteed cleanup by deliberately throwing inside a using block.",
-    "startingCondition": "ClockEntry.GetDuartion, PayrollService.CalculateTotalHours, and the real SQLite-based integration tests already exist.",
+    "objective": "Trace production exception propagation and preserve a separate ScratchPad resource-cleanup experiment.",
+    "startingCondition": "Session 24 added tested production exceptions. No TimeClock resource currently requires a custom IDisposable implementation.",
     "steps": [
-      "Call CalculateTotalHours in a way that includes an open (not clocked out) entry in the date range, and confirm the real, unhandled InvalidOperationException propagates out of the call.",
-      "Wrap that same call in a try/catch in a throwaway test and confirm you can observe the exact real exception message.",
-      "Write a small test that opens a using SqliteConnection, throws an exception inside the block, and confirms (via a flag or mock) that Dispose still ran.",
-      "Explain, in writing, why GetEmployeeClockEntries's ClockOut != null filter is what normally prevents this exception from surfacing in ordinary use."
+      "Trace one ClockEntry exception from model through service to App and decide where it should be translated or displayed.",
+      "Add only the production catch that provides a real application boundary response; preserve the original exception context.",
+      "Create ResourceExperiments.cs in ScratchPad with a small IDisposable probe and a deliberate exception inside using.",
+      "Verify cleanup occurs and keep the experiment permanently.",
+      "Run App, ScratchPad, and tests."
     ],
-    "expectedBehavior": "The unhandled InvalidOperationException is reproduced and its exact message confirmed; the using-block test confirms Dispose runs even when an exception is thrown inside the block.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "Production reports a real domain failure appropriately, while ScratchPad proves using cleanup in isolation.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntry.cs",
-      "action": "Verify",
-      "why": "Confirm GetDuartion's real, unhandled exception path."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Domain/TimeClockService.cs",
-      "action": "Verify",
-      "why": "Confirm PayrollService.CalculateTotalHours has no try/catch around its Sum call."
-    },
-    {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryTests.cs",
+      "path": "src/PinkMachine19.TimeClock.App/Program.cs",
       "action": "Modify",
-      "why": "Add a test reproducing the real unhandled-exception path and a using-block Dispose guarantee test."
+      "why": "Handle a domain failure at the application boundary."
     },
     {
-      "path": "site/data/sessions/session-24.json",
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/ResourceExperiments.cs",
       "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "why": "Demonstrate guaranteed cleanup without fake production resources."
+    },
+    {
+      "path": "site/data/sessions/session-25.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-24: teach exception propagation idisposable and using",
   "review": [
-    "GetDuartion's real exception path is traced through all three real files (ClockEntry, PayrollService, Program.cs), not asserted abstractly.",
-    "The console app's real lack of a global exception handler is contrasted honestly with what Session 34's WebApi will need.",
-    "using/await using's Dispose guarantee is demonstrated with a real, deliberately-throwing test, not just described.",
-    "The full test suite passes."
+    "The lab uses mixed because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -168,5 +163,13 @@
     "Where else in this codebase (beyond the SQLite tests) might a resource benefit from using/await using that doesn't currently have it?"
   ],
   "whatBreaks": "Calling GetDuartion on an open ClockEntry anywhere outside GetEmployeeClockEntries's filtered path reproduces the real, unhandled InvalidOperationException -- and because Program.cs has no try/catch, that would terminate the console app. Forgetting using/await using around a SqliteConnection or PayrollDbContext would leave the connection open if an exception occurred mid-method, relying on non-deterministic garbage collection to eventually release it instead of a guaranteed, immediate Dispose call.",
-  "summary": "GetDuartion's real InvalidOperationException propagates unchanged through PayrollService.CalculateTotalHours and Program.cs, because none of the three catches it -- a real, currently-true fact about this console app, not a hypothetical. using and await using (already at work in the real SQLite integration tests) guarantee Dispose/DisposeAsync runs at the end of a block regardless of whether an exception was thrown inside it, which is exactly why SqliteConnection and DbContext -- both real, external-resource-holding types -- are always opened inside one."
+  "summary": "GetDuartion's real InvalidOperationException propagates unchanged through PayrollService.CalculateTotalHours and Program.cs, because none of the three catches it -- a real, currently-true fact about this console app, not a hypothetical. using and await using (already at work in the real SQLite integration tests) guarantee Dispose/DisposeAsync runs at the end of a block regardless of whether an exception was thrown inside it, which is exactly why SqliteConnection and DbContext -- both real, external-resource-holding types -- are always opened inside one.",
+  "learningEnvironment": "mixed",
+  "buildState": {
+    "creates": [],
+    "extends": [
+      "exception propagation",
+      "ScratchPad resource-cleanup experiment"
+    ]
+  }
 }

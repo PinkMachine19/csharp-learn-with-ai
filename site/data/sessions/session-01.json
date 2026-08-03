@@ -2,117 +2,316 @@
   "number": 1,
   "category": "Tooling and project structure",
   "estimatedTime": "45 minutes",
-  "connection": "Session 00.6 identified the responsibilities TimeClock needs: business rules, execution, storage, delivery, and verification. This session gives those responsibilities a physical home by scaffolding PinkMachine19.TimeClock.sln, src/, tests/, and the purpose-named folders inside their projects with the dotnet CLI.",
+  "connection": "Begin in the empty learner workspace. No solution, projects, production code, tests, or experiments exist yet. Scaffold the permanent TimeClock production, test, and ScratchPad projects in the learner workspace.",
   "objectives": [
     "Explain what a solution (.sln) is and what a project (.csproj) is, and how the two relate.",
     "Distinguish a console application, a class library, an ASP.NET Core web project, and an xUnit test project by what each one produces.",
-    "Use dotnet new to generate a solution and all five TimeClock projects.",
+    "Use dotnet new to generate a solution and all six permanent projects.",
     "Explain why source projects live under src/ and test projects live under tests/.",
     "Use dotnet sln add and dotnet build to assemble and build a solution from independently created projects.",
     "Create a standard set of purpose-named folders inside a project and explain why each one exists.",
     "Explain why an empty folder disappears from a fresh git clone, and how a .gitkeep file prevents that."
   ],
   "visuals": [
-    {"diagram":"solution","title":"A solution is a list of projects, not a project itself","explanation":"PinkMachine19.TimeClock.sln does not contain code. It is a manifest that names which .csproj files belong together so one command can build or test all of them."},
-    {"diagram":"pipeline","title":"dotnet new turns a template name into a folder","explanation":"dotnet new classlib -o src/PinkMachine19.TimeClock.Domain creates a folder containing PinkMachine19.TimeClock.Domain.csproj and a starter .cs file. The -o path is also where the project will live."},
-    {"diagram":"tests","title":"A test project is a project, with one extra job","explanation":"PinkMachine19.TimeClock.Domain.Tests is an ordinary class library plus the xUnit package. Nothing about its .csproj is structurally special — only its purpose is."},
-    {"diagram":"folders","title":"A folder with nothing tracked inside it does not survive a clone","explanation":"Git records files, not directories. An empty Validators/ folder exists on your disk but vanishes the moment someone clones the repository, unless a file — even an empty .gitkeep — lives inside it."}
+    {
+      "diagram": "solution",
+      "title": "A solution is a list of projects, not a project itself",
+      "explanation": "PinkMachine19.TimeClock.sln does not contain code. It is a manifest that names which .csproj files belong together so one command can build or test all of them."
+    },
+    {
+      "diagram": "pipeline",
+      "title": "dotnet new turns a template name into a folder",
+      "explanation": "dotnet new classlib -o src/PinkMachine19.TimeClock.Domain creates a folder containing PinkMachine19.TimeClock.Domain.csproj and a starter .cs file. The -o path is also where the project will live."
+    },
+    {
+      "diagram": "tests",
+      "title": "A test project is a project, with one extra job",
+      "explanation": "PinkMachine19.TimeClock.Domain.Tests is an ordinary class library plus the xUnit package. Nothing about its .csproj is structurally special — only its purpose is."
+    },
+    {
+      "diagram": "folders",
+      "title": "A folder with nothing tracked inside it does not survive a clone",
+      "explanation": "Git records files, not directories. An empty Validators/ folder exists on your disk but vanishes the moment someone clones the repository, unless a file — even an empty .gitkeep — lives inside it."
+    }
   ],
   "preQuiz": [
-    {"prompt":"What does PinkMachine19.TimeClock.sln actually contain?","options":["Compiled C# code for the whole application","A list of project paths and build configurations, no source code","The xUnit test runner"],"correct":1,"explanation":"A .sln file is a manifest. The code lives entirely inside the .csproj-owning folders it lists."},
-    {"prompt":"What is the structural difference between a console application project and a class library project, right after dotnet new creates each one?","options":["A console app's .csproj sets OutputType to Exe and has an entry point; a class library has neither","Class libraries cannot contain any methods","xUnit test projects are console applications internally"],"correct":0,"explanation":"A console app is built to run directly (an .exe with a Main entry point); a class library is built to be referenced by something else and has no entry point of its own."},
-    {"prompt":"You run dotnet new classlib -o src/PinkMachine19.TimeClock.Domain but never run dotnet sln add. What happens when you later run dotnet build PinkMachine19.TimeClock.sln?","options":["The new project builds along with the others automatically because it's in a src/ folder","The new project is silently skipped — the solution only builds what it's told to include","dotnet build fails immediately because the folder isn't registered"],"correct":1,"explanation":"Folder presence is not membership. A project only participates in solution-wide build/test/restore once it's listed inside the .sln file."}
+    {
+      "prompt": "What does PinkMachine19.TimeClock.sln actually contain?",
+      "options": [
+        "Compiled C# code for the whole application",
+        "A list of project paths and build configurations, no source code",
+        "The xUnit test runner"
+      ],
+      "correct": 1,
+      "explanation": "A .sln file is a manifest. The code lives entirely inside the .csproj-owning folders it lists."
+    },
+    {
+      "prompt": "What is the structural difference between a console application project and a class library project, right after dotnet new creates each one?",
+      "options": [
+        "A console app's .csproj sets OutputType to Exe and has an entry point; a class library has neither",
+        "Class libraries cannot contain any methods",
+        "xUnit test projects are console applications internally"
+      ],
+      "correct": 0,
+      "explanation": "A console app is built to run directly (an .exe with a Main entry point); a class library is built to be referenced by something else and has no entry point of its own."
+    },
+    {
+      "prompt": "You run dotnet new classlib -o src/PinkMachine19.TimeClock.Domain but never run dotnet sln add. What happens when you later run dotnet build PinkMachine19.TimeClock.sln?",
+      "options": [
+        "The new project builds along with the others automatically because it's in a src/ folder",
+        "The new project is silently skipped — the solution only builds what it's told to include",
+        "dotnet build fails immediately because the folder isn't registered"
+      ],
+      "correct": 1,
+      "explanation": "Folder presence is not membership. A project only participates in solution-wide build/test/restore once it's listed inside the .sln file."
+    }
   ],
   "concept": [
-    {"title":"A solution groups projects; a project is the buildable unit","paragraphs":["A .csproj file is the actual unit the .NET toolchain compiles: it lists a target framework, its dependencies, and the source files that belong to it. Every meaningful thing — building, running, testing, publishing — ultimately happens at the level of one .csproj.","A .sln file exists one level above that. It doesn't compile to anything; it's a manifest that names a set of .csproj paths so a single command (dotnet build PinkMachine19.TimeClock.sln, dotnet test PinkMachine19.TimeClock.sln) can act on all of them together. PinkMachine19.TimeClock.sln currently lists five projects: PinkMachine19.TimeClock.Domain, PinkMachine19.TimeClock.App, PinkMachine19.TimeClock.Infrastructure, PinkMachine19.TimeClock.Web, and PinkMachine19.TimeClock.Domain.Tests — you can see this yourself with dotnet sln PinkMachine19.TimeClock.sln list."]},
-    {"title":"Four templates, five projects","paragraphs":["dotnet new console generates a project whose .csproj sets <OutputType>Exe</OutputType> and whose starter file has a Main entry point — something the operating system can launch directly. This is what PinkMachine19.TimeClock.App is: a runnable program.","dotnet new classlib generates a project with no OutputType override and no entry point. It compiles to a .dll that only means something once another project references it. Both PinkMachine19.TimeClock.Domain and PinkMachine19.TimeClock.Infrastructure begin as class libraries because neither runs by itself.","dotnet new web creates an ASP.NET Core host using the Web SDK. This gives PinkMachine19.TimeClock.Web a runnable HTTP-facing starting point without pretending its future controllers already exist.","dotnet new xunit generates a class library too, but one pre-wired with the xUnit and Microsoft.NET.Test.Sdk package references and an <IsPackable>false</IsPackable> setting. Structurally it's a class library; its distinguishing feature is what it's for, not anything the compiler treats differently.","You will run the exact commands for all four templates and create all five projects in the lab."]},
-    {"title":"src/ and tests/ are convention, not a compiler rule","paragraphs":["src/ and tests/ are ordinary folders used only to organize the repository. Neither name has special meaning to .NET or the compiler: src/ contains one or more source projects, tests/ contains one or more test projects, and each .csproj project — not either folder — is an actual buildable unit.","A small solution may have one test project, such as PinkMachine19.TimeClock.Domain.Tests. Larger professional solutions commonly have several, such as Domain.Tests, Infrastructure.Tests, Web.Tests, and Integration.Tests, all organized under tests/.","The mental model is: the solution lists projects; src/ holds source projects; tests/ holds test projects; and projects are what build. Creating these items is separate too — dotnet new creates the solution or project files, while dotnet sln add registers a project in the solution without moving its source code. The lab provides the complete copyable command sequence."]},
-    {"title":"Professional layout: a standard folder per purpose","paragraphs":["A freshly generated project is one flat folder. As it grows, most .NET codebases converge on the same small set of purpose-named subfolders, because giving each kind of thing its own folder makes the codebase navigable by a stranger without reading every file first. PinkMachine19.TimeClock.Domain (business types and logic), PinkMachine19.TimeClock.Infrastructure (data access), and PinkMachine19.TimeClock.Web (the future HTTP-facing project) each end up needing a different subset of these, based on what that project's job actually is.","Here is the standard set and why each one exists:"],"list":[
-      {"term":"Configuration/","text":"strongly-typed classes that mirror sections of appsettings.json, so configuration is read once into a typed object instead of looked up by raw string key everywhere it's needed."},
-      {"term":"Constants/","text":"fixed values — thresholds, format strings, default limits — named once so they aren't duplicated as magic numbers scattered through the code."},
-      {"term":"Dtos/","text":"Data Transfer Objects: shapes that cross the HTTP boundary, decoupled from the internal shape of the domain models so either can change independently."},
-      {"term":"Exceptions/","text":"domain-specific exception types (an already-clocked-in employee, an invalid payroll period) so callers can catch a precise failure instead of a generic Exception."},
-      {"term":"Extensions/","text":"extension methods that add behavior to types the project doesn't own, without subclassing or wrapping them."},
-      {"term":"Helpers/","text":"small, stateless utility logic used by more than one class that doesn't naturally belong on any single domain type."},
-      {"term":"Interfaces/","text":"contracts like IClockEntryRepository that describe what a collaborator must do, not how, so consumers can depend on behavior instead of a concrete class."},
-      {"term":"Mappings/","text":"the translation logic between domain models and Dtos/Requests/Responses, kept in one place so the mapping rules aren't duplicated across every endpoint."},
-      {"term":"Models/","text":"the core domain entities — Employee, ClockEntry, Timesheet — independent of any storage format or wire format."},
-      {"term":"Options/","text":"classes bound through the Options pattern (IOptions<T>) for configuration that gets injected into services, rather than read as raw values."},
-      {"term":"Repositories/","text":"concrete data-access implementations of the interfaces declared in Interfaces/, kept separate so the domain layer never depends on a specific storage technology."},
-      {"term":"Requests/","text":"the shapes of incoming API payloads, named for the action they represent (ClockInRequest) so an endpoint's expected input is obvious from the type alone."},
-      {"term":"Responses/","text":"the shapes of outgoing API payloads, kept separate from Requests and from domain Models so a response can be shaped for its caller without changing what's stored internally."},
-      {"term":"Services/","text":"application logic that coordinates models and repositories to carry out a use case — recording a clock entry, computing payroll."},
-      {"term":"Validators/","text":"input-validation logic kept separate from the Dtos it validates, so validation rules can change without touching the shape of the data."}
-    ],"closingParagraphs":["Not every project needs every folder. PinkMachine19.TimeClock.Domain (business rules and data shapes) is where Constants, Exceptions, Extensions, Helpers, Interfaces, Models, and Services belong. PinkMachine19.TimeClock.Infrastructure (data access) is where Repositories belongs, next to the concrete EF Core code it will eventually contain. PinkMachine19.TimeClock.Web (the future HTTP API) is where Configuration, Dtos, Mappings, Options, Requests, Responses, and Validators belong, since those all exist to shape and validate what crosses the wire. The point of this lesson is understanding why each folder exists and where its contents conceptually belong — not memorizing this exact list. A different team might name Helpers/ differently or skip Mappings/ until they actually need it, and that's fine; what matters is that the choice is deliberate."]},
-    {"title":"Git tracks files, not folders — so every folder gets a .gitkeep","paragraphs":["Git's index stores blobs (file contents) and trees (directory listings that point at blobs), never a directory entry with nothing inside it. An empty Validators/ folder can sit on your disk for weeks, but the moment you git add . and commit, nothing gets recorded for it — there's no file to point at. Clone the repository fresh, or check out that commit somewhere else, and Validators/ simply isn't there.","The fix is the smallest possible tracked file: an empty .gitkeep. There is nothing special about that filename as far as git itself is concerned — git has no built-in concept of a 'keep this empty folder' marker. .gitkeep is purely a naming convention the community settled on, popularized by early Git tooling, so that anyone reading a diff or a directory listing immediately recognizes the file's only purpose is to hold the folder open. (Some teams use a one-line README.md instead, so the placeholder also documents the folder's purpose — that's a reasonable choice too, but it's a different, dual-purpose decision. This course sticks to a plain, empty .gitkeep: the folder's purpose is explained where a student can actually find it — in this lesson — rather than duplicated into fifteen tiny files that would immediately go stale the moment real code arrives and nobody remembers to delete them.)","The lab contains the folder-creation and .gitkeep commands as copyable blocks."]}
+    {
+      "title": "A solution groups projects; a project is the buildable unit",
+      "paragraphs": [
+        "A .csproj file is the actual unit the .NET toolchain compiles: it lists a target framework, its dependencies, and the source files that belong to it. Every meaningful thing — building, running, testing, publishing — ultimately happens at the level of one .csproj.",
+        "A .sln file is a manifest of project paths. By the end of this lab it lists Domain, App, Infrastructure, Web, ScratchPad, and Domain.Tests so one build or test command can act on the complete learner workspace."
+      ]
+    },
+    {
+      "title": "Four templates, six permanent projects",
+      "paragraphs": [
+        "dotnet new console creates a runnable project. App is the production console host; ScratchPad is a second console project used only as the permanent learning notebook.",
+        "dotnet new classlib creates Domain and Infrastructure because neither runs by itself. dotnet new web creates the HTTP host. dotnet new xunit creates the permanent test project.",
+        "The lab creates all six projects. ScratchPad is never deleted, and production projects never reference it."
+      ]
+    },
+    {
+      "title": "src/ and tests/ are convention, not a compiler rule",
+      "paragraphs": [
+        "src/ and tests/ are ordinary folders used only to organize the repository. Neither name has special meaning to .NET or the compiler: src/ contains one or more source projects, tests/ contains one or more test projects, and each .csproj project — not either folder — is an actual buildable unit.",
+        "A small solution may have one test project, such as PinkMachine19.TimeClock.Domain.Tests. Larger professional solutions commonly have several, such as Domain.Tests, Infrastructure.Tests, Web.Tests, and Integration.Tests, all organized under tests/.",
+        "The mental model is: the solution lists projects; src/ holds source projects; tests/ holds test projects; and projects are what build. Creating these items is separate too — dotnet new creates the solution or project files, while dotnet sln add registers a project in the solution without moving its source code. The lab provides the complete copyable command sequence."
+      ]
+    },
+    {
+      "title": "Professional layout: a standard folder per purpose",
+      "paragraphs": [
+        "A freshly generated project is one flat folder. As it grows, most .NET codebases converge on the same small set of purpose-named subfolders, because giving each kind of thing its own folder makes the codebase navigable by a stranger without reading every file first. PinkMachine19.TimeClock.Domain (business types and logic), PinkMachine19.TimeClock.Infrastructure (data access), and PinkMachine19.TimeClock.Web (the future HTTP-facing project) each end up needing a different subset of these, based on what that project's job actually is.",
+        "Here is the standard set and why each one exists:"
+      ],
+      "list": [
+        {
+          "term": "Configuration/",
+          "text": "strongly-typed classes that mirror sections of appsettings.json, so configuration is read once into a typed object instead of looked up by raw string key everywhere it's needed."
+        },
+        {
+          "term": "Constants/",
+          "text": "fixed values — thresholds, format strings, default limits — named once so they aren't duplicated as magic numbers scattered through the code."
+        },
+        {
+          "term": "Dtos/",
+          "text": "Data Transfer Objects: shapes that cross the HTTP boundary, decoupled from the internal shape of the domain models so either can change independently."
+        },
+        {
+          "term": "Exceptions/",
+          "text": "domain-specific exception types (an already-clocked-in employee, an invalid payroll period) so callers can catch a precise failure instead of a generic Exception."
+        },
+        {
+          "term": "Extensions/",
+          "text": "extension methods that add behavior to types the project doesn't own, without subclassing or wrapping them."
+        },
+        {
+          "term": "Helpers/",
+          "text": "small, stateless utility logic used by more than one class that doesn't naturally belong on any single domain type."
+        },
+        {
+          "term": "Interfaces/",
+          "text": "contracts like IClockEntryRepository that describe what a collaborator must do, not how, so consumers can depend on behavior instead of a concrete class."
+        },
+        {
+          "term": "Mappings/",
+          "text": "the translation logic between domain models and Dtos/Requests/Responses, kept in one place so the mapping rules aren't duplicated across every endpoint."
+        },
+        {
+          "term": "Models/",
+          "text": "the core domain entities — Employee, ClockEntry, Timesheet — independent of any storage format or wire format."
+        },
+        {
+          "term": "Options/",
+          "text": "classes bound through the Options pattern (IOptions<T>) for configuration that gets injected into services, rather than read as raw values."
+        },
+        {
+          "term": "Repositories/",
+          "text": "concrete data-access implementations of the interfaces declared in Interfaces/, kept separate so the domain layer never depends on a specific storage technology."
+        },
+        {
+          "term": "Requests/",
+          "text": "the shapes of incoming API payloads, named for the action they represent (ClockInRequest) so an endpoint's expected input is obvious from the type alone."
+        },
+        {
+          "term": "Responses/",
+          "text": "the shapes of outgoing API payloads, kept separate from Requests and from domain Models so a response can be shaped for its caller without changing what's stored internally."
+        },
+        {
+          "term": "Services/",
+          "text": "application logic that coordinates models and repositories to carry out a use case — recording a clock entry, computing payroll."
+        },
+        {
+          "term": "Validators/",
+          "text": "input-validation logic kept separate from the Dtos it validates, so validation rules can change without touching the shape of the data."
+        }
+      ],
+      "closingParagraphs": [
+        "Not every project needs every folder. PinkMachine19.TimeClock.Domain (business rules and data shapes) is where Constants, Exceptions, Extensions, Helpers, Interfaces, Models, and Services belong. PinkMachine19.TimeClock.Infrastructure (data access) is where Repositories belongs, next to the concrete EF Core code it will eventually contain. PinkMachine19.TimeClock.Web (the future HTTP API) is where Configuration, Dtos, Mappings, Options, Requests, Responses, and Validators belong, since those all exist to shape and validate what crosses the wire. The point of this lesson is understanding why each folder exists and where its contents conceptually belong — not memorizing this exact list. A different team might name Helpers/ differently or skip Mappings/ until they actually need it, and that's fine; what matters is that the choice is deliberate."
+      ]
+    },
+    {
+      "title": "Git tracks files, not folders — so every folder gets a .gitkeep",
+      "paragraphs": [
+        "Git's index stores blobs (file contents) and trees (directory listings that point at blobs), never a directory entry with nothing inside it. An empty Validators/ folder can sit on your disk for weeks, but the moment you git add . and commit, nothing gets recorded for it — there's no file to point at. Clone the repository fresh, or check out that commit somewhere else, and Validators/ simply isn't there.",
+        "The fix is the smallest possible tracked file: an empty .gitkeep. There is nothing special about that filename as far as git itself is concerned — git has no built-in concept of a 'keep this empty folder' marker. .gitkeep is purely a naming convention the community settled on, popularized by early Git tooling, so that anyone reading a diff or a directory listing immediately recognizes the file's only purpose is to hold the folder open. (Some teams use a one-line README.md instead, so the placeholder also documents the folder's purpose — that's a reasonable choice too, but it's a different, dual-purpose decision. This course sticks to a plain, empty .gitkeep: the folder's purpose is explained where a student can actually find it — in this lesson — rather than duplicated into fifteen tiny files that would immediately go stale the moment real code arrives and nobody remembers to delete them.)",
+        "The lab contains the folder-creation and .gitkeep commands as copyable blocks."
+      ]
+    }
   ],
   "lab": {
-    "objective": "Create a persistent TimeClock practice solution with the dotnet CLI, then scaffold the standard purpose-named folders and .gitkeep placeholders the real projects will grow into.",
-    "startingCondition": "The repository already contains a completed reference implementation, so running dotnet new over its projects would overwrite real course code. You will create csharp-learn-with-ai-practice beside the repository and keep it for Session 02. Then you will return to the real repository and add only the empty purpose-named folders there.",
+    "objective": "Scaffold the permanent TimeClock production, test, and ScratchPad projects in the learner workspace.",
+    "startingCondition": "Begin in the empty learner workspace. No solution, projects, production code, tests, or experiments exist yet.",
     "steps": [
       {
-        "text": "From the real repository root, move to its parent, create a clearly named persistent practice workspace beside it, and create the classic .sln solution there. Keep this folder after the lab because Session 02 continues using it.",
-        "code": "cd ..\nmkdir -p csharp-learn-with-ai-practice\ncd csharp-learn-with-ai-practice\ndotnet new sln -n PinkMachine19.TimeClock -f sln"
+        "text": "Create the classic solution file in the learner workspace.",
+        "code": "dotnet new sln -n PinkMachine19.TimeClock -f sln"
       },
       {
-        "text": "Create all four source projects and the xUnit test project. Domain and Infrastructure are both class libraries; App is a console application; Web is an ASP.NET Core host.",
-        "code": "dotnet new classlib -o src/PinkMachine19.TimeClock.Domain\ndotnet new console -o src/PinkMachine19.TimeClock.App\ndotnet new classlib -o src/PinkMachine19.TimeClock.Infrastructure\ndotnet new web -o src/PinkMachine19.TimeClock.Web\ndotnet new xunit -o tests/PinkMachine19.TimeClock.Domain.Tests"
+        "text": "Create the four production projects, the permanent ScratchPad console project, and the Domain test project. ScratchPad is a notebook that stays in the solution for the entire course.",
+        "code": "dotnet new classlib -o src/PinkMachine19.TimeClock.Domain\ndotnet new console -o src/PinkMachine19.TimeClock.App\ndotnet new classlib -o src/PinkMachine19.TimeClock.Infrastructure\ndotnet new web -o src/PinkMachine19.TimeClock.Web\ndotnet new console -o src/PinkMachine19.TimeClock.ScratchPad\ndotnet new xunit -o tests/PinkMachine19.TimeClock.Domain.Tests"
       },
       {
-        "text": "Add all five projects to the solution, then confirm the persistent practice solution builds with zero errors.",
-        "code": "dotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\ndotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj\ndotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.Infrastructure/PinkMachine19.TimeClock.Infrastructure.csproj\ndotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj\ndotnet sln PinkMachine19.TimeClock.sln add tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj\ndotnet build PinkMachine19.TimeClock.sln"
+        "text": "Add all six projects to the solution. Creating a project does not add it automatically.",
+        "code": "dotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\ndotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj\ndotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.Infrastructure/PinkMachine19.TimeClock.Infrastructure.csproj\ndotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj\ndotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj\ndotnet sln PinkMachine19.TimeClock.sln add tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj"
       },
       {
-        "text": "Return to the real repository, list its projects, and compare all five paths with the practice solution. The names and directory depth should match.",
-        "code": "cd ../csharp-learn-with-ai\ndotnet sln PinkMachine19.TimeClock.sln list"
+        "text": "List and build the solution. Expect six project paths and zero build errors.",
+        "code": "dotnet sln PinkMachine19.TimeClock.sln list\ndotnet build PinkMachine19.TimeClock.sln"
       },
       {
-        "text": "Stay in the real repository for the remaining steps. Infrastructure and Web already exist here as projects; now create purpose-named folders inside those existing project directories.",
+        "text": "Create the purpose-named production folders. Do not add speculative C# implementations yet.",
         "code": "mkdir -p src/PinkMachine19.TimeClock.Domain/{Constants,Exceptions,Extensions,Helpers,Interfaces,Models,Services}\nmkdir -p src/PinkMachine19.TimeClock.Infrastructure/Repositories\nmkdir -p src/PinkMachine19.TimeClock.Web/{Configuration,Dtos,Mappings,Options,Requests,Responses,Validators}"
       },
       {
-        "text": "Create an empty .gitkeep file in every folder. These loops cover all 15 folders.",
-        "code": "for d in Constants Exceptions Extensions Helpers Interfaces Models Services; do\n  touch \"src/PinkMachine19.TimeClock.Domain/$d/.gitkeep\"\ndone\ntouch src/PinkMachine19.TimeClock.Infrastructure/Repositories/.gitkeep\nfor d in Configuration Dtos Mappings Options Requests Responses Validators; do\n  touch \"src/PinkMachine19.TimeClock.Web/$d/.gitkeep\"\ndone"
-      },
-      {
-        "text": "From the real repository root, confirm the Release build and all tests still succeed. The new folders should have no effect on the build.",
-        "code": "dotnet build PinkMachine19.TimeClock.sln -c Release\ndotnet test PinkMachine19.TimeClock.sln -c Release --no-build"
+        "text": "Add an empty .gitkeep to every otherwise-empty folder so the structure survives a clone.",
+        "code": "for d in Constants Exceptions Extensions Helpers Interfaces Models Services; do touch \"src/PinkMachine19.TimeClock.Domain/$d/.gitkeep\"; done\ntouch src/PinkMachine19.TimeClock.Infrastructure/Repositories/.gitkeep\nfor d in Configuration Dtos Mappings Options Requests Responses Validators; do touch \"src/PinkMachine19.TimeClock.Web/$d/.gitkeep\"; done"
       }
     ],
-    "expectedBehavior": "The sibling csharp-learn-with-ai-practice workspace remains on disk and builds all five projects with zero errors, matching every project path in the real repository. Back in the real repository, all 15 standard folders exist under the correct already-existing project, each containing a tracked, empty .gitkeep file. The Release build and tests still succeed exactly as they did before the folders were added.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln -c Release && dotnet test PinkMachine19.TimeClock.sln -c Release --no-build"
+    "expectedBehavior": "One persistent learner solution contains four production projects, one ScratchPad project, and one test project. It builds before any business code is added.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
-    {"path":"site/data/sessions/session-01.json","action":"Modify","why":"Publish the narrowed scaffolding lesson plus the new project-organization section, lab, and quizzes."},
-    {"path":"src/PinkMachine19.TimeClock.Domain/Constants/.gitkeep","action":"Add","why":"Track the otherwise-empty Constants/ folder."},
-    {"path":"src/PinkMachine19.TimeClock.Domain/Exceptions/.gitkeep","action":"Add","why":"Track the otherwise-empty Exceptions/ folder."},
-    {"path":"src/PinkMachine19.TimeClock.Domain/Extensions/.gitkeep","action":"Add","why":"Track the otherwise-empty Extensions/ folder."},
-    {"path":"src/PinkMachine19.TimeClock.Domain/Helpers/.gitkeep","action":"Add","why":"Track the otherwise-empty Helpers/ folder."},
-    {"path":"src/PinkMachine19.TimeClock.Domain/Interfaces/.gitkeep","action":"Add","why":"Track the otherwise-empty Interfaces/ folder."},
-    {"path":"src/PinkMachine19.TimeClock.Domain/Models/.gitkeep","action":"Add","why":"Track the otherwise-empty Models/ folder."},
-    {"path":"src/PinkMachine19.TimeClock.Domain/Services/.gitkeep","action":"Add","why":"Track the otherwise-empty Services/ folder."},
-    {"path":"src/PinkMachine19.TimeClock.Infrastructure/Repositories/.gitkeep","action":"Add","why":"Track the otherwise-empty Repositories/ folder."},
-    {"path":"src/PinkMachine19.TimeClock.Web/Configuration/.gitkeep","action":"Add","why":"Track the otherwise-empty Configuration/ folder."},
-    {"path":"src/PinkMachine19.TimeClock.Web/Dtos/.gitkeep","action":"Add","why":"Track the otherwise-empty Dtos/ folder."},
-    {"path":"src/PinkMachine19.TimeClock.Web/Mappings/.gitkeep","action":"Add","why":"Track the otherwise-empty Mappings/ folder."},
-    {"path":"src/PinkMachine19.TimeClock.Web/Options/.gitkeep","action":"Add","why":"Track the otherwise-empty Options/ folder."},
-    {"path":"src/PinkMachine19.TimeClock.Web/Requests/.gitkeep","action":"Add","why":"Track the otherwise-empty Requests/ folder."},
-    {"path":"src/PinkMachine19.TimeClock.Web/Responses/.gitkeep","action":"Add","why":"Track the otherwise-empty Responses/ folder."},
-    {"path":"src/PinkMachine19.TimeClock.Web/Validators/.gitkeep","action":"Add","why":"Track the otherwise-empty Validators/ folder."}
+    {
+      "path": "PinkMachine19.TimeClock.sln",
+      "action": "Add",
+      "why": "Track all six permanent projects."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj",
+      "action": "Add",
+      "why": "Create the business-rule project."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Domain/Class1.cs",
+      "action": "Add",
+      "why": "Record the class-library template file until Session 06 replaces it."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj",
+      "action": "Add",
+      "why": "Create the console host."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.App/Program.cs",
+      "action": "Add",
+      "why": "Record the console template entry point until Session 06 adds production behavior."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Infrastructure/PinkMachine19.TimeClock.Infrastructure.csproj",
+      "action": "Add",
+      "why": "Create the persistence project."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Infrastructure/Class1.cs",
+      "action": "Add",
+      "why": "Record the infrastructure template until EF persistence replaces it."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj",
+      "action": "Add",
+      "why": "Create the HTTP host."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Web/Program.cs",
+      "action": "Add",
+      "why": "Record the scaffolded web host until Session 33 adds endpoints."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj",
+      "action": "Add",
+      "why": "Provide the permanent experiment notebook."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs",
+      "action": "Add",
+      "why": "Preserve experiments from Session 03 onward."
+    },
+    {
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj",
+      "action": "Add",
+      "why": "Create the permanent test project."
+    },
+    {
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/UnitTest1.cs",
+      "action": "Add",
+      "why": "Record the test template until the first meaningful tests replace it."
+    },
+    {
+      "path": "site/data/sessions/session-01.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
+    }
   ],
   "commit": "session-01: scaffold the solution with dotnet new and dotnet sln add, then organize projects into standard folders",
   "review": [
-    "The persistent practice solution builds all five projects without errors and remains available for Session 02.",
-    "The practice project list matches all five real repository projects at the same relative paths.",
-    "Every standard folder exists under the project it conceptually belongs to (Domain, Infrastructure, or Web), not scattered arbitrarily.",
-    "Every one of the 15 folders contains a tracked, empty .gitkeep file.",
-    "dotnet build PinkMachine19.TimeClock.sln -c Release and dotnet test PinkMachine19.TimeClock.sln -c Release --no-build both still succeed after adding the folders.",
-    "Every command was run against explicit project or solution paths, not relied on ambient defaults."
+    "The lab uses solution because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
-    {"prompt":"You run dotnet new console -o src/PinkMachine19.TimeClock.App but never run dotnet sln add. Later, dotnet build PinkMachine19.TimeClock.sln succeeds with no mention of PinkMachine19.TimeClock.App. Why?","options":["Console apps build automatically once created","PinkMachine19.TimeClock.App was never added to the solution, so the solution build has no reason to know it exists","dotnet build always finds every .csproj under the current directory"],"correct":1,"explanation":"A folder on disk and a solution member are two different things. Only dotnet sln add creates the membership dotnet build PinkMachine19.TimeClock.sln relies on."},
-    {"prompt":"You create mkdir -p src/PinkMachine19.TimeClock.Web/Validators, write no files into it, and commit. A teammate clones the repository fresh. What do they see?","options":["An empty Validators/ folder, exactly as you left it","No Validators/ folder at all, because git never recorded an empty directory","A build error, because the folder is referenced somewhere"],"correct":1,"explanation":"Git's index only tracks files (and the directory structure implied by their paths). A directory with nothing tracked inside it is invisible to git add and disappears on clone."},
-    {"prompt":"Why does Repositories/ belong under PinkMachine19.TimeClock.Infrastructure rather than PinkMachine19.TimeClock.Domain, even though the repository interfaces (Interfaces/) live in Domain?","options":["Infrastructure is just an arbitrary place to put extra folders","Domain should not depend on any specific storage technology, so the concrete, storage-aware implementations live in the project that's allowed to know about EF Core","Interfaces and their implementations must always be in different solutions"],"correct":1,"explanation":"Keeping concrete repository implementations out of Domain is what lets Domain stay reusable by any consumer, regardless of what storage technology that consumer eventually chooses."}
+    {
+      "prompt": "You run dotnet new console -o src/PinkMachine19.TimeClock.App but never run dotnet sln add. Later, dotnet build PinkMachine19.TimeClock.sln succeeds with no mention of PinkMachine19.TimeClock.App. Why?",
+      "options": [
+        "Console apps build automatically once created",
+        "PinkMachine19.TimeClock.App was never added to the solution, so the solution build has no reason to know it exists",
+        "dotnet build always finds every .csproj under the current directory"
+      ],
+      "correct": 1,
+      "explanation": "A folder on disk and a solution member are two different things. Only dotnet sln add creates the membership dotnet build PinkMachine19.TimeClock.sln relies on."
+    },
+    {
+      "prompt": "You create mkdir -p src/PinkMachine19.TimeClock.Web/Validators, write no files into it, and commit. A teammate clones the repository fresh. What do they see?",
+      "options": [
+        "An empty Validators/ folder, exactly as you left it",
+        "No Validators/ folder at all, because git never recorded an empty directory",
+        "A build error, because the folder is referenced somewhere"
+      ],
+      "correct": 1,
+      "explanation": "Git's index only tracks files (and the directory structure implied by their paths). A directory with nothing tracked inside it is invisible to git add and disappears on clone."
+    },
+    {
+      "prompt": "Why does Repositories/ belong under PinkMachine19.TimeClock.Infrastructure rather than PinkMachine19.TimeClock.Domain, even though the repository interfaces (Interfaces/) live in Domain?",
+      "options": [
+        "Infrastructure is just an arbitrary place to put extra folders",
+        "Domain should not depend on any specific storage technology, so the concrete, storage-aware implementations live in the project that's allowed to know about EF Core",
+        "Interfaces and their implementations must always be in different solutions"
+      ],
+      "correct": 1,
+      "explanation": "Keeping concrete repository implementations out of Domain is what lets Domain stay reusable by any consumer, regardless of what storage technology that consumer eventually chooses."
+    }
   ],
   "reflections": [
     "Which command created files on disk, and which command changed what dotnet build PinkMachine19.TimeClock.sln considers in scope?",
@@ -120,5 +319,18 @@
     "Why does an empty .gitkeep file count as a legitimate fix for git's empty-directory problem instead of a hack, given that git itself gives the filename no special meaning at all?"
   ],
   "whatBreaks": "Skipping dotnet sln add leaves a project that builds standalone but is invisible to solution-wide build/test/restore commands. Creating a folder without any tracked file inside it looks fine locally but silently vanishes for every teammate who clones the repository, so any convention that depends on the folder existing (an CI step that globs Validators/*.cs, for instance) breaks for them with no obvious cause. Putting Repositories/ (or any storage-aware code) inside PinkMachine19.TimeClock.Domain instead of PinkMachine19.TimeClock.Infrastructure would make Domain depend on a specific storage technology, undermining the reusability the next session builds on.",
-  "summary": "A solution is a manifest naming which projects build and test together; a project is the actual buildable unit, created with dotnet new console, classlib, or xunit depending on its job. Beyond that, a mature project organizes its own contents into purpose-named folders — Models, Interfaces, Services, Dtos, Validators, and the rest — chosen deliberately for what that project is responsible for, and every one of those folders needs a tracked file — this course uses an empty .gitkeep, by convention rather than any git feature — or git will not carry it to the next clone."
+  "summary": "A solution is a manifest naming which projects build and test together; a project is the actual buildable unit, created with dotnet new console, classlib, or xunit depending on its job. Beyond that, a mature project organizes its own contents into purpose-named folders — Models, Interfaces, Services, Dtos, Validators, and the rest — chosen deliberately for what that project is responsible for, and every one of those folders needs a tracked file — this course uses an empty .gitkeep, by convention rather than any git feature — or git will not carry it to the next clone.",
+  "learningEnvironment": "solution",
+  "buildState": {
+    "creates": [
+      "PinkMachine19.TimeClock.sln",
+      "Domain project",
+      "App project",
+      "Infrastructure project",
+      "Web project",
+      "ScratchPad project",
+      "Domain.Tests project"
+    ],
+    "extends": []
+  }
 }

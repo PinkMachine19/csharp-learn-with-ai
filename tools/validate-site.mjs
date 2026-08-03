@@ -7,6 +7,8 @@ const dist = process.env.COURSE_OUTPUT_DIR
   ? path.resolve(root, process.env.COURSE_OUTPUT_DIR)
   : path.join(root, "site", "dist");
 const errors = [];
+const buildSequence = JSON.parse(await readFile(path.join(root, "site", "data", "build-sequence.json"), "utf8"));
+const sequenceByNumber = new Map(buildSequence.sessions.map((item) => [String(item.number), item]));
 const requiredRoutes = ["index.html", "syllabus/index.html", "sessions/index.html", "quizzes/index.html", "labs/index.html", "404.html"];
 const requiredNav = ["Home", "Syllabus", "Sessions", "Quizzes", "Labs"];
 const forbidden = [
@@ -50,6 +52,10 @@ if (manifest) {
       if (!session[field]) errors.push(`${session.id} is missing ${field}`);
     }
     if (!Array.isArray(session.filesExpectedToChange)) errors.push(`${session.id} filesExpectedToChange must be an array`);
+    const expectedBuildStep = sequenceByNumber.get(String(session.number));
+    if (!expectedBuildStep) errors.push(`${session.id} has no cumulative build-sequence entry`);
+    if (session.learningEnvironment !== expectedBuildStep?.environment) errors.push(`${session.id} has the wrong learning environment`);
+    if (!session.buildState || (!Array.isArray(session.buildState.creates) && !Array.isArray(session.buildState.extends))) errors.push(`${session.id} has no cumulative build state`);
     if (session.completionStatus === "complete") {
       for (const field of ["lessonPath", "labPath", "quizPath"]) {
         try { await access(path.join(dist, session[field])); }
@@ -117,7 +123,30 @@ for (const session of [...manifest.sessions, ...(manifest.refreshers || [])].fil
   const svgCount = (lesson.match(/<svg /g) || []).length;
   if (svgCount < 4 || svgCount > 8) errors.push(`${session.id} must contain 4–8 opening SVGs; found ${svgCount}`);
   if (!lesson.includes('aria-label="Session navigation"')) errors.push(`${session.id} is missing session navigation`);
+  if (!session.isSupplemental && !lesson.includes('class="build-state"')) errors.push(`${session.id} is missing its cumulative build-state banner`);
   if (!lesson.includes(session.suggestedCommitMessage)) errors.push(`${session.id} commit checkpoint does not match the manifest`);
+}
+
+const allowedEnvironments = new Set(["documentation", "solution", "production", "tests", "scratchpad", "mixed"]);
+const cumulativeFiles = new Set();
+for (const session of manifest.sessions) {
+  if (!allowedEnvironments.has(session.learningEnvironment)) errors.push(`${session.id} uses an unknown learning environment`);
+  const source = JSON.parse(await readFile(path.join(root, "site", "data", "sessions", `${session.id}.json`), "utf8"));
+  const serializedLab = JSON.stringify(source.lab);
+  if (/completed reference implementation|temporary scratch|scratch folder outside|pre-?built application/i.test(serializedLab)) errors.push(`${session.id} reintroduces a prebuilt or disposable-workspace assumption`);
+  const changedPaths = source.expectedFiles.map((item) => item.path);
+  if (session.learningEnvironment === "scratchpad" && changedPaths.some((item) => /src\/PinkMachine19\.TimeClock\.(?!ScratchPad)/.test(item))) errors.push(`${session.id} is ScratchPad-only but changes production source`);
+  if (session.learningEnvironment === "production" && changedPaths.some((item) => /ScratchPad/.test(item))) errors.push(`${session.id} is production-only but changes ScratchPad`);
+  for (const file of source.expectedFiles.filter((item) => /^(?:src|tests)\//.test(item.path) || item.path.endsWith(".sln"))) {
+    const action = file.action.toLowerCase();
+    if (action === "add") {
+      if (cumulativeFiles.has(file.path)) errors.push(`${session.id} adds ${file.path}, but an earlier session already created it`);
+      cumulativeFiles.add(file.path);
+    } else if (action === "modify" || action === "delete") {
+      if (!cumulativeFiles.has(file.path)) errors.push(`${session.id} ${action}s ${file.path}, but no earlier session created it`);
+      if (action === "delete") cumulativeFiles.delete(file.path);
+    }
+  }
 }
 
 if (errors.length) {

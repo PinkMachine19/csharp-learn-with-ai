@@ -2,7 +2,7 @@
   "number": 21,
   "category": "query pipelines",
   "estimatedTime": "40 minutes",
-  "connection": "Session 20 covered dependency injection. This session reads the real PayrollService.CalculateTotalHours line by line: a Where-shaped filter inside GetEmployeeClockEntries, feeding a Sum with an inline projection -- one LINQ pipeline split across two real methods.",
+  "connection": "The production workflow records entries and PayrollService totals completed hours. Query behavior is still expressed with basic loops or broad repository results. Extend PayrollService and repository queries with requirement-driven LINQ filtering, projection, and ordering.",
   "objectives": [
     "Read GetEmployeeClockEntries as a Where pipeline: employeeId match, ClockOut not null, and a date range, all in one lambda.",
     "Read CalculateTotalHours's .Sum(x => x.GetDuartion().TotalHours) as a projection and aggregation combined into a single call, not a separate Select stage.",
@@ -90,43 +90,40 @@
     }
   ],
   "lab": {
-    "objective": "Write a second LINQ query (ClockEntryQueries.LongestFirst) using the same Where-then-project-and-aggregate shape as the real CalculateTotalHours, filtered and ordered differently.",
-    "startingCondition": "Sessions 01–19 are complete and all existing tests pass.",
+    "objective": "Extend PayrollService and repository queries with requirement-driven LINQ filtering, projection, and ordering.",
+    "startingCondition": "The production workflow records entries and PayrollService totals completed hours. Query behavior is still expressed with basic loops or broad repository results.",
     "steps": [
-      "Predict the successful path and one boundary or failure case.",
-      "Add src/PinkMachine19.TimeClock.Domain/ClockEntryQueries.cs with a narrow public contract.",
-      "Add tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryQueriesTests.cs for the prediction and boundary case.",
-      "Run the focused tests and inspect the observed values or control flow.",
-      "Run the full Release build and test suite."
+      "Add a query that selects completed entries for one employee and period.",
+      "Use Where for business filtering, Select for the required shape, and OrderBy only where output order matters.",
+      "Keep clock-entry state rules on ClockEntry rather than embedding them in query syntax.",
+      "Update PayrollService to consume the query and preserve existing output.",
+      "Build, run App, and test."
     ],
-    "expectedBehavior": "The new tests establish that Where filters, Select transforms, and OrderBy sequences elements while preserving a readable left-to-right pipeline; prior behavior remains unchanged.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "Production uses LINQ to express existing filtering and ordering requirements without adding a second fictional feature.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
       "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryQueries.cs",
       "action": "Add",
-      "why": "Provide the LongestFirst query built on the same Where-then-Sum shape as the real CalculateTotalHours."
+      "why": "Centralize requirement-driven entry queries."
     },
     {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryQueriesTests.cs",
-      "action": "Add",
-      "why": "Verify the contract and its boundary case."
+      "path": "src/PinkMachine19.TimeClock.Domain/PayrollService.cs",
+      "action": "Modify",
+      "why": "Use the query pipeline."
     },
     {
-      "path": "site/data/sessions/session-20.json",
-      "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "path": "site/data/sessions/session-21.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-20: teach linq filtering projection and ordering",
   "review": [
-    "The public API states one coherent responsibility.",
-    "Dependencies and state changes are explicit.",
-    "The example remains deterministic and compact.",
-    "Tests cover success and a meaningful boundary.",
-    "No nullable warnings are introduced.",
-    "The complete suite passes."
+    "The lab uses production because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -166,5 +163,12 @@
     "Where else in this codebase could a Select-then-Sum split make a future second caller's job easier?"
   ],
   "whatBreaks": "Removing the ClockOut != null condition from GetEmployeeClockEntries reintroduces GetDuartion's InvalidOperationException into CalculateTotalHours. Removing the date-range conditions makes CalculateTotalHours silently ignore its own startDate/endDate parameters. Splitting Sum's inline projection into a separate Select adds an intermediate allocation with no current caller that needs it -- a real but currently unnecessary refactor.",
-  "summary": "The real PayrollService.CalculateTotalHours is one Where-shaped filter (in GetEmployeeClockEntries) feeding one Sum call with an inline projection -- decision-0007 documents that this two-method, no-separate-Select shape was the delivered design, not the three-stage pipeline originally planned."
+  "summary": "The real PayrollService.CalculateTotalHours is one Where-shaped filter (in GetEmployeeClockEntries) feeding one Sum call with an inline projection -- decision-0007 documents that this two-method, no-separate-Select shape was the delivered design, not the three-stage pipeline originally planned.",
+  "learningEnvironment": "production",
+  "buildState": {
+    "creates": [],
+    "extends": [
+      "clock-entry LINQ queries"
+    ]
+  }
 }

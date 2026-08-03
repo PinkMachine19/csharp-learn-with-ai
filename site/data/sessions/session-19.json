@@ -2,7 +2,7 @@
   "number": 19,
   "category": "Object-oriented design",
   "estimatedTime": "40 minutes",
-  "connection": "Session 18 studied interface polymorphism. Nothing in the real practice-07092026 source uses inheritance or abstract classes at all -- this session introduces HoursPolicyBase, a new, clearly-labeled abstract class that StandardHoursPolicy and FlexibleHoursPolicy now inherit from, and previews PayrollDbContext's real inheritance from EF Core's DbContext (Session 31).",
+  "connection": "Production now uses interfaces for real variation. Forcing inheritance into those services would weaken the design, so this language comparison belongs in ScratchPad. Teach inheritance and abstract members in ScratchPad because TimeClock has no verified requirement for a class hierarchy.",
   "objectives": [
     "Explain what HoursPolicyBase adds beyond what IHoursPolicy alone already provided: a shared, non-abstract Round helper both derived classes inherit for free.",
     "Distinguish HoursPolicyBase's abstract GetVariance (each derived class must supply its own) from its concrete Round (shared, inherited, never overridden).",
@@ -33,128 +33,125 @@
   ],
   "preQuiz": [
     {
-      "prompt": "What could HoursPolicyBase do that IHoursPolicy alone could not?",
+      "prompt": "Why is this lesson in ScratchPad?",
       "options": [
-        "Provide Round as a real, shared method body that both StandardHoursPolicy and FlexibleHoursPolicy inherit without rewriting it -- an interface can declare a member's signature but an ordinary interface cannot supply reusable implementation the way an abstract class can",
-        "Nothing -- interfaces and abstract classes are functionally identical",
-        "Prevent FlexibleHoursPolicy from ever changing its GetVariance result"
+        "C# forbids inheritance in production",
+        "TimeClock has no verified class-hierarchy requirement",
+        "ScratchPad is always preferred"
       ],
-      "correct": 0,
-      "explanation": "This is the concrete difference this session demonstrates: shared, inherited implementation is an abstract class capability that a plain interface does not give you."
+      "correct": 1,
+      "explanation": "Do not invent a hierarchy for the product."
     },
     {
-      "prompt": "Why must StandardHoursPolicy.GetVariance use the override keyword?",
+      "prompt": "Can an abstract class be instantiated directly?",
       "options": [
-        "HoursPolicyBase declares GetVariance as abstract, which requires every concrete derived class to supply an implementation marked override -- the compiler checks the signature matches exactly",
-        "override is optional stylistic decoration",
-        "override is required by IHoursPolicy, not HoursPolicyBase"
+        "Yes",
+        "No",
+        "Only by tests"
       ],
-      "correct": 0,
-      "explanation": "abstract members create a contract just as binding as an interface member -- override is how C# confirms a derived class is fulfilling that specific abstract declaration, not just adding an unrelated method with the same name."
+      "correct": 1,
+      "explanation": "It is an incomplete base for derived types."
     },
     {
-      "prompt": "Why will PayrollDbContext (Session 31) be forced to use inheritance, when nothing else in this codebase has needed it?",
+      "prompt": "What must a concrete derived class do with an abstract member?",
       "options": [
-        "EF Core's design requires your context class to literally BE a DbContext (public class PayrollDbContext : DbContext), inheriting its real infrastructure (change tracking, SaveChangesAsync) -- there is no interface-based alternative for that specific framework requirement",
-        "It isn't forced to -- it's a stylistic choice",
-        "DbContext is an interface, not a base class"
+        "Override it",
+        "Delete it",
+        "Convert it to a field"
       ],
       "correct": 0,
-      "explanation": "This is a genuine, external constraint from the EF Core framework itself, not a design preference this course is choosing -- worth previewing now so Session 31's inheritance doesn't feel unmotivated."
+      "explanation": "The override supplies the missing implementation."
     }
   ],
   "concept": [
     {
-      "title": "HoursPolicyBase: abstract plus concrete, in one class",
+      "title": "Abstract classes combine requirements and shared code",
       "paragraphs": [
-        "public abstract class HoursPolicyBase : IHoursPolicy declares GetVariance as abstract decimal GetVariance(decimal recordedHours) -- no body, forcing every non-abstract derived class to supply one.",
-        "The same class also declares protected static decimal Round(decimal hours) with a real, complete body -- every derived class inherits this exact implementation; none of them re-declare it."
+        "An abstract member requires each derived type to provide behavior. A concrete member supplies shared behavior once.",
+        "ScratchPad is appropriate because TimeClock's production variation is already modeled naturally with interfaces."
       ],
-      "code": "public abstract class HoursPolicyBase : IHoursPolicy\n{\n    public abstract decimal GetVariance(decimal recordedHours);\n\n    protected static decimal Round(decimal hours) =>\n        Math.Round(hours, 2, MidpointRounding.AwayFromZero);\n}"
+      "code": "abstract class Formatter\n{\n    public abstract string Format(string value);\n    protected static string Trim(string value) => value.Trim();\n}"
     },
     {
-      "title": "Two derived classes, one required override, one free inheritance",
+      "title": "Derived types override required behavior",
       "paragraphs": [
-        "StandardHoursPolicy and FlexibleHoursPolicy both extend HoursPolicyBase now, instead of implementing IHoursPolicy directly. Each provides its own override decimal GetVariance(...) -- required, because GetVariance is abstract.",
-        "Neither class writes its own Round method -- both simply call the inherited one, exactly as HoursPolicyBase defined it, with zero duplication."
+        "A derived class uses override to fulfill the abstract contract. It inherits concrete members without copying them.",
+        "The hierarchy should represent a genuine is-a relationship, not a desire to reuse a few lines."
       ],
-      "code": "public sealed class StandardHoursPolicy(decimal scheduledHours) : HoursPolicyBase\n{\n    public override decimal GetVariance(decimal recordedHours) => Round(recordedHours - scheduledHours);\n}\n\npublic sealed class FlexibleHoursPolicy : HoursPolicyBase\n{\n    public override decimal GetVariance(decimal recordedHours) => 0m;\n}"
+      "code": "sealed class UpperFormatter : Formatter\n{\n    public override string Format(string value) => Trim(value).ToUpperInvariant();\n}"
     },
     {
-      "title": "A preview: PayrollDbContext's real, necessary inheritance",
+      "title": "Interfaces and abstract classes solve different problems",
       "paragraphs": [
-        "Session 31 introduces PayrollDbContext : DbContext -- EF Core's own design requires your context type to literally be a DbContext, gaining its real change-tracking and SaveChangesAsync machinery through inheritance.",
-        "This is different from HoursPolicyBase's inheritance, which this course chose deliberately to demonstrate the concept -- PayrollDbContext's inheritance is externally required by the EF Core framework itself, the first genuinely necessary use of inheritance in this codebase."
-      ],
-      "code": "// Coming in Session 31 -- EF Core requires this shape, not just an interface\n// public sealed class PayrollDbContext(DbContextOptions<PayrollDbContext> options) : DbContext(options)"
+        "Interfaces describe capabilities across otherwise unrelated implementations. Abstract classes model a related family that benefits from shared implementation.",
+        "The production repository boundary needs substitution, not a shared base implementation, so it remains interface-based."
+      ]
     }
   ],
   "lab": {
-    "objective": "Confirm HoursPolicyBase's split between abstract and concrete members, and that both derived policies inherit Round unchanged.",
-    "startingCondition": "HoursPolicyBase, StandardHoursPolicy, and FlexibleHoursPolicy already exist with the real abstract/concrete split.",
+    "objective": "Teach inheritance and abstract members in ScratchPad because TimeClock has no verified requirement for a class hierarchy.",
+    "startingCondition": "Production now uses interfaces for real variation. Forcing inheritance into those services would weaken the design, so this language comparison belongs in ScratchPad.",
     "steps": [
-      "Attempt to instantiate HoursPolicyBase directly (new HoursPolicyBase()) and confirm the compiler rejects it -- abstract classes cannot be constructed.",
-      "Remove the override keyword from StandardHoursPolicy.GetVariance and confirm the compiler rejects the resulting method as an unrelated overload, not a valid override.",
-      "Confirm neither StandardHoursPolicy nor FlexibleHoursPolicy declares its own Round method, and that GetVariance's rounded results still work correctly through the inherited one.",
-      "Run the existing HoursPolicyTests.cs and confirm both policies still pass with their real, unchanged expected values."
+      "Create InheritanceExperiments.cs in ScratchPad.",
+      "Define one small abstract base type with one abstract and one concrete member.",
+      "Create two derived types and observe inherited versus overridden behavior.",
+      "Write a note comparing this closed hierarchy with the production interfaces from Session 18.",
+      {
+        "text": "Run ScratchPad and build production unchanged.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release"
+      }
     ],
-    "expectedBehavior": "HoursPolicyBase cannot be constructed directly; removing override causes a compile error; both policies correctly use the inherited Round method with no duplication; existing tests pass unchanged.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "The student learns inheritance through a permanent isolated comparison while production continues using natural interfaces.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/IHoursPolicy.cs",
-      "action": "Verify",
-      "why": "Confirm HoursPolicyBase's real abstract/concrete member split and both derived classes."
-    },
-    {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/HoursPolicyTests.cs",
-      "action": "Verify",
-      "why": "Confirm existing coverage still passes against the now-inherited implementation."
-    },
-    {
-      "path": "site/data/sessions/session-18.json",
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/InheritanceExperiments.cs",
       "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "why": "Preserve inheritance syntax without inventing TimeClock policies."
+    },
+    {
+      "path": "site/data/sessions/session-19.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-18: teach abstract classes inheritance and overrides",
   "review": [
-    "HoursPolicyBase is explicitly introduced as new, since no real inheritance exists in the source app.",
-    "The abstract/concrete split (GetVariance vs Round) is demonstrated by actually attempting to instantiate the base class and remove the override keyword.",
-    "PayrollDbContext's future, genuinely-required inheritance is previewed honestly as a different motivation than this session's deliberate teaching example.",
-    "The full test suite passes with both policies working correctly through the new inheritance chain."
+    "The lab uses scratchpad because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
-      "prompt": "Why can't HoursPolicyBase be instantiated directly with new HoursPolicyBase()?",
+      "prompt": "When is an abstract class a good fit?",
       "options": [
-        "It is declared abstract, and abstract classes can never be constructed directly -- only concrete (non-abstract) derived classes like StandardHoursPolicy and FlexibleHoursPolicy can be instantiated",
-        "It has no constructor",
-        "IHoursPolicy prevents it"
+        "For a related family with shared implementation",
+        "Whenever two classes have names",
+        "For every repository"
       ],
       "correct": 0,
-      "explanation": "abstract on a class is exactly this: a promise that the class is incomplete on its own and exists only to be extended."
+      "explanation": "Both relationship and shared behavior should be meaningful."
     },
     {
-      "prompt": "If HoursPolicyBase's Round method were declared virtual instead of a plain (non-virtual) method, what new capability would that add?",
+      "prompt": "Why do repositories remain interface-based?",
       "options": [
-        "Derived classes could optionally override Round with their own rounding behavior, using the override keyword -- today, neither StandardHoursPolicy nor FlexibleHoursPolicy can customize it at all",
-        "Nothing would change",
-        "Round would become abstract automatically"
+        "They need substitutable capabilities, not inherited implementation",
+        "Interfaces run faster",
+        "Abstract classes cannot have methods"
       ],
       "correct": 0,
-      "explanation": "virtual is what opens a concrete method up to being overridden; a plain method (like Round today) is fixed for every derived class, which is exactly why neither policy can (or needs to) customize rounding."
+      "explanation": "The design pressure is substitution across storage implementations."
     },
     {
-      "prompt": "What is genuinely different about PayrollDbContext's future inheritance from DbContext, compared to StandardHoursPolicy's inheritance from HoursPolicyBase?",
+      "prompt": "What happens to the concrete helper on a derived class?",
       "options": [
-        "PayrollDbContext's inheritance is required by the EF Core framework's own design; HoursPolicyBase's inheritance was a deliberate choice this course made specifically to have a real example to teach from",
-        "There is no real difference between the two",
-        "PayrollDbContext will not actually use inheritance"
+        "It is inherited",
+        "It is deleted",
+        "It becomes abstract automatically"
       ],
       "correct": 0,
-      "explanation": "This distinction matters for judgment: not every inheritance relationship is equally motivated -- some are genuinely required by a framework, others are a design choice worth justifying on their own merits."
+      "explanation": "Concrete base behavior is inherited."
     }
   ],
   "reflections": [
@@ -163,5 +160,12 @@
     "Now that you've seen both an interface-only design (Session 18's original IHoursPolicy) and an abstract-class design (this session's HoursPolicyBase), when would you reach for each?"
   ],
   "whatBreaks": "Attempting new HoursPolicyBase() directly fails to compile, because abstract classes exist only to be extended, never instantiated on their own. Removing StandardHoursPolicy's override keyword from GetVariance produces a compile error, because the compiler can no longer connect that method to HoursPolicyBase's abstract declaration. Duplicating Round's logic separately inside each derived policy (instead of inheriting it) would reintroduce the exact kind of duplication generics (Session 14) and interfaces (Session 18) already exist to avoid.",
-  "summary": "HoursPolicyBase is a new, clearly-labeled abstract class -- nothing in the real source uses inheritance, so this session builds one specifically to demonstrate what an abstract class adds beyond an interface: a required abstract member (GetVariance) alongside a shared, concrete, inherited one (Round). Session 31's PayrollDbContext will be this codebase's first genuinely framework-required use of inheritance, previewed here so it does not feel unmotivated when it arrives."
+  "summary": "HoursPolicyBase is a new, clearly-labeled abstract class -- nothing in the production code uses inheritance, so this session builds one specifically to demonstrate what an abstract class adds beyond an interface: a required abstract member (GetVariance) alongside a shared, concrete, inherited one (Round). Session 31's PayrollDbContext will be this codebase's first genuinely framework-required use of inheritance, previewed here so it does not feel unmotivated when it arrives.",
+  "learningEnvironment": "scratchpad",
+  "buildState": {
+    "creates": [],
+    "extends": [
+      "inheritance and abstract-member experiment"
+    ]
+  }
 }

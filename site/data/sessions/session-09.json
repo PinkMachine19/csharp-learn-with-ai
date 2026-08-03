@@ -2,7 +2,7 @@
   "number": 9,
   "category": "Memory and type behavior",
   "estimatedTime": "35 minutes",
-  "connection": "Session 8 covered value versus reference assignment. Nothing in the real Parm.Practice.ConsoleApplication uses ref, out, or in -- this session is a clearly-labeled new extension, written as a small TryGetOpenEntry helper next to the real IClockEntryRepository so the parameter-passing keywords have somewhere real-shaped to attach to.",
+  "connection": "ScratchPad contains prior experiments and the student knows local methods. No TimeClock requirement currently needs ref, out, or in parameters. Add an isolated ScratchPad parameter-passing experiment without distorting a production repository API.",
   "objectives": [
     "Explain why out lets a method report a lookup result and success/failure without a nullable return type or a thrown exception.",
     "Write TryGetOpenEntry(int employeeId, out ClockEntry? entry), a new method modeled on GetClockEntry's real nullable-return shape but demonstrating the out alternative.",
@@ -65,65 +65,63 @@
   ],
   "concept": [
     {
-      "title": "out: two results from one call",
+      "title": "Ordinary parameters receive values",
       "paragraphs": [
-        "The real GetClockEntry communicates 'found or not' entirely through its return type: Task<ClockEntry?>. The Try-pattern is the other common C# idiom for the same idea -- a bool return for success/failure, and an out parameter for the value.",
-        "This session adds TryGetOpenEntry as a new, clearly-labeled method next to the real GetClockEntry, so both idioms exist side by side for comparison -- not because the real repository needs both."
+        "By default, a method receives a copy of the argument value. Reassigning the parameter does not replace the caller's variable.",
+        "For a class variable, the copied value is a reference, so both sides can still observe mutation of the same object."
       ],
-      "code": "// New extension, modeled on the real GetClockEntry's nullable contract\npublic bool TryGetOpenEntry(int employeeId, out ClockEntry? entry)\n{\n    entry = _clockEntries.FirstOrDefault(e => e.EmployeeId == employeeId && e.ClockOut is null);\n    return entry is not null;\n}"
+      "code": "static void Inspect(int value) { value = 99; }"
     },
     {
-      "title": "ref: replacing what a variable refers to, not just mutating it",
+      "title": "out returns an additional value",
       "paragraphs": [
-        "Session 8 showed that ClockEntryService.Clockout already mutates a shared ClockEntry object through an ordinary reference -- no ref keyword needed, because mutating an object's members never requires ref.",
-        "ref parameters solve a narrower, different problem: letting a method reassign which object the CALLER's variable points to, not just change the current object's state. Nothing in this domain currently needs that."
+        "A Try-style method can return success as bool and place the found value in an out parameter.",
+        "This is useful when absence is expected, but it should not be added to a production API unless callers genuinely need that shape."
       ],
-      "code": "// Illustrative only -- not used anywhere in this codebase\nstatic void ReplaceIfClosed(ref ClockEntry entry, ClockEntry replacement)\n{\n    if (entry.ClockOut is not null) entry = replacement;   // reassigns the CALLER's variable\n}"
+      "code": "static bool TryRead(string text, out int value) =>\n    int.TryParse(text, out value);"
     },
     {
-      "title": "in: a tool for a problem this domain doesn't have",
+      "title": "ref and in communicate special intent",
       "paragraphs": [
-        "in tells the compiler a parameter is passed by reference but must not be modified -- its value is to avoid copying a large struct on every call.",
-        "Every value type in this codebase (int EmployeeId, DateTime ClockIn/ClockOut) is small; copying them is already effectively free. in would add a keyword with no measurable benefit here."
+        "ref permits the method to replace caller-visible storage. in passes by reference while preventing reassignment through that parameter.",
+        "Both are specialized tools. ScratchPad lets you observe them without distorting TimeClock contracts."
       ],
-      "code": "// Not used in this codebase -- int and DateTime are already cheap to copy\nstatic double HoursBetween(in DateTime start, in DateTime end) => (end - start).TotalHours;"
+      "code": "static void Increment(ref int value) => value++;"
     }
   ],
   "lab": {
-    "objective": "Add TryGetOpenEntry as a new out-parameter alternative to the real GetClockEntry, and write tests comparing both idioms' call sites.",
-    "startingCondition": "IClockEntryRepository and ClockEntryRepository already exist with the real async GetClockEntry method.",
+    "objective": "Add an isolated ScratchPad parameter-passing experiment without distorting a production repository API.",
+    "startingCondition": "ScratchPad contains prior experiments and the student knows local methods. No TimeClock requirement currently needs ref, out, or in parameters.",
     "steps": [
-      "Add bool TryGetOpenEntry(int employeeId, out ClockEntry? entry) to ClockEntryRepository (not the interface -- this is a new, additional method, not a replacement).",
-      "Write a call site using if (repository.TryGetOpenEntry(...)) and confirm the compiler enforces entry's definite assignment inside the branch.",
-      "Write a second call site using the real, existing GetClockEntry and compare how each communicates 'not found.'",
-      "Add tests for TryGetOpenEntry's true and false paths."
+      "Add a Session 09 heading and keep all previous sections.",
+      "Write one small method for ordinary by-value input, one Try-style out method, and one ref mutation.",
+      "Predict caller-visible state before each call.",
+      "Run the examples and annotate which changes cross the method boundary.",
+      {
+        "text": "Run ScratchPad and build the production solution unchanged.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release"
+      }
     ],
-    "expectedBehavior": "TryGetOpenEntry returns true with entry assigned when an open entry exists, and false with entry null when it does not; the real GetClockEntry is unchanged.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "ScratchPad demonstrates ref, out, in, and ordinary value passing; production contracts remain requirement-driven.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryRepository.cs",
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs",
       "action": "Modify",
-      "why": "Add the new TryGetOpenEntry method alongside the real, unmodified GetClockEntry."
+      "why": "Preserve parameter-passing observations outside production APIs."
     },
     {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryTests.cs",
+      "path": "site/data/sessions/session-09.json",
       "action": "Modify",
-      "why": "Add coverage for TryGetOpenEntry's true and false paths."
-    },
-    {
-      "path": "site/data/sessions/session-08.json",
-      "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-08: teach parameter passing with ref, out, and in",
   "review": [
-    "TryGetOpenEntry is added as a new method, not a replacement for the real GetClockEntry.",
-    "The out parameter's definite-assignment guarantee is demonstrated at a real call site.",
-    "ref and in are explained honestly as tools this domain does not currently need, not forced into contrived usage.",
-    "The full test suite passes."
+    "The lab uses scratchpad because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -163,5 +161,12 @@
     "Why does 'this domain doesn't need in' feel like a legitimate lesson outcome rather than an incomplete one?"
   ],
   "whatBreaks": "Adding a code path in TryGetOpenEntry that returns true without assigning entry would fail to compile -- the definite-assignment rule catches this at compile time rather than allowing a null-reference bug at runtime. Confusing ref with out would lead you to expect a caller-provided initial value for entry that TryGetOpenEntry does not need or use.",
-  "summary": "out lets a method return a second value (here, whether an open entry was found) alongside its normal return type, with the compiler enforcing definite assignment. ref would let a method reassign a caller's variable to an entirely different object -- a capability this codebase's real, ordinary-reference mutation patterns (Session 8) never need. in exists to avoid copying large structs, and this domain's small value types (int, DateTime) never pay that cost in the first place."
+  "summary": "out lets a method return a second value (here, whether an open entry was found) alongside its normal return type, with the compiler enforcing definite assignment. ref would let a method reassign a caller's variable to an entirely different object -- a capability this codebase's real, ordinary-reference mutation patterns (Session 8) never need. in exists to avoid copying large structs, and this domain's small value types (int, DateTime) never pay that cost in the first place.",
+  "learningEnvironment": "scratchpad",
+  "buildState": {
+    "creates": [],
+    "extends": [
+      "parameter-passing experiment"
+    ]
+  }
 }

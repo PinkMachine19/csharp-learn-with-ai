@@ -2,7 +2,7 @@
   "number": 18,
   "category": "Object-oriented design",
   "estimatedTime": "40 minutes",
-  "connection": "Session 17 fixed a real encapsulation gap. This session studies the real interfaces already driving this codebase's polymorphism -- IClockEntryRepository, IClockEntryService, IEmployeeRepository, IEmployeeService -- plus IHoursPolicy's two swappable implementations, StandardHoursPolicy and FlexibleHoursPolicy.",
+  "connection": "EmployeeRepository, ClockEntryRepository, and the domain models exist as concrete production code. App currently coordinates them directly. Introduce production repository and service interfaces where the application now has real collaborators to abstract.",
   "objectives": [
     "List all four real interfaces in PinkMachine19.TimeClock.Domain and their real implementing classes, including the real EmployeeRepositor typo.",
     "Explain what 'polymorphism' means concretely for ClockEntryService: it depends on IClockEntryRepository, and works correctly regardless of which implementation Program.cs registers.",
@@ -65,70 +65,75 @@
   ],
   "concept": [
     {
-      "title": "Four real interfaces, verified against source",
+      "title": "Extract contracts from behavior that exists",
       "paragraphs": [
-        "IClockEntryRepository (implemented by ClockEntryRepository), IClockEntryService (implemented by ClockEntryService), IEmployeeRepository (implemented by EmployeeRepositor -- the real typo), and IEmployeeService (implemented by EmployeeService) are the complete list of interfaces in this codebase, confirmed directly against the source files.",
-        "Every one of ClockEntryService, PayrollService, and Program.cs depends on these interfaces, never on the concrete class names -- this is why EmployeeRepositor's typo never had to be fixed for the application to work correctly."
+        "The repositories already save and retrieve production models, so their interfaces describe observed behavior instead of speculative architecture.",
+        "A consumer depends on the contract; the composition root chooses the implementation."
       ],
-      "code": "public interface IEmployeeRepository { Employee GetEmployeeById(int employeeId); }\n\n// Real typo, real class name -- callers never notice, because they depend on IEmployeeRepository\npublic sealed class EmployeeRepositor : IEmployeeRepository\n{\n    public Employee GetEmployeeById(int employeeId) => new Employee(1, \"Parm\", new Address());\n}"
+      "code": "public interface IClockEntryRepository\n{\n    void Save(ClockEntry entry);\n    IEnumerable<ClockEntry> ForEmployee(int employeeId);\n}"
     },
     {
-      "title": "Polymorphism at a real call site: IHoursPolicy",
+      "title": "Services coordinate use cases",
       "paragraphs": [
-        "IHoursPolicy has two real implementations: StandardHoursPolicy(decimal scheduledHours), which computes recordedHours - scheduledHours, and FlexibleHoursPolicy, which always returns 0m.",
-        "A caller holding an IHoursPolicy variable calls .GetVariance(recordedHours) without knowing or caring which implementation it actually is -- the correct GetVariance runs based on the object's real runtime type, not the variable's declared type."
+        "ClockEntry owns its state rules. ClockEntryService coordinates finding, creating, completing, and saving entries.",
+        "That division keeps the model focused and persistence replaceable."
       ],
-      "code": "IHoursPolicy policy = flexible ? new FlexibleHoursPolicy() : new StandardHoursPolicy(8m);\ndecimal variance = policy.GetVariance(7.5m);   // -0.5m or 0m, depending on which object policy actually is"
+      "code": "public sealed class ClockEntryService(IClockEntryRepository entries)"
     },
     {
-      "title": "What would actually break polymorphism here",
+      "title": "Polymorphism appears at the call site",
       "paragraphs": [
-        "If ClockEntryService's constructor took the concrete ClockEntryRepository class instead of IClockEntryRepository, Session 30's test doubles (a fake repository implementing the same interface) would have nowhere to substitute in -- polymorphism is what makes substitution possible at all.",
-        "The four real interfaces exist specifically so Program.cs's DI registrations (Session 20) can choose which concrete class to wire up, and so tests can wire up a different one entirely."
+        "The service can work with the in-memory repository today and an EF-backed repository later because both satisfy the same required behavior.",
+        "No fictional policy hierarchy is needed to prove the point."
       ],
-      "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+      "code": "IClockEntryRepository repository = new ClockEntryRepository();"
     }
   ],
   "lab": {
-    "objective": "Trace all four real interface/implementation pairs, and swap IHoursPolicy implementations at a call site to observe polymorphism directly.",
-    "startingCondition": "IClockEntryRepository, IClockEntryService, IEmployeeRepository, IEmployeeService, IHoursPolicy, and their real implementations already exist.",
+    "objective": "Introduce production repository and service interfaces where the application now has real collaborators to abstract.",
+    "startingCondition": "EmployeeRepository, ClockEntryRepository, and the domain models exist as concrete production code. App currently coordinates them directly.",
     "steps": [
-      "List all four repository/service interface pairs and confirm each implementing class's real name, including EmployeeRepositor's typo.",
-      "Write a small test that resolves an IEmployeeRepository as EmployeeRepositor and confirm GetEmployeeById works despite the class-name typo.",
-      "Call HoursPolicyTests.Caller_uses_policies_polymorphically with both flexible=true and flexible=false and confirm the SAME calling code produces two different GetVariance results.",
-      "Write down what would need to change in ClockEntryService if it depended on ClockEntryRepository (the concrete class) instead of IClockEntryRepository."
+      "Extract IEmployeeRepository and IClockEntryRepository from behavior App already uses.",
+      "Make both in-memory repositories implement their contracts.",
+      "Create ClockEntryService to coordinate clock-in and clock-out through IClockEntryRepository.",
+      "Create EmployeeService only for verified employee lookup/registration behavior.",
+      "Update App to depend on the interfaces and services, then build."
     ],
-    "expectedBehavior": "All four interfaces resolve to their real implementations correctly; the IHoursPolicy test demonstrates two different behaviors from one call site depending only on which object is passed in.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "Interfaces are extracted from working production behavior, and services coordinate real use cases rather than demonstrating polymorphism artificially.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/IEmployeeRepository.cs",
-      "action": "Verify",
-      "why": "Confirm the real interface and EmployeeRepositor's real typo'd implementing class."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Domain/IHoursPolicy.cs",
-      "action": "Verify",
-      "why": "Confirm both real IHoursPolicy implementations and their differing GetVariance behavior."
-    },
-    {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/HoursPolicyTests.cs",
-      "action": "Verify",
-      "why": "Confirm the existing polymorphic-call test."
-    },
-    {
-      "path": "site/data/sessions/session-17.json",
+      "path": "src/PinkMachine19.TimeClock.Domain/IClockEntryRepository.cs",
       "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "why": "Abstract entry persistence behavior."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Domain/IEmployeeRepository.cs",
+      "action": "Add",
+      "why": "Abstract employee persistence behavior."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryService.cs",
+      "action": "Add",
+      "why": "Coordinate clocking use cases."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Domain/EmployeeService.cs",
+      "action": "Add",
+      "why": "Coordinate employee use cases."
+    },
+    {
+      "path": "site/data/sessions/session-18.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-17: teach interfaces and polymorphism",
   "review": [
-    "All four real interface/implementation pairs are verified against source, including the real EmployeeRepositor typo.",
-    "IHoursPolicy's two implementations are demonstrated producing different results from identical calling code.",
-    "The connection between 'depend on the interface' and 'the typo never mattered' is made explicit, not left implicit.",
-    "The full test suite passes."
+    "The lab uses production because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -168,5 +173,14 @@
     "What would you look for in a code review to confirm a new class is genuinely programmed against an interface, not accidentally coupled to one concrete implementation?"
   ],
   "whatBreaks": "Changing ClockEntryService's constructor to depend on the concrete ClockEntryRepository class instead of IClockEntryRepository would still compile today, but it would permanently prevent Session 30's test doubles and Session 31's EF Core-backed repository from ever substituting in without changing ClockEntryService itself. Renaming EmployeeRepositor to fix its typo would require no changes anywhere else in the codebase precisely because nothing depends on that class name directly -- proof, by omission, that the typo was always harmless to behavior.",
-  "summary": "PinkMachine19.TimeClock.Domain has four real interfaces, each with one real implementation, verified directly against source -- including EmployeeRepositor's real class-name typo, which never mattered because nothing depends on implementation class names. IHoursPolicy's two implementations, StandardHoursPolicy and FlexibleHoursPolicy, demonstrate polymorphism concretely: one call site, policy.GetVariance(...), produces different results depending only on which object policy actually refers to at runtime."
+  "summary": "PinkMachine19.TimeClock.Domain has four real interfaces, each with one real implementation, verified directly against source -- including EmployeeRepositor's real class-name typo, which never mattered because nothing depends on implementation class names. IHoursPolicy's two implementations, StandardHoursPolicy and FlexibleHoursPolicy, demonstrate polymorphism concretely: one call site, policy.GetVariance(...), produces different results depending only on which object policy actually refers to at runtime.",
+  "learningEnvironment": "production",
+  "buildState": {
+    "creates": [
+      "repository and service interfaces",
+      "ClockEntryService",
+      "EmployeeService"
+    ],
+    "extends": []
+  }
 }

@@ -2,7 +2,7 @@
   "number": "03.5",
   "category": "Language foundations",
   "estimatedTime": "45 minutes",
-  "connection": "Session 03 introduced typed numeric values and converted TimeSpan.TotalHours from double to decimal. Before those values drive decisions in Session 04, this session answers why .NET offers several numeric types and how to choose among them.",
+  "connection": "ScratchPad contains the Session 03 numeric-expression section. Production code is still intentionally empty. Add a permanent numeric-type comparison beside the Session 03 ScratchPad experiment.",
   "objectives": [
     "Group the major .NET numeric types by the kind of problem they solve instead of memorizing a list.",
     "Explain why the same visible value can have different internal numeric representations.",
@@ -11,60 +11,216 @@
     "Describe precision, range, memory, and performance as tradeoffs rather than a search for one best numeric type."
   ],
   "visuals": [
-    {"diagram":"numericfamily","title":"Start with purpose, not a type table","explanation":"The family becomes manageable when grouped into whole numbers, approximate measurements, and base-10 business values. Most programs repeatedly use only a few defaults."},
-    {"diagram":"representations","title":"Appearance is not representation","explanation":"Both double and decimal can display 100.99. Their difference is how they model the value internally and which arithmetic they are designed to perform."},
-    {"diagram":"tenths","title":"Some fractions fit one system better","explanation":"Decimal tenths fit decimal arithmetic directly. Binary floating-point often stores the nearest available value, which is excellent for measurements but can expose a tiny difference."},
-    {"diagram":"numerictradeoffs","title":"Every choice balances tradeoffs","explanation":"A type offers a combination of precision, range, memory use, and calculation speed. Choose the combination that matches the meaning of the value."}
+    {
+      "diagram": "numericfamily",
+      "title": "Start with purpose, not a type table",
+      "explanation": "The family becomes manageable when grouped into whole numbers, approximate measurements, and base-10 business values. Most programs repeatedly use only a few defaults."
+    },
+    {
+      "diagram": "representations",
+      "title": "Appearance is not representation",
+      "explanation": "Both double and decimal can display 100.99. Their difference is how they model the value internally and which arithmetic they are designed to perform."
+    },
+    {
+      "diagram": "tenths",
+      "title": "Some fractions fit one system better",
+      "explanation": "Decimal tenths fit decimal arithmetic directly. Binary floating-point often stores the nearest available value, which is excellent for measurements but can expose a tiny difference."
+    },
+    {
+      "diagram": "numerictradeoffs",
+      "title": "Every choice balances tradeoffs",
+      "explanation": "A type offers a combination of precision, range, memory use, and calculation speed. Choose the combination that matches the meaning of the value."
+    }
   ],
   "preQuiz": [
-    {"prompt":"Which type is the normal first choice for a whole-number count such as 42 employees?","options":["int","decimal","float"],"correct":0,"explanation":"Use int for most ordinary whole numbers unless the domain gives you a reason to choose differently."},
-    {"prompt":"Can both double and decimal store a value written as 100.99?","options":["No, only decimal can contain a decimal point","Yes, but they represent and calculate with that value differently","Yes, and they are interchangeable in every expression"],"correct":1,"explanation":"The visible business value can be the same while the internal representation and arithmetic model differ."},
-    {"prompt":"Which type usually best communicates a product price?","options":["double","decimal","long"],"correct":1,"explanation":"Prices are base-10 business values, so decimal usually matches their meaning and expected arithmetic."}
+    {
+      "prompt": "Which type is the normal first choice for a whole-number count such as 42 employees?",
+      "options": [
+        "int",
+        "decimal",
+        "float"
+      ],
+      "correct": 0,
+      "explanation": "Use int for most ordinary whole numbers unless the domain gives you a reason to choose differently."
+    },
+    {
+      "prompt": "Can both double and decimal store a value written as 100.99?",
+      "options": [
+        "No, only decimal can contain a decimal point",
+        "Yes, but they represent and calculate with that value differently",
+        "Yes, and they are interchangeable in every expression"
+      ],
+      "correct": 1,
+      "explanation": "The visible business value can be the same while the internal representation and arithmetic model differ."
+    },
+    {
+      "prompt": "Which type usually best communicates a product price?",
+      "options": [
+        "double",
+        "decimal",
+        "long"
+      ],
+      "correct": 1,
+      "explanation": "Prices are base-10 business values, so decimal usually matches their meaning and expected arithmetic."
+    }
   ],
   "concept": [
-    {"title":"Why does .NET have so many numeric types?","paragraphs":["Different numbers do different jobs. An employee count is a whole number. A distance from a sensor is a measurement. A product price follows base-10 business rules.","No single representation gives the widest range, most useful precision, smallest memory use, and fastest calculations for every job. The numeric family lets code state which tradeoffs and meaning matter."],"code":"int employeeCount = 42;\ndouble distanceKm = 12.75;\ndecimal invoiceTotal = 100.99m;"},
-    {"title":"A practical map of the integer family","paragraphs":["Integer types store whole numbers. Do not begin by memorizing their limits. Begin with int, the normal default for ordinary counts, indexes, ages, and quantities.","Use long when a count can become much larger than int is intended to handle. The remaining integer types are specialized choices you will recognize when an API or a carefully constrained domain calls for them."],"list":[
-      {"term":"Small integers","text":"byte, sbyte, short, and ushort. Useful when a deliberately small value or an existing data format requires one; uncommon as everyday defaults."},
-      {"term":"Default integers","text":"int and uint. int is the usual choice. uint represents non-negative whole numbers but is less convenient in ordinary application code, so non-negative meaning alone does not make it the default."},
-      {"term":"Large integers","text":"long and ulong. long is the practical choice for very large counts. ulong is a specialized non-negative alternative."}
-    ],"closingParagraphs":["The u in uint, ushort, and ulong means unsigned: the type does not represent negative values. sbyte is the explicitly signed partner of byte. You only need to recognize that distinction here, not memorize limits."]},
-    {"title":"float and double model approximate measurements","paragraphs":["float and double are binary floating-point types. Think of them as scientific calculators that cover a very wide span of values and efficiently handle measurements, coordinates, graphics, engineering, and scientific calculations.","They use a binary number system internally. Some simple-looking base-10 fractions do not fit that system exactly, so the stored value is the closest available approximation. double is the normal default; float is mainly chosen when an API or a large graphics or measurement workload specifically benefits from it."],"code":"double temperature = 21.6;\nfloat opacity = 0.5f;"},
-    {"title":"decimal models base-10 business arithmetic","paragraphs":["decimal is designed for values whose decimal digits carry business meaning: money, prices, tax rates, account balances, and similar base-10 quantities.","It can store values such as 0.1 and 0.2 directly in decimal form, so familiar base-10 calculations behave as expected. It still has finite precision; its advantage is alignment with decimal arithmetic, not infinite accuracy."],"code":"decimal price = 100.99m;\ndecimal taxRate = 0.075m;"},
-    {"title":"The same visible value can use two representations","paragraphs":["Both declarations below describe the business value one hundred dollars and ninety-nine cents. They may print the same text. The difference is below the surface.","The double value uses binary floating-point and is well suited to approximate measurement calculations. The decimal value uses decimal arithmetic and is well suited to a price. How a value looks on screen does not tell you how it is represented."],"code":"double priceAsDouble = 100.99;\ndecimal priceAsDecimal = 100.99m;"},
-    {"title":"Why 0.1 + 0.2 exposes the difference","paragraphs":["In binary floating-point, 0.1 and 0.2 are stored as very close approximations because those decimal fractions do not fit neatly in the binary system. Adding the approximations can produce a result just beside exact 0.3, so a direct equality check can be false.","In decimal arithmetic, 0.1m and 0.2m are represented as decimal tenths. Their sum is 0.3m, so the equality check is true. This does not make double broken; it means double and decimal are designed for different kinds of calculation."],"code":"Console.WriteLine(0.1 + 0.2 == 0.3);       // False\nConsole.WriteLine(0.1m + 0.2m == 0.3m);    // True"},
-    {"title":"Why decimal literals use the m suffix","paragraphs":["A numeric literal with a decimal point is treated as double by default. Writing 100.99m tells the compiler to create a decimal literal from the beginning.","The suffix makes the choice visible and prevents an unnoticed change from binary floating-point into decimal arithmetic. Think of m as the marker for a decimal money-style value; it is part of the literal, not part of the variable name."],"code":"double measurement = 100.99;\ndecimal price = 100.99m;"},
-    {"title":"Use four questions instead of memorizing every type","paragraphs":["Precision asks how finely and predictably the value must be represented. Range asks how small or large it may become. Memory asks how much space matters when many values are stored. Performance asks how often and how quickly calculations must run.","For ordinary application code, meaning comes first. Use int for most whole numbers, long for very large counts, double for scientific, engineering, graphics, and measurement work, and decimal for money and other base-10 business values.","Smaller integer types and float remain useful, but choose them when a real requirement, data format, or API gives you a reason—not because they appear more economical in isolation."]}
+    {
+      "title": "Why does .NET have so many numeric types?",
+      "paragraphs": [
+        "Different numbers do different jobs. An employee count is a whole number. A distance from a sensor is a measurement. A product price follows base-10 business rules.",
+        "No single representation gives the widest range, most useful precision, smallest memory use, and fastest calculations for every job. The numeric family lets code state which tradeoffs and meaning matter."
+      ],
+      "code": "int employeeCount = 42;\ndouble distanceKm = 12.75;\ndecimal invoiceTotal = 100.99m;"
+    },
+    {
+      "title": "A practical map of the integer family",
+      "paragraphs": [
+        "Integer types store whole numbers. Do not begin by memorizing their limits. Begin with int, the normal default for ordinary counts, indexes, ages, and quantities.",
+        "Use long when a count can become much larger than int is intended to handle. The remaining integer types are specialized choices you will recognize when an API or a carefully constrained domain calls for them."
+      ],
+      "list": [
+        {
+          "term": "Small integers",
+          "text": "byte, sbyte, short, and ushort. Useful when a deliberately small value or an existing data format requires one; uncommon as everyday defaults."
+        },
+        {
+          "term": "Default integers",
+          "text": "int and uint. int is the usual choice. uint represents non-negative whole numbers but is less convenient in ordinary application code, so non-negative meaning alone does not make it the default."
+        },
+        {
+          "term": "Large integers",
+          "text": "long and ulong. long is the practical choice for very large counts. ulong is a specialized non-negative alternative."
+        }
+      ],
+      "closingParagraphs": [
+        "The u in uint, ushort, and ulong means unsigned: the type does not represent negative values. sbyte is the explicitly signed partner of byte. You only need to recognize that distinction here, not memorize limits."
+      ]
+    },
+    {
+      "title": "float and double model approximate measurements",
+      "paragraphs": [
+        "float and double are binary floating-point types. Think of them as scientific calculators that cover a very wide span of values and efficiently handle measurements, coordinates, graphics, engineering, and scientific calculations.",
+        "They use a binary number system internally. Some simple-looking base-10 fractions do not fit that system exactly, so the stored value is the closest available approximation. double is the normal default; float is mainly chosen when an API or a large graphics or measurement workload specifically benefits from it."
+      ],
+      "code": "double temperature = 21.6;\nfloat opacity = 0.5f;"
+    },
+    {
+      "title": "decimal models base-10 business arithmetic",
+      "paragraphs": [
+        "decimal is designed for values whose decimal digits carry business meaning: money, prices, tax rates, account balances, and similar base-10 quantities.",
+        "It can store values such as 0.1 and 0.2 directly in decimal form, so familiar base-10 calculations behave as expected. It still has finite precision; its advantage is alignment with decimal arithmetic, not infinite accuracy."
+      ],
+      "code": "decimal price = 100.99m;\ndecimal taxRate = 0.075m;"
+    },
+    {
+      "title": "The same visible value can use two representations",
+      "paragraphs": [
+        "Both declarations below describe the business value one hundred dollars and ninety-nine cents. They may print the same text. The difference is below the surface.",
+        "The double value uses binary floating-point and is well suited to approximate measurement calculations. The decimal value uses decimal arithmetic and is well suited to a price. How a value looks on screen does not tell you how it is represented."
+      ],
+      "code": "double priceAsDouble = 100.99;\ndecimal priceAsDecimal = 100.99m;"
+    },
+    {
+      "title": "Why 0.1 + 0.2 exposes the difference",
+      "paragraphs": [
+        "In binary floating-point, 0.1 and 0.2 are stored as very close approximations because those decimal fractions do not fit neatly in the binary system. Adding the approximations can produce a result just beside exact 0.3, so a direct equality check can be false.",
+        "In decimal arithmetic, 0.1m and 0.2m are represented as decimal tenths. Their sum is 0.3m, so the equality check is true. This does not make double broken; it means double and decimal are designed for different kinds of calculation."
+      ],
+      "code": "Console.WriteLine(0.1 + 0.2 == 0.3);       // False\nConsole.WriteLine(0.1m + 0.2m == 0.3m);    // True"
+    },
+    {
+      "title": "Why decimal literals use the m suffix",
+      "paragraphs": [
+        "A numeric literal with a decimal point is treated as double by default. Writing 100.99m tells the compiler to create a decimal literal from the beginning.",
+        "The suffix makes the choice visible and prevents an unnoticed change from binary floating-point into decimal arithmetic. Think of m as the marker for a decimal money-style value; it is part of the literal, not part of the variable name."
+      ],
+      "code": "double measurement = 100.99;\ndecimal price = 100.99m;"
+    },
+    {
+      "title": "Use four questions instead of memorizing every type",
+      "paragraphs": [
+        "Precision asks how finely and predictably the value must be represented. Range asks how small or large it may become. Memory asks how much space matters when many values are stored. Performance asks how often and how quickly calculations must run.",
+        "For ordinary application code, meaning comes first. Use int for most whole numbers, long for very large counts, double for scientific, engineering, graphics, and measurement work, and decimal for money and other base-10 business values.",
+        "Smaller integer types and float remain useful, but choose them when a real requirement, data format, or API gives you a reason—not because they appear more economical in isolation."
+      ]
+    }
   ],
   "lab": {
-    "objective": "Observe how one familiar fraction behaves under double and decimal arithmetic, then practice choosing types by meaning.",
-    "startingCondition": "Use a temporary scratch console project outside the repository. The TimeClock source does not need to change.",
+    "objective": "Add a permanent numeric-type comparison beside the Session 03 ScratchPad experiment.",
+    "startingCondition": "ScratchPad contains the Session 03 numeric-expression section. Production code is still intentionally empty.",
     "steps": [
-      {"text":"Create and enter a temporary console project.","code":"dotnet new console -n NumericTypesLab\ncd NumericTypesLab"},
-      {"text":"Replace Program.cs with a side-by-side comparison.","code":"double doublePrice = 100.99;\ndecimal decimalPrice = 100.99m;\n\nConsole.WriteLine($\"double price:  {doublePrice}\");\nConsole.WriteLine($\"decimal price: {decimalPrice}\");\nConsole.WriteLine($\"double tenths equal 0.3:  {0.1 + 0.2 == 0.3}\");\nConsole.WriteLine($\"decimal tenths equal 0.3: {0.1m + 0.2m == 0.3m}\");"},
-      {"text":"Predict all four lines before running the program, then run it.","code":"dotnet run"},
-      {"text":"Write down the type you would choose for an employee count, a worldwide event count, a temperature measurement, and an invoice total. Use int, long, double, and decimal once each."},
-      {"text":"Delete the temporary scratch project when you are finished. Do not modify or commit files in the course repository."}
+      "Keep the Session 03 experiment. Add a new Session 03.5 heading below it rather than replacing earlier work.",
+      "Compare int and long choices for counts, then compare double and decimal declarations for 100.99.",
+      "Predict the two 0.1 + 0.2 equality results before running.",
+      "Add the double and decimal comparisons and record one sentence explaining the representation difference.",
+      {
+        "text": "Run ScratchPad and verify the double comparison is false while the decimal comparison is true.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"
+      }
     ],
-    "expectedBehavior": "Both price values display as 100.99. The double equality comparison reports False, while the decimal equality comparison reports True.",
-    "validation": "dotnet run"
+    "expectedBehavior": "Both ScratchPad experiments remain, and the new output demonstrates why type choice follows meaning rather than appearance.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
-    {"path":"None","action":"No repository changes","why":"The lab runs in a disposable scratch project and exists only to observe numeric behavior."}
+    {
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs",
+      "action": "Modify",
+      "why": "Preserve the numeric-family comparison after Session 03."
+    },
+    {
+      "path": "site/data/sessions/session-03.5.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
+    }
   ],
   "commit": "Not applicable — observation-only lab; no repository files change.",
   "review": [
-    "The scratch example declares both 100.99 values with the intended types.",
-    "Every decimal literal uses the m suffix.",
-    "The prediction distinguishes displayed appearance from internal representation.",
-    "The scenario choices use int, long, double, and decimal according to meaning.",
-    "No numeric type was selected only because it sounds smaller or more precise.",
-    "No course repository files were changed by the lab."
+    "The lab uses scratchpad because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
-    {"prompt":"Why can double price = 100.99 and decimal price = 100.99m print the same value but behave differently in later calculations?","options":["Variable names change arithmetic","They use different internal representations","decimal automatically rounds every value to two places"],"correct":1,"explanation":"Visible text can match even though binary floating-point and decimal arithmetic represent and calculate with the value differently."},
-    {"prompt":"Why is 0.1 + 0.2 == 0.3 commonly false for double?","options":["The compiler performs string concatenation","Those decimal fractions are stored as nearby binary approximations","double cannot add positive values"],"correct":1,"explanation":"The addition combines nearby binary approximations, and the result can sit just beside exact decimal 0.3."},
-    {"prompt":"Which pairing best follows the lesson's practical defaults?","options":["int for ordinary counts; decimal for prices","byte for every count; double for money","decimal for graphics; ulong for temperatures"],"correct":0,"explanation":"int is the normal whole-number default, while decimal communicates base-10 business arithmetic."},
-    {"prompt":"What does the m in 100.99m do?","options":["Formats the output as money","Makes the literal decimal instead of the default double","Stores the value in memory immediately"],"correct":1,"explanation":"The suffix tells the compiler that the literal itself has type decimal."}
+    {
+      "prompt": "Why can double price = 100.99 and decimal price = 100.99m print the same value but behave differently in later calculations?",
+      "options": [
+        "Variable names change arithmetic",
+        "They use different internal representations",
+        "decimal automatically rounds every value to two places"
+      ],
+      "correct": 1,
+      "explanation": "Visible text can match even though binary floating-point and decimal arithmetic represent and calculate with the value differently."
+    },
+    {
+      "prompt": "Why is 0.1 + 0.2 == 0.3 commonly false for double?",
+      "options": [
+        "The compiler performs string concatenation",
+        "Those decimal fractions are stored as nearby binary approximations",
+        "double cannot add positive values"
+      ],
+      "correct": 1,
+      "explanation": "The addition combines nearby binary approximations, and the result can sit just beside exact decimal 0.3."
+    },
+    {
+      "prompt": "Which pairing best follows the lesson's practical defaults?",
+      "options": [
+        "int for ordinary counts; decimal for prices",
+        "byte for every count; double for money",
+        "decimal for graphics; ulong for temperatures"
+      ],
+      "correct": 0,
+      "explanation": "int is the normal whole-number default, while decimal communicates base-10 business arithmetic."
+    },
+    {
+      "prompt": "What does the m in 100.99m do?",
+      "options": [
+        "Formats the output as money",
+        "Makes the literal decimal instead of the default double",
+        "Stores the value in memory immediately"
+      ],
+      "correct": 1,
+      "explanation": "The suffix tells the compiler that the literal itself has type decimal."
+    }
   ],
   "reflections": [
     "Why is 'Does this value have a decimal point?' not enough information to choose between double and decimal?",
@@ -72,5 +228,12 @@
     "When might a specialized type such as byte, uint, or float be justified instead of the usual default?"
   ],
   "whatBreaks": "Removing the comparison leaves students with syntax but no reason for choosing a numeric type. They may use decimal for every fractional value, use double for financial calculations because it prints correctly, or select small integer types without a requirement. The program may compile while its arithmetic communicates the wrong domain intent.",
-  "summary": ".NET has multiple numeric types because whole-number counts, approximate measurements, and base-10 business values need different tradeoffs. Start with int for ordinary whole numbers, long for very large counts, double for measurements and scientific or graphics work, and decimal for money and base-10 business arithmetic. The same visible value can use different internal representations; the m suffix makes a decimal literal explicit."
+  "summary": ".NET has multiple numeric types because whole-number counts, approximate measurements, and base-10 business values need different tradeoffs. Start with int for ordinary whole numbers, long for very large counts, double for measurements and scientific or graphics work, and decimal for money and base-10 business arithmetic. The same visible value can use different internal representations; the m suffix makes a decimal literal explicit.",
+  "learningEnvironment": "scratchpad",
+  "buildState": {
+    "creates": [],
+    "extends": [
+      "ScratchPad numeric-type comparison"
+    ]
+  }
 }

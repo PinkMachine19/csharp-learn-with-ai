@@ -2,7 +2,7 @@
   "number": 28,
   "category": "Asynchronous programming",
   "estimatedTime": "45 minutes",
-  "connection": "Session 26 identified, without fixing, Program.cs's real unawaited clockEntryService.Clockout(1) call and the CS4014 warning it produces. This session fixes it -- the real async/await bug this codebase has carried since Session 6 -- and studies cancellation through IClockEntryRepository.GetClockEntry's real, unused CancellationToken parameter alongside CancellableEntrySource, a new extension that actually uses one.",
+  "connection": "Session 26 established awaited repository/service flow. Those methods do not yet accept or observe cancellation. Propagate cancellation through the real asynchronous repository and service workflow.",
   "objectives": [
     "Fix the real CS4014 bug: add await to Program.cs's clockEntryService.Clockout(1) call and remove the pragma suppression, confirming the build is warning-free without it.",
     "Explain why the fix changes CalculateTotalHours's printed total from a near-zero accident to a real, deterministic, non-trivial number of hours.",
@@ -60,76 +60,79 @@
         "Only if the lookup takes longer than one second"
       ],
       "correct": 0,
-      "explanation": "This is confirmed by reading the real source directly -- the parameter exists in the signature (the only CancellationToken in the whole codebase) but is unused, decorative."
+      "explanation": "This is confirmed by reading the production code directly -- the parameter exists in the signature (the only CancellationToken in the whole codebase) but is unused, decorative."
     }
   ],
   "concept": [
     {
-      "title": "The fix: one keyword, and a warning that stops needing suppression",
+      "title": "Cancellation is a cooperative request",
       "paragraphs": [
-        "The real bug is exactly as small as it looks: clockEntryService.Clockout(1); becomes await clockEntryService.Clockout(1);. No other line in Program.cs needs to change.",
-        "The #pragma warning disable CS4014 / restore pair this course added around the real bug (to keep TreatWarningsAsErrors from failing the build while the bug was still being taught) is removed entirely once the fix is in place -- the build is warning-free without needing to suppress anything."
+        "A CancellationToken carries a request to stop. Code at a cancellable boundary must observe it; adding a parameter without using or forwarding it changes nothing.",
+        "Cancellation is not failure and should not be converted into an unrelated domain exception."
       ],
-      "code": "// Before -- the real, long-standing bug, kept intentionally through Session 26\n#pragma warning disable CS4014\nclockEntryService.Clockout(1);\n#pragma warning restore CS4014\n\n// After -- the fix\nawait clockEntryService.Clockout(1);"
+      "code": "token.ThrowIfCancellationRequested();"
     },
     {
-      "title": "Why the printed total changes -- and becomes trustworthy",
+      "title": "Propagate the same token",
       "paragraphs": [
-        "Before the fix, CalculateTotalHours's near-zero output only happened to look plausible; it was one possible outcome of an actual race condition, not a guaranteed one.",
-        "After the fix, ClockIn's SaveClockEntry and Clockout's ClockOutEmployee-then-SaveClockEntry are both guaranteed complete before CalculateTotalHours reads GetEmployeeClockEntries -- the printed total now reliably reflects the real (tiny, since ClockIn and Clockout still happen almost instantly) elapsed time between the two calls."
+        "App passes the token to the service, and the service passes it to the repository. Each layer should avoid replacing it with CancellationToken.None.",
+        "The operation that waits on I/O is usually where cancellation becomes effective."
       ],
-      "code": "clockEntryService.ClockIn(1);\nawait clockEntryService.Clockout(1);\nvar result = payrollService.CalculateTotalHours(1, DateTime.Today.AddHours(-4), DateTime.Now.AddHours(4));\nConsole.WriteLine($\"Total hours worked: {result}\");"
+      "code": "await entries.FindOpenAsync(employeeId, token);"
     },
     {
-      "title": "A decorative token versus a real one",
+      "title": "Test cancellation deterministically",
       "paragraphs": [
-        "GetClockEntry's CancellationToken cancellationToken = default is the only CancellationToken anywhere in this codebase's real, ported source -- and it is never read inside the method body. Passing CancellationToken.None or a token that is already cancelled produces identical behavior today.",
-        "CancellableEntrySource -- a new extension -- shows what a genuinely functioning token looks like: await Task.Delay(latency, cancellationToken) actually observes cancellation and throws OperationCanceledException if the token fires before the delay completes."
-      ],
-      "code": "// Real, decorative -- confirmed unused inside the method body\nTask<ClockEntry?> GetClockEntry(int employeeId, CancellationToken cancellationToken = default);\n\n// New extension -- a genuinely functioning token\npublic async Task<ClockEntry> LoadAsync(int employeeId, CancellationToken cancellationToken)\n{\n    await Task.Delay(latency, cancellationToken);   // actually observes cancellation\n    ...\n}"
+        "An already-cancelled token gives a deterministic first test. A second test proves normal work still succeeds.",
+        "There is no need to preserve a known unawaited-call bug merely to teach cancellation."
+      ]
     }
   ],
   "lab": {
-    "objective": "Fix Program.cs's real CS4014 bug, confirm the total-hours output changes, and demonstrate the difference between GetClockEntry's decorative token and CancellableEntrySource's real one.",
-    "startingCondition": "Program.cs still has the real, pragma-suppressed unawaited Clockout(1) call from Sessions 5-25; CancellableEntrySource already exists as a real, functioning-cancellation extension.",
+    "objective": "Propagate cancellation through the real asynchronous repository and service workflow.",
+    "startingCondition": "Session 26 established awaited repository/service flow. Those methods do not yet accept or observe cancellation.",
     "steps": [
-      "Add await to clockEntryService.Clockout(1) in Program.cs and remove the #pragma warning disable/restore CS4014 pair.",
-      "Build the solution and confirm it is warning-free with no suppression needed.",
-      "Run the app before and after the fix (or compare against Session 26's recorded output) and explain the difference in the printed total.",
-      "Write a test that cancels a CancellableEntrySource.LoadAsync call mid-delay and confirms OperationCanceledException is thrown -- then confirm the same cancellation approach has no effect on GetClockEntry."
+      "Add CancellationToken to asynchronous repository contracts and implementations.",
+      "Pass the token through ClockEntryService and any asynchronous App workflow.",
+      "Observe cancellation at the operation that can actually stop work.",
+      "Add tests for an already-cancelled token and normal completion.",
+      "Run App and the full test suite."
     ],
-    "expectedBehavior": "The build succeeds with 0 warnings and no pragma suppression; the app's printed total-hours line reflects the now-guaranteed ClockIn-then-Clockout ordering; CancellableEntrySource genuinely responds to cancellation while GetClockEntry does not.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release && dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release --no-build"
+    "expectedBehavior": "Cancellation is meaningful, propagated, and tested rather than decorative.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.App/Program.cs",
-      "action": "Modify",
-      "why": "Await clockEntryService.Clockout(1) and remove the now-unnecessary CS4014 pragma suppression."
-    },
-    {
       "path": "src/PinkMachine19.TimeClock.Domain/IClockEntryRepository.cs",
-      "action": "Verify",
-      "why": "Confirm the real, decorative CancellationToken parameter on GetClockEntry."
+      "action": "Modify",
+      "why": "Accept cancellation."
     },
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/CancellableEntrySource.cs",
-      "action": "Verify",
-      "why": "Confirm the new extension's genuinely functioning cancellation."
+      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryRepository.cs",
+      "action": "Modify",
+      "why": "Observe cancellation."
     },
     {
-      "path": "site/data/sessions/session-27.json",
+      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryService.cs",
+      "action": "Modify",
+      "why": "Propagate cancellation."
+    },
+    {
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/CancellationTests.cs",
       "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "why": "Verify cancellation behavior."
+    },
+    {
+      "path": "site/data/sessions/session-28.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-27: teach cancellation and asynchronous exceptions",
   "review": [
-    "Program.cs's await fix is the exact, minimal change (add await, remove the pragma pair) -- no other lines are touched.",
-    "The build is confirmed warning-free without any suppression after the fix.",
-    "GetClockEntry's CancellationToken is confirmed decorative by reading its real implementation, not assumed.",
-    "CancellableEntrySource's genuinely functioning cancellation is demonstrated with a real test, contrasting directly with GetClockEntry.",
-    "The full test suite passes."
+    "The lab uses production because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -140,7 +143,7 @@
         "Unawaited async calls are actually correct C# and never need fixing"
       ],
       "correct": 0,
-      "explanation": "This mirrors the real source repository's own history: the bug exists in production-adjacent code precisely because understanding why it matters requires the async/await knowledge this course builds up to across Sessions 25-27."
+      "explanation": "This mirrors the production code's own history: the bug exists in production-adjacent code precisely because understanding why it matters requires the async/await knowledge this course builds up to across Sessions 25-27."
     },
     {
       "prompt": "If GetClockEntry's CancellationToken parameter started being genuinely checked (e.g. with cancellationToken.ThrowIfCancellationRequested()), what real behavior would change for existing callers?",
@@ -169,5 +172,12 @@
     "What would you need to change about ClockEntryRepository for GetClockEntry's CancellationToken to become genuinely functional?"
   ],
   "whatBreaks": "Reverting Program.cs's await fix reintroduces the real race condition between Clockout's completion and CalculateTotalHours's read of GetEmployeeClockEntries, along with the real CS4014 warning that would then need re-suppressing to keep the build warning-free. Assuming GetClockEntry's CancellationToken parameter provides genuine cancellation support (because the parameter exists) would lead to writing cancellation-dependent code around a method that currently cannot honor it.",
-  "summary": "Program.cs's real, long-standing unawaited Clockout(1) call is fixed here, in the session where async/await and cancellation are both fully in scope: adding await removes the race that made CalculateTotalHours's near-zero output an accident rather than a guarantee, and the CS4014 pragma suppression is removed along with the bug it was protecting. GetClockEntry's CancellationToken parameter is confirmed, by reading its real implementation, to be entirely decorative -- a real contrast to CancellableEntrySource's genuinely functioning one."
+  "summary": "Program.cs's real, long-standing unawaited Clockout(1) call is fixed here, in the session where async/await and cancellation are both fully in scope: adding await removes the race that made CalculateTotalHours's near-zero output an accident rather than a guarantee, and the CS4014 pragma suppression is removed along with the bug it was protecting. GetClockEntry's CancellationToken parameter is confirmed, by reading its real implementation, to be entirely decorative -- a real contrast to CancellableEntrySource's genuinely functioning one.",
+  "learningEnvironment": "production",
+  "buildState": {
+    "creates": [],
+    "extends": [
+      "cancellation through repository and service boundaries"
+    ]
+  }
 }

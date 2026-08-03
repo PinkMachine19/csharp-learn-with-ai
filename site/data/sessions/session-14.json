@@ -2,7 +2,7 @@
   "number": 14,
   "category": "Collections and generics",
   "estimatedTime": "40 minutes",
-  "connection": "Session 13 studied IEnumerable<ClockEntry>, itself a generic interface. This session steps back to name what T actually means, using generic types already at work throughout the real codebase -- List<ClockEntry>, Dictionary<int, Employee>, Task<ClockEntry?> -- plus one new generic method, GenericRules.Later<T>.",
+  "connection": "Production repositories and models exist. ScratchPad retains earlier language experiments; no verified requirement needs a custom generic type or method. Preserve a generic-method experiment in ScratchPad because the production domain has no natural generic algorithm yet.",
   "objectives": [
     "Identify at least three generic types already in real, everyday use across this codebase, and state what concrete type argument each is instantiated with.",
     "Explain why IClockEntryRepository.GetClockEntry returns Task<ClockEntry?> specifically, not just Task -- what the type argument communicates.",
@@ -90,40 +90,38 @@
     }
   ],
   "lab": {
-    "objective": "Call GenericRules.Later<T> with both DateTime and int arguments from the real domain, and confirm one method definition serves both without modification.",
-    "startingCondition": "GenericRules.Later<T> already exists with the real where T : IComparable<T> constraint.",
+    "objective": "Preserve a generic-method experiment in ScratchPad because the production domain has no natural generic algorithm yet.",
+    "startingCondition": "Production repositories and models exist. ScratchPad retains earlier language experiments; no verified requirement needs a custom generic type or method.",
     "steps": [
-      "Call Later with two ClockEntry.ClockIn values and confirm the later of the two DateTimes is returned.",
-      "Call Later with two Employee.EmployeeId values and confirm the greater int is returned.",
-      "Attempt to call Later with two Employee objects directly (not their EmployeeId), and observe the compile error -- Employee does not implement IComparable<Employee>.",
-      "Explain, in writing, why that compile error is the constraint working as intended, not a bug."
+      "Add a Session 14 section to ScratchPad.",
+      "Write Later<T> once and call it with int and DateTime.",
+      "Predict the selected value for each call.",
+      "Keep the experiment isolated and document why it is not production code.",
+      {
+        "text": "Run ScratchPad and leave production unchanged.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"
+      }
     ],
-    "expectedBehavior": "Later(DateTime, DateTime) and Later(int, int) both compile and return the correct result; Later(Employee, Employee) fails to compile with a constraint-violation error.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "One generic definition works for multiple types in ScratchPad; TimeClock production APIs remain non-generic until requirements demand otherwise.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/GenericRules.cs",
-      "action": "Verify",
-      "why": "Confirm the real generic method and its IComparable<T> constraint."
-    },
-    {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/GenericRulesTests.cs",
-      "action": "Verify",
-      "why": "Confirm coverage across at least two different closed generic types."
-    },
-    {
-      "path": "site/data/sessions/session-13.json",
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/GenericExperiments.cs",
       "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "why": "Preserve a focused generic-method experiment."
+    },
+    {
+      "path": "site/data/sessions/session-14.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-13: teach generic types and methods",
   "review": [
-    "Every generic type cited is quoted from real, already-existing code, not invented for this session.",
-    "Later<T> is demonstrated with two genuinely different closed type arguments, not just described abstractly.",
-    "The Employee compile-error case is used to make the constraint's purpose concrete, not skipped.",
-    "The full test suite passes."
+    "The lab uses scratchpad because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -163,5 +161,12 @@
     "How does Task<ClockEntry?> communicate more to a reader than plain Task would, at the exact call site where GetClockEntry is awaited?"
   ],
   "whatBreaks": "Calling GenericRules.Later with two Employee arguments (instead of their EmployeeId or another IComparable value) fails to compile, because Employee implements no comparison logic -- this is the constraint doing its job, not a limitation to work around. Removing the where T : IComparable<T> constraint would let Later<T> compile against any T, but left.CompareTo(right) inside the method body would then fail to compile, since the compiler could no longer assume CompareTo exists.",
-  "summary": "Generic types are not a new concept this session invents -- List<ClockEntry>, Dictionary<int, Employee>, and Task<ClockEntry?> were already doing real work throughout Sessions 5-12. GenericRules.Later<T> demonstrates the other half of generics: one method definition, reused unmodified across every type (DateTime, int, and any future IComparable<T>) that satisfies its constraint."
+  "summary": "Generic types are not a new concept this session invents -- List<ClockEntry>, Dictionary<int, Employee>, and Task<ClockEntry?> were already doing real work throughout Sessions 5-12. GenericRules.Later<T> demonstrates the other half of generics: one method definition, reused unmodified across every type (DateTime, int, and any future IComparable<T>) that satisfies its constraint.",
+  "learningEnvironment": "scratchpad",
+  "buildState": {
+    "creates": [],
+    "extends": [
+      "generic method experiment"
+    ]
+  }
 }

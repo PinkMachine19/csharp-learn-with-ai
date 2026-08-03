@@ -2,7 +2,7 @@
   "number": 17,
   "category": "Object-oriented design",
   "estimatedTime": "40 minutes",
-  "connection": "Session 11 named ClockEntryRepository's public _clockEntries field as a real, unfixed encapsulation gap and promised to revisit it here. This session fixes it, and studies Timesheet -- a new extension composing Employee and List<ClockEntry> -- as a contrast in deliberate composition.",
+  "connection": "Production repositories keep collections private, and Employee plus ClockEntry already model the core relationship. No Timesheet aggregate exists yet. Strengthen production encapsulation and create Timesheet composition from existing Employee and ClockEntry models.",
   "objectives": [
     "Fix ClockEntryRepository's real public _clockEntries field: make it private, and confirm every existing caller still compiles using only SaveClockEntry/GetClockEntry/GetEmployeeClockEntries.",
     "Contrast that fix with ClockEntry's own ClockOut property, which was already correctly encapsulated (get with a private set) from the very first session.",
@@ -90,46 +90,45 @@
     }
   ],
   "lab": {
-    "objective": "Make ClockEntryRepository's _clockEntries field private, confirm the whole solution still builds, and exercise Timesheet's composition invariant.",
-    "startingCondition": "ClockEntryRepository's _clockEntries field is still public, as in the real source repository; Timesheet already exists with its real composition and Add invariant.",
+    "objective": "Strengthen production encapsulation and create Timesheet composition from existing Employee and ClockEntry models.",
+    "startingCondition": "Production repositories keep collections private, and Employee plus ClockEntry already model the core relationship. No Timesheet aggregate exists yet.",
     "steps": [
-      "Change _clockEntries from public to private in ClockEntryRepository.cs.",
-      "Build the whole solution and confirm nothing outside ClockEntryRepository referenced the field directly (it should not have).",
-      "Write a Timesheet, add one matching ClockEntry successfully, then attempt to add a ClockEntry with a different EmployeeId and confirm ArgumentException is thrown.",
-      "Confirm Timesheet.Entries is read-only from the outside -- Entries.Add(...) should not compile."
+      "Review repository fields and make any exposed mutable collection private.",
+      "Create Timesheet with one Employee and a private collection of that employee's entries.",
+      "Add an entry only when EmployeeId matches and expose a read-only view.",
+      "Update App to compose a Timesheet and demonstrate rejection of a mismatched employee entry.",
+      "Build without changing ScratchPad."
     ],
-    "expectedBehavior": "The solution builds and all tests pass after the private-field fix; Timesheet.Add succeeds for a matching entry and throws for a mismatched one; Entries cannot be mutated directly from outside Timesheet.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "Mutable collections remain encapsulated and Timesheet protects employee-entry ownership.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
+      "path": "src/PinkMachine19.TimeClock.Domain/Timesheet.cs",
+      "action": "Add",
+      "why": "Compose employee and entries around a real invariant."
+    },
+    {
       "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryRepository.cs",
       "action": "Modify",
-      "why": "Change _clockEntries from public to private, closing the real encapsulation gap named in Session 11."
+      "why": "Preserve collection encapsulation."
     },
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/Timesheet.cs",
-      "action": "Verify",
-      "why": "Confirm the real composition and EmployeeId-matching invariant."
+      "path": "src/PinkMachine19.TimeClock.App/Program.cs",
+      "action": "Modify",
+      "why": "Exercise Timesheet composition."
     },
     {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/TimesheetTests.cs",
-      "action": "Verify",
-      "why": "Confirm both the successful-add and mismatched-employee-throws cases."
-    },
-    {
-      "path": "site/data/sessions/session-16.json",
-      "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "path": "site/data/sessions/session-17.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-16: teach encapsulation and composition",
   "review": [
-    "The _clockEntries field is private, and every existing real method still compiles unchanged.",
-    "No caller outside ClockEntryRepository referenced the field directly before or after the fix.",
-    "ClockEntry.ClockOut's already-correct encapsulation is used as a contrast, not silently ignored.",
-    "Timesheet's Add invariant is demonstrated with both a passing and a throwing case.",
-    "The full test suite passes."
+    "The lab uses production because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -169,5 +168,14 @@
     "How does Timesheet's IReadOnlyList<ClockEntry> return type connect back to Session 13's discussion of interface-level promises?"
   ],
   "whatBreaks": "Leaving _clockEntries public keeps the real bypass Session 11 identified: any code with a ClockEntryRepository reference can clear or directly mutate stored entries, invalidating anything SaveClockEntry might someday enforce. Changing Timesheet.Entries to return the mutable List<ClockEntry> directly would let callers add entries without EmployeeId validation, reintroducing the same class of bug in a different class.",
-  "summary": "ClockEntryRepository's real public _clockEntries field -- named as a gap in Session 11 -- is fixed here by making it private, with no change required to IClockEntryRepository or any of its three real methods. ClockEntry.ClockOut's private setter shows what correct encapsulation looked like from the start. Timesheet demonstrates composition: it owns an Employee and a list of that employee's entries, and Add enforces that every entry actually belongs to it."
+  "summary": "ClockEntryRepository's real public _clockEntries field -- named as a gap in Session 11 -- is fixed here by making it private, with no change required to IClockEntryRepository or any of its three real methods. ClockEntry.ClockOut's private setter shows what correct encapsulation looked like from the start. Timesheet demonstrates composition: it owns an Employee and a list of that employee's entries, and Add enforces that every entry actually belongs to it.",
+  "learningEnvironment": "production",
+  "buildState": {
+    "creates": [
+      "Timesheet"
+    ],
+    "extends": [
+      "repository encapsulation"
+    ]
+  }
 }

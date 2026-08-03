@@ -1,5 +1,18 @@
 # Source Mapping
 
+## Curriculum-use boundary (current)
+
+This file records historical provenance for the completed reference implementation. It is
+not the student's starting state and must not be used by a lesson to assume that production
+files already exist. The taught path is zero-to-N: Session 01 scaffolds the learner solution,
+each later session creates or extends its own artifacts, and the completed repository is only
+an authoring and verification reference.
+
+`site/data/build-sequence.json` is authoritative for the student-visible creation order.
+Production is the default environment, permanent tests are preferred for behavioral
+verification, and the permanent ScratchPad project is reserved for language experiments that
+would be artificial in TimeClock production code.
+
 This document supersedes `COURSE_REBUILD_PLAN.md`'s claims about content quality and
 about "TimeLedger" being a justified canonical domain. It is the authoritative record of
 where every session's content and code actually comes from.

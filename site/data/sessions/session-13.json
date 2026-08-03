@@ -2,7 +2,7 @@
   "number": 13,
   "category": "Collections and generics",
   "estimatedTime": "40 minutes",
-  "connection": "Session 12 covered Dictionary and HashSet. This session studies the real IEnumerable<ClockEntry> return type on GetEmployeeClockEntries (Step 44 of the source syllabus) and what the collection interface hierarchy above it -- IEnumerable<T>, ICollection<T>, IList<T> -- actually promises to callers.",
+  "connection": "ClockEntryRepository stores entries in a private List and returns employee entries, while callers need only enumerate them. Narrow repository query results to IEnumerable<ClockEntry> so consumers depend on enumeration rather than storage details.",
   "objectives": [
     "Read GetEmployeeClockEntries's real return type, IEnumerable<ClockEntry>, and explain exactly what capability that promises callers: enumeration, nothing else.",
     "Explain why GetEmployeeClockEntries does NOT return List<ClockEntry>, even though its implementation is built from one.",
@@ -90,40 +90,40 @@
     }
   ],
   "lab": {
-    "objective": "Confirm GetEmployeeClockEntries's real IEnumerable<ClockEntry> contract and demonstrate what capabilities are and are not available through it.",
-    "startingCondition": "IClockEntryRepository and ClockEntryRepository already exist with the real GetEmployeeClockEntries signature and implementation.",
+    "objective": "Narrow repository query results to IEnumerable<ClockEntry> so consumers depend on enumeration rather than storage details.",
+    "startingCondition": "ClockEntryRepository stores entries in a private List and returns employee entries, while callers need only enumerate them.",
     "steps": [
-      "Call GetEmployeeClockEntries and confirm foreach works directly on the result.",
-      "Attempt to index the result with [0] and confirm the compiler rejects it, given the declared IEnumerable<ClockEntry> type.",
-      "Call .ToList() on the result and confirm the resulting List<ClockEntry> DOES support indexing and .Count.",
-      "Write down which of List<T>'s members (Add, this[int], Count) are and are not accessible through GetEmployeeClockEntries's declared return type without first calling .ToList()."
+      "Change the employee-entry query contract to IEnumerable<ClockEntry>.",
+      "Keep the private List implementation inside the repository.",
+      "Update App to enumerate the returned sequence without casting it back to List.",
+      "Explain which mutation capabilities disappeared from the caller's view.",
+      "Build and run the existing workflow."
     ],
-    "expectedBehavior": "foreach works directly on GetEmployeeClockEntries's result; indexing does not compile without first materializing with .ToList(); the materialized List<ClockEntry> supports indexing and Count.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "Callers enumerate repository results without depending on List-specific mutation.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/IClockEntryRepository.cs",
-      "action": "Verify",
-      "why": "Confirm the real IEnumerable<ClockEntry> return type on GetEmployeeClockEntries."
-    },
-    {
       "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryRepository.cs",
-      "action": "Verify",
-      "why": "Confirm the real Where-based implementation."
+      "action": "Modify",
+      "why": "Expose an enumeration contract."
     },
     {
-      "path": "site/data/sessions/session-12.json",
-      "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "path": "src/PinkMachine19.TimeClock.App/Program.cs",
+      "action": "Modify",
+      "why": "Consume entries through IEnumerable."
+    },
+    {
+      "path": "site/data/sessions/session-13.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-12: teach collection interfaces and ienumerable",
   "review": [
-    "GetEmployeeClockEntries's real signature is quoted directly from IClockEntryRepository.cs, not paraphrased.",
-    "The distinction between what the implementation returns and what the interface promises is demonstrated, not just asserted.",
-    "The IEnumerable<T>/ICollection<T>/IList<T> hierarchy is connected to List<T>'s real, concrete role as ClockEntryRepository's storage.",
-    "The full test suite passes."
+    "The lab uses production because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -163,5 +163,12 @@
     "Where else in this codebase does a method's declared return type deliberately hide more specific capability the implementation happens to have?"
   ],
   "whatBreaks": "Changing GetEmployeeClockEntries's declared return type to List<ClockEntry> would let callers start depending on list-specific members (indexing, Add) that the repository's author never intended to promise -- making a future change to the underlying storage a breaking change for those callers. Assuming IEnumerable<ClockEntry> supports indexing without first materializing it with .ToList() produces a compile error, not a runtime surprise -- exactly the kind of mistake the type system is built to catch early.",
-  "summary": "GetEmployeeClockEntries's real, verified return type is IEnumerable<ClockEntry> -- a promise of enumeration only, even though its actual implementation is built from a List<ClockEntry>. The standard IEnumerable<T> -> ICollection<T> -> IList<T> hierarchy explains exactly what capability each step adds, and why a method's declared interface type, not its concrete backing type, is what callers should be written against."
+  "summary": "GetEmployeeClockEntries's real, verified return type is IEnumerable<ClockEntry> -- a promise of enumeration only, even though its actual implementation is built from a List<ClockEntry>. The standard IEnumerable<T> -> ICollection<T> -> IList<T> hierarchy explains exactly what capability each step adds, and why a method's declared interface type, not its concrete backing type, is what callers should be written against.",
+  "learningEnvironment": "production",
+  "buildState": {
+    "creates": [],
+    "extends": [
+      "repository enumeration contracts"
+    ]
+  }
 }

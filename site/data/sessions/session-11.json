@@ -2,7 +2,7 @@
   "number": 11,
   "category": "Collections and generics",
   "estimatedTime": "40 minutes",
-  "connection": "Session 10 covered equality. This session studies the real, public List<ClockEntry> _clockEntries field in ClockEntryRepository -- both how List<T> supports the repository's real operations, and why exposing that field publicly is a real, unfixed encapsulation smell worth naming now and revisiting in Session 17.",
+  "connection": "ClockEntry exists and can be completed. No production component stores more than one entry yet. Create the first in-memory ClockEntryRepository using a private List<ClockEntry> required for saving and retrieving entries.",
   "objectives": [
     "Identify ClockEntryRepository's real, public _clockEntries field and explain what capability that exposes to any caller, not just the repository's own methods.",
     "Trace how SaveClockEntry (Add) and GetEmployeeClockEntries (Where, a LINQ extension method on IEnumerable<T>) both operate on the same underlying List<ClockEntry>.",
@@ -55,12 +55,12 @@
     {
       "prompt": "What does the real, leftover foreach(var clockentry in _clockEntries) { } inside GetClockEntry actually do?",
       "options": [
-        "It enumerates every entry and does nothing with each one -- a genuine, harmless-but-pointless leftover in the real source, kept intentionally as a 'spot the smell' artifact",
+        "It enumerates every entry and does nothing with each one -- a genuine, harmless-but-pointless leftover in the production code, kept intentionally as a 'spot the smell' artifact",
         "It searches for the requested employeeId",
         "It deletes completed entries"
       ],
       "correct": 0,
-      "explanation": "The loop body is empty in the real repository -- confirmed by reading Repositories/ClockEntryRepository.cs directly. It has no effect on the method's behavior."
+      "explanation": "The loop body is empty in the learner solution -- confirmed by reading Repositories/ClockEntryRepository.cs directly. It has no effect on the method's behavior."
     }
   ],
   "concept": [
@@ -90,41 +90,40 @@
     }
   ],
   "lab": {
-    "objective": "Trace every real operation ClockEntryRepository performs on _clockEntries, and write a test that demonstrates the public field's real encapsulation gap.",
-    "startingCondition": "ClockEntryRepository already exists with its real public _clockEntries field and three real methods.",
+    "objective": "Create the first in-memory ClockEntryRepository using a private List<ClockEntry> required for saving and retrieving entries.",
+    "startingCondition": "ClockEntry exists and can be completed. No production component stores more than one entry yet.",
     "steps": [
-      "List every method in ClockEntryRepository and identify which List<T> operation (Add, Where, FirstOrDefault, foreach) each one uses.",
-      "Write a test that directly manipulates repository._clockEntries (e.g. .Clear() or .Add(...)) from outside the class, and confirm it compiles and runs -- proving the field is genuinely public, not just documentation.",
-      "Predict what SaveClockEntry followed immediately by a direct _clockEntries.Clear() call does to a subsequent GetClockEntry lookup, then confirm it.",
-      "Write down, without changing any code yet, what a private field plus explicit methods would have prevented."
+      "Create ClockEntryRepository in Domain with a private List<ClockEntry>.",
+      "Add Save to append an entry.",
+      "Add methods to retrieve an employee's entries and locate an open entry.",
+      "Update App to save open and completed entries and display the resulting count.",
+      "Keep the list private; callers interact through repository behavior."
     ],
-    "expectedBehavior": "The direct-manipulation test compiles and passes, demonstrating the field really is publicly writable; the prediction about Clear() erasing a just-saved entry is confirmed.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "Production stores and retrieves clock entries through behavior rather than exposing its List.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
       "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryRepository.cs",
-      "action": "Verify",
-      "why": "Confirm the real public _clockEntries field and its three real consuming methods."
-    },
-    {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryTests.cs",
-      "action": "Modify",
-      "why": "Add a test demonstrating direct external access to the public _clockEntries field."
-    },
-    {
-      "path": "site/data/sessions/session-10.json",
       "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "why": "Store entries in memory."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.App/Program.cs",
+      "action": "Modify",
+      "why": "Exercise repository collection behavior."
+    },
+    {
+      "path": "site/data/sessions/session-11.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-10: teach arrays lists and enumeration",
   "review": [
-    "The real public _clockEntries field is read directly from source, not assumed.",
-    "Add and Where are correctly distinguished as mutating versus non-mutating list operations.",
-    "The encapsulation gap is named honestly as a real, currently-unfixed issue, not silently patched in this session.",
-    "The new test demonstrates the gap is real and reproducible, not hypothetical.",
-    "The full test suite passes."
+    "The lab uses production because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -164,5 +163,14 @@
     "Where else in this codebase might a similarly 'too-permissive' field or property be hiding?"
   ],
   "whatBreaks": "Directly clearing or mutating _clockEntries from outside ClockEntryRepository bypasses SaveClockEntry entirely, and would silently corrupt GetClockEntry/GetEmployeeClockEntries's results for any code that assumed only SaveClockEntry could add entries. Replacing List<ClockEntry> with a fixed-size array would break SaveClockEntry's Add call the moment more entries are saved than the array's original length allows.",
-  "summary": "List<ClockEntry> is ClockEntryRepository's entire storage: SaveClockEntry mutates it with Add, while GetEmployeeClockEntries and GetClockEntry read it with LINQ's Where and FirstOrDefault without changing it. The field's real public accessibility is a genuine, currently-unfixed encapsulation gap -- named honestly here, and revisited as an explicit fix in Session 17."
+  "summary": "List<ClockEntry> is ClockEntryRepository's entire storage: SaveClockEntry mutates it with Add, while GetEmployeeClockEntries and GetClockEntry read it with LINQ's Where and FirstOrDefault without changing it. The field's real public accessibility is a genuine, currently-unfixed encapsulation gap -- named honestly here, and revisited as an explicit fix in Session 17.",
+  "learningEnvironment": "production",
+  "buildState": {
+    "creates": [
+      "ClockEntryRepository"
+    ],
+    "extends": [
+      "ClockEntry collection behavior"
+    ]
+  }
 }

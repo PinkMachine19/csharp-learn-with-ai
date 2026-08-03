@@ -13,25 +13,119 @@
     "Explain why this session, like every session after it, ends with a hands-on action instead of passive reading."
   ],
   "visuals": [
-    {"diagram":"toolbelt","title":"Languages are tools. Systems are ecosystems.","explanation":"A belt holds several distinct tools — none of them replaces the others, and none of them is \"the\" tool. C#, JavaScript, Python, and SQL are the same: different tools, each reached for because it fits a specific job."},
-    {"diagram":"skew","title":"Visible tutorial content is not the same as the whole industry","explanation":"Scripting and web tutorials are tall and easy to find; enterprise backend content is shorter and harder to stumble into online. The size difference in visible content does not reflect the size difference in the real job market."},
-    {"diagram":"ecosystem","title":"A production system is a small ecosystem of collaborating technologies","explanation":"A real system is rarely one language talking to itself. It's a hub of separate technologies — C#, JavaScript, SQL, Python, CI/CD — each solving one part of the same problem."},
-    {"diagram":"stack","title":"A real system layers languages instead of choosing one","explanation":"A browser talks to a TypeScript/JavaScript frontend, which talks to a C# Web API, which talks to SQL Server, alongside Python analytics and a CI/CD pipeline that ships all of it. Every layer is collaboration, not competition."}
+    {
+      "diagram": "toolbelt",
+      "title": "Languages are tools. Systems are ecosystems.",
+      "explanation": "A belt holds several distinct tools — none of them replaces the others, and none of them is \"the\" tool. C#, JavaScript, Python, and SQL are the same: different tools, each reached for because it fits a specific job."
+    },
+    {
+      "diagram": "skew",
+      "title": "Visible tutorial content is not the same as the whole industry",
+      "explanation": "Scripting and web tutorials are tall and easy to find; enterprise backend content is shorter and harder to stumble into online. The size difference in visible content does not reflect the size difference in the real job market."
+    },
+    {
+      "diagram": "ecosystem",
+      "title": "A production system is a small ecosystem of collaborating technologies",
+      "explanation": "A real system is rarely one language talking to itself. It's a hub of separate technologies — C#, JavaScript, SQL, Python, CI/CD — each solving one part of the same problem."
+    },
+    {
+      "diagram": "stack",
+      "title": "A real system layers languages instead of choosing one",
+      "explanation": "A browser talks to a TypeScript/JavaScript frontend, which talks to a C# Web API, which talks to SQL Server, alongside Python analytics and a CI/CD pipeline that ships all of it. Every layer is collaboration, not competition."
+    }
   ],
   "preQuiz": [
-    {"prompt":"If you learned to program mostly through AI assistants, YouTube tutorials, and blog posts, which of these is most likely true?","options":["You've been exposed evenly to every major part of the software industry","You've likely seen a lot of Python, JavaScript, and TypeScript content, and comparatively little about enterprise stacks like C#/.NET, simply because of what's most common online","C# doesn't show up in tutorials because it isn't used professionally"],"correct":1,"explanation":"Tutorial volume tracks what's popular to write about and easy to demo, not the full shape of the professional industry. A real gap in enterprise-content exposure is very possible without C# being rare in practice."},
-    {"prompt":"A single production system commonly includes C#, TypeScript, SQL, Docker, and Python together. What does that tell you about how real systems are usually built?","options":["One of those technologies is being used incorrectly","Production systems are typically polyglot — different technologies are chosen for different responsibilities, not because one of them \"won\"","Only unusually large companies use more than one language"],"correct":1,"explanation":"Polyglot systems are the norm, not the exception, once a system has a frontend, a backend, a database, infrastructure, and automation — each of those jobs tends to have a technology that fits it best."},
-    {"prompt":"Which best predicts why a company might choose C# for its backend business logic over, say, a dynamically typed scripting language?","options":["C# is inherently \"better\" than every other language in every situation","Static typing, compile-time checks, and mature tooling matter more once a codebase and its team both grow large","Scripting languages cannot run outside a browser"],"correct":1,"explanation":"The advantage isn't universal superiority — it's that certain guarantees (catching a typo or a type mismatch before it ships) pay off more as scale, team size, and lifespan increase."}
+    {
+      "prompt": "If you learned to program mostly through AI assistants, YouTube tutorials, and blog posts, which of these is most likely true?",
+      "options": [
+        "You've been exposed evenly to every major part of the software industry",
+        "You've likely seen a lot of Python, JavaScript, and TypeScript content, and comparatively little about enterprise stacks like C#/.NET, simply because of what's most common online",
+        "C# doesn't show up in tutorials because it isn't used professionally"
+      ],
+      "correct": 1,
+      "explanation": "Tutorial volume tracks what's popular to write about and easy to demo, not the full shape of the professional industry. A real gap in enterprise-content exposure is very possible without C# being rare in practice."
+    },
+    {
+      "prompt": "A single production system commonly includes C#, TypeScript, SQL, Docker, and Python together. What does that tell you about how real systems are usually built?",
+      "options": [
+        "One of those technologies is being used incorrectly",
+        "Production systems are typically polyglot — different technologies are chosen for different responsibilities, not because one of them \"won\"",
+        "Only unusually large companies use more than one language"
+      ],
+      "correct": 1,
+      "explanation": "Polyglot systems are the norm, not the exception, once a system has a frontend, a backend, a database, infrastructure, and automation — each of those jobs tends to have a technology that fits it best."
+    },
+    {
+      "prompt": "Which best predicts why a company might choose C# for its backend business logic over, say, a dynamically typed scripting language?",
+      "options": [
+        "C# is inherently \"better\" than every other language in every situation",
+        "Static typing, compile-time checks, and mature tooling matter more once a codebase and its team both grow large",
+        "Scripting languages cannot run outside a browser"
+      ],
+      "correct": 1,
+      "explanation": "The advantage isn't universal superiority — it's that certain guarantees (catching a typo or a type mismatch before it ships) pay off more as scale, team size, and lifespan increase."
+    }
   ],
   "concept": [
-    {"title":"1. The opening question","paragraphs":["If Python and JavaScript are everywhere — in tutorials, in AI-generated examples, in bootcamps, in nearly every \"learn to code\" video — why would anyone still learn C#?","That's a fair question, and this course takes it seriously instead of brushing past it. The honest answer isn't that Python and JavaScript are overrated, or that C# is secretly superior. It's that \"everywhere you look\" and \"everywhere it's used\" are two different things, and the gap between them is exactly what this session is about."]},
-    {"title":"2. Common perception vs. reality","paragraphs":["Ask a self-taught developer, or an AI assistant, to name popular programming languages, and Python and JavaScript will come up almost immediately. They're genuinely important — dominant in scripting, web development, data tooling, and the tutorial content that teaches all of it. Nothing here is arguing otherwise.","But popularity in visible content is not the same as popularity in the industry that pays salaries. A huge share of the software running banks, hospitals, insurers, logistics networks, and government systems was written, and continues to be written, in languages like C# and Java — code that rarely shows up in a beginner's YouTube feed, because it isn't flashy, isn't a weekend project, and doesn't demo well in five minutes. It's just quietly running payroll, processing claims, and routing shipments.","The perception gap isn't anyone's fault. It's a natural consequence of what's easy to write tutorials about versus what's actually deployed in production."]},
-    {"title":"3. Why AI examples skew toward certain languages","paragraphs":["AI assistants, including the one you might be using to help you learn right now, generate answers based on patterns in the text they were trained on. Public tutorials, open-source scripts, Stack Overflow answers, and beginner-friendly blog posts are disproportionately written in Python and JavaScript, because those languages are fast to demo, easy to run in a browser or a single file, and popular for teaching programming concepts from scratch.","Enterprise C#/.NET code, by contrast, tends to live inside private company repositories, behind the walls of large internal systems that never get open-sourced or blogged about. There's no shortage of it — there's a shortage of it being visible to a learner outside that world.","The practical consequence: if you learn primarily through AI conversations, YouTube, or blog examples, you can go a long way into your learning without ever bumping into the enormous enterprise ecosystem this course is about to introduce you to. That's not a flaw in you. It's a blind spot built into how most beginner-facing content gets produced."]},
-    {"title":"4. The hidden enterprise ecosystem","paragraphs":["Step outside tutorials and into the industry itself, and a different picture appears. Finance, insurance, healthcare, logistics, manufacturing, government, and enterprise SaaS all run on large, long-lived software systems — and C# and .NET are commonly found doing serious, unglamorous work inside them: processing transactions, enforcing business rules, integrating with other systems, and keeping data consistent for years, sometimes decades, at a time.","This is not an exhaustive list, and it's not a claim that every application everywhere uses C#. It's a claim that an entire, enormous side of professional software engineering exists mostly out of view of tutorial culture — and that missing it means missing a real, viable, well-paid part of the industry you're preparing to join."]},
-    {"title":"5. How modern production systems are actually built","paragraphs":["Here's the part that tutorials rarely show: a real production system is almost never written in one language. Picture a typical business application. A browser renders a user interface built with TypeScript and JavaScript. That interface talks to a backend API written in C#, which enforces business rules and coordinates data. The data itself lives in SQL Server, often cached in Redis for speed. The whole thing runs in Docker containers, orchestrated by Kubernetes, deployed to Azure. PowerShell and Bash scripts handle operational tasks. Python shows up too — not competing with C#, but doing the things Python is genuinely excellent at: automation, data analysis, and machine learning tooling. A CI/CD pipeline ties all of it together, building, testing, and shipping the whole system automatically.","None of these technologies are rivals in that picture. They're collaborators, each handling the piece it's best suited for. A production system is closer to a small ecosystem than a single decision between competing options — which is exactly why framing this as \"C# versus Python versus JavaScript\" misses how real software actually gets built."]},
-    {"title":"6. Why companies keep choosing C#","paragraphs":["None of this happens by inertia. Organizations actively choose C# for specific, defensible engineering reasons, and each one matters more as a codebase and its team grow.","Static typing and compile-time safety mean a whole category of mistakes — passing the wrong type, misspelling a member name, calling a method that doesn't exist — gets caught by the compiler before the code ever runs, instead of surfacing as a runtime failure in production. Mature tooling means Visual Studio and the wider .NET ecosystem offer refactoring, debugging, and testing support that's been refined for over two decades, which matters enormously once a codebase is too large for any one person to hold in their head. Performance and a managed runtime give C# a strong balance between speed and safety for the kind of long-running, high-throughput services enterprises depend on. Cross-platform development means the same .NET code can run on Windows, Linux, and macOS, and NuGet gives access to a vast library ecosystem instead of reinventing common functionality from scratch.","Perhaps most importantly for a business: long-term maintainability, backwards compatibility, and a long support lifecycle mean code written today has a realistic chance of still working, and still being understood by the next engineer, five or ten years from now. Enterprise software is rarely thrown away and rewritten every year — it's maintained, extended, and depended on for a very long time, and C#/.NET was built with exactly that reality in mind."]},
-    {"title":"7. \"Languages are tools. Systems are ecosystems.\"", "paragraphs":["That sentence is the mental model this whole course asks you to carry forward. A language is a tool — useful for certain jobs, less useful for others, and never inherently \"the best\" outside of a specific context. A system is an ecosystem — a collection of tools, chosen deliberately, working together toward one outcome.", "Experienced engineers don't ask \"which language is the best language?\" They ask \"which tool fits this job, inside this system, given these constraints?\" Sometimes that answer is C#. Sometimes it's TypeScript, or Python, or plain SQL. This course is about making sure C# is a tool genuinely in your belt — not about convincing you to put every other tool down."]},
-    {"title":"8. A polyglot system, laid out", "paragraphs":["It helps to see the collaboration explicitly rather than just describe it. A typical request in a real production system moves through several of these layers in sequence: a browser renders a TypeScript/JavaScript frontend, which calls a C# Web API, which reads and writes through SQL Server, while a Python job runs analytics on the same data on a separate schedule, and a CI/CD pipeline builds, tests, and deploys every layer whenever code changes.", "The diagram above this section shows exactly that layering. Notice what it isn't: it isn't a competition between layers, and it isn't a ranking of which layer matters most. Removing any one layer doesn't leave the \"winning\" language standing — it leaves a broken system. That's the picture C# fits into, and it's the picture the rest of this course builds toward, one real, working layer at a time."]}
+    {
+      "title": "1. The opening question",
+      "paragraphs": [
+        "If Python and JavaScript are everywhere — in tutorials, in AI-generated examples, in bootcamps, in nearly every \"learn to code\" video — why would anyone still learn C#?",
+        "That's a fair question, and this course takes it seriously instead of brushing past it. The honest answer isn't that Python and JavaScript are overrated, or that C# is secretly superior. It's that \"everywhere you look\" and \"everywhere it's used\" are two different things, and the gap between them is exactly what this session is about."
+      ]
+    },
+    {
+      "title": "2. Common perception vs. reality",
+      "paragraphs": [
+        "Ask a self-taught developer, or an AI assistant, to name popular programming languages, and Python and JavaScript will come up almost immediately. They're genuinely important — dominant in scripting, web development, data tooling, and the tutorial content that teaches all of it. Nothing here is arguing otherwise.",
+        "But popularity in visible content is not the same as popularity in the industry that pays salaries. A huge share of the software running banks, hospitals, insurers, logistics networks, and government systems was written, and continues to be written, in languages like C# and Java — code that rarely shows up in a beginner's YouTube feed, because it isn't flashy, isn't a weekend project, and doesn't demo well in five minutes. It's just quietly running payroll, processing claims, and routing shipments.",
+        "The perception gap isn't anyone's fault. It's a natural consequence of what's easy to write tutorials about versus what's actually deployed in production."
+      ]
+    },
+    {
+      "title": "3. Why AI examples skew toward certain languages",
+      "paragraphs": [
+        "AI assistants, including the one you might be using to help you learn right now, generate answers based on patterns in the text they were trained on. Public tutorials, open-source scripts, Stack Overflow answers, and beginner-friendly blog posts are disproportionately written in Python and JavaScript, because those languages are fast to demo, easy to run in a browser or a single file, and popular for teaching programming concepts from scratch.",
+        "Enterprise C#/.NET code, by contrast, tends to live inside private company repositories, behind the walls of large internal systems that never get open-sourced or blogged about. There's no shortage of it — there's a shortage of it being visible to a learner outside that world.",
+        "The practical consequence: if you learn primarily through AI conversations, YouTube, or blog examples, you can go a long way into your learning without ever bumping into the enormous enterprise ecosystem this course is about to introduce you to. That's not a flaw in you. It's a blind spot built into how most beginner-facing content gets produced."
+      ]
+    },
+    {
+      "title": "4. The hidden enterprise ecosystem",
+      "paragraphs": [
+        "Step outside tutorials and into the industry itself, and a different picture appears. Finance, insurance, healthcare, logistics, manufacturing, government, and enterprise SaaS all run on large, long-lived software systems — and C# and .NET are commonly found doing serious, unglamorous work inside them: processing transactions, enforcing business rules, integrating with other systems, and keeping data consistent for years, sometimes decades, at a time.",
+        "This is not an exhaustive list, and it's not a claim that every application everywhere uses C#. It's a claim that an entire, enormous side of professional software engineering exists mostly out of view of tutorial culture — and that missing it means missing a real, viable, well-paid part of the industry you're preparing to join."
+      ]
+    },
+    {
+      "title": "5. How modern production systems are actually built",
+      "paragraphs": [
+        "Here's the part that tutorials rarely show: a real production system is almost never written in one language. Picture a typical business application. A browser renders a user interface built with TypeScript and JavaScript. That interface talks to a backend API written in C#, which enforces business rules and coordinates data. The data itself lives in SQL Server, often cached in Redis for speed. The whole thing runs in Docker containers, orchestrated by Kubernetes, deployed to Azure. PowerShell and Bash scripts handle operational tasks. Python shows up too — not competing with C#, but doing the things Python is genuinely excellent at: automation, data analysis, and machine learning tooling. A CI/CD pipeline ties all of it together, building, testing, and shipping the whole system automatically.",
+        "None of these technologies are rivals in that picture. They're collaborators, each handling the piece it's best suited for. A production system is closer to a small ecosystem than a single decision between competing options — which is exactly why framing this as \"C# versus Python versus JavaScript\" misses how real software actually gets built."
+      ]
+    },
+    {
+      "title": "6. Why companies keep choosing C#",
+      "paragraphs": [
+        "None of this happens by inertia. Organizations actively choose C# for specific, defensible engineering reasons, and each one matters more as a codebase and its team grow.",
+        "Static typing and compile-time safety mean a whole category of mistakes — passing the wrong type, misspelling a member name, calling a method that doesn't exist — gets caught by the compiler before the code ever runs, instead of surfacing as a runtime failure in production. Mature tooling means Visual Studio and the wider .NET ecosystem offer refactoring, debugging, and testing support that's been refined for over two decades, which matters enormously once a codebase is too large for any one person to hold in their head. Performance and a managed runtime give C# a strong balance between speed and safety for the kind of long-running, high-throughput services enterprises depend on. Cross-platform development means the same .NET code can run on Windows, Linux, and macOS, and NuGet gives access to a vast library ecosystem instead of reinventing common functionality from scratch.",
+        "Perhaps most importantly for a business: long-term maintainability, backwards compatibility, and a long support lifecycle mean code written today has a realistic chance of still working, and still being understood by the next engineer, five or ten years from now. Enterprise software is rarely thrown away and rewritten every year — it's maintained, extended, and depended on for a very long time, and C#/.NET was built with exactly that reality in mind."
+      ]
+    },
+    {
+      "title": "7. \"Languages are tools. Systems are ecosystems.\"",
+      "paragraphs": [
+        "That sentence is the mental model this whole course asks you to carry forward. A language is a tool — useful for certain jobs, less useful for others, and never inherently \"the best\" outside of a specific context. A system is an ecosystem — a collection of tools, chosen deliberately, working together toward one outcome.",
+        "Experienced engineers don't ask \"which language is the best language?\" They ask \"which tool fits this job, inside this system, given these constraints?\" Sometimes that answer is C#. Sometimes it's TypeScript, or Python, or plain SQL. This course is about making sure C# is a tool genuinely in your belt — not about convincing you to put every other tool down."
+      ]
+    },
+    {
+      "title": "8. A polyglot system, laid out",
+      "paragraphs": [
+        "It helps to see the collaboration explicitly rather than just describe it. A typical request in a real production system moves through several of these layers in sequence: a browser renders a TypeScript/JavaScript frontend, which calls a C# Web API, which reads and writes through SQL Server, while a Python job runs analytics on the same data on a separate schedule, and a CI/CD pipeline builds, tests, and deploys every layer whenever code changes.",
+        "The diagram above this section shows exactly that layering. Notice what it isn't: it isn't a competition between layers, and it isn't a ranking of which layer matters most. Removing any one layer doesn't leave the \"winning\" language standing — it leaves a broken system. That's the picture C# fits into, and it's the picture the rest of this course builds toward, one real, working layer at a time."
+      ]
+    }
   ],
   "lab": {
     "objective": "Create foundation-notes.md and hand-write your own answers to five orientation questions — the first entry in the personal engineering notebook you'll keep for the rest of this course.",
@@ -49,8 +143,16 @@
     "validation": "test -s foundation-notes.md && test $(grep -c '^## ' foundation-notes.md) -ge 5"
   },
   "expectedFiles": [
-    {"path":"site/data/sessions/session-00.json","action":"Add","why":"Publish the new orientation opening chapter as Session 00."},
-    {"path":"foundation-notes.md","action":"Add","why":"Create the personal engineering notebook this and every later lab builds on — the course's first hands-on artifact."}
+    {
+      "path": "site/data/sessions/session-00.json",
+      "action": "Add",
+      "why": "Publish the new orientation opening chapter as Session 00."
+    },
+    {
+      "path": "foundation-notes.md",
+      "action": "Add",
+      "why": "Create the personal engineering notebook this and every later lab builds on — the course's first hands-on artifact."
+    }
   ],
   "commit": "session-00: capture why-learn-csharp orientation notes as the first entry in the engineering notebook",
   "review": [
@@ -61,9 +163,36 @@
     "The file reads like a genuine personal reflection, not a checklist filled in mechanically."
   ],
   "postQuiz": [
-    {"prompt":"A learner says: \"I've only ever seen Python and JavaScript in tutorials, so C# must not be used much professionally.\" What's the flaw in that reasoning?","options":["There is no flaw — tutorial volume is a reliable measure of professional usage","It confuses what's visible and easy to tutorialize with what's actually deployed in the industry; enterprise C#/.NET code is common but rarely shows up in public beginner content","C# actually appears in tutorials more often than Python"],"correct":1,"explanation":"Tutorial and AI-example volume reflects what's easy to demo and popular to write about, not the full shape of the professional software industry."},
-    {"prompt":"Why does this session describe C#, TypeScript, SQL Server, Python, and Docker as \"collaborating\" rather than \"competing\" inside one system?","options":["Because only one of them is actually doing meaningful work","Because each one is solving a different part of the same problem — frontend, backend logic, data storage, automation, packaging — inside a single running system","Because they are all secretly the same language under the hood"],"correct":1,"explanation":"A real production system assigns each technology the job it's best suited for. Removing one doesn't leave a \"winning\" language behind — it leaves a broken system."},
-    {"prompt":"Which of these is a real, specific engineering reason organizations keep choosing C#, as opposed to a vague buzzword?","options":["\"C# is popular\"","Static typing and compile-time checks catch a category of mistakes before the code ever runs, which matters more as a codebase and team grow","\"Everyone uses C#\""],"correct":1,"explanation":"The concrete, specific reasons — compile-time safety, tooling maturity, long-term maintainability — are what make the case for C#, not a claim of universal popularity or superiority."}
+    {
+      "prompt": "A learner says: \"I've only ever seen Python and JavaScript in tutorials, so C# must not be used much professionally.\" What's the flaw in that reasoning?",
+      "options": [
+        "There is no flaw — tutorial volume is a reliable measure of professional usage",
+        "It confuses what's visible and easy to tutorialize with what's actually deployed in the industry; enterprise C#/.NET code is common but rarely shows up in public beginner content",
+        "C# actually appears in tutorials more often than Python"
+      ],
+      "correct": 1,
+      "explanation": "Tutorial and AI-example volume reflects what's easy to demo and popular to write about, not the full shape of the professional software industry."
+    },
+    {
+      "prompt": "Why does this session describe C#, TypeScript, SQL Server, Python, and Docker as \"collaborating\" rather than \"competing\" inside one system?",
+      "options": [
+        "Because only one of them is actually doing meaningful work",
+        "Because each one is solving a different part of the same problem — frontend, backend logic, data storage, automation, packaging — inside a single running system",
+        "Because they are all secretly the same language under the hood"
+      ],
+      "correct": 1,
+      "explanation": "A real production system assigns each technology the job it's best suited for. Removing one doesn't leave a \"winning\" language behind — it leaves a broken system."
+    },
+    {
+      "prompt": "Which of these is a real, specific engineering reason organizations keep choosing C#, as opposed to a vague buzzword?",
+      "options": [
+        "\"C# is popular\"",
+        "Static typing and compile-time checks catch a category of mistakes before the code ever runs, which matters more as a codebase and team grow",
+        "\"Everyone uses C#\""
+      ],
+      "correct": 1,
+      "explanation": "The concrete, specific reasons — compile-time safety, tooling maturity, long-term maintainability — are what make the case for C#, not a claim of universal popularity or superiority."
+    }
   ],
   "reflections": [
     "Before this session, what did you actually believe about how common C# is in the professional software industry — and where did that belief come from?",
@@ -71,5 +200,12 @@
     "Why does \"Languages are tools. Systems are ecosystems.\" change the question from \"which language should I learn\" to a more useful one — and what is that more useful question?"
   ],
   "whatBreaks": "Skipping this session doesn't break any code — there isn't any yet. What it risks breaking is your mental model going into the rest of the course: without it, it's easy to treat every professional codebase as if it should look like a tutorial repository, to assume C# is a niche or dying choice because it's underrepresented in beginner content, or to miss why real systems reach for several technologies instead of one. Skipping the lab specifically — letting an AI assistant generate foundation-notes.md for you instead of typing it yourself — breaks something smaller but just as real: the habit this course is built around, that reading builds awareness but only your own hands build skill.",
-  "summary": "Python, JavaScript, and TypeScript dominate tutorials and AI-generated examples because they're fast to demo and popular to teach with — not because they're the whole software industry. A huge, mostly-invisible enterprise ecosystem runs on languages like C#, chosen for concrete reasons that matter more as software gets larger: static typing, compile-time safety, mature tooling, performance, cross-platform support, and long-term maintainability. Real production systems are polyglot by default, layering C#, TypeScript, SQL, Python, and infrastructure tooling together as collaborators, not competitors. Languages are tools; systems are ecosystems — and this course is about adding a genuinely powerful tool to your belt. Next, Session 00.5 introduces the TimeClock product so you understand what you are building before you design or scaffold it."
+  "summary": "Python, JavaScript, and TypeScript dominate tutorials and AI-generated examples because they're fast to demo and popular to teach with — not because they're the whole software industry. A huge, mostly-invisible enterprise ecosystem runs on languages like C#, chosen for concrete reasons that matter more as software gets larger: static typing, compile-time safety, mature tooling, performance, cross-platform support, and long-term maintainability. Real production systems are polyglot by default, layering C#, TypeScript, SQL, Python, and infrastructure tooling together as collaborators, not competitors. Languages are tools; systems are ecosystems — and this course is about adding a genuinely powerful tool to your belt. Next, Session 00.5 introduces the TimeClock product so you understand what you are building before you design or scaffold it.",
+  "learningEnvironment": "documentation",
+  "buildState": {
+    "creates": [
+      "foundation-notes.md"
+    ],
+    "extends": []
+  }
 }

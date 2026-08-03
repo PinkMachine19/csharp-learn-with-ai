@@ -2,7 +2,7 @@
   "number": 8,
   "category": "Memory and type behavior",
   "estimatedTime": "40 minutes",
-  "connection": "Session 7 covered ClockOut's nullability. This session asks what actually gets copied when a ClockEntry or an Employee is assigned to a second variable -- and shows why Employee.Rename mutating through an alias is a real, observable consequence of Employee being a reference type.",
+  "connection": "Production contains Employee, Address, and ClockEntry from Sessions 06–07. ScratchPad already references Domain and retains Sessions 03–05. Add a preserved ScratchPad experiment that observes value copying and reference sharing through the production models.",
   "objectives": [
     "Predict, before running any code, whether assigning one Employee variable to another copies the object or shares it.",
     "Use Employee.Rename to observe that two variables referring to the same Employee see the same mutation.",
@@ -90,36 +90,38 @@
     }
   ],
   "lab": {
-    "objective": "Observe reference sharing through Employee.Rename and value copying through ClockEntry's int/DateTime fields, using the real domain types.",
-    "startingCondition": "Employee, Address, and ClockEntry already exist with their real constructors and members.",
+    "objective": "Add a preserved ScratchPad experiment that observes value copying and reference sharing through the production models.",
+    "startingCondition": "Production contains Employee, Address, and ClockEntry from Sessions 06–07. ScratchPad already references Domain and retains Sessions 03–05.",
     "steps": [
-      "Construct one Employee, assign it to a second variable, and predict what employee.Name will be after calling Rename through the second variable.",
-      "Run the prediction and confirm both variables observe the renamed value.",
-      "Construct a ClockEntry, copy EmployeeId into a local int, and confirm changing the local variable has no effect on entry.EmployeeId (also confirm EmployeeId has no setter to change anyway).",
-      "Trace ClockEntryService.ClockIn and SaveClockEntry to confirm the exact same ClockEntry reference flows from construction into the repository's _clockEntries list."
+      "Add a Session 08 heading below the existing ScratchPad work.",
+      "Copy an int EmployeeId and change the copy; observe that the original value is unchanged.",
+      "Assign one Employee reference to a second variable and rename through one reference; observe the shared object.",
+      "Write the prediction before each mutation and keep the observations as comments.",
+      {
+        "text": "Run ScratchPad without deleting earlier sections.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"
+      }
     ],
-    "expectedBehavior": "Renaming through an alias changes the name visible through the original variable; copying EmployeeId into a local int produces an independent value; SaveClockEntry stores the identical reference ClockIn constructed.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "ScratchPad demonstrates value copying and reference sharing without adding diagnostic-only production classes.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/AssignmentExamples.cs",
-      "action": "Verify",
-      "why": "Confirm the reference-sharing example matches Employee's real mutable Name/Rename shape."
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs",
+      "action": "Modify",
+      "why": "Preserve the assignment-semantics experiment using real domain types."
     },
     {
-      "path": "site/data/sessions/session-07.json",
-      "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "path": "site/data/sessions/session-08.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-07: teach value and reference assignment",
   "review": [
-    "Employee assignment is described as reference copying, never as object duplication.",
-    "The example uses Employee.Rename, a real existing method, rather than an invented mutator.",
-    "ClockEntry.EmployeeId's value-type copying is demonstrated independently of ClockEntry's own reference-type status.",
-    "SaveClockEntry's identical-reference behavior is traced back to real ClockEntryService code.",
-    "The full test suite passes."
+    "The lab uses scratchpad because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -159,5 +161,12 @@
     "How does knowing SaveClockEntry stores a live reference (not a copy) change how you would reason about a bug where an entry's ClockOut value seems to change unexpectedly?"
   ],
   "whatBreaks": "Assuming Employee assignment copies the object would lead you to expect alias.Rename(...) to leave employee.Name unchanged -- it does not, and code relying on that wrong assumption would silently read stale names. Assuming ClockEntry.EmployeeId is somehow 'live' after being copied into a local variable would lead to bugs trying to use that local as if it still tracked the entry. Forgetting that SaveClockEntry holds a live reference (not a defensive copy) means any code that later mutates a ClockEntry object directly is also mutating what the repository has stored.",
-  "summary": "Employee is a reference type: assigning it copies the reference, so Employee.Rename's mutation through one alias is visible through every other alias. ClockEntry's EmployeeId and ClockIn are value types: copying them copies the number or date itself, independent of ClockEntry's own reference-type identity. SaveClockEntry stores the exact reference ClockIn constructs -- the mechanism that lets Clockout later mutate the same object."
+  "summary": "Employee is a reference type: assigning it copies the reference, so Employee.Rename's mutation through one alias is visible through every other alias. ClockEntry's EmployeeId and ClockIn are value types: copying them copies the number or date itself, independent of ClockEntry's own reference-type identity. SaveClockEntry stores the exact reference ClockIn constructs -- the mechanism that lets Clockout later mutate the same object.",
+  "learningEnvironment": "scratchpad",
+  "buildState": {
+    "creates": [],
+    "extends": [
+      "assignment-semantics experiment using production models"
+    ]
+  }
 }

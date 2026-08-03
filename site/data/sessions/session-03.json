@@ -2,7 +2,7 @@
   "number": 3,
   "category": "Language foundations",
   "estimatedTime": "40 minutes",
-  "connection": "Sessions 01 and 02 scaffolded the learner solution and established its dependency direction. This session writes the first purposeful statements in its console application and uses the build-run-test loop to observe how names, types, literals, conversions, and expressions produce values.",
+  "connection": "The scaffold and references exist. Production projects still contain no TimeClock behavior. ScratchPad contains only its template Program.cs. Add the first preserved numeric-expression experiment to ScratchPad.",
   "objectives": [
     "Describe a variable as a typed name bound to a value, not as an untyped box.",
     "Distinguish declarations, literals, conversions, and expressions.",
@@ -10,54 +10,174 @@
     "Predict the value and type produced by a small numeric expression."
   ],
   "visuals": [
-    {"diagram":"variable","title":"A name carries a type contract","explanation":"The variable name hours makes intent visible, while its declared type limits which values and operations are valid."},
-    {"diagram":"expression","title":"Expressions produce values","explanation":"Operands and operators are evaluated to produce a result. The result can be assigned, passed, returned, or observed."},
-    {"diagram":"type","title":"Types control valid operations","explanation":"A value must fit the target type. When types differ, C# either applies a permitted implicit conversion or requires an explicit cast."},
-    {"diagram":"decimal","title":"Decimal models base-10 quantities","explanation":"decimal is useful when base-10 precision is part of the domain. The m suffix makes a numeric literal a decimal value."}
+    {
+      "diagram": "variable",
+      "title": "A name carries a type contract",
+      "explanation": "The variable name hours makes intent visible, while its declared type limits which values and operations are valid."
+    },
+    {
+      "diagram": "expression",
+      "title": "Expressions produce values",
+      "explanation": "Operands and operators are evaluated to produce a result. The result can be assigned, passed, returned, or observed."
+    },
+    {
+      "diagram": "type",
+      "title": "Types control valid operations",
+      "explanation": "A value must fit the target type. When types differ, C# either applies a permitted implicit conversion or requires an explicit cast."
+    },
+    {
+      "diagram": "decimal",
+      "title": "Decimal models base-10 quantities",
+      "explanation": "decimal is useful when base-10 precision is part of the domain. The m suffix makes a numeric literal a decimal value."
+    }
   ],
   "preQuiz": [
-    {"prompt":"What does the m suffix mean in 8m?","options":["The value is measured in meters","The literal has type decimal","The value is mutable"],"correct":1,"explanation":"The suffix tells the compiler to treat the literal as decimal."},
-    {"prompt":"Why does converting TotalHours to decimal require an explicit cast?","options":["TotalHours is a double and the conversion can change representation","decimal variables cannot store numbers","C# never converts numeric values"],"correct":0,"explanation":"double and decimal use different representations, so C# requires the programmer to acknowledge this conversion."},
-    {"prompt":"If recordedHours is 8m and scheduledHours is 7.5m, what does recordedHours - scheduledHours produce?","options":["0.5m","15.5m","A string"],"correct":0,"explanation":"Subtraction evaluates both decimal operands and produces a decimal result."}
+    {
+      "prompt": "What does the m suffix mean in 8m?",
+      "options": [
+        "The value is measured in meters",
+        "The literal has type decimal",
+        "The value is mutable"
+      ],
+      "correct": 1,
+      "explanation": "The suffix tells the compiler to treat the literal as decimal."
+    },
+    {
+      "prompt": "Why does converting TotalHours to decimal require an explicit cast?",
+      "options": [
+        "TotalHours is a double and the conversion can change representation",
+        "decimal variables cannot store numbers",
+        "C# never converts numeric values"
+      ],
+      "correct": 0,
+      "explanation": "double and decimal use different representations, so C# requires the programmer to acknowledge this conversion."
+    },
+    {
+      "prompt": "If recordedHours is 8m and scheduledHours is 7.5m, what does recordedHours - scheduledHours produce?",
+      "options": [
+        "0.5m",
+        "15.5m",
+        "A string"
+      ],
+      "correct": 0,
+      "explanation": "Subtraction evaluates both decimal operands and produces a decimal result."
+    }
   ],
   "concept": [
-    {"title":"Declarations create typed names","paragraphs":["A declaration connects a type, a name, and usually an initial value. The type is a compile-time contract: it determines which values can be assigned and which operations are available.","Names should explain the role a value plays. targetHours communicates more than x even when both have the same type."],"code":"decimal targetHours = 6.5m;"},
-    {"title":"Expressions are evaluated","paragraphs":["An expression is code that produces a value. A literal such as 6.5m is an expression; so are a variable read, a method call, and subtraction.","Evaluation happens before assignment. In difference = currentHours - targetHours, subtraction produces a value and that result is assigned to difference."],"code":"decimal difference = currentHours - targetHours;"},
-    {"title":"Conversions should be visible when meaning changes","paragraphs":["A measurement-oriented source may provide double while a base-10 business calculation uses decimal. Moving between them requires an explicit conversion.","The cast is not a promise of extra accuracy. It is a visible change of numeric representation. Later APIs such as TimeSpan.TotalHours create this same decision."],"code":"decimal businessValue = (decimal)measuredValue;"}
+    {
+      "title": "Declarations create typed names",
+      "paragraphs": [
+        "A declaration connects a type, a name, and usually an initial value. The type is a compile-time contract: it determines which values can be assigned and which operations are available.",
+        "Names should explain the role a value plays. targetHours communicates more than x even when both have the same type."
+      ],
+      "code": "decimal targetHours = 6.5m;"
+    },
+    {
+      "title": "Expressions are evaluated",
+      "paragraphs": [
+        "An expression is code that produces a value. A literal such as 6.5m is an expression; so are a variable read, a method call, and subtraction.",
+        "Evaluation happens before assignment. In difference = currentHours - targetHours, subtraction produces a value and that result is assigned to difference."
+      ],
+      "code": "decimal difference = currentHours - targetHours;"
+    },
+    {
+      "title": "Conversions should be visible when meaning changes",
+      "paragraphs": [
+        "A measurement-oriented source may provide double while a base-10 business calculation uses decimal. Moving between them requires an explicit conversion.",
+        "The cast is not a promise of extra accuracy. It is a visible change of numeric representation. Later APIs such as TimeSpan.TotalHours create this same decision."
+      ],
+      "code": "decimal businessValue = (decimal)measuredValue;"
+    }
   ],
   "lab": {
-    "objective": "Calculate and display the difference between scheduled and recorded hours using typed numeric variables.",
-    "startingCondition": "Continue in the learner workspace scaffolded in Sessions 01–02. Open src/PinkMachine19.TimeClock.App/Program.cs. Because the project came from dotnet new console, the file contains only Console.WriteLine(\"Hello, World!\");. No TimeClock models or completed application code exist yet.",
+    "objective": "Add the first preserved numeric-expression experiment to ScratchPad.",
+    "startingCondition": "The scaffold and references exist. Production projects still contain no TimeClock behavior. ScratchPad contains only its template Program.cs.",
     "steps": [
-      {"text":"From the learner workspace root, open src/PinkMachine19.TimeClock.App/Program.cs. Confirm it contains the console template's Hello, World! line, then remove that line so you can build the exercise in the empty file.","code":"code src/PinkMachine19.TimeClock.App/Program.cs","reveals":[{"title":"What you should see","code":"Console.WriteLine(\"Hello, World!\");"}]},
-      {"text":"Begin with one supplied measurement value. Add double measuredHours = 8.0;. This represents eight recorded hours arriving in a measurement-oriented type and gives the later conversion a visible source.","code":"double measuredHours = 8.0;"},
-      {"text":"Before adding the remaining variables, write your predictions in a notebook or temporary comment. scheduledHours will be decimal 7.5, recordedHours will be measuredHours converted to decimal, and varianceHours will mean recorded minus scheduled. Predict each value and type so the run can test your reasoning.","reveals":[{"title":"Expected reasoning","items":["scheduledHours should be decimal 7.5 because it will use the literal 7.5m.","recordedHours should be decimal 8.0 because converting measuredHours changes its type, not its visible value.","varianceHours should be decimal 0.5 because recorded minus scheduled is 8.0 - 7.5."]}]},
-      {"text":"Declare scheduledHours explicitly as decimal and assign 7.5m. The m suffix matters because a fractional literal is double by default; this schedule is deliberately a base-10 value.","reveals":[{"title":"Expected code","code":"decimal scheduledHours = 7.5m;","blurred":true},{"title":"Common mistake","text":"decimal scheduledHours = 7.5; does not compile because 7.5 is a double literal. Add m to make the literal decimal."}]},
-      {"text":"Convert measuredHours from double to decimal and assign the result to an explicitly typed recordedHours variable. Keep the cast beside measuredHours so the representation change is visible.","reveals":[{"title":"Expected code","code":"decimal recordedHours = (decimal)measuredHours;","blurred":true},{"title":"Common mistake","text":"Removing (decimal) causes a conversion error because C# does not implicitly assign a double value to decimal."}]},
-      {"text":"Create varianceHours by subtracting scheduledHours from recordedHours. Read the expression aloud as recorded minus scheduled, then compare the result with your written prediction.","reveals":[{"title":"Expected code","code":"decimal varianceHours = recordedHours - scheduledHours;","blurred":true},{"title":"Why order matters","text":"Reversing the operands still compiles, but produces -0.5 and changes the meaning to scheduled minus recorded."}]},
-      {"text":"Write three Console.WriteLine statements that display scheduledHours, recordedHours, and varianceHours. Format the first two with F2. Use +0.00;-0.00;0.00 for variance so positive, negative, and zero values are distinguishable. Try writing the statements before revealing the answer.","reveals":[{"title":"Expected code","code":"Console.WriteLine($\"Scheduled hours: {scheduledHours:F2}\");\nConsole.WriteLine($\"Recorded hours: {recordedHours:F2}\");\nConsole.WriteLine($\"Variance hours: {varianceHours:+0.00;-0.00;0.00}\");","blurred":true}]},
-      {"text":"Run the console project and compare each value with your written prediction. Then test the solution. Success means the three numeric values match and the scaffolded test project still passes.","code":"dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release","reveals":[{"title":"Expected output","text":"The labels may differ slightly if yours are equally clear, but the values should be:","code":"Scheduled hours: 7.50\nRecorded hours: 8.00\nVariance hours: +0.50"},{"title":"Common validation mistakes","items":["A build error mentioning double and decimal usually means the m suffix or explicit cast is missing.","A variance of -0.50 means the subtraction order is reversed.","A remaining Hello, World! line is harmless but should have been removed to keep the output focused.","Different spacing is harmless; the values and passing tests are what matter."]}]}
+      "Open src/PinkMachine19.TimeClock.ScratchPad/Program.cs and keep the file as the permanent language notebook.",
+      {
+        "text": "Add a clearly labeled Session 03 section and begin with the supplied measurement value.",
+        "code": "// Session 03 — Variables, expressions, and numeric types\ndouble measuredHours = 8.0;"
+      },
+      {
+        "text": "Predict scheduledHours, converted recordedHours, and recorded-minus-scheduled variance before writing the expressions.",
+        "reveals": [
+          {
+            "title": "Expected reasoning",
+            "items": [
+              "scheduledHours is decimal 7.5.",
+              "recordedHours is decimal 8.0 after conversion.",
+              "varianceHours is decimal 0.5."
+            ]
+          }
+        ]
+      },
+      {
+        "text": "Write the decimal declaration, explicit conversion, subtraction, and formatted output. Try first; reveal source only if blocked.",
+        "reveals": [
+          {
+            "title": "Expected source code",
+            "blurred": true,
+            "code": "decimal scheduledHours = 7.5m;\ndecimal recordedHours = (decimal)measuredHours;\ndecimal varianceHours = recordedHours - scheduledHours;\n\nConsole.WriteLine($\"Scheduled: {scheduledHours:F2}\");\nConsole.WriteLine($\"Recorded: {recordedHours:F2}\");\nConsole.WriteLine($\"Variance: {varianceHours:+0.00;-0.00;0.00}\");"
+          }
+        ]
+      },
+      {
+        "text": "Run ScratchPad, then build and test the entire solution.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+      }
     ],
-    "expectedBehavior": "The console reports 7.50 scheduled hours, 8.00 recorded hours, and a +0.50 variance. The student's written predictions match those values, the application exits normally, and the scaffolded tests pass.",
-    "validation": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "ScratchPad retains a labeled Session 03 experiment and prints 7.50 scheduled, 8.00 recorded, and +0.50 variance. Production code remains empty.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
-    {"path":"src/PinkMachine19.TimeClock.App/Program.cs","action":"Modify","why":"Add typed numeric values, an explicit conversion, and observable expressions."},
-    {"path":"site/data/sessions/session-03.json","action":"Modify","why":"Publish the synchronized lesson, scaffolded lab, hidden guidance, and quizzes."}
+    {
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs",
+      "action": "Modify",
+      "why": "Preserve the numeric-expression experiment without inventing production behavior."
+    },
+    {
+      "path": "site/data/sessions/session-03.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
+    }
   ],
   "commit": "session-03: teach variables expressions and numeric types",
   "review": [
-    "Each variable name describes its role in the calculation.",
-    "Decimal literals use the m suffix.",
-    "The double-to-decimal conversion is explicit and close to its source.",
-    "The variance expression has an unambiguous subtraction order.",
-    "Output formatting does not change the stored numeric values.",
-    "The solution builds without warnings and all tests pass."
+    "The lab uses scratchpad because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
-    {"prompt":"The output shows +0.50. Where is the plus sign introduced?","options":["In the decimal value itself","By the custom numeric format used for display","By the solution file"],"correct":1,"explanation":"Formatting controls the text representation; the stored decimal value is still 0.5m."},
-    {"prompt":"What changes if scheduledHours becomes 8.5m while recordedHours remains 8m?","options":["varianceHours becomes -0.5m","recordedHours becomes 8.5m","The cast is removed"],"correct":0,"explanation":"The expression is recorded minus scheduled, so a larger schedule produces a negative result."},
-    {"prompt":"Why not declare every numeric value as var in this lesson?","options":["var is invalid C#","Explicit types keep the numeric contract visible while the concept is being learned","var always creates strings"],"correct":1,"explanation":"Type inference is useful, but explicit types make this lesson's conversions and numeric choices easier to inspect."}
+    {
+      "prompt": "The output shows +0.50. Where is the plus sign introduced?",
+      "options": [
+        "In the decimal value itself",
+        "By the custom numeric format used for display",
+        "By the solution file"
+      ],
+      "correct": 1,
+      "explanation": "Formatting controls the text representation; the stored decimal value is still 0.5m."
+    },
+    {
+      "prompt": "What changes if scheduledHours becomes 8.5m while recordedHours remains 8m?",
+      "options": [
+        "varianceHours becomes -0.5m",
+        "recordedHours becomes 8.5m",
+        "The cast is removed"
+      ],
+      "correct": 0,
+      "explanation": "The expression is recorded minus scheduled, so a larger schedule produces a negative result."
+    },
+    {
+      "prompt": "Why not declare every numeric value as var in this lesson?",
+      "options": [
+        "var is invalid C#",
+        "Explicit types keep the numeric contract visible while the concept is being learned",
+        "var always creates strings"
+      ],
+      "correct": 1,
+      "explanation": "Type inference is useful, but explicit types make this lesson's conversions and numeric choices easier to inspect."
+    }
   ],
   "reflections": [
     "Which parts of the new statements are expressions?",
@@ -65,6 +185,12 @@
     "Does formatting a value to two decimal places change the value or only its text representation?"
   ],
   "whatBreaks": "Removing scheduledHours leaves no comparison target. Removing the explicit conversion prevents assignment from double to decimal. Reversing the subtraction changes the meaning of positive and negative variance even though the code still compiles.",
-  "summary": "Variables are typed names for values. Expressions produce values, literals have types, conversions change representation, and formatting changes only how a value is displayed."
+  "summary": "Variables are typed names for values. Expressions produce values, literals have types, conversions change representation, and formatting changes only how a value is displayed.",
+  "learningEnvironment": "scratchpad",
+  "buildState": {
+    "creates": [],
+    "extends": [
+      "ScratchPad numeric-expression notebook"
+    ]
+  }
 }
-

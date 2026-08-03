@@ -2,7 +2,7 @@
   "number": 29,
   "category": "test structure",
   "estimatedTime": "40 minutes",
-  "connection": "Session 28 covered cancellation. This session studies the one real xUnit test in the source repository -- PayrollServiceTests.CalculateTotalHours_SumsDurationsOfCompletedEntries -- as a worked Arrange-Act-Assert example, including its unconfigured Mock<IEmployeeService>.",
+  "connection": "Earlier sessions added focused tests when assertions were the natural verification tool. This session names and standardizes the testing practice already in use. Organize the permanent test suite around Arrange–Act–Assert and add missing PayrollService behavior coverage.",
   "objectives": [
     "Identify the Arrange, Act, and Assert sections of the real PayrollServiceTests.cs, even though the source file has no comments marking them.",
     "Explain why the test mocks IClockEntryRepository with a configured .Setup(...).Returns(...) but mocks IEmployeeService with no configuration at all.",
@@ -65,60 +65,64 @@
   ],
   "concept": [
     {
-      "title": "Arrange: two real ClockEntry objects, one mocked repository",
+      "title": "Arrange creates only relevant state",
       "paragraphs": [
-        "The real test constructs two genuine ClockEntry objects and clocks each one out -- no test double stands in for ClockEntry itself, only for IClockEntryRepository and IEmployeeService.",
-        "Mocking only the interfaces PayrollService depends on, while using the real domain objects those interfaces return, is what makes this an effective unit test of PayrollService specifically."
-      ],
-      "code": "// tests/.../PayrollServiceTests.cs -- Arrange\nvar firstShift = new ClockEntry(1, At(9));\nfirstShift.ClockOutEmployee(At(11)); // 2 hours\n\nvar secondShift = new ClockEntry(1, At(13));\nsecondShift.ClockOutEmployee(At(16)); // 3 hours\n\nvar repository = new Mock<IClockEntryRepository>();\nrepository.Setup(r => r.GetEmployeeClockEntries(1, DateTime.MinValue, DateTime.MaxValue))\n    .Returns(new[] { firstShift, secondShift });\n\nvar employeeService = new Mock<IEmployeeService>();   // deliberately unconfigured"
+        "Construct the entries and repository behavior the test needs. Deterministic timestamps keep the expected total obvious.",
+        "Shared mutable setup makes failures harder to diagnose, so each test owns its arrangement."
+      ]
     },
     {
-      "title": "Act: one call, matching the test's own naming",
+      "title": "Act performs one behavior",
       "paragraphs": [
-        "The method name -- CalculateTotalHours_SumsDurationsOfCompletedEntries -- states the single behavior under test before the Act line is even read.",
-        "PayrollService is constructed with both mocked dependencies, in the same order as its real constructor: employeeService first, then repository."
+        "The Act phase calls the behavior named by the test. If several unrelated actions are required, the test may be describing too much.",
+        "Async tests await the operation rather than blocking on Result."
       ],
-      "code": "var payrollService = new PayrollService(employeeService.Object, repository.Object);\n\n// Act\nvar totalHours = payrollService.CalculateTotalHours(1, DateTime.MinValue, DateTime.MaxValue);"
+      "code": "decimal total = await service.CalculateTotalHoursAsync(employeeId, from, to);"
     },
     {
-      "title": "Assert: one observable value, with an explicit precision",
+      "title": "Assert checks an observable outcome",
       "paragraphs": [
-        "Assert.Equal(5.0, totalHours, precision: 5) compares totalHours to 5.0 to five decimal places -- appropriate for a double built from TimeSpan.TotalHours arithmetic, which can carry tiny floating-point error.",
-        "Nothing in the Assert checks whether IEmployeeService was called -- if it becomes used by a future change to CalculateTotalHours, this test's unconfigured mock would need real Setup calls, and this test's silence about it would itself be a signal to update the test."
+        "Assert the returned total or persisted state, not private implementation details.",
+        "A failing assertion should explain which behavior changed."
       ],
-      "code": "// Assert\nAssert.Equal(5.0, totalHours, precision: 5);"
+      "code": "Assert.Equal(8m, total);"
     }
   ],
   "lab": {
-    "objective": "Trace the real PayrollServiceTests.cs by hand, then add a second test covering an employee with zero completed entries.",
-    "startingCondition": "PayrollServiceTests.cs already contains the real, single test from the source repository.",
+    "objective": "Organize the permanent test suite around Arrange–Act–Assert and add missing PayrollService behavior coverage.",
+    "startingCondition": "Earlier sessions added focused tests when assertions were the natural verification tool. This session names and standardizes the testing practice already in use.",
     "steps": [
-      "Compute firstShift and secondShift's durations by hand from the At(hour) helper and confirm they are 2 and 3 hours.",
-      "Trace repository.Setup's arguments against the Act line's arguments and confirm they match exactly.",
-      "Add a new [Fact] that configures GetEmployeeClockEntries to return an empty array and asserts CalculateTotalHours returns 0.0.",
-      "Run both tests and confirm the new test does not require any configuration on Mock<IEmployeeService> either."
+      "Create ClockEntryTests and identify its Arrange, Act, and Assert responsibilities without adding noisy comments.",
+      "Create PayrollServiceTests for completed entries, open entries, and no entries.",
+      "Use deterministic dates and avoid sharing mutable fixtures between tests.",
+      "Run focused tests, intentionally break one expectation, observe the failure, and restore it.",
+      "Run the full suite."
     ],
-    "expectedBehavior": "The original test still passes; the new zero-entries test passes with totalHours equal to 0.0; Mock<IEmployeeService> remains unconfigured in both tests.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "The permanent suite communicates behavior through independent AAA tests and covers PayrollService boundaries.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/PayrollServiceTests.cs",
-      "action": "Modify",
-      "why": "Add a second test for the zero-completed-entries boundary case."
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryTests.cs",
+      "action": "Add",
+      "why": "Verify core ClockEntry behavior with AAA."
     },
     {
-      "path": "site/data/sessions/session-28.json",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/PayrollServiceTests.cs",
       "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "why": "Verify total-hours behavior."
+    },
+    {
+      "path": "site/data/sessions/session-29.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-28: teach unit tests and arrange act assert",
   "review": [
-    "The new test follows the same Arrange-Act-Assert shape as the real, existing test.",
-    "Mock<IEmployeeService> remains unconfigured, consistent with PayrollService's real, unused dependency.",
-    "The new test's assertion checks one observable value, matching the existing test's style.",
-    "Both tests pass together, and the full suite remains green."
+    "The lab uses tests because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -144,7 +148,7 @@
     {
       "prompt": "What would a new test for 'an employee with one still-open (not clocked out) entry' need to configure differently?",
       "options": [
-        "GetEmployeeClockEntries would need to return only completed entries -- matching the real repository's own ClockOut != null filter -- so the open entry should simply not appear in the mocked return value",
+        "GetEmployeeClockEntries would need to return only completed entries -- matching the learner solution's own ClockOut != null filter -- so the open entry should simply not appear in the mocked return value",
         "The test would need to catch an exception from CalculateTotalHours",
         "PayrollService would need a different constructor"
       ],
@@ -158,5 +162,12 @@
     "How does testing against interfaces (IClockEntryRepository, IEmployeeService) rather than concrete classes make this test possible without an EF Core database?"
   ],
   "whatBreaks": "Configuring Mock<IEmployeeService> with unnecessary .Setup() calls would not break the test, but it would misrepresent the real dependency as used when it is not -- exactly the kind of drift Session 20's dead-dependency discussion warns about. Using DateTime.Now instead of the fixed At(hour) helper would make the expected duration nondeterministic. Asserting on an internal field instead of the public totalHours return value would couple the test to PayrollService's implementation instead of its contract.",
-  "summary": "PayrollServiceTests.cs is the source repository's one real xUnit test: Arrange builds two genuine ClockEntry shifts behind a configured Mock<IClockEntryRepository>, Act calls CalculateTotalHours once, and Assert checks the single resulting total -- while its unconfigured Mock<IEmployeeService> is itself proof that PayrollService's second dependency is not yet exercised."
+  "summary": "PayrollServiceTests.cs is the learner solution's one real xUnit test: Arrange builds two genuine ClockEntry shifts behind a configured Mock<IClockEntryRepository>, Act calls CalculateTotalHours once, and Assert checks the single resulting total -- while its unconfigured Mock<IEmployeeService> is itself proof that PayrollService's second dependency is not yet exercised.",
+  "learningEnvironment": "tests",
+  "buildState": {
+    "creates": [],
+    "extends": [
+      "AAA domain and payroll tests"
+    ]
+  }
 }

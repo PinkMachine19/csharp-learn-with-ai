@@ -2,7 +2,7 @@
   "number": 22,
   "category": "relational transformations",
   "estimatedTime": "40 minutes",
-  "connection": "Session 21 read PayrollService's single-employee Where-then-Sum pipeline. This session extends the same domain to many employees at once with GroupBy, and correlates the grouped totals back to employee names with Join -- a natural next step the real PayrollService does not (yet) need, since it only ever asks about one employeeId at a time.",
+  "connection": "WorkSummary, EmployeeRepository, ClockEntryRepository, and single-employee total-hours behavior already exist from earlier production sessions. Add the verified multi-employee work-summary report using grouping, joining, and aggregation.",
   "objectives": [
     "Use GroupBy to partition a mixed list of ClockEntry objects by EmployeeId, the same key CalculateTotalHours filters on for a single employee.",
     "Reuse GetDuartion().TotalHours as the per-group Sum projection, exactly as PayrollService does for one employee.",
@@ -90,43 +90,40 @@
     }
   ],
   "lab": {
-    "objective": "Add a multi-employee report using GroupBy and Join, built on the exact same GetDuartion().TotalHours projection PayrollService.CalculateTotalHours already uses for one employee.",
-    "startingCondition": "Sessions 01–20 are complete and all existing tests pass.",
+    "objective": "Add the verified multi-employee work-summary report using grouping, joining, and aggregation.",
+    "startingCondition": "WorkSummary, EmployeeRepository, ClockEntryRepository, and single-employee total-hours behavior already exist from earlier production sessions.",
     "steps": [
-      "Predict the successful path and one boundary or failure case.",
-      "Add src/PinkMachine19.TimeClock.Domain/ClockEntryAnalytics.cs with a narrow public contract.",
-      "Add tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryAnalyticsTests.cs for the prediction and boundary case.",
-      "Run the focused tests and inspect the observed values or control flow.",
-      "Run the full Release build and test suite."
+      "Add a report method that groups completed entries by EmployeeId.",
+      "Aggregate each group into WorkSummary.",
+      "Join summaries with employees only when the output requires employee information.",
+      "Define empty-entry behavior explicitly.",
+      "Call the report from App and preserve the single-employee workflow."
     ],
-    "expectedBehavior": "The new tests establish that grouping partitions elements by key, joining correlates sources, and aggregation reduces many values into a result; prior behavior remains unchanged.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "Production can report completed hours per employee using existing models and repositories.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
       "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryAnalytics.cs",
       "action": "Add",
-      "why": "Provide the GroupBy/Join multi-employee report extending PayrollService's real single-employee Sum projection."
+      "why": "Produce multi-employee summaries."
     },
     {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryAnalyticsTests.cs",
-      "action": "Add",
-      "why": "Verify the contract and its boundary case."
+      "path": "src/PinkMachine19.TimeClock.App/Program.cs",
+      "action": "Modify",
+      "why": "Display the report."
     },
     {
-      "path": "site/data/sessions/session-21.json",
-      "action": "Add",
-      "why": "Publish synchronized lesson, lab, and quiz material."
+      "path": "site/data/sessions/session-22.json",
+      "action": "Modify",
+      "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
   "commit": "session-21: teach grouping joining and aggregation",
   "review": [
-    "The public API states one coherent responsibility.",
-    "Dependencies and state changes are explicit.",
-    "The example remains deterministic and compact.",
-    "Tests cover success and a meaningful boundary.",
-    "No nullable warnings are introduced.",
-    "The complete suite passes."
+    "The lab uses production because that is the most natural environment for this concept.",
+    "Every referenced application artifact was created in this session or an earlier session.",
+    "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
@@ -166,5 +163,12 @@
     "Where would a multi-employee report like this plug into the real application -- Program.cs, or a new WebApi endpoint from Session 33?"
   ],
   "whatBreaks": "Removing the ClockOut is not null filter reintroduces GetDuartion's InvalidOperationException into the Sum call. Removing OrderBy makes the grouped totals order non-deterministic across runs, which would make the tests flaky. Using a plain foreach loop instead of Join to correlate employees and summaries would require a manual dictionary lookup -- reintroducing exactly the accidental complexity Join and GroupBy remove.",
-  "summary": "GroupBy and Join extend PayrollService's real single-employee Sum pipeline to a multi-employee report: GroupBy partitions by EmployeeId using the same GetDuartion().TotalHours projection, and Join correlates the resulting totals back to employee names by matching EmployeeId across two independent sequences."
+  "summary": "GroupBy and Join extend PayrollService's real single-employee Sum pipeline to a multi-employee report: GroupBy partitions by EmployeeId using the same GetDuartion().TotalHours projection, and Join correlates the resulting totals back to employee names by matching EmployeeId across two independent sequences.",
+  "learningEnvironment": "production",
+  "buildState": {
+    "creates": [],
+    "extends": [
+      "multi-employee work summaries"
+    ]
+  }
 }

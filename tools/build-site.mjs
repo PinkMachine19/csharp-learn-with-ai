@@ -40,7 +40,9 @@ const sessions = raw.sessions.map(([number, slug, title, layerId, prerequisite, 
     validationCommand: "npm test",
     suggestedCommitMessage: content?.commit || `session-${padded}: ${title.toLowerCase()}`,
     migrationSource: `source steps ${migrationSource}`,
-    completionStatus: sessionContent.has(number) ? "complete" : "planned"
+    completionStatus: sessionContent.has(number) ? "complete" : "planned",
+    learningEnvironment: content?.learningEnvironment,
+    buildState: content?.buildState
   };
 });
 const refresherSessions = raw.refreshers.map(([number, slug, title, prerequisite, migrationSource]) => {
@@ -240,10 +242,12 @@ function sessionPage(session, content, track = sessions) {
   const nextLink = next ? (next.completionStatus === "complete" ? `<a href="${url(next.lessonPath.replace("index.html", ""))}">${nextLabel} →</a>` : `<a href="${url("sessions/")}">${nextLabel} (planned) →</a>`) : session.isSupplemental ? `<a href="${url("syllabus/#modern-csharp-refresher")}">Refresher index →</a>` : `<span>No next session</span>`;
   const trackBadge = session.isSupplemental ? `<span class="badge badge-optional">Optional refresher</span>` : `<span class="badge badge-layer">Layer ${layersById.get(session.layerId).number}</span>`;
   const optionalBanner = session.isSupplemental ? `<div class="refresher-notice"><strong>Optional reference:</strong> This session is not a prerequisite for the TimeClock application path. Use it when you need a modern C# reminder or interview review.</div>` : "";
+  const buildBanner = session.isSupplemental ? "" : `<div class="build-state"><strong>Learning environment:</strong> ${escapeHtml(environmentLabel(content.learningEnvironment))}<br><strong>Cumulative build step:</strong> ${escapeHtml(buildStateSummary(content.buildState))}</div>`;
   return page({ title: `${label} — ${session.title}`, active: "sessions", description: content.connection, sessionWidgets: true, body: `<main id="main-content" class="${session.isSupplemental ? "refresher-page" : ""}"><div class="container">
     ${optionalBanner}<div style="margin-bottom:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">${trackBadge}<span class="badge ${session.isSupplemental ? "badge-refresher" : "badge-current"}">${label}</span><span style="color:var(--text-muted); font-size:12px;">${escapeHtml(content.category)}</span></div>
     <h1>${escapeHtml(session.title)}</h1>
     <p class="subtitle">${escapeHtml(content.connection)}</p>
+    ${buildBanner}
     <div class="alert alert-info"><strong>Estimated time:</strong> ${escapeHtml(content.estimatedTime)}</div>
     <h2 aria-label="Lesson mental models">Mental Models</h2>
     <div class="visual-grid">${content.visuals.map(visualCard).join("")}</div>
@@ -284,6 +288,8 @@ function quizPage(session, content) { const label = session.isSupplemental ? `Re
   <p><a href="${url(session.lessonPath.replace("index.html", ""))}">Return to the lesson</a></p>
 </div></main>`}); }
 function lessonSection(title, body) { return `<hr class="section-divider">\n<h2>${title}</h2>${body}`; }
+function environmentLabel(value) { return ({ production: "Production application", tests: "Permanent test suite", scratchpad: "Permanent ScratchPad notebook", mixed: "Production and permanent verification", solution: "Solution architecture", documentation: "Product and design documentation" })[value] || value; }
+function buildStateSummary(state = {}) { const parts = []; if (state.creates?.length) parts.push(`Creates ${state.creates.join(", ")}`); if (state.extends?.length) parts.push(`Extends ${state.extends.join(", ")}`); return parts.join(". ") || "No code artifacts change."; }
 function renderLabStep(step, index) { const detail = typeof step === "string" ? { text: step } : step; return `<div class="step"><div class="step-num">${index+1}</div><div class="step-body"><p>${escapeHtml(detail.text)}</p>${detail.code ? `<pre><code>${escapeHtml(detail.code)}</code></pre>` : ""}${(detail.reveals || []).map(renderLabReveal).join("")}</div></div>`; }
 function renderLabReveal(reveal) { if (reveal.blurred && reveal.code) return `<div class="blur-solution"><button type="button" aria-expanded="false"><span>${escapeHtml(reveal.title)}</span><small>Reveal blurred answer</small></button>${reveal.text ? `<p>${escapeHtml(reveal.text)}</p>` : ""}<pre aria-hidden="true"><code>${escapeHtml(reveal.code)}</code></pre></div>`; return `<div class="reveal-card"><button type="button" aria-expanded="false"><span>${escapeHtml(reveal.title)}</span><small>Reveal</small></button><div hidden>${reveal.text ? `<p>${escapeHtml(reveal.text)}</p>` : ""}${reveal.items ? `<ul>${reveal.items.map((item)=>`<li>${escapeHtml(item)}</li>`).join("")}</ul>` : ""}${reveal.code ? `<pre><code>${escapeHtml(reveal.code)}</code></pre>` : ""}</div></div>`; }
 function renderQuiz(id, questions) { return `<div class="quiz-set" data-quiz-set data-threshold="${raw.course.advancementThreshold}">${questions.map((question,index)=>`<details class="card quiz-card" data-quiz><summary><span class="quiz-label">Question ${index+1}</span><span class="quiz-prompt">${escapeHtml(question.prompt)}</span><span class="quiz-expand-hint">Open question</span></summary><div class="quiz-card-body"><div class="answers">${question.options.map((option,optionIndex)=>`<label><input type="radio" name="${id}-${index}" value="${optionIndex}"> ${escapeHtml(option)}</label>`).join("")}</div><button class="btn" type="button" data-check-answer data-correct="${question.correct}">Check answer</button><p class="quiz-feedback" data-explanation="${escapeHtml(question.explanation)}" role="status" aria-live="polite"></p></div></details>`).join("")}</div>`; }
