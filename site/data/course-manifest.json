@@ -6,7 +6,7 @@
     "subtitle": "A Practical C# and .NET Refresher",
     "basePath": "/csharp-learn-with-ai/",
     "advancementThreshold": 80,
-    "sessionCount": 38
+    "sessionCount": 39
   },
   "layers": [
     { "id": "orientation", "number": 1, "title": "Orientation and Context", "range": "00–00.6" },
@@ -27,7 +27,8 @@
     [1,"scaffolding-the-solution-src-tests-and-sln","Scaffolding the Solution: src, tests, and the .sln","foundations","00.6","001–006"],
     [2,"project-references-and-dependency-direction","Project References and Dependency Direction","foundations",1,"internal: split out of original session 1 (scaffolding), expanded with new dependency-graph and layering material"],
     [3,"variables-expressions-and-numeric-types","Variables, Expressions, and Numeric Types","foundations",2,"007, 013"],
-    [4,"control-flow-and-pattern-based-decisions","Control Flow and Pattern-Based Decisions","foundations",3,"007–013"],
+    ["03.5","choosing-dotnet-numeric-types","Choosing .NET Numeric Types","foundations",3,"new conceptual bridge between numeric expressions and control flow"],
+    [4,"control-flow-and-pattern-based-decisions","Control Flow and Pattern-Based Decisions","foundations","03.5","007–013"],
     [5,"methods-parameters-scope-and-return-values","Methods, Parameters, Scope, and Return Values","foundations",4,"008–010"],
     [6,"classes-objects-properties-and-constructors","Classes, Objects, Properties, and Constructors","foundations",5,"023–027, 040"],
     [7,"initialization-nullability-and-invariants","Initialization, Nullability, and Invariants","foundations",6,"011, 028–029, 079"],

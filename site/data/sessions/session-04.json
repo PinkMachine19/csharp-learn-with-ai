@@ -2,7 +2,7 @@
   "number": 4,
   "category": "Language foundations",
   "estimatedTime": "40 minutes",
-  "connection": "Session 03 produced a numeric variance. This session turns that value into a decision, tracing which execution path runs and why.",
+  "connection": "Session 03 produced a numeric variance, and Session 03.5 explained why its numeric type matters. This session turns that value into a decision, tracing which execution path runs and why.",
   "objectives": [
     "Explain how Boolean conditions select an execution path.",
     "Predict the result of relational comparisons at boundary values.",

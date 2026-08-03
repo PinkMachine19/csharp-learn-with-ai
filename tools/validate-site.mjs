@@ -41,7 +41,7 @@ if (manifest) {
   if (new Set(sessions.map((session) => session.id)).size !== sessions.length) errors.push("Duplicate session IDs exist");
   if (new Set(sessions.map((session) => session.slug)).size !== sessions.length) errors.push("Duplicate session slugs exist");
   if (layers.length !== 10) errors.push(`Expected 10 curriculum layers, found ${layers.length}`);
-  const expectedNumbers = [0, "00.5", "00.6", ...Array.from({ length: 35 }, (_, index) => index + 1)];
+  const expectedNumbers = [0, "00.5", "00.6", 1, 2, 3, "03.5", ...Array.from({ length: 32 }, (_, index) => index + 4)];
   for (const [index, session] of sessions.entries()) {
     if (session.number !== expectedNumbers[index]) errors.push(`Session sequence breaks at ${session.id}`);
     const expectedPrerequisite = index === 0 ? null : sessions[index - 1].number;
