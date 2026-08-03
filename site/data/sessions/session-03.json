@@ -2,7 +2,7 @@
   "number": 3,
   "category": "Language foundations",
   "estimatedTime": "40 minutes",
-  "connection": "Session 01 established the build-run-test loop. This session uses that loop to observe how names, types, literals, conversions, and expressions produce values.",
+  "connection": "Sessions 01 and 02 established the project layout and dependency direction. This session returns to the real console application and uses its build-run-test loop to observe how names, types, literals, conversions, and expressions produce values.",
   "objectives": [
     "Describe a variable as a typed name bound to a value, not as an untyped box.",
     "Distinguish declarations, literals, conversions, and expressions.",
@@ -27,23 +27,24 @@
   ],
   "lab": {
     "objective": "Calculate and display the difference between scheduled and recorded hours using typed numeric variables.",
-    "startingCondition": "Session 02 is finished. Return to the real csharp-learn-with-ai repository; do not remain in csharp-learn-with-ai-practice. The real repository provides an existing console application at src/PinkMachine19.TimeClock.App/Program.cs that displays a completed eight-hour entry, and all seven domain tests pass.",
+    "startingCondition": "Session 02 is finished. Return to the real csharp-learn-with-ai repository; do not remain in csharp-learn-with-ai-practice. You will edit the existing console entry point at src/PinkMachine19.TimeClock.App/Program.cs. It currently runs the service workflow and prints Total hours worked, but it does not yet contain the deterministic eight-hour ClockEntry used by this lab.",
     "steps": [
-      {"text":"If your terminal is still in the practice workspace, return to the real repository and open the existing console entry point.","code":"cd ../csharp-learn-with-ai\ncode src/PinkMachine19.TimeClock.App/Program.cs"},
-      "Predict the values of scheduledHours, recordedHours, and varianceHours before editing.",
-      "Declare scheduledHours as decimal with a value of 7.5m.",
-      "Convert entry.GetDuartion().TotalHours to decimal and assign it to recordedHours.",
-      "Subtract scheduledHours from recordedHours and assign the result to varianceHours.",
-      "Display all three values with two decimal places, then run the application and tests."
+      {"text":"Return to the real repository and open src/PinkMachine19.TimeClock.App/Program.cs. Locate the final Console.WriteLine that prints Total hours worked. This confirms you are editing the real console application rather than the Session 01 practice copy.","code":"cd ../csharp-learn-with-ai\ncode src/PinkMachine19.TimeClock.App/Program.cs","reveals":[{"title":"Common navigation mistake","text":"If the file contains only Console.WriteLine(\"Hello, World!\"), you opened the practice project. The real Program.cs begins with dependency-injection setup and ends by printing Total hours worked."}]},
+      {"text":"Immediately after the existing Total hours worked line, add the setup below. Treat it as provided context: it creates one entry that starts at 9:00 AM and ends exactly eight hours later. The numeric declarations remain your work.","code":"DateTime shiftStart = DateTime.Today.AddHours(9);\nClockEntry entry = new(1, shiftStart);\nentry.ClockOutEmployee(shiftStart.AddHours(8));","reveals":[{"title":"What the setup guarantees","text":"shiftStart.AddHours(8) produces a clock-out time eight hours after clock-in. Therefore entry.GetDuartion().TotalHours will produce 8 as a double."}]},
+      {"text":"Before adding the three numeric variables, inspect the setup and write your predictions in a notebook or temporary comment. Assume scheduledHours will be 7.5m, recordedHours will come from the eight-hour entry, and varianceHours will mean recorded minus scheduled. Predict each resulting value and type. This makes your current mental model testable before the program gives you the answer.","reveals":[{"title":"Expected reasoning","items":["scheduledHours should be decimal 7.5 because the schedule will be assigned the literal 7.5m.","recordedHours should be decimal 8.0 because clock-out is exactly eight hours after clock-in and TotalHours will be converted from double to decimal.","varianceHours should be decimal 0.5 because recorded minus scheduled is 8.0 - 7.5."]}]},
+      {"text":"Below the setup, declare scheduledHours explicitly as decimal and assign 7.5m. The m suffix matters because a fractional literal is double by default; here the schedule is deliberately a base-10 value.","reveals":[{"title":"Expected code","code":"decimal scheduledHours = 7.5m;"},{"title":"Common mistake","text":"Writing decimal scheduledHours = 7.5; does not compile because 7.5 is a double literal. Add the m suffix to make the literal decimal."}]},
+      {"text":"On the next line, call entry.GetDuartion().TotalHours. TotalHours produces double, so cast that result to decimal and assign it to an explicitly typed recordedHours variable. Keep the cast beside the source so the representation change is visible.","reveals":[{"title":"Expected code","code":"decimal recordedHours = (decimal)entry.GetDuartion().TotalHours;"},{"title":"Common mistakes","items":["The existing method is intentionally spelled GetDuartion; GetDuration will not compile in this repository.","Removing (decimal) causes a conversion error because C# does not implicitly assign this double result to decimal."]}]},
+      {"text":"Create varianceHours by subtracting scheduledHours from recordedHours. Read the expression aloud as recorded minus scheduled, then compare the result with the prediction you wrote earlier.","reveals":[{"title":"Expected code","code":"decimal varianceHours = recordedHours - scheduledHours;"},{"title":"Why order matters","text":"Reversing the operands still compiles, but produces -0.5 and changes the meaning: it would calculate scheduled minus recorded."}]},
+      {"text":"Print the three values. Use F2 for the first two lines so two decimal places are visible, and use the supplied positive/negative/zero format for variance. Run the console app, compare the three lines with your written prediction, and then run the tests to check that the existing behavior still passes.","code":"Console.WriteLine($\"Scheduled hours: {scheduledHours:F2}\");\nConsole.WriteLine($\"Recorded hours: {recordedHours:F2}\");\nConsole.WriteLine($\"Variance hours: {varianceHours:+0.00;-0.00;0.00}\");","reveals":[{"title":"Expected output","text":"Ignore the earlier Total hours worked value for this exercise. The three deterministic lines should be:","code":"Scheduled hours: 7.50\nRecorded hours: 8.00\nVariance hours: +0.50"},{"title":"Common validation mistakes","items":["A build error mentioning double and decimal usually means the m suffix or explicit cast is missing.","A variance of -0.50 means the subtraction order is reversed.","An exception saying the employee has not clocked out means ClockOutEmployee was omitted or placed after GetDuartion.","Different spacing is harmless; the three numeric values and the passing tests are what matter."]}]}
     ],
-    "expectedBehavior": "The console reports 7.50 scheduled hours, 8.00 recorded hours, and a +0.50 variance; all tests pass.",
+    "expectedBehavior": "After the existing Total hours worked line, the console reports 7.50 scheduled hours, 8.00 recorded hours, and a +0.50 variance. The student's written predictions match those values, the application exits without an exception, and all tests pass.",
     "validation": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {"path":"src/PinkMachine19.TimeClock.App/Program.cs","action":"Modify","why":"Add typed numeric values, an explicit conversion, and observable expressions."},
-    {"path":"site/data/sessions/session-02.json","action":"Add","why":"Publish the synchronized lesson, lab, and quizzes."}
+    {"path":"site/data/sessions/session-03.json","action":"Modify","why":"Publish the synchronized lesson, scaffolded lab, hidden guidance, and quizzes."}
   ],
-  "commit": "session-02: teach variables expressions and numeric types",
+  "commit": "session-03: teach variables expressions and numeric types",
   "review": [
     "Each variable name describes its role in the calculation.",
     "Decimal literals use the m suffix.",
