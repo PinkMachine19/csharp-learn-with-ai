@@ -5,8 +5,8 @@
   "connection": "Session 00.6 identified the responsibilities TimeClock needs: business rules, execution, storage, delivery, and verification. This session gives those responsibilities a physical home by scaffolding PinkMachine19.TimeClock.sln, src/, tests/, and the purpose-named folders inside their projects with the dotnet CLI.",
   "objectives": [
     "Explain what a solution (.sln) is and what a project (.csproj) is, and how the two relate.",
-    "Distinguish a console application, a class library, and an xUnit test project by what each one produces.",
-    "Use dotnet new to generate a solution, a class library, a console app, and an xUnit test project.",
+    "Distinguish a console application, a class library, an ASP.NET Core web project, and an xUnit test project by what each one produces.",
+    "Use dotnet new to generate a solution and all five TimeClock projects.",
     "Explain why source projects live under src/ and test projects live under tests/.",
     "Use dotnet sln add and dotnet build to assemble and build a solution from independently created projects.",
     "Create a standard set of purpose-named folders inside a project and explain why each one exists.",
@@ -25,7 +25,7 @@
   ],
   "concept": [
     {"title":"A solution groups projects; a project is the buildable unit","paragraphs":["A .csproj file is the actual unit the .NET toolchain compiles: it lists a target framework, its dependencies, and the source files that belong to it. Every meaningful thing — building, running, testing, publishing — ultimately happens at the level of one .csproj.","A .sln file exists one level above that. It doesn't compile to anything; it's a manifest that names a set of .csproj paths so a single command (dotnet build PinkMachine19.TimeClock.sln, dotnet test PinkMachine19.TimeClock.sln) can act on all of them together. PinkMachine19.TimeClock.sln currently lists five projects: PinkMachine19.TimeClock.Domain, PinkMachine19.TimeClock.App, PinkMachine19.TimeClock.Infrastructure, PinkMachine19.TimeClock.Web, and PinkMachine19.TimeClock.Domain.Tests — you can see this yourself with dotnet sln PinkMachine19.TimeClock.sln list."]},
-    {"title":"Three templates, three jobs","paragraphs":["dotnet new console generates a project whose .csproj sets <OutputType>Exe</OutputType> and whose starter file has a Main entry point — something the operating system can launch directly. This is what PinkMachine19.TimeClock.App is: a runnable program.","dotnet new classlib generates a project with no OutputType override and no entry point. It compiles to a .dll that only means something once another project references it. This is what PinkMachine19.TimeClock.Domain is: a library of types (Employee, ClockEntry, PayrollService) meant to be consumed, not run on its own.","dotnet new xunit generates a class library too, but one pre-wired with the xUnit and Microsoft.NET.Test.Sdk package references and an <IsPackable>false</IsPackable> setting. Structurally it's a class library; its distinguishing feature is what it's for, not anything the compiler treats differently.","You will run the exact commands for all three templates in the lab."]},
+    {"title":"Four templates, five projects","paragraphs":["dotnet new console generates a project whose .csproj sets <OutputType>Exe</OutputType> and whose starter file has a Main entry point — something the operating system can launch directly. This is what PinkMachine19.TimeClock.App is: a runnable program.","dotnet new classlib generates a project with no OutputType override and no entry point. It compiles to a .dll that only means something once another project references it. Both PinkMachine19.TimeClock.Domain and PinkMachine19.TimeClock.Infrastructure begin as class libraries because neither runs by itself.","dotnet new web creates an ASP.NET Core host using the Web SDK. This gives PinkMachine19.TimeClock.Web a runnable HTTP-facing starting point without pretending its future controllers already exist.","dotnet new xunit generates a class library too, but one pre-wired with the xUnit and Microsoft.NET.Test.Sdk package references and an <IsPackable>false</IsPackable> setting. Structurally it's a class library; its distinguishing feature is what it's for, not anything the compiler treats differently.","You will run the exact commands for all four templates and create all five projects in the lab."]},
     {"title":"src/ and tests/ are convention, not a compiler rule","paragraphs":["src/ and tests/ are ordinary folders used only to organize the repository. Neither name has special meaning to .NET or the compiler: src/ contains one or more source projects, tests/ contains one or more test projects, and each .csproj project — not either folder — is an actual buildable unit.","A small solution may have one test project, such as PinkMachine19.TimeClock.Domain.Tests. Larger professional solutions commonly have several, such as Domain.Tests, Infrastructure.Tests, Web.Tests, and Integration.Tests, all organized under tests/.","The mental model is: the solution lists projects; src/ holds source projects; tests/ holds test projects; and projects are what build. Creating these items is separate too — dotnet new creates the solution or project files, while dotnet sln add registers a project in the solution without moving its source code. The lab provides the complete copyable command sequence."]},
     {"title":"Professional layout: a standard folder per purpose","paragraphs":["A freshly generated project is one flat folder. As it grows, most .NET codebases converge on the same small set of purpose-named subfolders, because giving each kind of thing its own folder makes the codebase navigable by a stranger without reading every file first. PinkMachine19.TimeClock.Domain (business types and logic), PinkMachine19.TimeClock.Infrastructure (data access), and PinkMachine19.TimeClock.Web (the future HTTP-facing project) each end up needing a different subset of these, based on what that project's job actually is.","Here is the standard set and why each one exists:"],"list":[
       {"term":"Configuration/","text":"strongly-typed classes that mirror sections of appsettings.json, so configuration is read once into a typed object instead of looked up by raw string key everywhere it's needed."},
@@ -48,26 +48,26 @@
   ],
   "lab": {
     "objective": "Reproduce TimeClock's project layout from scratch with the dotnet CLI, then scaffold the standard purpose-named folders and .gitkeep placeholders the real projects will grow into.",
-    "startingCondition": "The repository already contains a working PinkMachine19.TimeClock.sln with PinkMachine19.TimeClock.Domain, PinkMachine19.TimeClock.App, PinkMachine19.TimeClock.Infrastructure, PinkMachine19.TimeClock.Web, and PinkMachine19.TimeClock.Domain.Tests. You will rebuild the App/Domain/Tests portion from nothing in a separate scratch folder, then create the standard folders directly inside the real repository (folders and .gitkeep placeholders only — no C# code).",
+    "startingCondition": "The repository already contains a working PinkMachine19.TimeClock.sln with PinkMachine19.TimeClock.Domain, PinkMachine19.TimeClock.App, PinkMachine19.TimeClock.Infrastructure, PinkMachine19.TimeClock.Web, and PinkMachine19.TimeClock.Domain.Tests. You will rebuild all five projects from nothing in a separate scratch folder, then return to the real repository and create only the standard folders and .gitkeep placeholders there.",
     "steps": [
       {
         "text": "In a new empty scratch folder outside this repository, create the classic .sln solution. The -f sln flag matters: current SDKs otherwise default to the newer .slnx format.",
         "code": "dotnet new sln -n PinkMachine19.TimeClock -f sln"
       },
       {
-        "text": "Create the Domain class library, runnable App, and xUnit test project.",
-        "code": "dotnet new classlib -o src/PinkMachine19.TimeClock.Domain\ndotnet new console -o src/PinkMachine19.TimeClock.App\ndotnet new xunit -o tests/PinkMachine19.TimeClock.Domain.Tests"
+        "text": "Create all four source projects and the xUnit test project. Domain and Infrastructure are both class libraries; App is a console application; Web is an ASP.NET Core host.",
+        "code": "dotnet new classlib -o src/PinkMachine19.TimeClock.Domain\ndotnet new console -o src/PinkMachine19.TimeClock.App\ndotnet new classlib -o src/PinkMachine19.TimeClock.Infrastructure\ndotnet new web -o src/PinkMachine19.TimeClock.Web\ndotnet new xunit -o tests/PinkMachine19.TimeClock.Domain.Tests"
       },
       {
-        "text": "Add all three projects to the solution, then confirm the scratch solution builds with zero errors.",
-        "code": "dotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\ndotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj\ndotnet sln PinkMachine19.TimeClock.sln add tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj\ndotnet build PinkMachine19.TimeClock.sln"
+        "text": "Add all five projects to the solution, then confirm the scratch solution builds with zero errors.",
+        "code": "dotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\ndotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj\ndotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.Infrastructure/PinkMachine19.TimeClock.Infrastructure.csproj\ndotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj\ndotnet sln PinkMachine19.TimeClock.sln add tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj\ndotnet build PinkMachine19.TimeClock.sln"
       },
       {
-        "text": "From the real repository root, list its projects and compare the App, Domain, and Tests paths with the scratch solution.",
+        "text": "From the real repository root, list its projects and compare all five paths with the scratch solution. The names and directory depth should match.",
         "code": "dotnet sln PinkMachine19.TimeClock.sln list"
       },
       {
-        "text": "Back in the real repository, create the 15 purpose-named folders.",
+        "text": "Stay in the real repository for the remaining steps. Infrastructure and Web already exist here as projects; now create purpose-named folders inside those existing project directories.",
         "code": "mkdir -p src/PinkMachine19.TimeClock.Domain/{Constants,Exceptions,Extensions,Helpers,Interfaces,Models,Services}\nmkdir -p src/PinkMachine19.TimeClock.Infrastructure/Repositories\nmkdir -p src/PinkMachine19.TimeClock.Web/{Configuration,Dtos,Mappings,Options,Requests,Responses,Validators}"
       },
       {
@@ -79,7 +79,7 @@
         "code": "dotnet build PinkMachine19.TimeClock.sln -c Release\ndotnet test PinkMachine19.TimeClock.sln -c Release --no-build"
       }
     ],
-    "expectedBehavior": "Your scratch solution builds three projects with zero errors, matching the real repository's App/Domain/Tests paths. All 15 standard folders exist under the correct real project, each containing a tracked, empty .gitkeep file. dotnet build PinkMachine19.TimeClock.sln -c Release and dotnet test PinkMachine19.TimeClock.sln -c Release --no-build both succeed exactly as they did before the folders were added.",
+    "expectedBehavior": "Your scratch solution builds all five projects with zero errors, matching every project path in the real repository. Back in the real repository, all 15 standard folders exist under the correct already-existing project, each containing a tracked, empty .gitkeep file. The Release build and tests still succeed exactly as they did before the folders were added.",
     "validation": "dotnet build PinkMachine19.TimeClock.sln -c Release && dotnet test PinkMachine19.TimeClock.sln -c Release --no-build"
   },
   "expectedFiles": [
@@ -102,8 +102,8 @@
   ],
   "commit": "session-01: scaffold the solution with dotnet new and dotnet sln add, then organize projects into standard folders",
   "review": [
-    "The scratch solution builds all three projects without errors.",
-    "The scratch project list matches the real repository's App/Domain/Tests projects at the same relative paths.",
+    "The scratch solution builds all five projects without errors.",
+    "The scratch project list matches all five real repository projects at the same relative paths.",
     "Every standard folder exists under the project it conceptually belongs to (Domain, Infrastructure, or Web), not scattered arbitrarily.",
     "Every one of the 15 folders contains a tracked, empty .gitkeep file.",
     "dotnet build PinkMachine19.TimeClock.sln -c Release and dotnet test PinkMachine19.TimeClock.sln -c Release --no-build both still succeed after adding the folders.",
