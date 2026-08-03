@@ -50,13 +50,34 @@
     "objective": "Reproduce TimeClock's project layout from scratch with the dotnet CLI, then scaffold the standard purpose-named folders and .gitkeep placeholders the real projects will grow into.",
     "startingCondition": "The repository already contains a working PinkMachine19.TimeClock.sln with PinkMachine19.TimeClock.Domain, PinkMachine19.TimeClock.App, PinkMachine19.TimeClock.Infrastructure, PinkMachine19.TimeClock.Web, and PinkMachine19.TimeClock.Domain.Tests. You will rebuild the App/Domain/Tests portion from nothing in a separate scratch folder, then create the standard folders directly inside the real repository (folders and .gitkeep placeholders only — no C# code).",
     "steps": [
-      "In a new empty scratch folder outside this repository, run: dotnet new sln -n PinkMachine19.TimeClock -f sln (the -f sln flag matters: on current SDKs, dotnet new sln defaults to the newer .slnx format, but this repository's solution file is the classic .sln format)",
-      "Run: dotnet new classlib -o src/PinkMachine19.TimeClock.Domain, then dotnet new console -o src/PinkMachine19.TimeClock.App, then dotnet new xunit -o tests/PinkMachine19.TimeClock.Domain.Tests",
-      "Add all three to the solution with dotnet sln PinkMachine19.TimeClock.sln add for each .csproj path, then run dotnet build PinkMachine19.TimeClock.sln and confirm all three projects build with zero errors",
-      "From the real repository root, run dotnet sln PinkMachine19.TimeClock.sln list and compare its project list against what you just built — App/Domain/Tests should match at the same relative paths and depth",
-      "Back in the real repository, create the standard folders: mkdir -p src/PinkMachine19.TimeClock.Domain/{Constants,Exceptions,Extensions,Helpers,Interfaces,Models,Services}, mkdir -p src/PinkMachine19.TimeClock.Infrastructure/Repositories, and mkdir -p src/PinkMachine19.TimeClock.Web/{Configuration,Dtos,Mappings,Options,Requests,Responses,Validators}",
-      "Create an empty .gitkeep file in every folder you just created — for example: touch src/PinkMachine19.TimeClock.Web/Validators/.gitkeep — and repeat for the other 14 folders",
-      "Run dotnet build PinkMachine19.TimeClock.sln -c Release and dotnet test PinkMachine19.TimeClock.sln -c Release --no-build from the real repository root and confirm both still succeed with zero errors and zero failing tests — the new folders should have no effect on the build at all"
+      {
+        "text": "In a new empty scratch folder outside this repository, create the classic .sln solution. The -f sln flag matters: current SDKs otherwise default to the newer .slnx format.",
+        "code": "dotnet new sln -n PinkMachine19.TimeClock -f sln"
+      },
+      {
+        "text": "Create the Domain class library, runnable App, and xUnit test project.",
+        "code": "dotnet new classlib -o src/PinkMachine19.TimeClock.Domain\ndotnet new console -o src/PinkMachine19.TimeClock.App\ndotnet new xunit -o tests/PinkMachine19.TimeClock.Domain.Tests"
+      },
+      {
+        "text": "Add all three projects to the solution, then confirm the scratch solution builds with zero errors.",
+        "code": "dotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\ndotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj\ndotnet sln PinkMachine19.TimeClock.sln add tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj\ndotnet build PinkMachine19.TimeClock.sln"
+      },
+      {
+        "text": "From the real repository root, list its projects and compare the App, Domain, and Tests paths with the scratch solution.",
+        "code": "dotnet sln PinkMachine19.TimeClock.sln list"
+      },
+      {
+        "text": "Back in the real repository, create the 15 purpose-named folders.",
+        "code": "mkdir -p src/PinkMachine19.TimeClock.Domain/{Constants,Exceptions,Extensions,Helpers,Interfaces,Models,Services}\nmkdir -p src/PinkMachine19.TimeClock.Infrastructure/Repositories\nmkdir -p src/PinkMachine19.TimeClock.Web/{Configuration,Dtos,Mappings,Options,Requests,Responses,Validators}"
+      },
+      {
+        "text": "Create an empty .gitkeep file in every folder. These loops cover all 15 folders.",
+        "code": "for d in Constants Exceptions Extensions Helpers Interfaces Models Services; do\n  touch \"src/PinkMachine19.TimeClock.Domain/$d/.gitkeep\"\ndone\ntouch src/PinkMachine19.TimeClock.Infrastructure/Repositories/.gitkeep\nfor d in Configuration Dtos Mappings Options Requests Responses Validators; do\n  touch \"src/PinkMachine19.TimeClock.Web/$d/.gitkeep\"\ndone"
+      },
+      {
+        "text": "From the real repository root, confirm the Release build and all tests still succeed. The new folders should have no effect on the build.",
+        "code": "dotnet build PinkMachine19.TimeClock.sln -c Release\ndotnet test PinkMachine19.TimeClock.sln -c Release --no-build"
+      }
     ],
     "expectedBehavior": "Your scratch solution builds three projects with zero errors, matching the real repository's App/Domain/Tests paths. All 15 standard folders exist under the correct real project, each containing a tracked, empty .gitkeep file. dotnet build PinkMachine19.TimeClock.sln -c Release and dotnet test PinkMachine19.TimeClock.sln -c Release --no-build both succeed exactly as they did before the folders were added.",
     "validation": "dotnet build PinkMachine19.TimeClock.sln -c Release && dotnet test PinkMachine19.TimeClock.sln -c Release --no-build"

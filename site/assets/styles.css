@@ -86,8 +86,10 @@ tr:hover td { background: rgba(255, 255, 255, 0.02); }
 .badge-layer    { background: rgba(88,166,255,0.08); color: var(--accent); border: 1px solid var(--border); font-size: 10px; }
 
 code { font-family: var(--font-mono); font-size: 13px; background: var(--surface-2); padding: 1px 5px; border-radius: 3px; color: #e6edf3; }
-pre { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; overflow-x: auto; margin-bottom: 16px; }
+pre { position: relative; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 46px 18px 16px; overflow-x: auto; margin-bottom: 16px; }
 pre code { background: none; padding: 0; font-size: 13px; line-height: 1.75; }
+.copy-code-button { position: absolute; top: 8px; right: 8px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text-muted); padding: 5px 10px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.copy-code-button:hover, .copy-code-button:focus-visible { color: var(--text); border-color: var(--accent); }
 
 .alert { padding: 12px 16px; border-radius: var(--radius); margin-bottom: 16px; font-size: 14px; border-left: 3px solid; line-height: 1.55; }
 .alert-info    { background: rgba(88,166,255,0.08); border-color: var(--accent); }
@@ -130,7 +132,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 /* Steps (labs) */
 .step { display: flex; gap: 12px; margin-bottom: 12px; }
 .step-num { flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--border); color: var(--accent); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-.step-body { font-size: 15px; padding-top: 2px; }
+.step-body { min-width: 0; width: 100%; font-size: 15px; padding-top: 2px; }
+.step-body > p { margin: 0 0 10px; }
 
 /* Concept / visuals */
 .concept-part { margin-bottom: 20px; }

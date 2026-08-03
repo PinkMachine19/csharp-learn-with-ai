@@ -51,3 +51,34 @@ document.querySelectorAll("[data-check-answer]").forEach((button) => {
     feedback.dataset.state = correct ? "correct" : "incorrect";
   });
 });
+
+document.querySelectorAll("pre").forEach((block) => {
+  const code = block.querySelector("code");
+  if (!code) return;
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "copy-code-button";
+  button.textContent = "Copy";
+  button.setAttribute("aria-label", "Copy code to clipboard");
+
+  button.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(code.textContent);
+      button.textContent = "Copied!";
+    } catch {
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(code);
+      selection.removeAllRanges();
+      selection.addRange(range);
+      button.textContent = "Selected";
+    }
+
+    window.setTimeout(() => {
+      button.textContent = "Copy";
+    }, 1600);
+  });
+
+  block.append(button);
+});
