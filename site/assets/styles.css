@@ -131,7 +131,18 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 
 /* Quizzes */
 .quiz-set { display: grid; gap: 14px; margin-bottom: 16px; }
-.quiz-card .quiz-label { color: var(--text-muted); font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 6px; }
+.quiz-card { padding: 0; overflow: hidden; }
+.quiz-card > summary { position: relative; display: grid; gap: 6px; padding: 16px 48px 16px 16px; cursor: pointer; list-style: none; }
+.quiz-card > summary::-webkit-details-marker { display: none; }
+.quiz-card > summary::after { content: "+"; position: absolute; top: 50%; right: 18px; translate: 0 -50%; color: var(--accent); font-size: 24px; font-weight: 400; line-height: 1; }
+.quiz-card[open] > summary::after { content: "−"; }
+.quiz-card[open] > summary { border-bottom: 1px solid var(--border); }
+.quiz-card > summary:hover, .quiz-card > summary:focus-visible { background: var(--surface-2); outline: none; }
+.quiz-card .quiz-label { color: var(--text-muted); font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; }
+.quiz-prompt { color: var(--text); font-size: 15px; font-weight: 700; line-height: 1.45; }
+.quiz-expand-hint { color: var(--accent); font-size: 12px; font-weight: 600; }
+.quiz-card[open] .quiz-expand-hint { display: none; }
+.quiz-card-body { padding: 16px; }
 .quiz-card h2, .quiz-card h3 { border: none; padding: 0; margin: 0 0 10px; font-size: 15px; color: var(--text); }
 .answers { display: grid; gap: 8px; margin-bottom: 14px; }
 .answers label { display: flex; gap: 10px; align-items: flex-start; padding: 9px 12px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface-2); cursor: pointer; font-size: 14px; }
