@@ -157,6 +157,12 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 .reveal-card small { color: var(--accent); font-weight: 600; font-size: 12px; }
 .reveal-card > div { padding-top: 10px; color: var(--text-muted); font-size: 14px; }
 .reveal-card > div p { margin-bottom: 0; }
+.blur-solution { position: relative; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 14px 16px; margin-bottom: 16px; overflow: hidden; }
+.blur-solution > button { width: 100%; display: flex; justify-content: space-between; gap: 1rem; padding: 0 0 10px; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--text); text-align: left; cursor: pointer; font-weight: 600; }
+.blur-solution > button small { color: var(--accent); font-weight: 600; }
+.blur-solution > pre { filter: blur(6px); user-select: none; pointer-events: none; transition: filter 160ms ease; }
+.blur-solution:not([data-revealed]) .copy-code-button { display: none; }
+.blur-solution[data-revealed] > pre { filter: none; user-select: text; pointer-events: auto; }
 
 /* Steps (labs) */
 .step { display: flex; gap: 12px; margin-bottom: 12px; }

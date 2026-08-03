@@ -52,6 +52,19 @@ document.querySelectorAll("[data-check-answer]").forEach((button) => {
   });
 });
 
+document.querySelectorAll(".blur-solution > button").forEach((button) => {
+  button.addEventListener("click", () => {
+    const solution = button.closest(".blur-solution");
+    const code = solution?.querySelector("pre");
+    const revealed = solution?.hasAttribute("data-revealed");
+    solution?.toggleAttribute("data-revealed", !revealed);
+    button.setAttribute("aria-expanded", String(!revealed));
+    code?.setAttribute("aria-hidden", String(revealed));
+    const hint = button.querySelector("small");
+    if (hint) hint.textContent = revealed ? "Reveal blurred answer" : "Blur answer";
+  });
+});
+
 document.querySelectorAll("pre").forEach((block) => {
   const code = block.querySelector("code");
   if (!code) return;
