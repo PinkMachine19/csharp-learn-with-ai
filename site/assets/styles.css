@@ -151,6 +151,10 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 .check-list li { position: relative; padding-left: 22px; }
 .check-list li::before { content: "\2713"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
 
+.concept-list { margin: 10px 0 16px; }
+.concept-list li { margin-bottom: 10px; line-height: 1.5; }
+.concept-list li strong { color: var(--accent); }
+
 footer { border-top: 1px solid var(--border); background: var(--surface); padding: 24px 0; margin-top: 24px; }
 footer .container { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
 footer strong { color: var(--text); font-size: 14px; }
