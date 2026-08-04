@@ -94,6 +94,7 @@
     "startingCondition": "The scaffold and references exist. Production projects still contain no TimeClock behavior. ScratchPad contains only its template Program.cs.",
     "steps": [
       {
+        "copyInstruction": true,
         "text": "Open src/PinkMachine19.TimeClock.ScratchPad/Program.cs. Delete only the template Console.WriteLine statement that prints Hello, World! Replace it with a comment naming Session 03 and its topic. This label keeps the experiment identifiable when later sessions add more examples to the same file.",
         "reveals": [
           {
@@ -104,6 +105,7 @@
         ]
       },
       {
+        "copyInstruction": true,
         "text": "Directly below the heading, declare a variable named measuredHours. Give it the type double and initialize it to 8.0. This value represents hours supplied by a measurement-oriented API. Do not print it yet.",
         "reveals": [
           {
@@ -114,6 +116,7 @@
         ]
       },
       {
+        "copyInstruction": true,
         "text": "Below measuredHours, declare scheduledHours as a decimal initialized to 7.5. Then declare recordedHours as a decimal and assign measuredHours to it using an explicit cast. The m suffix belongs on the decimal literal; the cast belongs around measuredHours because double does not convert to decimal implicitly.",
         "reveals": [
           {
@@ -124,6 +127,7 @@
         ]
       },
       {
+        "copyInstruction": true,
         "text": "Below those declarations, create a decimal variable named varianceHours. Calculate it by subtracting scheduledHours from recordedHours, in that order. Then add three Console.WriteLine statements: print Scheduled and Recorded with two decimal places, and print Variance with a leading plus sign for a positive result, a minus sign for a negative result, and 0.00 for zero.",
         "reveals": [
           {
@@ -134,6 +138,7 @@
         ]
       },
       {
+        "copyInstruction": true,
         "text": "Open a terminal at the solution root. Run ScratchPad with the first command below. Confirm that it prints Scheduled 7.50, Recorded 8.00, and Variance +0.50. Then use the second command to build and test the complete solution. The lab is complete when ScratchPad prints those values and the solution reports zero build errors and zero failing tests.",
         "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
         "reveals": [

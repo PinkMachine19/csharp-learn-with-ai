@@ -65,6 +65,24 @@ document.querySelectorAll(".blur-solution > button").forEach((button) => {
   });
 });
 
+document.querySelectorAll("[data-copy-instruction]").forEach((button) => {
+  button.addEventListener("click", async () => {
+    const instruction = button.closest(".lab-instruction")?.querySelector("p")?.textContent?.trim();
+    if (!instruction) return;
+
+    try {
+      await navigator.clipboard.writeText(instruction);
+      button.textContent = "Copied!";
+    } catch {
+      button.textContent = "Copy unavailable";
+    }
+
+    window.setTimeout(() => {
+      button.textContent = "Copy instructions";
+    }, 1600);
+  });
+});
+
 document.querySelectorAll("pre").forEach((block) => {
   const code = block.querySelector("code");
   if (!code) return;

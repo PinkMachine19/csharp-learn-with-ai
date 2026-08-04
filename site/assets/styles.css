@@ -170,7 +170,11 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 .step { display: flex; gap: 12px; margin-bottom: 12px; }
 .step-num { flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--border); color: var(--accent); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 .step-body { min-width: 0; width: 100%; font-size: 15px; padding-top: 2px; }
-.step-body > p { margin: 0 0 10px; }
+.lab-instruction { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.lab-instruction > p { margin: 0; }
+.copy-instruction-button { flex: 0 0 auto; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text-muted); padding: 5px 10px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.copy-instruction-button:hover, .copy-instruction-button:focus-visible { color: var(--text); border-color: var(--accent); }
+@media (max-width: 640px) { .lab-instruction { flex-direction: column; } }
 
 /* Concept / visuals */
 .concept-part { margin-bottom: 20px; }
