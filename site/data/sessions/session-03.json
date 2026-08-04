@@ -7,7 +7,8 @@
     "Describe a variable as a typed name bound to a value, not as an untyped box.",
     "Distinguish declarations, literals, conversions, and expressions.",
     "Choose decimal for deliberate base-10 quantities and recognize when a conversion is explicit.",
-    "Predict the value and type produced by a small numeric expression."
+    "Predict the value and type produced by a small numeric expression.",
+    "Use string interpolation and numeric format specifiers without confusing display text with the stored value."
   ],
   "visuals": [
     {
@@ -87,6 +88,15 @@
         "The cast is not a promise of extra accuracy. It is a visible change of numeric representation. Later APIs such as TimeSpan.TotalHours create this same decision."
       ],
       "code": "decimal businessValue = (decimal)measuredValue;"
+    },
+    {
+      "title": "Side note: formatting changes the display, not the number",
+      "paragraphs": [
+        "A $ before a string enables string interpolation. Text inside braces is evaluated and inserted into the string. For example, {hours} inserts the value stored in hours.",
+        "A colon inside the braces introduces a format specifier. F2 means fixed-point with exactly two digits after the decimal point, so 8m displays as 8.00. The value stored in the variable is still 8m.",
+        "A custom numeric format can contain three sections separated by semicolons: positive; negative; zero. The format +0.00;-0.00;0.00 displays 0.5 as +0.50, -0.5 as -0.50, and zero as 0.00. It changes only the output text—not the calculation."
+      ],
+      "code": "decimal hours = 8m;\nConsole.WriteLine($\"Hours: {hours:F2}\");       // Hours: 8.00\n\ndecimal difference = 0.5m;\nConsole.WriteLine($\"{difference:+0.00;-0.00;0.00}\"); // +0.50"
     }
   ],
   "lab": {
@@ -128,7 +138,7 @@
       },
       {
         "copyInstruction": true,
-        "text": "Below those declarations, create a decimal variable named varianceHours. Calculate it by subtracting scheduledHours from recordedHours, in that order. Then add three Console.WriteLine statements: print Scheduled and Recorded with two decimal places, and print Variance with a leading plus sign for a positive result, a minus sign for a negative result, and 0.00 for zero.",
+        "text": "Below those declarations, create a decimal variable named varianceHours. Calculate it by subtracting scheduledHours from recordedHours, in that order. Then use the interpolation and format-specifier side note above to add three Console.WriteLine statements: print Scheduled and Recorded with F2, and print Variance with the three-section positive;negative;zero format shown in the note.",
         "reveals": [
           {
             "title": "Check the calculation and output statements",
