@@ -10,6 +10,36 @@ function persistDetailsOpenState(element, storageKey) {
 persistDetailsOpenState(document.querySelector(".academy-project-status"), "academy-project-status-open");
 persistDetailsOpenState(document.querySelector(".preface"), "academy-preface-open");
 
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // Some browsers expose the Clipboard API but block it by permission or context.
+    }
+  }
+
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  textArea.setAttribute("readonly", "");
+  textArea.style.position = "fixed";
+  textArea.style.left = "-9999px";
+  textArea.style.opacity = "0";
+  document.body.append(textArea);
+  textArea.select();
+  textArea.setSelectionRange(0, textArea.value.length);
+
+  let copied = false;
+  try {
+    copied = document.execCommand("copy");
+  } finally {
+    textArea.remove();
+  }
+
+  return copied;
+}
+
 const menuButton = document.querySelector(".menu-button");
 const navigation = document.querySelector("#site-nav");
 
@@ -70,12 +100,8 @@ document.querySelectorAll("[data-copy-instruction]").forEach((button) => {
     const instruction = button.closest(".lab-instruction")?.querySelector("p")?.textContent?.trim();
     if (!instruction) return;
 
-    try {
-      await navigator.clipboard.writeText(instruction);
-      button.textContent = "Copied!";
-    } catch {
-      button.textContent = "Copy unavailable";
-    }
+    const copied = await copyTextToClipboard(instruction);
+    button.textContent = copied ? "Copied!" : "Could not copy";
 
     window.setTimeout(() => {
       button.textContent = "Copy instructions";
@@ -94,10 +120,10 @@ document.querySelectorAll("pre").forEach((block) => {
   button.setAttribute("aria-label", "Copy code to clipboard");
 
   button.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(code.textContent);
+    const copied = await copyTextToClipboard(code.textContent);
+    if (copied) {
       button.textContent = "Copied!";
-    } catch {
+    } else {
       const selection = window.getSelection();
       const range = document.createRange();
       range.selectNodeContents(code);
