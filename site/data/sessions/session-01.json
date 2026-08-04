@@ -9,7 +9,7 @@
     "Use dotnet new to generate a solution and all six permanent projects.",
     "Explain why source projects live under src/ and test projects live under tests/.",
     "Use dotnet sln add and dotnet build to assemble and build a solution from independently created projects.",
-    "Create a standard set of purpose-named folders inside a project and explain why each one exists.",
+    "Choose project folders by architectural responsibility and explain when each one should be added.",
     "Explain why an empty folder disappears from a fresh git clone, and how a .gitkeep file prevents that."
   ],
   "visuals": [
@@ -91,83 +91,44 @@
       ]
     },
     {
-      "title": "Professional layout: a standard folder per purpose",
+      "title": "Professional layout: folders follow responsibility",
       "paragraphs": [
-        "A freshly generated project is one flat folder. As it grows, most .NET codebases converge on the same small set of purpose-named subfolders, because giving each kind of thing its own folder makes the codebase navigable by a stranger without reading every file first. PinkMachine19.TimeClock.Domain (business types and logic), PinkMachine19.TimeClock.Infrastructure (data access), and PinkMachine19.TimeClock.Web (the future HTTP-facing project) each end up needing a different subset of these, based on what that project's job actually is.",
-        "Here is the standard set and why each one exists:"
+        "A new project starts as one flat folder. Add a subfolder when real code needs a useful home—not because a universal .NET checklist says the folder must exist. Folder names are team conventions, and different projects need different subsets.",
+        "Use the TimeClock project's responsibility to decide where a folder belongs:"
       ],
       "list": [
         {
-          "term": "Configuration/",
-          "text": "strongly-typed classes that mirror sections of appsettings.json, so configuration is read once into a typed object instead of looked up by raw string key everywhere it's needed."
+          "term": "Domain — PinkMachine19.TimeClock.Domain",
+          "text": "Models/ holds business concepts such as Employee and ClockEntry. Exceptions/ can hold business-specific failures. Why here? These types express TimeClock rules without knowing about databases or HTTP. Add each folder only when its first real type is introduced."
         },
         {
-          "term": "Constants/",
-          "text": "fixed values — thresholds, format strings, default limits — named once so they aren't duplicated as magic numbers scattered through the code."
+          "term": "Infrastructure — PinkMachine19.TimeClock.Infrastructure",
+          "text": "Repositories/ holds concrete persistence implementations, alongside database-specific code. Why here? Infrastructure is allowed to know how data is stored; Domain is not. Create it when the course adds its first concrete persistence type."
         },
         {
-          "term": "Dtos/",
-          "text": "Data Transfer Objects: shapes that cross the HTTP boundary, decoupled from the internal shape of the domain models so either can change independently."
+          "term": "Web/API — PinkMachine19.TimeClock.Web",
+          "text": "Requests/ and Responses/ hold HTTP input and output shapes; Validators/ checks incoming data; Mappings/ translates boundary types; Configuration/ or Options/ holds typed settings. Why here? These concerns exist at the HTTP boundary. Add only the folders required by actual endpoints and configuration."
         },
         {
-          "term": "Exceptions/",
-          "text": "domain-specific exception types (an already-clocked-in employee, an invalid payroll period) so callers can catch a precise failure instead of a generic Exception."
+          "term": "Application or host — PinkMachine19.TimeClock.App",
+          "text": "Startup and dependency wiring normally stay near Program.cs. Use-case Services/ may live here while the solution is small, or in a separate Application project if orchestration grows. Why here? Coordinating a workflow is different from enforcing a business rule. No extra host folder is required yet."
         },
         {
-          "term": "Extensions/",
-          "text": "extension methods that add behavior to types the project doesn't own, without subclassing or wrapping them."
-        },
-        {
-          "term": "Helpers/",
-          "text": "small, stateless utility logic used by more than one class that doesn't naturally belong on any single domain type."
-        },
-        {
-          "term": "Interfaces/",
-          "text": "contracts like IClockEntryRepository that describe what a collaborator must do, not how, so consumers can depend on behavior instead of a concrete class."
-        },
-        {
-          "term": "Mappings/",
-          "text": "the translation logic between domain models and Dtos/Requests/Responses, kept in one place so the mapping rules aren't duplicated across every endpoint."
-        },
-        {
-          "term": "Models/",
-          "text": "the core domain entities — Employee, ClockEntry, Timesheet — independent of any storage format or wire format."
-        },
-        {
-          "term": "Options/",
-          "text": "classes bound through the Options pattern (IOptions<T>) for configuration that gets injected into services, rather than read as raw values."
-        },
-        {
-          "term": "Repositories/",
-          "text": "concrete data-access implementations of the interfaces declared in Interfaces/, kept separate so the domain layer never depends on a specific storage technology."
-        },
-        {
-          "term": "Requests/",
-          "text": "the shapes of incoming API payloads, named for the action they represent (ClockInRequest) so an endpoint's expected input is obvious from the type alone."
-        },
-        {
-          "term": "Responses/",
-          "text": "the shapes of outgoing API payloads, kept separate from Requests and from domain Models so a response can be shaped for its caller without changing what's stored internally."
-        },
-        {
-          "term": "Services/",
-          "text": "application logic that coordinates models and repositories to carry out a use case — recording a clock entry, computing payroll."
-        },
-        {
-          "term": "Validators/",
-          "text": "input-validation logic kept separate from the Dtos it validates, so validation rules can change without touching the shape of the data."
+          "term": "Shared or situational — location depends on contents",
+          "text": "Interfaces/, Constants/, Extensions/, and Helpers/ can appear in several projects. Put an interface with the code that owns the contract; put a constant or extension near the responsibility it supports. Helpers/ is a last resort for focused utility code, not a default dumping ground."
         }
       ],
       "closingParagraphs": [
-        "Not every project needs every folder. PinkMachine19.TimeClock.Domain (business rules and data shapes) is where Constants, Exceptions, Extensions, Helpers, Interfaces, Models, and Services belong. PinkMachine19.TimeClock.Infrastructure (data access) is where Repositories belongs, next to the concrete EF Core code it will eventually contain. PinkMachine19.TimeClock.Web (the future HTTP API) is where Configuration, Dtos, Mappings, Options, Requests, Responses, and Validators belong, since those all exist to shape and validate what crosses the wire. The point of this lesson is understanding why each folder exists and where its contents conceptually belong — not memorizing this exact list. A different team might name Helpers/ differently or skip Mappings/ until they actually need it, and that's fine; what matters is that the choice is deliberate."
+        "Services/ needs a name check before a location check. A domain service that contains business rules belongs in Domain. An application service that coordinates a use case often belongs in the host or a later Application project. The name alone does not decide the architecture.",
+        "None of these names is mandatory, and Session 01 does not create empty purpose folders. Later sessions add structure when TimeClock gains real code that justifies it."
       ]
     },
     {
-      "title": "Git tracks files, not folders — so every folder gets a .gitkeep",
+      "title": "Git tracks files, not empty folders",
       "paragraphs": [
         "Git's index stores blobs (file contents) and trees (directory listings that point at blobs), never a directory entry with nothing inside it. An empty Validators/ folder can sit on your disk for weeks, but the moment you git add . and commit, nothing gets recorded for it — there's no file to point at. Clone the repository fresh, or check out that commit somewhere else, and Validators/ simply isn't there.",
-        "The fix is the smallest possible tracked file: an empty .gitkeep. There is nothing special about that filename as far as git itself is concerned — git has no built-in concept of a 'keep this empty folder' marker. .gitkeep is purely a naming convention the community settled on, popularized by early Git tooling, so that anyone reading a diff or a directory listing immediately recognizes the file's only purpose is to hold the folder open. (Some teams use a one-line README.md instead, so the placeholder also documents the folder's purpose — that's a reasonable choice too, but it's a different, dual-purpose decision. This course sticks to a plain, empty .gitkeep: the folder's purpose is explained where a student can actually find it — in this lesson — rather than duplicated into fifteen tiny files that would immediately go stale the moment real code arrives and nobody remembers to delete them.)",
-        "The lab contains the folder-creation and .gitkeep commands as copyable blocks."
+        "If an empty folder genuinely must exist before its contents, the smallest tracked placeholder is an empty .gitkeep. Git gives that filename no special behavior; it is only a recognizable community convention. A short README.md can document the folder instead. Most of the time, the better choice is to wait and create the folder with its first real file.",
+        "Session 01 does not need placeholder folders because it creates only the projects. If a later change deliberately adds an empty folder before its first source file, a .gitkeep can preserve it—but creating the real file and folder together is usually clearer."
       ]
     }
   ],
@@ -190,14 +151,6 @@
       {
         "text": "List and build the solution. Expect six project paths and zero build errors.",
         "code": "dotnet sln PinkMachine19.TimeClock.sln list\ndotnet build PinkMachine19.TimeClock.sln"
-      },
-      {
-        "text": "Create the purpose-named production folders. Do not add speculative C# implementations yet.",
-        "code": "mkdir -p src/PinkMachine19.TimeClock.Domain/{Constants,Exceptions,Extensions,Helpers,Interfaces,Models,Services}\nmkdir -p src/PinkMachine19.TimeClock.Infrastructure/Repositories\nmkdir -p src/PinkMachine19.TimeClock.Web/{Configuration,Dtos,Mappings,Options,Requests,Responses,Validators}"
-      },
-      {
-        "text": "Add an empty .gitkeep to every otherwise-empty folder so the structure survives a clone.",
-        "code": "for d in Constants Exceptions Extensions Helpers Interfaces Models Services; do touch \"src/PinkMachine19.TimeClock.Domain/$d/.gitkeep\"; done\ntouch src/PinkMachine19.TimeClock.Infrastructure/Repositories/.gitkeep\nfor d in Configuration Dtos Mappings Options Requests Responses Validators; do touch \"src/PinkMachine19.TimeClock.Web/$d/.gitkeep\"; done"
       }
     ],
     "expectedBehavior": "One persistent learner solution contains four production projects, one ScratchPad project, and one test project. It builds before any business code is added.",
@@ -275,7 +228,7 @@
       "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
-  "commit": "session-01: scaffold the solution with dotnet new and dotnet sln add, then organize projects into standard folders",
+  "commit": "session-01: scaffold the permanent solution and projects",
   "review": [
     "The lab uses solution because that is the most natural environment for this concept.",
     "Every referenced application artifact was created in this session or an earlier session.",
@@ -315,11 +268,11 @@
   ],
   "reflections": [
     "Which command created files on disk, and which command changed what dotnet build PinkMachine19.TimeClock.sln considers in scope?",
-    "For one folder you created, could you explain its purpose to someone who has never seen this codebase, purely from its name, without the explanations from this lesson?",
+    "Choose one folder from the responsibility table. Which TimeClock project would own it, and what real code would justify creating it?",
     "Why does an empty .gitkeep file count as a legitimate fix for git's empty-directory problem instead of a hack, given that git itself gives the filename no special meaning at all?"
   ],
-  "whatBreaks": "Skipping dotnet sln add leaves a project that builds standalone but is invisible to solution-wide build/test/restore commands. Creating a folder without any tracked file inside it looks fine locally but silently vanishes for every teammate who clones the repository, so any convention that depends on the folder existing (an CI step that globs Validators/*.cs, for instance) breaks for them with no obvious cause. Putting Repositories/ (or any storage-aware code) inside PinkMachine19.TimeClock.Domain instead of PinkMachine19.TimeClock.Infrastructure would make Domain depend on a specific storage technology, undermining the reusability the next session builds on.",
-  "summary": "A solution is a manifest naming which projects build and test together; a project is the actual buildable unit, created with dotnet new console, classlib, or xunit depending on its job. Beyond that, a mature project organizes its own contents into purpose-named folders — Models, Interfaces, Services, Dtos, Validators, and the rest — chosen deliberately for what that project is responsible for, and every one of those folders needs a tracked file — this course uses an empty .gitkeep, by convention rather than any git feature — or git will not carry it to the next clone.",
+  "whatBreaks": "Skipping dotnet sln add leaves a project that builds standalone but is invisible to solution-wide build/test/restore commands. An intentionally empty folder without a tracked file silently vanishes for every teammate who clones the repository. Putting Repositories/ or other storage-aware code inside PinkMachine19.TimeClock.Domain would make Domain depend on a specific storage technology, undermining the reusability the next session builds on.",
+  "summary": "A solution is a manifest naming which projects build and test together; a project is the actual buildable unit. As TimeClock grows, folders are added for real code according to project responsibility—not from a mandatory universal checklist. Domain owns business rules, Infrastructure owns persistence details, Web owns HTTP boundaries, and host or application code coordinates use cases. Situational folders belong wherever their contents are owned.",
   "learningEnvironment": "solution",
   "buildState": {
     "creates": [
