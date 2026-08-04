@@ -95,8 +95,9 @@
     "steps": [
       "Keep all earlier experiments.",
       "Add a Session 04 section that classifies a local variance value as over, under, or on schedule.",
+      "For now, use one decimal variable and test one value at a time. A data structure, such as an array, can hold several values together, but data structures and loops have not been introduced yet; later sessions will explain them properly. Do not use one here: change the same variable to a positive value, zero, and a negative value, running the program after each change.",
       "Predict positive, zero, and negative outcomes before writing the switch expression.",
-      "Run all three values and compare them with the prediction.",
+      "Compare the result from each run with the prediction.",
       {
         "text": "Run ScratchPad and build the solution.",
         "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release"
