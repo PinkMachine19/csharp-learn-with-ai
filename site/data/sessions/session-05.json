@@ -101,17 +101,18 @@
           "Create the src/PinkMachine19.TimeClock.ScratchPad/Session05 folder.",
           "Create Session05Lab01.cs inside the new folder.",
           "Paste the lab comment at the top of Session05Lab01.cs.",
-          {
-            "text": "Paste this class below the comment.",
-            "code": "class Session05Lab01\n{\n    public void Run()\n    {\n        WriteHeading();\n    }\n\n    public void WriteHeading()\n    {\n        Console.WriteLine(\"Session 05 Lab 01\");\n    }\n}"
-          },
+          "Write a class declaration named Session05Lab01 below the comment.",
+          "Add the opening and closing braces for the class.",
+          "Inside the class, write a public method named Run that returns void and has no parameters.",
+          "Inside Run, call a method named WriteHeading.",
+          "Below Run, write a public method named WriteHeading that returns void and has no parameters.",
+          "Inside WriteHeading, write one Console.WriteLine statement that displays Session 05 Lab 01.",
           "Open src/PinkMachine19.TimeClock.ScratchPad/Program.cs.",
-          {
-            "text": "Add these two entry-point statements below the earlier session calls or output.",
-            "code": "var session05Lab01 = new Session05Lab01();\nsession05Lab01.Run();"
-          },
+          "Below the earlier session output, declare a variable named session05Lab01 and assign a new Session05Lab01 object to it.",
+          "On the next line, call Run on session05Lab01.",
           "Save both files."
-        ]
+        ],
+        "solution": "// Session05Lab01.cs\n// Lab 1 of 7 - Create the Session 05 Scratch Area\nclass Session05Lab01\n{\n    public void Run()\n    {\n        WriteHeading();\n    }\n\n    public void WriteHeading()\n    {\n        Console.WriteLine(\"Session 05 Lab 01\");\n    }\n}\n\n// Add to Program.cs\nvar session05Lab01 = new Session05Lab01();\nsession05Lab01.Run();"
       },
       {
         "title": "Pass an Argument to a Parameter",
@@ -120,19 +121,20 @@
         "instructions": [
           "Create Session05Lab02.cs inside the Session05 folder.",
           "Paste the lab comment at the top of Session05Lab02.cs.",
-          {
-            "text": "Paste this class below the comment.",
-            "code": "class Session05Lab02\n{\n    public void Run()\n    {\n        PrintHours(8.5m);\n    }\n\n    public void PrintHours(decimal hours)\n    {\n        Console.WriteLine($\"Recorded hours: {hours}\");\n    }\n}"
-          },
+          "Write a class declaration named Session05Lab02.",
+          "Inside the class, write a public Run method that returns void and has no parameters.",
+          "Inside Run, call PrintHours with the decimal argument 8.5m.",
+          "Below Run, write a public method named PrintHours that returns void.",
+          "Give PrintHours one decimal parameter named hours.",
+          "Inside PrintHours, write one interpolated Console.WriteLine statement that displays Recorded hours followed by hours.",
           "Open Program.cs.",
-          {
-            "text": "Construct the Lab 02 class and call Run from the entry point.",
-            "code": "var session05Lab02 = new Session05Lab02();\nsession05Lab02.Run();"
-          },
+          "Declare session05Lab02 and assign a new Session05Lab02 object to it.",
+          "Call Run on session05Lab02.",
           "Identify 8.5m as the argument at the PrintHours call site.",
           "Identify hours as the parameter in the PrintHours declaration.",
           "Save both files."
-        ]
+        ],
+        "solution": "// Session05Lab02.cs\n// Lab 2 of 7 - Pass an Argument to a Parameter\nclass Session05Lab02\n{\n    public void Run()\n    {\n        PrintHours(8.5m);\n    }\n\n    public void PrintHours(decimal hours)\n    {\n        Console.WriteLine($\"Recorded hours: {hours}\");\n    }\n}\n\n// Add to Program.cs\nvar session05Lab02 = new Session05Lab02();\nsession05Lab02.Run();"
       },
       {
         "title": "Return a Calculated Value",
@@ -141,19 +143,22 @@
         "instructions": [
           "Create Session05Lab03.cs inside the Session05 folder.",
           "Paste the lab comment at the top of Session05Lab03.cs.",
-          {
-            "text": "Paste this class below the comment.",
-            "code": "class Session05Lab03\n{\n    public void Run()\n    {\n        decimal totalHours = AddHours(4m, 3.5m);\n        Console.WriteLine($\"Total hours: {totalHours}\");\n    }\n\n    public decimal AddHours(decimal firstHours, decimal secondHours)\n    {\n        return firstHours + secondHours;\n    }\n}"
-          },
+          "Write a class declaration named Session05Lab03.",
+          "Inside the class, write a public Run method that returns void.",
+          "Inside Run, declare a decimal variable named totalHours.",
+          "Assign the result of calling AddHours with 4m and 3.5m to totalHours.",
+          "On the next line, display totalHours with an interpolated Console.WriteLine statement.",
+          "Below Run, write a public method named AddHours with a decimal return type.",
+          "Give AddHours two decimal parameters named firstHours and secondHours.",
+          "Inside AddHours, return the sum of firstHours and secondHours.",
           "Open Program.cs.",
-          {
-            "text": "Construct the Lab 03 class and call Run from the entry point.",
-            "code": "var session05Lab03 = new Session05Lab03();\nsession05Lab03.Run();"
-          },
+          "Declare session05Lab03 and assign a new Session05Lab03 object to it.",
+          "Call Run on session05Lab03.",
           "Identify decimal as the AddHours return type.",
           "Point to the return statement that sends the sum to Run.",
           "Save both files."
-        ]
+        ],
+        "solution": "// Session05Lab03.cs\n// Lab 3 of 7 - Return a Calculated Value\nclass Session05Lab03\n{\n    public void Run()\n    {\n        decimal totalHours = AddHours(4m, 3.5m);\n        Console.WriteLine($\"Total hours: {totalHours}\");\n    }\n\n    public decimal AddHours(decimal firstHours, decimal secondHours)\n    {\n        return firstHours + secondHours;\n    }\n}\n\n// Add to Program.cs\nvar session05Lab03 = new Session05Lab03();\nsession05Lab03.Run();"
       },
       {
         "title": "Observe Local Scope",
@@ -162,20 +167,25 @@
         "instructions": [
           "Create Session05Lab04.cs inside the Session05 folder.",
           "Paste the lab comment at the top of Session05Lab04.cs.",
-          {
-            "text": "Paste this class below the comment.",
-            "code": "class Session05Lab04\n{\n    public void Run()\n    {\n        string message = BuildMessage(8m);\n        Console.WriteLine(message);\n    }\n\n    public string BuildMessage(decimal hours)\n    {\n        string localMessage = $\"Hours inside the method: {hours}\";\n        return localMessage;\n    }\n}"
-          },
+          "Write a class declaration named Session05Lab04.",
+          "Inside the class, write a public Run method that returns void.",
+          "Inside Run, declare a string variable named message.",
+          "Assign the result of calling BuildMessage with 8m to message.",
+          "Display message with Console.WriteLine.",
+          "Below Run, write a public method named BuildMessage with a string return type.",
+          "Give BuildMessage one decimal parameter named hours.",
+          "Inside BuildMessage, declare a string local variable named localMessage.",
+          "Assign an interpolated Hours inside the method message to localMessage.",
+          "Return localMessage.",
           "Open Program.cs.",
-          {
-            "text": "Construct the Lab 04 class and call Run from the entry point.",
-            "code": "var session05Lab04 = new Session05Lab04();\nsession05Lab04.Run();"
-          },
+          "Declare session05Lab04 and assign a new Session05Lab04 object to it.",
+          "Call Run on session05Lab04.",
           "Point to localMessage inside BuildMessage.",
           "Confirm that Run receives the returned text through its separate message variable.",
           "Explain why Run cannot directly read localMessage.",
           "Save both files."
-        ]
+        ],
+        "solution": "// Session05Lab04.cs\n// Lab 4 of 7 - Observe Local Scope\nclass Session05Lab04\n{\n    public void Run()\n    {\n        string message = BuildMessage(8m);\n        Console.WriteLine(message);\n    }\n\n    public string BuildMessage(decimal hours)\n    {\n        string localMessage = $\"Hours inside the method: {hours}\";\n        return localMessage;\n    }\n}\n\n// Add to Program.cs\nvar session05Lab04 = new Session05Lab04();\nsession05Lab04.Run();"
       },
       {
         "title": "Name a Variance Calculation",
@@ -184,20 +194,25 @@
         "instructions": [
           "Create Session05Lab05.cs inside the Session05 folder.",
           "Paste the lab comment at the top of Session05Lab05.cs.",
-          {
-            "text": "Paste this class below the comment.",
-            "code": "class Session05Lab05\n{\n    public void Run()\n    {\n        decimal varianceHours = CalculateVariance(8m, 7.5m);\n        Console.WriteLine($\"Variance: {varianceHours}\");\n    }\n\n    public decimal CalculateVariance(decimal recordedHours, decimal scheduledHours)\n    {\n        decimal difference = recordedHours - scheduledHours;\n        return difference;\n    }\n}"
-          },
+          "Write a class declaration named Session05Lab05.",
+          "Inside the class, write a public Run method that returns void.",
+          "Inside Run, declare a decimal variable named varianceHours.",
+          "Assign the result of CalculateVariance with arguments 8m and 7.5m to varianceHours.",
+          "Display varianceHours with an interpolated Console.WriteLine statement.",
+          "Below Run, write a public method named CalculateVariance with a decimal return type.",
+          "Give CalculateVariance decimal parameters named recordedHours and scheduledHours.",
+          "Inside CalculateVariance, declare a decimal local named difference.",
+          "Assign recordedHours minus scheduledHours to difference.",
+          "Return difference.",
           "Open Program.cs.",
-          {
-            "text": "Construct the Lab 05 class and call Run from the entry point.",
-            "code": "var session05Lab05 = new Session05Lab05();\nsession05Lab05.Run();"
-          },
+          "Declare session05Lab05 and assign a new Session05Lab05 object to it.",
+          "Call Run on session05Lab05.",
           "Identify 8m and 7.5m as arguments.",
           "Identify recordedHours and scheduledHours as parameters.",
           "Predict the returned variance before running.",
           "Save both files."
-        ]
+        ],
+        "solution": "// Session05Lab05.cs\n// Lab 5 of 7 - Name a Variance Calculation\nclass Session05Lab05\n{\n    public void Run()\n    {\n        decimal varianceHours = CalculateVariance(8m, 7.5m);\n        Console.WriteLine($\"Variance: {varianceHours}\");\n    }\n\n    public decimal CalculateVariance(decimal recordedHours, decimal scheduledHours)\n    {\n        decimal difference = recordedHours - scheduledHours;\n        return difference;\n    }\n}\n\n// Add to Program.cs\nvar session05Lab05 = new Session05Lab05();\nsession05Lab05.Run();"
       },
       {
         "title": "Name a Classification Decision",
@@ -206,20 +221,27 @@
         "instructions": [
           "Create Session05Lab06.cs inside the Session05 folder.",
           "Paste the lab comment at the top of Session05Lab06.cs.",
-          {
-            "text": "Paste this class below the comment.",
-            "code": "class Session05Lab06\n{\n    public void Run()\n    {\n        string status = ClassifyVariance(0.5m);\n        Console.WriteLine($\"Status: {status}\");\n    }\n\n    public string ClassifyVariance(decimal varianceHours)\n    {\n        return varianceHours switch\n        {\n            > 0m => \"over schedule\",\n            < 0m => \"under schedule\",\n            _ => \"on schedule\"\n        };\n    }\n}"
-          },
+          "Write a class declaration named Session05Lab06.",
+          "Inside the class, write a public Run method that returns void.",
+          "Inside Run, declare a string variable named status.",
+          "Assign the result of ClassifyVariance with argument 0.5m to status.",
+          "Display status with an interpolated Console.WriteLine statement.",
+          "Below Run, write a public method named ClassifyVariance with a string return type.",
+          "Give ClassifyVariance one decimal parameter named varianceHours.",
+          "Inside ClassifyVariance, begin a return statement using a switch expression on varianceHours.",
+          "Add an arm that returns over schedule for values greater than 0m.",
+          "Add an arm that returns under schedule for values less than 0m.",
+          "Add a fallback arm that returns on schedule.",
+          "Finish the switch expression with a semicolon.",
           "Open Program.cs.",
-          {
-            "text": "Construct the Lab 06 class and call Run from the entry point.",
-            "code": "var session05Lab06 = new Session05Lab06();\nsession05Lab06.Run();"
-          },
+          "Declare session05Lab06 and assign a new Session05Lab06 object to it.",
+          "Call Run on session05Lab06.",
           "Identify 0.5m as the argument.",
           "Identify varianceHours as the parameter.",
           "Predict the returned status before running.",
           "Save both files."
-        ]
+        ],
+        "solution": "// Session05Lab06.cs\n// Lab 6 of 7 - Name a Classification Decision\nclass Session05Lab06\n{\n    public void Run()\n    {\n        string status = ClassifyVariance(0.5m);\n        Console.WriteLine($\"Status: {status}\");\n    }\n\n    public string ClassifyVariance(decimal varianceHours)\n    {\n        return varianceHours switch\n        {\n            > 0m => \"over schedule\",\n            < 0m => \"under schedule\",\n            _ => \"on schedule\"\n        };\n    }\n}\n\n// Add to Program.cs\nvar session05Lab06 = new Session05Lab06();\nsession05Lab06.Run();"
       },
       {
         "title": "Combine Calculation and Classification",
@@ -228,15 +250,18 @@
         "instructions": [
           "Create Session05Lab07.cs inside the Session05 folder.",
           "Paste the lab comment at the top of Session05Lab07.cs.",
-          {
-            "text": "Paste this class below the comment.",
-            "code": "class Session05Lab07\n{\n    public void Run()\n    {\n        decimal varianceHours = CalculateVariance(8m, 7.5m);\n        string status = ClassifyVariance(varianceHours);\n        Console.WriteLine($\"Final variance: {varianceHours}; status: {status}\");\n    }\n\n    public decimal CalculateVariance(decimal recordedHours, decimal scheduledHours)\n    {\n        return recordedHours - scheduledHours;\n    }\n\n    public string ClassifyVariance(decimal varianceHours)\n    {\n        return varianceHours switch\n        {\n            > 0m => \"over schedule\",\n            < 0m => \"under schedule\",\n            _ => \"on schedule\"\n        };\n    }\n}"
-          },
+          "Write a class declaration named Session05Lab07.",
+          "Inside the class, write a public Run method that returns void.",
+          "Inside Run, declare varianceHours and assign the result of CalculateVariance with 8m and 7.5m.",
+          "On the next line, declare status and assign the result of ClassifyVariance with varianceHours.",
+          "Display varianceHours and status in one interpolated Console.WriteLine statement.",
+          "Below Run, write CalculateVariance with two decimal parameters and a decimal return type.",
+          "Inside CalculateVariance, return recordedHours minus scheduledHours directly.",
+          "Below CalculateVariance, write ClassifyVariance with one decimal parameter and a string return type.",
+          "Inside ClassifyVariance, return a switch expression with positive, negative, and fallback arms.",
           "Open Program.cs.",
-          {
-            "text": "Construct the Lab 07 class and call Run from the entry point.",
-            "code": "var session05Lab07 = new Session05Lab07();\nsession05Lab07.Run();"
-          },
+          "Declare session05Lab07 and assign a new Session05Lab07 object to it.",
+          "Call Run on session05Lab07.",
           "Save Session05Lab07.cs.",
           "Save Program.cs.",
           {
@@ -253,7 +278,8 @@
             "text": "Run the complete test suite without rebuilding.",
             "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
           }
-        ]
+        ],
+        "solution": "// Session05Lab07.cs\n// Lab 7 of 7 - Combine Calculation and Classification\nclass Session05Lab07\n{\n    public void Run()\n    {\n        decimal varianceHours = CalculateVariance(8m, 7.5m);\n        string status = ClassifyVariance(varianceHours);\n        Console.WriteLine($\"Final variance: {varianceHours}; status: {status}\");\n    }\n\n    public decimal CalculateVariance(decimal recordedHours, decimal scheduledHours)\n    {\n        return recordedHours - scheduledHours;\n    }\n\n    public string ClassifyVariance(decimal varianceHours)\n    {\n        return varianceHours switch\n        {\n            > 0m => \"over schedule\",\n            < 0m => \"under schedule\",\n            _ => \"on schedule\"\n        };\n    }\n}\n\n// Add to Program.cs\nvar session05Lab07 = new Session05Lab07();\nsession05Lab07.Run();"
       }
     ],
     "expectedBehavior": "Earlier ScratchPad work remains unchanged. The Session05 folder contains seven dedicated class files, Program.cs constructs each class and calls Run from the entry point, and the final exercise prints variance 0.5 with status over schedule.",
