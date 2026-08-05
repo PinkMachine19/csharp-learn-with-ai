@@ -96,6 +96,13 @@
       {
         "title": "Create the Session 05 Scratch Area",
         "objective": "Create a dedicated folder and first class for Session 05. The class wrapper is supplied for now; classes and object construction are taught properly in Session 06.",
+        "practice": [
+          "Keeping one session's experiments isolated from earlier work",
+          "Recognizing a class as the boundary around this exercise",
+          "Declaring and calling small void methods",
+          "Connecting the application entry point to a Run method"
+        ],
+        "task": "Create the Session05 folder and a Session05Lab01 class whose Run method calls WriteHeading. Start the exercise from Program.cs and display a Session 05 Lab 01 heading.",
         "comment": "// Lab 1 of 7 - Create the Session 05 Scratch Area",
         "instructions": [
           "Create the src/PinkMachine19.TimeClock.ScratchPad/Session05 folder.",
@@ -117,19 +124,23 @@
       {
         "title": "Pass an Argument to a Parameter",
         "objective": "Create a fresh exercise that passes a decimal argument into a method parameter. The method observes the supplied value and prints it.",
+        "practice": [
+          "Distinguishing an argument from a parameter",
+          "Passing a decimal value into a method",
+          "Using a parameter inside a method body",
+          "Tracing a value from Run to another method"
+        ],
+        "task": "Create a Session05Lab02 exercise that passes 8.5m to PrintHours and displays the received number of recorded hours.",
         "comment": "// Lab 2 of 7 - Pass an Argument to a Parameter",
         "instructions": [
           "Create Session05Lab02.cs inside the Session05 folder.",
           "Paste the lab comment at the top of Session05Lab02.cs.",
-          "Write a class declaration named Session05Lab02.",
-          "Inside the class, write a public Run method that returns void and has no parameters.",
+          "Use the established Session 05 class pattern to add Session05Lab02 with a public parameterless Run method.",
           "Inside Run, call PrintHours with the decimal argument 8.5m.",
           "Below Run, write a public method named PrintHours that returns void.",
           "Give PrintHours one decimal parameter named hours.",
           "Inside PrintHours, write one interpolated Console.WriteLine statement that displays Recorded hours followed by hours.",
-          "Open Program.cs.",
-          "Declare session05Lab02 and assign a new Session05Lab02 object to it.",
-          "Call Run on session05Lab02.",
+          "Wire Lab 02 into Program.cs using the established Session 05 pattern: construct Session05Lab02 and call Run on it.",
           "Identify 8.5m as the argument at the PrintHours call site.",
           "Identify hours as the parameter in the PrintHours declaration.",
           "Save both files."
@@ -139,21 +150,25 @@
       {
         "title": "Return a Calculated Value",
         "objective": "Create a method that receives two decimal parameters and returns their sum. The Run method stores and displays the returned value.",
+        "practice": [
+          "Declaring a non-void return type",
+          "Returning a calculated value",
+          "Storing a method result in a local variable",
+          "Tracing two arguments into two parameters"
+        ],
+        "task": "Create a Session05Lab03 exercise that adds 4m and 3.5m through AddHours, stores the returned total, and displays it.",
         "comment": "// Lab 3 of 7 - Return a Calculated Value",
         "instructions": [
           "Create Session05Lab03.cs inside the Session05 folder.",
           "Paste the lab comment at the top of Session05Lab03.cs.",
-          "Write a class declaration named Session05Lab03.",
-          "Inside the class, write a public Run method that returns void.",
+          "Use the established Session 05 class pattern to add Session05Lab03 with a public parameterless Run method.",
           "Inside Run, declare a decimal variable named totalHours.",
           "Assign the result of calling AddHours with 4m and 3.5m to totalHours.",
           "On the next line, display totalHours with an interpolated Console.WriteLine statement.",
           "Below Run, write a public method named AddHours with a decimal return type.",
           "Give AddHours two decimal parameters named firstHours and secondHours.",
           "Inside AddHours, return the sum of firstHours and secondHours.",
-          "Open Program.cs.",
-          "Declare session05Lab03 and assign a new Session05Lab03 object to it.",
-          "Call Run on session05Lab03.",
+          "Wire Lab 03 into Program.cs using the established Session 05 pattern: construct Session05Lab03 and call Run on it.",
           "Identify decimal as the AddHours return type.",
           "Point to the return statement that sends the sum to Run.",
           "Save both files."
@@ -163,12 +178,18 @@
       {
         "title": "Observe Local Scope",
         "objective": "Create a method with a local variable and observe where that name can be used. The local value exists only inside the method body that declares it.",
+        "practice": [
+          "Declaring a local variable inside a method",
+          "Understanding where a local name is in scope",
+          "Returning a local value to a caller",
+          "Keeping caller and method variables separate"
+        ],
+        "task": "Create a Session05Lab04 exercise whose BuildMessage method creates and returns localMessage, while Run stores the returned text in its own message variable.",
         "comment": "// Lab 4 of 7 - Observe Local Scope",
         "instructions": [
           "Create Session05Lab04.cs inside the Session05 folder.",
           "Paste the lab comment at the top of Session05Lab04.cs.",
-          "Write a class declaration named Session05Lab04.",
-          "Inside the class, write a public Run method that returns void.",
+          "Use the established Session 05 class pattern to add Session05Lab04 with a public parameterless Run method.",
           "Inside Run, declare a string variable named message.",
           "Assign the result of calling BuildMessage with 8m to message.",
           "Display message with Console.WriteLine.",
@@ -177,9 +198,7 @@
           "Inside BuildMessage, declare a string local variable named localMessage.",
           "Assign an interpolated Hours inside the method message to localMessage.",
           "Return localMessage.",
-          "Open Program.cs.",
-          "Declare session05Lab04 and assign a new Session05Lab04 object to it.",
-          "Call Run on session05Lab04.",
+          "Wire Lab 04 into Program.cs using the established Session 05 pattern: construct Session05Lab04 and call Run on it.",
           "Point to localMessage inside BuildMessage.",
           "Confirm that Run receives the returned text through its separate message variable.",
           "Explain why Run cannot directly read localMessage.",
@@ -190,12 +209,18 @@
       {
         "title": "Name a Variance Calculation",
         "objective": "Create a dedicated class whose method gives the recorded-minus-scheduled calculation a clear name. This is a fresh Session 05 example, not an edit to Session 03.",
+        "practice": [
+          "Naming a calculation with a method",
+          "Mapping call-site arguments to method parameters",
+          "Using a local variable for an intermediate result",
+          "Returning a decimal result"
+        ],
+        "task": "Create a Session05Lab05 exercise that calculates recorded hours minus scheduled hours through CalculateVariance and displays the returned variance.",
         "comment": "// Lab 5 of 7 - Name a Variance Calculation",
         "instructions": [
           "Create Session05Lab05.cs inside the Session05 folder.",
           "Paste the lab comment at the top of Session05Lab05.cs.",
-          "Write a class declaration named Session05Lab05.",
-          "Inside the class, write a public Run method that returns void.",
+          "Use the established Session 05 class pattern to add Session05Lab05 with a public parameterless Run method.",
           "Inside Run, declare a decimal variable named varianceHours.",
           "Assign the result of CalculateVariance with arguments 8m and 7.5m to varianceHours.",
           "Display varianceHours with an interpolated Console.WriteLine statement.",
@@ -204,9 +229,7 @@
           "Inside CalculateVariance, declare a decimal local named difference.",
           "Assign recordedHours minus scheduledHours to difference.",
           "Return difference.",
-          "Open Program.cs.",
-          "Declare session05Lab05 and assign a new Session05Lab05 object to it.",
-          "Call Run on session05Lab05.",
+          "Wire Lab 05 into Program.cs using the established Session 05 pattern: construct Session05Lab05 and call Run on it.",
           "Identify 8m and 7.5m as arguments.",
           "Identify recordedHours and scheduledHours as parameters.",
           "Predict the returned variance before running.",
@@ -217,12 +240,18 @@
       {
         "title": "Name a Classification Decision",
         "objective": "Create a dedicated class whose method maps one decimal variance to one status string. This keeps the method exercise isolated from Session 04's existing code.",
+        "practice": [
+          "Naming a classification with a method",
+          "Passing one decimal argument to one parameter",
+          "Returning a string result",
+          "Keeping a switch expression behind a method boundary"
+        ],
+        "task": "Create a Session05Lab06 exercise that sends 0.5m to ClassifyVariance and displays the returned schedule status.",
         "comment": "// Lab 6 of 7 - Name a Classification Decision",
         "instructions": [
           "Create Session05Lab06.cs inside the Session05 folder.",
           "Paste the lab comment at the top of Session05Lab06.cs.",
-          "Write a class declaration named Session05Lab06.",
-          "Inside the class, write a public Run method that returns void.",
+          "Use the established Session 05 class pattern to add Session05Lab06 with a public parameterless Run method.",
           "Inside Run, declare a string variable named status.",
           "Assign the result of ClassifyVariance with argument 0.5m to status.",
           "Display status with an interpolated Console.WriteLine statement.",
@@ -233,9 +262,7 @@
           "Add an arm that returns under schedule for values less than 0m.",
           "Add a fallback arm that returns on schedule.",
           "Finish the switch expression with a semicolon.",
-          "Open Program.cs.",
-          "Declare session05Lab06 and assign a new Session05Lab06 object to it.",
-          "Call Run on session05Lab06.",
+          "Wire Lab 06 into Program.cs using the established Session 05 pattern: construct Session05Lab06 and call Run on it.",
           "Identify 0.5m as the argument.",
           "Identify varianceHours as the parameter.",
           "Predict the returned status before running.",
@@ -246,12 +273,19 @@
       {
         "title": "Combine Calculation and Classification",
         "objective": "Create a final dedicated class that calls two named methods in sequence. Then run every Session 05 exercise from the application's entry point and verify the solution.",
+        "practice": [
+          "Composing two methods into one workflow",
+          "Passing one method's result into another method",
+          "Separating calculation from classification",
+          "Tracing values through several method boundaries",
+          "Verifying behavior without changing earlier sessions"
+        ],
+        "task": "Create a Session05Lab07 exercise that calculates a variance, passes that result into a classification method, and displays both final values before validating the complete solution.",
         "comment": "// Lab 7 of 7 - Combine Calculation and Classification",
         "instructions": [
           "Create Session05Lab07.cs inside the Session05 folder.",
           "Paste the lab comment at the top of Session05Lab07.cs.",
-          "Write a class declaration named Session05Lab07.",
-          "Inside the class, write a public Run method that returns void.",
+          "Use the established Session 05 class pattern to add Session05Lab07 with a public parameterless Run method.",
           "Inside Run, declare varianceHours and assign the result of CalculateVariance with 8m and 7.5m.",
           "On the next line, declare status and assign the result of ClassifyVariance with varianceHours.",
           "Display varianceHours and status in one interpolated Console.WriteLine statement.",
@@ -259,9 +293,7 @@
           "Inside CalculateVariance, return recordedHours minus scheduledHours directly.",
           "Below CalculateVariance, write ClassifyVariance with one decimal parameter and a string return type.",
           "Inside ClassifyVariance, return a switch expression with positive, negative, and fallback arms.",
-          "Open Program.cs.",
-          "Declare session05Lab07 and assign a new Session05Lab07 object to it.",
-          "Call Run on session05Lab07.",
+          "Wire Lab 07 into Program.cs using the established Session 05 pattern: construct Session05Lab07 and call Run on it.",
           "Save Session05Lab07.cs.",
           "Save Program.cs.",
           {
