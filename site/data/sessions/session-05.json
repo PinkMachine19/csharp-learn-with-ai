@@ -2,12 +2,12 @@
   "number": 5,
   "category": "Language foundations",
   "estimatedTime": "40 minutes",
-  "connection": "ScratchPad contains labeled numeric and decision sections written as top-level statements. Refactor the ScratchPad calculations into named methods while preserving every earlier experiment's output.",
+  "connection": "Earlier ScratchPad sessions remain unchanged. Create a dedicated Session05 folder containing one small class per exercise, then use Program.cs only as the application's entry point for constructing and running each exercise.",
   "objectives": [
     "Identify a method signature, arguments, parameters, and return value.",
     "Trace values into and out of a method call.",
     "Explain local scope and lifetime.",
-    "Extract repeated or conceptually named work without changing behavior."
+    "Place each method exercise in a session-specific class and invoke it from the application's entry point."
   ],
   "visuals": [
     {
@@ -68,129 +68,183 @@
       "title": "A method names a unit of behavior",
       "paragraphs": [
         "A method groups statements behind a name. A good name lets the caller express intent while the body owns calculation details.",
-        "Extraction is useful when it clarifies responsibility, not merely to make code shorter."
+        "Session 05 uses fresh examples instead of rewriting earlier-session code. Each example lives in its own class file so the exercise has a clear boundary. Classes are taught properly in Session 06; for now, use the provided class wrapper and focus on the methods inside it."
       ],
-      "code": "decimal varianceHours = CalculateVariance(recordedHours, scheduledHours);"
+      "code": "var session05Lab01 = new Session05Lab01();\nsession05Lab01.Run();"
     },
     {
       "title": "Parameters receive values",
       "paragraphs": [
         "Arguments are expressions at the call site. Parameters are local names in the method declaration. By default, C# passes the resulting values by value.",
-        "In this session, both arguments and parameters are decimal values. Reference-type behavior is a separate topic taught in a later session."
+        "In this session, method examples use decimal and string values. Reference-type behavior is a separate topic taught in a later session."
       ],
       "code": "static decimal CalculateVariance(decimal recordedHours, decimal scheduledHours)"
     },
     {
       "title": "Scope limits dependencies",
       "paragraphs": [
-        "difference exists only inside CalculateVariance. The varianceHours parameter inside ClassifyVariance is separate from variables at the call site. Those boundaries prevent temporary details from leaking into unrelated statements.",
+        "A local variable exists only inside the method body that declares it. A parameter is also local to its method, even when an argument at the call site has a similar name.",
         "return ends the method and supplies its result to the caller."
       ],
       "code": "decimal difference = recordedHours - scheduledHours;\nreturn difference;"
     }
   ],
   "lab": {
-    "objective": "Refactor the ScratchPad calculations into named methods while preserving every earlier experiment's output.",
-    "startingCondition": "ScratchPad contains labeled numeric and decision sections written as top-level statements.",
+    "objective": "Practice method declarations, parameters, local scope, and return values in seven isolated Session 05 classes.",
+    "startingCondition": "Keep every earlier ScratchPad section unchanged. Session 05 begins in a new src/PinkMachine19.TimeClock.ScratchPad/Session05 folder; Program.cs is edited only to construct each lab class and call Run from the application's top-level Main entry point.",
     "labs": [
       {
-        "title": "Find the Code That Will Be Refactored",
-        "objective": "Inspect the existing Session 03 and Session 04 sections before editing them. You are identifying the calculation and classification that will receive method names.",
+        "title": "Create the Session 05 Scratch Area",
+        "objective": "Create a dedicated folder and first class for Session 05. The class wrapper is supplied for now; classes and object construction are taught properly in Session 06.",
+        "comment": "// Lab 1 of 7 - Create the Session 05 Scratch Area",
         "instructions": [
+          "Create the src/PinkMachine19.TimeClock.ScratchPad/Session05 folder.",
+          "Create Session05Lab01.cs inside the new folder.",
+          "Paste the lab comment at the top of Session05Lab01.cs.",
+          {
+            "text": "Paste this class below the comment.",
+            "code": "class Session05Lab01\n{\n    public void Run()\n    {\n        WriteHeading();\n    }\n\n    public void WriteHeading()\n    {\n        Console.WriteLine(\"Session 05 Lab 01\");\n    }\n}"
+          },
           "Open src/PinkMachine19.TimeClock.ScratchPad/Program.cs.",
-          "Find the Session 03 heading.",
-          "Locate the line that subtracts scheduledHours from recordedHours.",
-          "Find the Session 04 heading.",
-          "Locate the switch expression assigned to scheduleStatus.",
-          "Confirm that the Session 04 Console.WriteLine statements appear below the switch expression."
-        ]
-      },
-      {
-        "title": "Call the Variance Method",
-        "objective": "Replace Session 03's direct subtraction with a call to a named method. The method does not exist yet, so a temporary compiler error is expected until Lab 4.",
-        "comment": "// Lab 2 of 7 - Call the Variance Method",
-        "instructions": [
-          "Paste the lab comment directly above the current varianceHours declaration.",
-          "Delete the direct recordedHours - scheduledHours expression.",
           {
-            "text": "Replace the declaration with this method call.",
-            "code": "decimal varianceHours = CalculateVariance(recordedHours, scheduledHours);"
+            "text": "Add these two entry-point statements below the earlier session calls or output.",
+            "code": "var session05Lab01 = new Session05Lab01();\nsession05Lab01.Run();"
           },
-          "Identify recordedHours and scheduledHours as the two arguments supplied by the caller."
+          "Save both files."
         ]
       },
       {
-        "title": "Call the Classification Method",
-        "objective": "Replace Session 04's inline switch expression with a call that names the classification behavior. Keep the existing output statements unchanged.",
-        "comment": "// Lab 3 of 7 - Call the Classification Method",
+        "title": "Pass an Argument to a Parameter",
+        "objective": "Create a fresh exercise that passes a decimal argument into a method parameter. The method observes the supplied value and prints it.",
+        "comment": "// Lab 2 of 7 - Pass an Argument to a Parameter",
         "instructions": [
-          "Paste the lab comment directly above the scheduleStatus declaration.",
-          "Delete the existing switch expression assigned to scheduleStatus.",
+          "Create Session05Lab02.cs inside the Session05 folder.",
+          "Paste the lab comment at the top of Session05Lab02.cs.",
           {
-            "text": "Replace it with this method call.",
-            "code": "string scheduleStatus = ClassifyVariance(decisionVarianceHours);"
+            "text": "Paste this class below the comment.",
+            "code": "class Session05Lab02\n{\n    public void Run()\n    {\n        PrintHours(8.5m);\n    }\n\n    public void PrintHours(decimal hours)\n    {\n        Console.WriteLine($\"Recorded hours: {hours}\");\n    }\n}"
           },
-          "Confirm that both Session 04 Console.WriteLine statements remain below the new call."
-        ]
-      },
-      {
-        "title": "Create CalculateVariance",
-        "objective": "Create the first local method at the bottom of Program.cs. This method receives two decimal parameters, calculates one local value, and returns that value to its caller.",
-        "comment": "// Lab 4 of 7 - Create CalculateVariance",
-        "instructions": [
-          "Scroll to the bottom of Program.cs.",
-          "Paste the lab comment below all top-level executable statements.",
+          "Open Program.cs.",
           {
-            "text": "Paste the CalculateVariance method directly below the comment.",
-            "code": "static decimal CalculateVariance(decimal recordedHours, decimal scheduledHours)\n{\n    decimal difference = recordedHours - scheduledHours;\n    return difference;\n}"
+            "text": "Construct the Lab 02 class and call Run from the entry point.",
+            "code": "var session05Lab02 = new Session05Lab02();\nsession05Lab02.Run();"
           },
-          "Identify decimal as the method's return type.",
-          "Identify recordedHours and scheduledHours as parameters local to the method.",
-          "Identify difference as a local variable that exists only inside the method body."
+          "Identify 8.5m as the argument at the PrintHours call site.",
+          "Identify hours as the parameter in the PrintHours declaration.",
+          "Save both files."
         ]
       },
       {
-        "title": "Create ClassifyVariance",
-        "objective": "Create a second local method that owns the switch expression from Session 04. The method receives one decimal parameter and returns one status string.",
-        "comment": "// Lab 5 of 7 - Create ClassifyVariance",
+        "title": "Return a Calculated Value",
+        "objective": "Create a method that receives two decimal parameters and returns their sum. The Run method stores and displays the returned value.",
+        "comment": "// Lab 3 of 7 - Return a Calculated Value",
         "instructions": [
-          "Place the cursor below the closing brace of CalculateVariance.",
-          "Paste the lab comment on a new line.",
+          "Create Session05Lab03.cs inside the Session05 folder.",
+          "Paste the lab comment at the top of Session05Lab03.cs.",
           {
-            "text": "Paste the ClassifyVariance method directly below the comment.",
-            "code": "static string ClassifyVariance(decimal varianceHours)\n{\n    return varianceHours switch\n    {\n        > 0m => \"over schedule\",\n        < 0m => \"under schedule\",\n        _ => \"on schedule\"\n    };\n}"
+            "text": "Paste this class below the comment.",
+            "code": "class Session05Lab03\n{\n    public void Run()\n    {\n        decimal totalHours = AddHours(4m, 3.5m);\n        Console.WriteLine($\"Total hours: {totalHours}\");\n    }\n\n    public decimal AddHours(decimal firstHours, decimal secondHours)\n    {\n        return firstHours + secondHours;\n    }\n}"
           },
-          "Identify string as the method's return type.",
-          "Identify varianceHours as the method's parameter.",
-          "Confirm that every switch arm produces a string."
+          "Open Program.cs.",
+          {
+            "text": "Construct the Lab 03 class and call Run from the entry point.",
+            "code": "var session05Lab03 = new Session05Lab03();\nsession05Lab03.Run();"
+          },
+          "Identify decimal as the AddHours return type.",
+          "Point to the return statement that sends the sum to Run.",
+          "Save both files."
         ]
       },
       {
-        "title": "Trace Arguments, Parameters, Locals, and Returns",
-        "objective": "Trace values across each method boundary before running the program. This checks whether the refactor is understood rather than merely copied.",
+        "title": "Observe Local Scope",
+        "objective": "Create a method with a local variable and observe where that name can be used. The local value exists only inside the method body that declares it.",
+        "comment": "// Lab 4 of 7 - Observe Local Scope",
         "instructions": [
-          "Read the CalculateVariance call aloud.",
-          "Name the two arguments at the CalculateVariance call site.",
-          "Name the two parameters in the CalculateVariance declaration.",
-          "Point to the local variable named difference.",
-          "Point to the return statement that sends difference back to the caller.",
-          "Read the ClassifyVariance call aloud.",
-          "Name the argument at the ClassifyVariance call site.",
-          "Name the parameter in the ClassifyVariance declaration.",
-          "Explain why top-level code cannot directly read the local variable difference."
+          "Create Session05Lab04.cs inside the Session05 folder.",
+          "Paste the lab comment at the top of Session05Lab04.cs.",
+          {
+            "text": "Paste this class below the comment.",
+            "code": "class Session05Lab04\n{\n    public void Run()\n    {\n        string message = BuildMessage(8m);\n        Console.WriteLine(message);\n    }\n\n    public string BuildMessage(decimal hours)\n    {\n        string localMessage = $\"Hours inside the method: {hours}\";\n        return localMessage;\n    }\n}"
+          },
+          "Open Program.cs.",
+          {
+            "text": "Construct the Lab 04 class and call Run from the entry point.",
+            "code": "var session05Lab04 = new Session05Lab04();\nsession05Lab04.Run();"
+          },
+          "Point to localMessage inside BuildMessage.",
+          "Confirm that Run receives the returned text through its separate message variable.",
+          "Explain why Run cannot directly read localMessage.",
+          "Save both files."
         ]
       },
       {
-        "title": "Run and Verify the Refactor",
-        "objective": "Compile and run the refactored ScratchPad, then verify that naming the behavior did not change its output. Finish by checking the complete solution and test suite.",
+        "title": "Name a Variance Calculation",
+        "objective": "Create a dedicated class whose method gives the recorded-minus-scheduled calculation a clear name. This is a fresh Session 05 example, not an edit to Session 03.",
+        "comment": "// Lab 5 of 7 - Name a Variance Calculation",
         "instructions": [
+          "Create Session05Lab05.cs inside the Session05 folder.",
+          "Paste the lab comment at the top of Session05Lab05.cs.",
+          {
+            "text": "Paste this class below the comment.",
+            "code": "class Session05Lab05\n{\n    public void Run()\n    {\n        decimal varianceHours = CalculateVariance(8m, 7.5m);\n        Console.WriteLine($\"Variance: {varianceHours}\");\n    }\n\n    public decimal CalculateVariance(decimal recordedHours, decimal scheduledHours)\n    {\n        decimal difference = recordedHours - scheduledHours;\n        return difference;\n    }\n}"
+          },
+          "Open Program.cs.",
+          {
+            "text": "Construct the Lab 05 class and call Run from the entry point.",
+            "code": "var session05Lab05 = new Session05Lab05();\nsession05Lab05.Run();"
+          },
+          "Identify 8m and 7.5m as arguments.",
+          "Identify recordedHours and scheduledHours as parameters.",
+          "Predict the returned variance before running.",
+          "Save both files."
+        ]
+      },
+      {
+        "title": "Name a Classification Decision",
+        "objective": "Create a dedicated class whose method maps one decimal variance to one status string. This keeps the method exercise isolated from Session 04's existing code.",
+        "comment": "// Lab 6 of 7 - Name a Classification Decision",
+        "instructions": [
+          "Create Session05Lab06.cs inside the Session05 folder.",
+          "Paste the lab comment at the top of Session05Lab06.cs.",
+          {
+            "text": "Paste this class below the comment.",
+            "code": "class Session05Lab06\n{\n    public void Run()\n    {\n        string status = ClassifyVariance(0.5m);\n        Console.WriteLine($\"Status: {status}\");\n    }\n\n    public string ClassifyVariance(decimal varianceHours)\n    {\n        return varianceHours switch\n        {\n            > 0m => \"over schedule\",\n            < 0m => \"under schedule\",\n            _ => \"on schedule\"\n        };\n    }\n}"
+          },
+          "Open Program.cs.",
+          {
+            "text": "Construct the Lab 06 class and call Run from the entry point.",
+            "code": "var session05Lab06 = new Session05Lab06();\nsession05Lab06.Run();"
+          },
+          "Identify 0.5m as the argument.",
+          "Identify varianceHours as the parameter.",
+          "Predict the returned status before running.",
+          "Save both files."
+        ]
+      },
+      {
+        "title": "Combine Calculation and Classification",
+        "objective": "Create a final dedicated class that calls two named methods in sequence. Then run every Session 05 exercise from the application's entry point and verify the solution.",
+        "comment": "// Lab 7 of 7 - Combine Calculation and Classification",
+        "instructions": [
+          "Create Session05Lab07.cs inside the Session05 folder.",
+          "Paste the lab comment at the top of Session05Lab07.cs.",
+          {
+            "text": "Paste this class below the comment.",
+            "code": "class Session05Lab07\n{\n    public void Run()\n    {\n        decimal varianceHours = CalculateVariance(8m, 7.5m);\n        string status = ClassifyVariance(varianceHours);\n        Console.WriteLine($\"Final variance: {varianceHours}; status: {status}\");\n    }\n\n    public decimal CalculateVariance(decimal recordedHours, decimal scheduledHours)\n    {\n        return recordedHours - scheduledHours;\n    }\n\n    public string ClassifyVariance(decimal varianceHours)\n    {\n        return varianceHours switch\n        {\n            > 0m => \"over schedule\",\n            < 0m => \"under schedule\",\n            _ => \"on schedule\"\n        };\n    }\n}"
+          },
+          "Open Program.cs.",
+          {
+            "text": "Construct the Lab 07 class and call Run from the entry point.",
+            "code": "var session05Lab07 = new Session05Lab07();\nsession05Lab07.Run();"
+          },
+          "Save Session05Lab07.cs.",
           "Save Program.cs.",
           {
             "text": "Run ScratchPad.",
             "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"
           },
-          "Confirm that the Session 03 numeric output still matches the earlier result.",
-          "Confirm that the Session 04 status output still says over schedule for 0.5m.",
+          "Confirm that all seven Session 05 headings or results appear.",
+          "Confirm that the final line reports variance 0.5 and status over schedule.",
           {
             "text": "Build the complete solution.",
             "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
@@ -202,14 +256,49 @@
         ]
       }
     ],
-    "expectedBehavior": "All ScratchPad examples still run, but calculation and classification now use named local methods.",
+    "expectedBehavior": "Earlier ScratchPad work remains unchanged. The Session05 folder contains seven dedicated class files, Program.cs constructs each class and calls Run from the entry point, and the final exercise prints variance 0.5 with status over schedule.",
     "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
     {
       "path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs",
       "action": "Modify",
-      "why": "Teach methods and scope in the permanent notebook without premature production design."
+      "why": "Use the application's top-level Main entry point to construct each Session 05 class and call Run."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session05/Session05Lab01.cs",
+      "action": "Add",
+      "why": "Keep the first named-method exercise in a Session 05-specific class."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session05/Session05Lab02.cs",
+      "action": "Add",
+      "why": "Isolate the argument-and-parameter exercise."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session05/Session05Lab03.cs",
+      "action": "Add",
+      "why": "Isolate the return-value exercise."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session05/Session05Lab04.cs",
+      "action": "Add",
+      "why": "Isolate the local-scope exercise."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session05/Session05Lab05.cs",
+      "action": "Add",
+      "why": "Isolate the named variance-calculation exercise."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session05/Session05Lab06.cs",
+      "action": "Add",
+      "why": "Isolate the named classification exercise."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session05/Session05Lab07.cs",
+      "action": "Add",
+      "why": "Combine calculation and classification inside one final Session 05 exercise."
     },
     {
       "path": "site/data/sessions/session-05.json",
@@ -217,15 +306,15 @@
       "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
-  "commit": "session-04: teach methods parameters scope and returns",
+  "commit": "session-05: teach methods parameters scope and returns",
   "review": [
     "The lab uses scratchpad because that is the most natural environment for this concept.",
     "Every referenced application artifact was created in this session or an earlier session.",
-    "Earlier production code, tests, and ScratchPad experiments remain intact."
+    "Earlier production code, tests, and ScratchPad session files remain unchanged."
   ],
   "postQuiz": [
     {
-      "prompt": "Where is difference available after extraction?",
+      "prompt": "Where is difference available in Session05Lab05?",
       "options": [
         "Only inside CalculateVariance",
         "Every project",
@@ -256,11 +345,11 @@
     }
   ],
   "reflections": [
-    "Which details became hidden after extraction?",
+    "Which details are hidden behind each named method call?",
     "When would a method with many parameters signal a design problem?",
     "How does return type constrain callers?"
   ],
-  "whatBreaks": "Removing CalculateVariance leaves the caller without the numeric result. Removing a return statement prevents a non-void method from compiling. Moving difference outside the method widens scope and weakens the boundary even if behavior remains the same.",
+  "whatBreaks": "Removing a Session 05 class while Program.cs still constructs it prevents the ScratchPad from compiling. Removing CalculateVariance leaves its Run method without the numeric result. Removing a return statement prevents a non-void method from compiling, while trying to read difference outside Session05Lab05.CalculateVariance fails because that local name is out of scope.",
   "summary": "Methods name behavior. Arguments produce values for parameters, locals stay within scope, and return values carry results back to callers.",
   "learningEnvironment": "scratchpad",
   "buildState": {

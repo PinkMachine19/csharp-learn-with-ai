@@ -71,11 +71,20 @@ const plans = {
     behavior: "ScratchPad retains every earlier experiment. Running Session 04 separately with 0.5m, 0m, and -0.5m produces over schedule, on schedule, and under schedule respectively. The final saved value is restored to 0.5m, and production code remains unchanged."
   },
   "5": {
-    objective: "Refactor the ScratchPad calculations into named methods while preserving every earlier experiment's output.",
-    starting: "ScratchPad contains labeled numeric and decision sections written as top-level statements.",
+    objective: "Practice method declarations, parameters, local scope, and return values in seven isolated Session 05 classes.",
+    starting: "Keep every earlier ScratchPad section unchanged. Session 05 begins in a new src/PinkMachine19.TimeClock.ScratchPad/Session05 folder; Program.cs is edited only to construct each lab class and call Run from the application's top-level Main entry point.",
     preserveStructuredLabs: true,
-    expected: [f("src/PinkMachine19.TimeClock.ScratchPad/Program.cs", "Modify", "Teach methods and scope in the permanent notebook without premature production design.")],
-    behavior: "All ScratchPad examples still run, but calculation and classification now use named local methods."
+    expected: [
+      f("src/PinkMachine19.TimeClock.ScratchPad/Program.cs", "Modify", "Use the application's top-level Main entry point to construct each Session 05 class and call Run."),
+      f("src/PinkMachine19.TimeClock.ScratchPad/Session05/Session05Lab01.cs", "Add", "Keep the first named-method exercise in a Session 05-specific class."),
+      f("src/PinkMachine19.TimeClock.ScratchPad/Session05/Session05Lab02.cs", "Add", "Isolate the argument-and-parameter exercise."),
+      f("src/PinkMachine19.TimeClock.ScratchPad/Session05/Session05Lab03.cs", "Add", "Isolate the return-value exercise."),
+      f("src/PinkMachine19.TimeClock.ScratchPad/Session05/Session05Lab04.cs", "Add", "Isolate the local-scope exercise."),
+      f("src/PinkMachine19.TimeClock.ScratchPad/Session05/Session05Lab05.cs", "Add", "Isolate the named variance-calculation exercise."),
+      f("src/PinkMachine19.TimeClock.ScratchPad/Session05/Session05Lab06.cs", "Add", "Isolate the named classification exercise."),
+      f("src/PinkMachine19.TimeClock.ScratchPad/Session05/Session05Lab07.cs", "Add", "Combine calculation and classification inside one final Session 05 exercise.")
+    ],
+    behavior: "Earlier ScratchPad work remains unchanged. The Session05 folder contains seven dedicated class files, Program.cs constructs each class and calls Run from the entry point, and the final exercise prints variance 0.5 with status over schedule."
   }
 };
 
