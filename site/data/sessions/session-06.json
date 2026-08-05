@@ -87,6 +87,14 @@
         "ClockEntryService.ClockIn uses exactly this shape: it builds a new ClockEntry and hands it to the repository -- a pure create, with no existing record to look up."
       ],
       "code": "// Services/ClockEntryService.cs -- the real ClockIn implementation\npublic void ClockIn(int employeeId)\n{\n    var entry = new ClockEntry(employeeId, DateTime.Now);\n    _clockEntryRepository.SaveClockEntry(entry);\n}"
+    },
+    {
+      "title": "The Domain project owns the business models",
+      "paragraphs": [
+        "Address, Employee, and ClockEntry belong inside the PinkMachine19.TimeClock.Domain project because they describe the business. In VS Code, that project appears as the src/PinkMachine19.TimeClock.Domain folder. The folder path tells you where to create the files; the .csproj file defines which project owns and compiles them.",
+        "Session 02 already added a ProjectReference from App to Domain. That reference is what allows Session06ModelDemo in the App project to consume the Domain classes. Do not add the reference again: open the App project file and verify the existing ProjectReference before writing the demo."
+      ],
+      "code": "<ProjectReference Include=\"..\\PinkMachine19.TimeClock.Domain\\PinkMachine19.TimeClock.Domain.csproj\" />"
     }
   ],
   "lab": {
@@ -98,11 +106,12 @@
         "title": "Create the Address Model",
         "objective": "Create the first small production model without removing or rewriting an earlier class.",
         "practice": ["Declaring a class", "Representing related values with properties", "Using a constructor to establish initial state"],
-        "task": "Add Address.cs with the address values required by the product brief.",
+        "task": "Add Address.cs to the PinkMachine19.TimeClock.Domain project with the address values required by the product brief.",
         "comment": "// Lab 1 of 4 - Create the Address Model",
         "instructions": [
           "Leave Class1.cs and every existing file unchanged.",
-          "Create Address.cs in src/PinkMachine19.TimeClock.Domain.",
+          "In VS Code, locate the PinkMachine19.TimeClock.Domain project at src/PinkMachine19.TimeClock.Domain.",
+          "Create Address.cs directly inside that Domain project folder.",
           "Paste the lab comment at the top of Address.cs.",
           "Declare a public class named Address.",
           "Add one required address property at a time using the names from the product brief.",
@@ -115,11 +124,11 @@
         "title": "Create the Employee Model",
         "objective": "Create a second production class and connect it to Address through an object property.",
         "practice": ["Creating a second class", "Using one model as another model's property", "Establishing identity and required state"],
-        "task": "Add Employee.cs with identity, name, and address state established by its constructor.",
+        "task": "Add Employee.cs to the PinkMachine19.TimeClock.Domain project with identity, name, and address state established by its constructor.",
         "comment": "// Lab 2 of 4 - Create the Employee Model",
         "instructions": [
           "Keep Address.cs and every earlier class unchanged.",
-          "Create Employee.cs in src/PinkMachine19.TimeClock.Domain.",
+          "Create Employee.cs directly inside the src/PinkMachine19.TimeClock.Domain project folder.",
           "Paste the lab comment at the top of Employee.cs.",
           "Declare a public class named Employee.",
           "Add the employee identity property from the product brief.",
@@ -134,11 +143,11 @@
         "title": "Create the Open Clock Entry Model",
         "objective": "Create a third production class that represents the state known when an employee clocks in.",
         "practice": ["Modeling a business event", "Choosing constructor-required state", "Stopping at the current session boundary"],
-        "task": "Add ClockEntry.cs with EmployeeId and ClockIn established by its constructor; do not add clock-out behavior yet.",
+        "task": "Add ClockEntry.cs to the PinkMachine19.TimeClock.Domain project with EmployeeId and ClockIn established by its constructor; do not add clock-out behavior yet.",
         "comment": "// Lab 3 of 4 - Create the Open Clock Entry Model",
         "instructions": [
           "Keep Address.cs, Employee.cs, and every earlier class unchanged.",
-          "Create ClockEntry.cs in src/PinkMachine19.TimeClock.Domain.",
+          "Create ClockEntry.cs directly inside the src/PinkMachine19.TimeClock.Domain project folder.",
           "Paste the lab comment at the top of ClockEntry.cs.",
           "Declare a public class named ClockEntry.",
           "Add an int property named EmployeeId.",
@@ -154,10 +163,13 @@
         "title": "Run the Session 06 Model Demo",
         "objective": "Use a new session-specific demo class to construct the models, while Program.cs remains the entry point that starts the exercise.",
         "practice": ["Constructing objects", "Reading initial property state", "Calling a session class from Main", "Preserving earlier classes"],
-        "task": "Create Session06ModelDemo with a Run method that constructs and displays one Employee and one open ClockEntry, then append its construction and Run call to App/Program.cs.",
+        "task": "Verify that App already references Domain, create Session06ModelDemo in the App project, and use its Run method to construct and display one Employee and one open ClockEntry. Then append its construction and Run call to App/Program.cs.",
         "comment": "// Lab 4 of 4 - Run the Session 06 Model Demo",
         "instructions": [
-          "Create Session06ModelDemo.cs in src/PinkMachine19.TimeClock.App.",
+          "Open src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj.",
+          "Find the existing ProjectReference to PinkMachine19.TimeClock.Domain.csproj.",
+          "Do not add a second ProjectReference.",
+          "Create Session06ModelDemo.cs directly inside the src/PinkMachine19.TimeClock.App project folder.",
           "Paste the lab comment at the top of Session06ModelDemo.cs.",
           "Declare a public class named Session06ModelDemo.",
           "Add a public parameterless Run method.",
@@ -184,17 +196,17 @@
     {
       "path": "src/PinkMachine19.TimeClock.Domain/Address.cs",
       "action": "Add",
-      "why": "Represent an employee address."
+      "why": "Place the employee address business model in the Domain project."
     },
     {
       "path": "src/PinkMachine19.TimeClock.Domain/Employee.cs",
       "action": "Add",
-      "why": "Represent an employee."
+      "why": "Place the employee business model in the Domain project."
     },
     {
       "path": "src/PinkMachine19.TimeClock.Domain/ClockEntry.cs",
       "action": "Add",
-      "why": "Represent an employee clock-in."
+      "why": "Place the employee clock-in business model in the Domain project."
     },
     {
       "path": "src/PinkMachine19.TimeClock.App/Session06ModelDemo.cs",
