@@ -91,27 +91,96 @@
   ],
   "lab": {
     "objective": "Create the first production domain models—Address, Employee, and ClockEntry—from the verified product vocabulary.",
-    "startingCondition": "The solution and ScratchPad experiments exist, but Domain still contains only the class-library template. This is the first session that adds TimeClock business code.",
-    "steps": [
-      "Delete the template Class1.cs from Domain.",
-      "Create Address.cs with the address values required by the product brief.",
-      "Create Employee.cs with identity, name, and address state established by its constructor.",
-      "Create ClockEntry.cs with EmployeeId and ClockIn established by its constructor; do not add clock-out rules yet.",
-      "In App/Program.cs, construct one Employee and one open ClockEntry and print their initial state.",
+    "startingCondition": "Keep every earlier class and ScratchPad experiment unchanged. Add the first TimeClock business classes as new files, then add a separate Session06ModelDemo class that Program.cs constructs and runs.",
+    "collapseInstructions": true,
+    "labs": [
       {
-        "text": "Build, run App, and test the scaffold.",
-        "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+        "title": "Create the Address Model",
+        "objective": "Create the first small production model without removing or rewriting an earlier class.",
+        "practice": ["Declaring a class", "Representing related values with properties", "Using a constructor to establish initial state"],
+        "task": "Add Address.cs with the address values required by the product brief.",
+        "comment": "// Lab 1 of 4 - Create the Address Model",
+        "instructions": [
+          "Leave Class1.cs and every existing file unchanged.",
+          "Create Address.cs in src/PinkMachine19.TimeClock.Domain.",
+          "Paste the lab comment at the top of Address.cs.",
+          "Declare a public class named Address.",
+          "Add one required address property at a time using the names from the product brief.",
+          "Add a constructor that receives the required address values.",
+          "Assign each constructor parameter to its matching property.",
+          "Save Address.cs."
+        ]
+      },
+      {
+        "title": "Create the Employee Model",
+        "objective": "Create a second production class and connect it to Address through an object property.",
+        "practice": ["Creating a second class", "Using one model as another model's property", "Establishing identity and required state"],
+        "task": "Add Employee.cs with identity, name, and address state established by its constructor.",
+        "comment": "// Lab 2 of 4 - Create the Employee Model",
+        "instructions": [
+          "Keep Address.cs and every earlier class unchanged.",
+          "Create Employee.cs in src/PinkMachine19.TimeClock.Domain.",
+          "Paste the lab comment at the top of Employee.cs.",
+          "Declare a public class named Employee.",
+          "Add the employee identity property from the product brief.",
+          "Add the employee name property from the product brief.",
+          "Add an Address property whose type is Address.",
+          "Add a constructor that receives the required employee values.",
+          "Assign each constructor parameter to its matching property.",
+          "Save Employee.cs."
+        ]
+      },
+      {
+        "title": "Create the Open Clock Entry Model",
+        "objective": "Create a third production class that represents the state known when an employee clocks in.",
+        "practice": ["Modeling a business event", "Choosing constructor-required state", "Stopping at the current session boundary"],
+        "task": "Add ClockEntry.cs with EmployeeId and ClockIn established by its constructor; do not add clock-out behavior yet.",
+        "comment": "// Lab 3 of 4 - Create the Open Clock Entry Model",
+        "instructions": [
+          "Keep Address.cs, Employee.cs, and every earlier class unchanged.",
+          "Create ClockEntry.cs in src/PinkMachine19.TimeClock.Domain.",
+          "Paste the lab comment at the top of ClockEntry.cs.",
+          "Declare a public class named ClockEntry.",
+          "Add an int property named EmployeeId.",
+          "Add a DateTime property named ClockIn.",
+          "Add a constructor that receives employeeId and clockIn.",
+          "Assign employeeId to EmployeeId.",
+          "Assign clockIn to ClockIn.",
+          "Do not add ClockOut or duration behavior in this session.",
+          "Save ClockEntry.cs."
+        ]
+      },
+      {
+        "title": "Run the Session 06 Model Demo",
+        "objective": "Use a new session-specific demo class to construct the models, while Program.cs remains the entry point that starts the exercise.",
+        "practice": ["Constructing objects", "Reading initial property state", "Calling a session class from Main", "Preserving earlier classes"],
+        "task": "Create Session06ModelDemo with a Run method that constructs and displays one Employee and one open ClockEntry, then append its construction and Run call to App/Program.cs.",
+        "comment": "// Lab 4 of 4 - Run the Session 06 Model Demo",
+        "instructions": [
+          "Create Session06ModelDemo.cs in src/PinkMachine19.TimeClock.App.",
+          "Paste the lab comment at the top of Session06ModelDemo.cs.",
+          "Declare a public class named Session06ModelDemo.",
+          "Add a public parameterless Run method.",
+          "Inside Run, construct one Address object.",
+          "On the next line, construct one Employee object using that Address.",
+          "On the next line, construct one open ClockEntry for that employee.",
+          "Display the employee's initial state.",
+          "Display the clock entry's initial state.",
+          "Open src/PinkMachine19.TimeClock.App/Program.cs.",
+          "Move to the end of Main without deleting or replacing existing code.",
+          "Construct one Session06ModelDemo object.",
+          "Call Run on the Session06ModelDemo object.",
+          "Save both files.",
+          {"text": "Run the App and observe the model state.", "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release"},
+          {"text": "Build the complete solution.", "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"},
+          {"text": "Run the complete test suite without rebuilding.", "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"}
+        ]
       }
     ],
     "expectedBehavior": "The production application creates and displays its first employee and open clock entry; no service or persistence code exists yet.",
     "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
-    {
-      "path": "src/PinkMachine19.TimeClock.Domain/Class1.cs",
-      "action": "Delete",
-      "why": "Remove the class-library placeholder when real domain models arrive."
-    },
     {
       "path": "src/PinkMachine19.TimeClock.Domain/Address.cs",
       "action": "Add",
@@ -128,9 +197,14 @@
       "why": "Represent an employee clock-in."
     },
     {
+      "path": "src/PinkMachine19.TimeClock.App/Session06ModelDemo.cs",
+      "action": "Add",
+      "why": "Keep the Session 06 model exercise in a dedicated class with a Run method."
+    },
+    {
       "path": "src/PinkMachine19.TimeClock.App/Program.cs",
       "action": "Modify",
-      "why": "Exercise the first production models."
+      "why": "Construct Session06ModelDemo and call Run from the application's entry point."
     },
     {
       "path": "site/data/sessions/session-06.json",

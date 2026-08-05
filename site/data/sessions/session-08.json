@@ -91,15 +91,44 @@
   ],
   "lab": {
     "objective": "Add a preserved ScratchPad experiment that observes value copying and reference sharing through the production models.",
-    "startingCondition": "Production contains Employee, Address, and ClockEntry from Sessions 06–07. ScratchPad already references Domain and retains Sessions 03–05.",
-    "steps": [
-      "Add a Session 08 heading below the existing ScratchPad work.",
-      "Copy an int EmployeeId and change the copy; observe that the original value is unchanged.",
-      "Assign one Employee reference to a second variable and rename through one reference; observe the shared object.",
-      "Write the prediction before each mutation and keep the observations as comments.",
+    "startingCondition": "Production contains Employee, Address, and ClockEntry from Sessions 06–07. Keep every earlier ScratchPad class and Program.cs call unchanged; Session 08 adds a new class in its own folder and appends one new Run call.",
+    "collapseInstructions": true,
+    "labs": [
       {
-        "text": "Run ScratchPad without deleting earlier sections.",
-        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"
+        "title": "Compare Value Copying and Reference Sharing",
+        "objective": "Create a new Session 08 class that keeps the assignment experiment separate from all earlier ScratchPad exercises.",
+        "practice": ["Copying a value type", "Sharing a reference-type object", "Predicting before mutation", "Observing state through two variables"],
+        "task": "Create Session08AssignmentDemo with a Run method that compares an int copy with two variables referring to one Employee, then append its construction and Run call to ScratchPad/Program.cs.",
+        "comment": "// Lab 1 of 1 - Compare Value Copying and Reference Sharing",
+        "instructions": [
+          "Create the src/PinkMachine19.TimeClock.ScratchPad/Session08 folder.",
+          "Create Session08AssignmentDemo.cs inside the Session08 folder.",
+          "Paste the lab comment at the top of Session08AssignmentDemo.cs.",
+          "Declare a public class named Session08AssignmentDemo.",
+          "Add a public parameterless Run method.",
+          "Inside Run, display a Session 08 heading.",
+          "Declare an int variable that represents an employee ID.",
+          "Copy that value into a second int variable.",
+          "Before changing the copy, write a comment predicting what will happen to the original.",
+          "Change only the copied int variable.",
+          "Display both int values.",
+          "Write a comment recording what the output demonstrates about value copying.",
+          "Construct one Address object.",
+          "Construct one Employee object using that Address.",
+          "Assign the Employee reference to a second Employee variable.",
+          "Before changing the employee through the second variable, write a comment predicting what the first variable will observe.",
+          "Change the employee name through the second variable.",
+          "Display the employee name through both variables.",
+          "Write a comment recording what the output demonstrates about reference sharing.",
+          "Open src/PinkMachine19.TimeClock.ScratchPad/Program.cs.",
+          "Keep every existing session construction and Run call unchanged.",
+          "Move to the end of Program.cs.",
+          "Construct one Session08AssignmentDemo object.",
+          "Call Run on the Session08AssignmentDemo object.",
+          "Save both files.",
+          {"text": "Run ScratchPad and compare the output with both predictions.", "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"},
+          {"text": "Build the complete solution.", "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"}
+        ]
       }
     ],
     "expectedBehavior": "ScratchPad demonstrates value copying and reference sharing without adding diagnostic-only production classes.",
@@ -107,9 +136,14 @@
   },
   "expectedFiles": [
     {
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session08/Session08AssignmentDemo.cs",
+      "action": "Add",
+      "why": "Keep the Session 08 assignment experiment in a new dedicated class with a Run method."
+    },
+    {
       "path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs",
       "action": "Modify",
-      "why": "Preserve the assignment-semantics experiment using real domain types."
+      "why": "Preserve earlier calls, then construct Session08AssignmentDemo and call Run."
     },
     {
       "path": "site/data/sessions/session-08.json",

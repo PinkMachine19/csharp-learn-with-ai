@@ -91,13 +91,75 @@
   ],
   "lab": {
     "objective": "Extend the production models with initialization guarantees, nullable clock-out state, and completion invariants.",
-    "startingCondition": "Session 06 created Address, Employee, and an open ClockEntry with EmployeeId and ClockIn. ClockEntry cannot be completed or calculate duration yet.",
-    "steps": [
-      "Enable nullable analysis if the template did not already enable it.",
-      "Add nullable ClockOut with a private setter to ClockEntry.",
-      "Add ClockOutEmployee and reject a second completion or a completion before ClockIn.",
-      "Add GetDuration and reject calls while the entry remains open.",
-      "Update App to complete the entry and print its duration; keep the employee example."
+    "startingCondition": "Keep the Session 06 models and Session06ModelDemo intact. Update the existing domain models only where the new invariants require it, then add a separate Session07InvariantDemo class and append its Run call in Program.cs.",
+    "collapseInstructions": true,
+    "labs": [
+      {
+        "title": "Make Required Initialization Explicit",
+        "objective": "Strengthen the existing Employee model so its required state is clear to the compiler and to callers.",
+        "practice": ["Nullable-reference analysis", "Required initialization", "Preserving an existing public model"],
+        "task": "Confirm nullable analysis is enabled and update Employee only as needed to make required initialization explicit.",
+        "comment": "// Lab 1 of 3 - Make Required Initialization Explicit",
+        "instructions": [
+          "Open the project file that contains Employee.",
+          "Confirm nullable analysis is enabled.",
+          "Open Employee.cs.",
+          "Identify each reference-type property that must have a value on a valid Employee.",
+          "Update one required property at a time using the initialization approach explained in this session.",
+          "Keep the Session 06 constructor behavior intact.",
+          "Save Employee.cs."
+        ]
+      },
+      {
+        "title": "Protect Clock Entry Completion",
+        "objective": "Extend the existing ClockEntry model with an optional clock-out value and rules that protect valid completion and duration.",
+        "practice": ["Nullable value types", "Private setters", "Guard clauses", "Protecting business invariants"],
+        "task": "Add ClockOut, ClockOutEmployee, and GetDuration to ClockEntry while preserving its Session 06 clock-in state.",
+        "comment": "// Lab 2 of 3 - Protect Clock Entry Completion",
+        "instructions": [
+          "Open ClockEntry.cs without deleting its Session 06 properties or constructor.",
+          "Add a nullable DateTime property named ClockOut.",
+          "Give ClockOut a private setter.",
+          "Add a public method named ClockOutEmployee.",
+          "Give ClockOutEmployee one DateTime parameter named clockOut.",
+          "Reject the call when ClockOut already has a value.",
+          "Reject the call when clockOut is earlier than ClockIn.",
+          "Assign clockOut to ClockOut after both checks pass.",
+          "Add a public method named GetDuration with a TimeSpan return type.",
+          "Reject GetDuration when ClockOut has no value.",
+          "Return the elapsed time between ClockOut and ClockIn.",
+          "Save ClockEntry.cs."
+        ]
+      },
+      {
+        "title": "Run the Session 07 Invariant Demo",
+        "objective": "Exercise the new completion behavior from a new class while preserving the Session 06 demo and its Main call.",
+        "practice": ["Constructing a valid object", "Moving an object between valid states", "Calling behavior from Main", "Preserving cumulative examples"],
+        "task": "Create Session07InvariantDemo with a Run method that completes one clock entry and displays its duration, then append its construction and Run call to App/Program.cs.",
+        "comment": "// Lab 3 of 3 - Run the Session 07 Invariant Demo",
+        "instructions": [
+          "Create Session07InvariantDemo.cs in src/PinkMachine19.TimeClock.App.",
+          "Paste the lab comment at the top of Session07InvariantDemo.cs.",
+          "Declare a public class named Session07InvariantDemo.",
+          "Add a public parameterless Run method.",
+          "Inside Run, construct one Address object.",
+          "On the next line, construct one Employee object using that Address.",
+          "On the next line, construct one open ClockEntry for that employee.",
+          "Call ClockOutEmployee with a valid later time.",
+          "Call GetDuration and store the returned duration.",
+          "Display the employee example.",
+          "Display the completed entry's duration.",
+          "Open src/PinkMachine19.TimeClock.App/Program.cs.",
+          "Keep the Session06ModelDemo construction and Run call unchanged.",
+          "Move to the end of Main.",
+          "Construct one Session07InvariantDemo object.",
+          "Call Run on the Session07InvariantDemo object.",
+          "Save both files.",
+          {"text": "Run the App and observe both preserved session demonstrations.", "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release"},
+          {"text": "Build the complete solution.", "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"},
+          {"text": "Run the complete test suite without rebuilding.", "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"}
+        ]
+      }
     ],
     "expectedBehavior": "ClockEntry represents open and completed states safely, App completes one entry, and invalid duration access is impossible without an exception.",
     "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
@@ -114,9 +176,14 @@
       "why": "Make required initialization explicit."
     },
     {
+      "path": "src/PinkMachine19.TimeClock.App/Session07InvariantDemo.cs",
+      "action": "Add",
+      "why": "Keep the Session 07 invariant exercise in a new dedicated class with a Run method."
+    },
+    {
       "path": "src/PinkMachine19.TimeClock.App/Program.cs",
       "action": "Modify",
-      "why": "Demonstrate a valid completed entry."
+      "why": "Preserve the Session 06 call, then construct Session07InvariantDemo and call Run."
     },
     {
       "path": "site/data/sessions/session-07.json",
