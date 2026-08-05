@@ -92,28 +92,114 @@
   "lab": {
     "objective": "Refactor the ScratchPad calculations into named methods while preserving every earlier experiment's output.",
     "startingCondition": "ScratchPad contains labeled numeric and decision sections written as top-level statements.",
-    "steps": [
-      "Open src/PinkMachine19.TimeClock.ScratchPad/Program.cs. Keep all earlier session headings, values, and output statements.",
+    "labs": [
       {
-        "text": "In the Session 03 section, replace the direct subtraction with a call to CalculateVariance. recordedHours and scheduledHours are arguments at this call site.",
-        "code": "decimal varianceHours = CalculateVariance(recordedHours, scheduledHours);"
+        "title": "Find the Code That Will Be Refactored",
+        "objective": "Inspect the existing Session 03 and Session 04 sections before editing them. You are identifying the calculation and classification that will receive method names.",
+        "instructions": [
+          "Open src/PinkMachine19.TimeClock.ScratchPad/Program.cs.",
+          "Find the Session 03 heading.",
+          "Locate the line that subtracts scheduledHours from recordedHours.",
+          "Find the Session 04 heading.",
+          "Locate the switch expression assigned to scheduleStatus.",
+          "Confirm that the Session 04 Console.WriteLine statements appear below the switch expression."
+        ]
       },
       {
-        "text": "In the Session 04 section, replace the switch expression with a call to ClassifyVariance. Keep the existing Console.WriteLine statements below it.",
-        "code": "string scheduleStatus = ClassifyVariance(decisionVarianceHours);"
+        "title": "Call the Variance Method",
+        "objective": "Replace Session 03's direct subtraction with a call to a named method. The method does not exist yet, so a temporary compiler error is expected until Lab 4.",
+        "comment": "// Lab 2 of 7 - Call the Variance Method",
+        "instructions": [
+          "Paste the lab comment directly above the current varianceHours declaration.",
+          "Delete the direct recordedHours - scheduledHours expression.",
+          {
+            "text": "Replace the declaration with this method call.",
+            "code": "decimal varianceHours = CalculateVariance(recordedHours, scheduledHours);"
+          },
+          "Identify recordedHours and scheduledHours as the two arguments supplied by the caller."
+        ]
       },
       {
-        "text": "At the bottom of Program.cs, add CalculateVariance. Its two parameters receive the argument values, its local difference exists only inside the method, and return sends the result back to the caller.",
-        "code": "static decimal CalculateVariance(decimal recordedHours, decimal scheduledHours)\n{\n    decimal difference = recordedHours - scheduledHours;\n    return difference;\n}"
+        "title": "Call the Classification Method",
+        "objective": "Replace Session 04's inline switch expression with a call that names the classification behavior. Keep the existing output statements unchanged.",
+        "comment": "// Lab 3 of 7 - Call the Classification Method",
+        "instructions": [
+          "Paste the lab comment directly above the scheduleStatus declaration.",
+          "Delete the existing switch expression assigned to scheduleStatus.",
+          {
+            "text": "Replace it with this method call.",
+            "code": "string scheduleStatus = ClassifyVariance(decisionVarianceHours);"
+          },
+          "Confirm that both Session 04 Console.WriteLine statements remain below the new call."
+        ]
       },
       {
-        "text": "Below CalculateVariance, add ClassifyVariance. It receives one decimal value and returns the status string selected by the switch expression.",
-        "code": "static string ClassifyVariance(decimal varianceHours)\n{\n    return varianceHours switch\n    {\n        > 0m => \"over schedule\",\n        < 0m => \"under schedule\",\n        _ => \"on schedule\"\n    };\n}"
+        "title": "Create CalculateVariance",
+        "objective": "Create the first local method at the bottom of Program.cs. This method receives two decimal parameters, calculates one local value, and returns that value to its caller.",
+        "comment": "// Lab 4 of 7 - Create CalculateVariance",
+        "instructions": [
+          "Scroll to the bottom of Program.cs.",
+          "Paste the lab comment below all top-level executable statements.",
+          {
+            "text": "Paste the CalculateVariance method directly below the comment.",
+            "code": "static decimal CalculateVariance(decimal recordedHours, decimal scheduledHours)\n{\n    decimal difference = recordedHours - scheduledHours;\n    return difference;\n}"
+          },
+          "Identify decimal as the method's return type.",
+          "Identify recordedHours and scheduledHours as parameters local to the method.",
+          "Identify difference as a local variable that exists only inside the method body."
+        ]
       },
-      "Read each call and method declaration aloud: identify the method name, each argument, each parameter, and the return value. Confirm that difference cannot be used outside CalculateVariance.",
       {
-        "text": "Run ScratchPad and confirm its earlier output is preserved. Then build and test the full solution.",
-        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+        "title": "Create ClassifyVariance",
+        "objective": "Create a second local method that owns the switch expression from Session 04. The method receives one decimal parameter and returns one status string.",
+        "comment": "// Lab 5 of 7 - Create ClassifyVariance",
+        "instructions": [
+          "Place the cursor below the closing brace of CalculateVariance.",
+          "Paste the lab comment on a new line.",
+          {
+            "text": "Paste the ClassifyVariance method directly below the comment.",
+            "code": "static string ClassifyVariance(decimal varianceHours)\n{\n    return varianceHours switch\n    {\n        > 0m => \"over schedule\",\n        < 0m => \"under schedule\",\n        _ => \"on schedule\"\n    };\n}"
+          },
+          "Identify string as the method's return type.",
+          "Identify varianceHours as the method's parameter.",
+          "Confirm that every switch arm produces a string."
+        ]
+      },
+      {
+        "title": "Trace Arguments, Parameters, Locals, and Returns",
+        "objective": "Trace values across each method boundary before running the program. This checks whether the refactor is understood rather than merely copied.",
+        "instructions": [
+          "Read the CalculateVariance call aloud.",
+          "Name the two arguments at the CalculateVariance call site.",
+          "Name the two parameters in the CalculateVariance declaration.",
+          "Point to the local variable named difference.",
+          "Point to the return statement that sends difference back to the caller.",
+          "Read the ClassifyVariance call aloud.",
+          "Name the argument at the ClassifyVariance call site.",
+          "Name the parameter in the ClassifyVariance declaration.",
+          "Explain why top-level code cannot directly read the local variable difference."
+        ]
+      },
+      {
+        "title": "Run and Verify the Refactor",
+        "objective": "Compile and run the refactored ScratchPad, then verify that naming the behavior did not change its output. Finish by checking the complete solution and test suite.",
+        "instructions": [
+          "Save Program.cs.",
+          {
+            "text": "Run ScratchPad.",
+            "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"
+          },
+          "Confirm that the Session 03 numeric output still matches the earlier result.",
+          "Confirm that the Session 04 status output still says over schedule for 0.5m.",
+          {
+            "text": "Build the complete solution.",
+            "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+          },
+          {
+            "text": "Run the complete test suite without rebuilding.",
+            "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+          }
+        ]
       }
     ],
     "expectedBehavior": "All ScratchPad examples still run, but calculation and classification now use named local methods.",

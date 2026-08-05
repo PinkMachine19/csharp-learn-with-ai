@@ -73,7 +73,7 @@ const plans = {
   "5": {
     objective: "Refactor the ScratchPad calculations into named methods while preserving every earlier experiment's output.",
     starting: "ScratchPad contains labeled numeric and decision sections written as top-level statements.",
-    steps: ["Open src/PinkMachine19.TimeClock.ScratchPad/Program.cs. Keep all earlier session headings, values, and output statements.", { text: "In the Session 03 section, replace the direct subtraction with a call to CalculateVariance. recordedHours and scheduledHours are arguments at this call site.", code: "decimal varianceHours = CalculateVariance(recordedHours, scheduledHours);" }, { text: "In the Session 04 section, replace the switch expression with a call to ClassifyVariance. Keep the existing Console.WriteLine statements below it.", code: "string scheduleStatus = ClassifyVariance(decisionVarianceHours);" }, { text: "At the bottom of Program.cs, add CalculateVariance. Its two parameters receive the argument values, its local difference exists only inside the method, and return sends the result back to the caller.", code: "static decimal CalculateVariance(decimal recordedHours, decimal scheduledHours)\n{\n    decimal difference = recordedHours - scheduledHours;\n    return difference;\n}" }, { text: "Below CalculateVariance, add ClassifyVariance. It receives one decimal value and returns the status string selected by the switch expression.", code: "static string ClassifyVariance(decimal varianceHours)\n{\n    return varianceHours switch\n    {\n        > 0m => \"over schedule\",\n        < 0m => \"under schedule\",\n        _ => \"on schedule\"\n    };\n}" }, "Read each call and method declaration aloud: identify the method name, each argument, each parameter, and the return value. Confirm that difference cannot be used outside CalculateVariance.", { text: "Run ScratchPad and confirm its earlier output is preserved. Then build and test the full solution.", code: `${runScratch}\ndotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build` }],
+    preserveStructuredLabs: true,
     expected: [f("src/PinkMachine19.TimeClock.ScratchPad/Program.cs", "Modify", "Teach methods and scope in the permanent notebook without premature production design.")],
     behavior: "All ScratchPad examples still run, but calculation and classification now use named local methods."
   }
@@ -308,7 +308,12 @@ for (const [number, plan] of Object.entries(plans)) {
   session.lab.objective = plan.objective;
   session.connection = `${plan.starting} ${plan.objective}`;
   session.lab.startingCondition = plan.starting;
-  session.lab.steps = plan.steps;
+  if (plan.preserveStructuredLabs && session.lab.labs) {
+    delete session.lab.steps;
+  } else {
+    session.lab.steps = plan.steps;
+    delete session.lab.labs;
+  }
   session.lab.expectedBehavior = plan.behavior;
   session.lab.validation = plan.validation || (build.environment === "scratchpad" ? `${runScratch} && dotnet build PinkMachine19.TimeClock.sln --configuration Release` : runAll);
   session.expectedFiles = [...plan.expected, f(`site/data/sessions/session-${padded}.json`, "Modify", "Keep the lesson synchronized with the cumulative build step.")];

@@ -211,6 +211,12 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 .concept-list { margin: 10px 0 16px; }
 .concept-list li { margin-bottom: 10px; line-height: 1.5; }
 .concept-list li strong { color: var(--accent); }
+.lab-unit { margin-top: 24px; border-left: 4px solid var(--accent); }
+.lab-unit h3 { margin-top: 0; }
+.lab-objective { padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.lab-instructions { padding-left: 24px; }
+.lab-instructions > li { margin-bottom: 14px; padding-left: 4px; }
+.lab-instructions > li > p { margin-bottom: 8px; }
 
 footer { border-top: 1px solid var(--border); background: var(--surface); padding: 24px 0; margin-top: 24px; }
 footer .container { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
