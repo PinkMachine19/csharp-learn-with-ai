@@ -22,6 +22,12 @@ const refresherContent = new Map(await Promise.all(refresherFiles.filter((name) 
   const content = JSON.parse(await readFile(path.join(refresherDirectory, name), "utf8"));
   return [content.number, content];
 })));
+const sideLabDirectory = path.join(site, "data", "side-labs");
+const sideLabFiles = await readdir(sideLabDirectory).catch(() => []);
+const sideLabContent = new Map(await Promise.all(sideLabFiles.filter((name) => name.endsWith(".json")).map(async (name) => {
+  const content = JSON.parse(await readFile(path.join(sideLabDirectory, name), "utf8"));
+  return [content.number, content];
+})));
 const sessions = raw.sessions.map(([number, slug, title, layerId, prerequisite, migrationSource]) => {
   const padded = String(number).padStart(2, "0");
   const content = sessionContent.get(number);
@@ -67,7 +73,31 @@ const refresherSessions = raw.refreshers.map(([number, slug, title, prerequisite
     isSupplemental: true
   };
 });
-const manifest = { ...raw, course: { ...raw.course, basePath, refresherCount: refresherSessions.length }, sessions, refreshers: refresherSessions };
+const sideLabs = (raw.sideLabs || []).map(([number, slug, title, attachedTo, migrationSource]) => {
+  const content = sideLabContent.get(number);
+  const route = number.toLowerCase();
+  return {
+    number,
+    id: `side-lab-${route}`,
+    slug,
+    title,
+    curriculumLayer: "Optional Session Sidebar",
+    layerId: "side-lab",
+    prerequisiteSession: attachedTo,
+    attachedToSession: attachedTo,
+    lessonPath: `side-labs/${route}/index.html`,
+    labPath: `side-labs/labs/${route}.html`,
+    quizPath: `side-labs/quizzes/${route}.html`,
+    filesExpectedToChange: content ? content.expectedFiles.map((file) => file.path) : [],
+    validationCommand: content?.lab.validation || "dotnet run",
+    suggestedCommitMessage: content?.commit || `side-lab-${route}: ${title.toLowerCase()}`,
+    migrationSource,
+    completionStatus: sideLabContent.has(number) ? "complete" : "planned",
+    isSupplemental: true,
+    isSideLab: true
+  };
+});
+const manifest = { ...raw, course: { ...raw.course, basePath, refresherCount: refresherSessions.length, sideLabCount: sideLabs.length }, sessions, refreshers: refresherSessions, sideLabs };
 
 await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
@@ -77,7 +107,10 @@ const completeCount = sessions.filter((session) => session.completionStatus === 
 const plannedCount = sessions.length - completeCount;
 const statusBadge = (session) => session.completionStatus === "complete" ? `<span class="badge badge-complete">Complete</span>` : `<span class="badge badge-locked">Planned</span>`;
 
-const syllabusRows = sessions.map((session) => `<tr><td><span class="badge badge-layer">${String(session.number).padStart(2,"0")}</span></td><td>${session.completionStatus === "complete" ? `<a href="${url(session.lessonPath.replace("index.html", ""))}"><strong>${escapeHtml(session.title)}</strong></a>` : `<strong>${escapeHtml(session.title)}</strong>`}<br><small style="color:var(--text-muted)">${escapeHtml(session.curriculumLayer)}</small></td><td>${session.prerequisiteSession !== null && session.prerequisiteSession !== undefined ? `Session ${String(session.prerequisiteSession).padStart(2,"0")}` : "None"}</td><td>${statusBadge(session)}</td></tr>`).join("");
+const syllabusRows = sessions.flatMap((session) => [
+  `<tr><td><span class="badge badge-layer">${String(session.number).padStart(2,"0")}</span></td><td>${session.completionStatus === "complete" ? `<a href="${url(session.lessonPath.replace("index.html", ""))}"><strong>${escapeHtml(session.title)}</strong></a>` : `<strong>${escapeHtml(session.title)}</strong>`}<br><small style="color:var(--text-muted)">${escapeHtml(session.curriculumLayer)}</small></td><td>${session.prerequisiteSession !== null && session.prerequisiteSession !== undefined ? `Session ${String(session.prerequisiteSession).padStart(2,"0")}` : "None"}</td><td>${statusBadge(session)}</td></tr>`,
+  ...sideLabs.filter((sideLab) => sideLab.attachedToSession === session.number).map((sideLab) => `<tr class="side-lab-row"><td><span class="badge badge-side-lab">${sideLab.number}</span></td><td><a href="${url(sideLab.lessonPath.replace("index.html", ""))}"><strong>${escapeHtml(sideLab.title)}</strong></a><br><small>Optional sidebar · safe to skip</small></td><td>After Session ${String(sideLab.attachedToSession).padStart(2,"0")}</td><td><span class="badge badge-optional">Optional</span></td></tr>`)
+]).join("");
 const refresherRows = refresherSessions.map((session) => `<tr><td><span class="badge badge-refresher">${session.number}</span></td><td><a href="${url(session.lessonPath.replace("index.html", ""))}"><strong>${escapeHtml(session.title)}</strong></a></td><td>${session.prerequisiteSession || "Start anywhere"}</td><td><span class="badge badge-optional">Optional</span></td></tr>`).join("");
 const refresherCards = refresherSessions.map((session) => `<a class="nav-card refresher-card" href="${url(session.lessonPath.replace("index.html", ""))}"><div class="nav-card-title"><span class="badge badge-refresher">${session.number}</span> ${escapeHtml(session.title)}</div><div class="nav-card-desc">Supplemental reference · safe to skip</div></a>`).join("");
 const navGrid = `<div class="nav-grid">
@@ -159,9 +192,11 @@ const syllabus = page({ title: "Syllabus", active: "syllabus", description: "The
 </div></main>` });
 
 const sessionsByLayer = raw.layers.map((layer) => ({ layer, items: sessions.filter((session) => session.layerId === layer.id) }));
-const sessionsIndexBody = sessionsByLayer.map(({ layer, items }) => `<div class="layer-header"><span class="badge badge-layer">${layer.number}</span><span class="layer-title">${escapeHtml(layer.title)}</span></div><p class="layer-desc">Sessions ${escapeHtml(layer.range)}</p><div class="nav-grid">${items.map((session) => session.completionStatus === "complete"
+const sessionsIndexBody = sessionsByLayer.map(({ layer, items }) => `<div class="layer-header"><span class="badge badge-layer">${layer.number}</span><span class="layer-title">${escapeHtml(layer.title)}</span></div><p class="layer-desc">Sessions ${escapeHtml(layer.range)}</p><div class="nav-grid">${items.flatMap((session) => [session.completionStatus === "complete"
   ? `<a class="nav-card" href="${url(session.lessonPath.replace("index.html", ""))}"><div class="nav-card-title">Session ${String(session.number).padStart(2,"0")} — ${escapeHtml(session.title)}</div><div class="nav-card-desc">${statusBadge(session)}</div></a>`
-  : `<div class="nav-card" style="opacity:.6"><div class="nav-card-title">Session ${String(session.number).padStart(2,"0")} — ${escapeHtml(session.title)}</div><div class="nav-card-desc">${statusBadge(session)}</div></div>`).join("")}</div>`).join("");
+  : `<div class="nav-card" style="opacity:.6"><div class="nav-card-title">Session ${String(session.number).padStart(2,"0")} — ${escapeHtml(session.title)}</div><div class="nav-card-desc">${statusBadge(session)}</div></div>`,
+  ...sideLabs.filter((sideLab) => sideLab.attachedToSession === session.number).map((sideLab) => `<a class="nav-card side-lab-card" href="${url(sideLab.lessonPath.replace("index.html", ""))}"><div class="nav-card-title"><span class="badge badge-side-lab">Side Lab ${sideLab.number}</span> ${escapeHtml(sideLab.title)}</div><div class="nav-card-desc">Optional sidebar attached to Session ${String(sideLab.attachedToSession).padStart(2,"0")} · safe to skip</div></a>`)
+]).join("")}</div>`).join("");
 const sessionsIndex = page({ title: "Sessions", active: "sessions", description: "All course sessions", body: `<main id="main-content"><div class="container">
   <h1>Sessions</h1>
   <p class="subtitle">One conceptual slice at a time — each completed session combines visual previews, prediction, explanation, a focused lab, review, and reflection.</p>
@@ -206,6 +241,16 @@ for (const [number, content] of refresherContent) {
     writeRoute(session.quizPath, quizPage(session, content))
   );
 }
+for (const [number, content] of sideLabContent) {
+  const session = sideLabs.find((item) => item.number === number);
+  const attachedSession = sessions.find((item) => item.number === session.attachedToSession);
+  const nextSession = sessions.find((item) => item.number === session.attachedToSession + 1);
+  sessionRoutes.push(
+    writeRoute(session.lessonPath, sessionPage(session, content, [attachedSession, session, nextSession].filter(Boolean))),
+    writeRoute(session.labPath, labPage(session, content)),
+    writeRoute(session.quizPath, quizPage(session, content))
+  );
+}
 
 await Promise.all([
   writeRoute("index.html", syllabus),
@@ -219,7 +264,7 @@ await Promise.all([
   ...sessionRoutes
 ]);
 
-console.log(`Built ${sessions.length} primary sessions and ${refresherSessions.length} optional refreshers at ${dist}`);
+console.log(`Built ${sessions.length} primary sessions, ${sideLabs.length} optional side labs, and ${refresherSessions.length} optional refreshers at ${dist}`);
 console.log(`Base path: ${basePath}`);
 
 function normalizeBase(value) { return `/${value.split("/").filter(Boolean).join("/")}/`.replace("//", "/"); }
@@ -235,19 +280,22 @@ function sessionPage(session, content, track = sessions) {
   const position = track.indexOf(session);
   const previous = position > 0 ? track[position - 1] : null;
   const next = position < track.length - 1 ? track[position + 1] : null;
-  const label = session.isSupplemental ? `Refresher ${session.number}` : `Session ${padded}`;
-  const previousLabel = previous ? (previous.isSupplemental ? `Refresher ${previous.number}` : `Session ${String(previous.number).padStart(2,"0")}`) : "";
-  const nextLabel = next ? (next.isSupplemental ? `Refresher ${next.number}` : `Session ${String(next.number).padStart(2,"0")}`) : "";
-  const prevLink = previous && previous.completionStatus === "complete" ? `<a href="${url(previous.lessonPath.replace("index.html", ""))}">← ${previousLabel}</a>` : session.isSupplemental ? `<a href="${url("syllabus/#modern-csharp-refresher")}">← Refresher index</a>` : `<span>No previous session</span>`;
-  const nextLink = next ? (next.completionStatus === "complete" ? `<a href="${url(next.lessonPath.replace("index.html", ""))}">${nextLabel} →</a>` : `<a href="${url("sessions/")}">${nextLabel} (planned) →</a>`) : session.isSupplemental ? `<a href="${url("syllabus/#modern-csharp-refresher")}">Refresher index →</a>` : `<span>No next session</span>`;
-  const trackBadge = session.isSupplemental ? `<span class="badge badge-optional">Optional refresher</span>` : `<span class="badge badge-layer">Layer ${layersById.get(session.layerId).number}</span>`;
-  const optionalBanner = session.isSupplemental ? `<div class="refresher-notice"><strong>Optional reference:</strong> This session is not a prerequisite for the TimeClock application path. Use it when you need a modern C# reminder or interview review.</div>` : "";
+  const label = learningItemLabel(session);
+  const previousLabel = previous ? learningItemLabel(previous) : "";
+  const nextLabel = next ? learningItemLabel(next) : "";
+  const supplementalIndex = session.isSideLab ? "sessions/" : "syllabus/#modern-csharp-refresher";
+  const prevLink = previous && previous.completionStatus === "complete" ? `<a href="${url(previous.lessonPath.replace("index.html", ""))}">← ${previousLabel}</a>` : session.isSupplemental ? `<a href="${url(supplementalIndex)}">← Optional index</a>` : `<span>No previous session</span>`;
+  const nextLink = next ? (next.completionStatus === "complete" ? `<a href="${url(next.lessonPath.replace("index.html", ""))}">${nextLabel} →</a>` : `<a href="${url("sessions/")}">${nextLabel} (planned) →</a>`) : session.isSupplemental ? `<a href="${url(supplementalIndex)}">Optional index →</a>` : `<span>No next session</span>`;
+  const trackBadge = session.isSideLab ? `<span class="badge badge-optional">Optional sidebar</span>` : session.isSupplemental ? `<span class="badge badge-optional">Optional refresher</span>` : `<span class="badge badge-layer">Layer ${layersById.get(session.layerId).number}</span>`;
+  const optionalBanner = session.isSideLab ? `<div class="side-lab-notice"><strong>Optional Session 04 sidebar:</strong> This mini lab compares older and modern decision syntax. It is safe to skip and does not block Session 05.</div>` : session.isSupplemental ? `<div class="refresher-notice"><strong>Optional reference:</strong> This session is not a prerequisite for the TimeClock application path. Use it when you need a modern C# reminder or interview review.</div>` : "";
   const buildBanner = session.isSupplemental ? "" : `<div class="build-state"><strong>Learning environment:</strong> ${escapeHtml(environmentLabel(content.learningEnvironment))}<br><strong>Cumulative build step:</strong> ${escapeHtml(buildStateSummary(content.buildState))}</div>`;
-  return page({ title: `${label} — ${session.title}`, active: "sessions", description: content.connection, sessionWidgets: true, body: `<main id="main-content" class="${session.isSupplemental ? "refresher-page" : ""}"><div class="container">
-    ${optionalBanner}<div style="margin-bottom:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">${trackBadge}<span class="badge ${session.isSupplemental ? "badge-refresher" : "badge-current"}">${label}</span><span style="color:var(--text-muted); font-size:12px;">${escapeHtml(content.category)}</span></div>
+  const sideLabCallout = session.isSupplemental ? "" : sideLabs.filter((sideLab) => sideLab.attachedToSession === session.number).map((sideLab) => `<aside class="side-lab-callout" aria-label="Optional side lab"><span class="badge badge-side-lab">Side Lab ${sideLab.number}</span><div><strong>${escapeHtml(sideLab.title)}</strong><p>Compare older and modern syntax without changing the required course path.</p><a href="${url(sideLab.lessonPath.replace("index.html", ""))}">Open the optional side lab →</a></div></aside>`).join("");
+  return page({ title: `${label} — ${session.title}`, active: "sessions", description: content.connection, sessionWidgets: true, body: `<main id="main-content" class="${session.isSideLab ? "side-lab-page" : session.isSupplemental ? "refresher-page" : ""}"><div class="container">
+    ${optionalBanner}<div style="margin-bottom:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">${trackBadge}<span class="badge ${session.isSideLab ? "badge-side-lab" : session.isSupplemental ? "badge-refresher" : "badge-current"}">${label}</span><span style="color:var(--text-muted); font-size:12px;">${escapeHtml(content.category)}</span></div>
     <h1>${escapeHtml(session.title)}</h1>
     <p class="subtitle">${escapeHtml(content.connection)}</p>
     ${buildBanner}
+    ${sideLabCallout}
     <div class="alert alert-info"><strong>Estimated time:</strong> ${escapeHtml(content.estimatedTime)}</div>
     <h2 aria-label="Lesson mental models">Mental Models</h2>
     <div class="visual-grid">${content.visuals.map(visualCard).join("")}</div>
@@ -266,7 +314,7 @@ function sessionPage(session, content, track = sessions) {
     <p style="margin-top:24px;" aria-label="Session navigation">${prevLink} &nbsp;·&nbsp; <a href="${url("syllabus/")}">Syllabus</a> &nbsp;·&nbsp; ${nextLink}</p>
   </div></main>` });
 }
-function labPage(session, content) { const label = session.isSupplemental ? `Refresher ${session.number}` : `Session ${String(session.number).padStart(2,"0")}`; return page({title:`${label} Lab — ${session.title}`,active:"labs",description:content.lab.objective,body:`<main id="main-content"><div class="container">
+function labPage(session, content) { const label = learningItemLabel(session); return page({title:`${label} Lab — ${session.title}`,active:"labs",description:content.lab.objective,body:`<main id="main-content"><div class="container">
   <p class="subtitle">${label} lab</p>
   <h1>${escapeHtml(content.lab.objective)}</h1>
   <p class="subtitle">Starting condition: ${escapeHtml(content.lab.startingCondition)}</p>
@@ -279,7 +327,7 @@ function labPage(session, content) { const label = session.isSupplemental ? `Ref
   <div class="alert alert-success"><code>${escapeHtml(content.commit)}</code></div>
   <p><a href="${url(session.lessonPath.replace("index.html", ""))}">Return to ${label}</a></p>
 </div></main>`}); }
-function quizPage(session, content) { const label = session.isSupplemental ? `Refresher ${session.number}` : `Session ${String(session.number).padStart(2,"0")}`; return page({title:`${label} Quiz — ${session.title}`,active:"quizzes",description:`${label} quizzes`,body:`<main id="main-content"><div class="container">
+function quizPage(session, content) { const label = learningItemLabel(session); return page({title:`${label} Quiz — ${session.title}`,active:"quizzes",description:`${label} quizzes`,body:`<main id="main-content"><div class="container">
   <p class="subtitle">${label}</p>
   <h1>Prediction and observation quizzes</h1>
   <p class="subtitle">Score at least ${raw.course.advancementThreshold}% and read every explanation.</p>
@@ -288,6 +336,7 @@ function quizPage(session, content) { const label = session.isSupplemental ? `Re
   <p><a href="${url(session.lessonPath.replace("index.html", ""))}">Return to the lesson</a></p>
 </div></main>`}); }
 function lessonSection(title, body) { return `<hr class="section-divider">\n<h2>${title}</h2>${body}`; }
+function learningItemLabel(item) { return item.isSideLab ? `Side Lab ${item.number}` : item.isSupplemental ? `Refresher ${item.number}` : `Session ${String(item.number).padStart(2,"0")}`; }
 function renderConceptPart(part) { return `<article class="concept-part"><h3>${escapeHtml(part.title)}</h3>${part.paragraphs.map((text)=>`<p>${escapeHtml(text)}</p>`).join("")}${part.list ? `<ul class="concept-list">${part.list.map((entry)=>`<li><strong>${escapeHtml(entry.term)}</strong> — ${escapeHtml(entry.text)}</li>`).join("")}</ul>` : ""}${part.table ? renderConceptTable(part.table) : ""}${(part.closingParagraphs || []).map((text)=>`<p>${escapeHtml(text)}</p>`).join("")}${part.code ? `<pre><code>${escapeHtml(part.code)}</code></pre>` : ""}</article>`; }
 function renderConceptTable(table) { return `<div class="table-wrap"><table><thead><tr>${table.headers.map((header)=>`<th>${escapeHtml(header)}</th>`).join("")}</tr></thead><tbody>${table.rows.map((row)=>`<tr>${row.map((cell)=>`<td>${escapeHtml(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`; }
 function environmentLabel(value) { return ({ production: "Production application", tests: "Permanent test suite", scratchpad: "Permanent ScratchPad notebook", mixed: "Production and permanent verification", solution: "Solution architecture", documentation: "Product and design documentation" })[value] || value; }

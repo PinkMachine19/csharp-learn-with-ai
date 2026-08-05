@@ -67,5 +67,8 @@
     ["R3","async-await-refresher","async/await Refresher","R2","supplemental synthesis of Sessions 26–28"],
     ["R4","pattern-matching-and-nullable-reference-types","Pattern Matching & Nullable Reference Types","R3","supplemental modern C# production reference"],
     ["R5","records-modern-construction-and-collection-expressions","Records, Modern Construction & Collection Expressions","R4","supplemental C# 9–13 production reference"]
+  ],
+  "sideLabs": [
+    ["04C","choosing-if-switch-statement-or-switch-expression","Choosing if/else, a switch Statement, or a switch Expression",4,"optional decision-syntax comparison attached to Session 04"]
   ]
 }

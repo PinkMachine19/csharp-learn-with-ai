@@ -38,7 +38,7 @@ try { manifest = JSON.parse(await readFile(manifestPath, "utf8")); }
 catch (error) { errors.push(`Manifest is missing or invalid: ${error.message}`); }
 
 if (manifest) {
-  const { sessions, refreshers = [], course, layers } = manifest;
+  const { sessions, refreshers = [], sideLabs = [], course, layers } = manifest;
   if (sessions.length !== course.sessionCount) errors.push(`Manifest count ${sessions.length} does not match course count ${course.sessionCount}`);
   if (new Set(sessions.map((session) => session.id)).size !== sessions.length) errors.push("Duplicate session IDs exist");
   if (new Set(sessions.map((session) => session.slug)).size !== sessions.length) errors.push("Duplicate session slugs exist");
@@ -75,6 +75,18 @@ if (manifest) {
     for (const field of ["lessonPath", "labPath", "quizPath"]) {
       try { await access(path.join(dist, refresher[field])); }
       catch { errors.push(`${refresher.id} ${field} does not exist`); }
+    }
+  }
+  if (sideLabs.length !== course.sideLabCount) errors.push(`Side-lab count ${sideLabs.length} does not match course count ${course.sideLabCount}`);
+  for (const sideLab of sideLabs) {
+    if (!sideLab.isSideLab || !sideLab.isSupplemental) errors.push(`${sideLab.id} is not marked as an optional side lab`);
+    if (!sessions.some((session) => session.number === sideLab.attachedToSession)) errors.push(`${sideLab.id} is attached to a missing session`);
+    for (const field of ["lessonPath", "labPath", "quizPath", "suggestedCommitMessage", "completionStatus"]) {
+      if (!sideLab[field]) errors.push(`${sideLab.id} is missing ${field}`);
+    }
+    for (const field of ["lessonPath", "labPath", "quizPath"]) {
+      try { await access(path.join(dist, sideLab[field])); }
+      catch { errors.push(`${sideLab.id} ${field} does not exist`); }
     }
   }
 }
@@ -117,7 +129,7 @@ const requiredLessonHeadings = [
   "8. Post-Coding Quiz", "9. Reflection Questions", "10. What Breaks If This Code Is Removed?",
   "11. What C#/.NET Concept Was Learned Today?"
 ];
-for (const session of [...manifest.sessions, ...(manifest.refreshers || [])].filter((item) => item.completionStatus === "complete")) {
+for (const session of [...manifest.sessions, ...(manifest.sideLabs || []), ...(manifest.refreshers || [])].filter((item) => item.completionStatus === "complete")) {
   const lesson = await readFile(path.join(dist, session.lessonPath), "utf8");
   for (const heading of requiredLessonHeadings) if (!lesson.includes(`>${heading}</h2>`)) errors.push(`${session.id} is missing section: ${heading}`);
   const svgCount = (lesson.match(/<svg /g) || []).length;
@@ -154,7 +166,7 @@ if (errors.length) {
   errors.forEach((error) => console.error(`- ${error}`));
   process.exitCode = 1;
 } else {
-  console.log(`Validated ${htmlFiles.length} HTML pages, ${manifest.sessions.length} primary sessions, and ${(manifest.refreshers || []).length} optional refreshers.`);
+  console.log(`Validated ${htmlFiles.length} HTML pages, ${manifest.sessions.length} primary sessions, ${(manifest.sideLabs || []).length} optional side labs, and ${(manifest.refreshers || []).length} optional refreshers.`);
   console.log(`Base path verified: ${manifest.course.basePath}`);
   console.log("Navigation, interactions, SVG accessibility, content policy, and internal references passed.");
 }

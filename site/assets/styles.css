@@ -86,6 +86,19 @@ tr:hover td { background: rgba(255, 255, 255, 0.02); }
 .badge-layer    { background: rgba(88,166,255,0.08); color: var(--accent); border: 1px solid var(--border); font-size: 10px; }
 .badge-refresher { background: rgba(188,140,255,0.14); color: #bc8cff; border: 1px solid rgba(188,140,255,0.5); }
 .badge-optional { background: rgba(210,153,34,0.12); color: #e3b341; border: 1px solid rgba(210,153,34,0.5); }
+.badge-side-lab { background: rgba(255,166,87,0.14); color: #ffa657; border: 1px solid rgba(255,166,87,0.55); }
+.side-lab-row { background: rgba(255,166,87,0.07); }
+.side-lab-row td:first-child { border-left: 4px solid #ffa657; }
+.side-lab-row small { color: #ffa657; }
+.side-lab-card { grid-column: 1 / -1; border: 1px dashed rgba(255,166,87,0.65); border-left: 5px solid #ffa657; background: linear-gradient(135deg, rgba(255,166,87,0.12), rgba(210,153,34,0.04)); }
+.side-lab-card:hover { border-color: #ffa657; background: rgba(255,166,87,0.15); }
+.side-lab-page h2 { color: #ffa657; }
+.side-lab-page .visual-art svg :is(rect, circle, ellipse, path, line, polyline, polygon) { stroke: #ffa657; }
+.side-lab-notice { margin-bottom: 20px; padding: 14px 16px; border: 1px dashed rgba(255,166,87,0.65); border-left: 5px solid #ffa657; border-radius: var(--radius); background: rgba(255,166,87,0.09); color: var(--text-muted); }
+.side-lab-notice strong { color: #ffa657; }
+.side-lab-callout { display: flex; gap: 14px; align-items: flex-start; margin: 18px 0; padding: 16px; border: 1px dashed rgba(255,166,87,0.65); border-left: 5px solid #ffa657; border-radius: var(--radius); background: rgba(255,166,87,0.08); }
+.side-lab-callout p { margin: 4px 0; color: var(--text-muted); }
+.side-lab-callout a { color: #ffa657; font-weight: 700; }
 
 .refresher-track { margin-top: 48px; padding: 22px; border: 1px solid rgba(188,140,255,0.45); border-left: 5px solid #bc8cff; border-radius: 10px; background: linear-gradient(135deg, rgba(188,140,255,0.10), rgba(88,166,255,0.04)); }
 .refresher-banner { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 18px; }
