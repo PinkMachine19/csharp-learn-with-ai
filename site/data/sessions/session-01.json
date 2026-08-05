@@ -137,24 +137,28 @@
     "startingCondition": "Begin in the empty learner workspace. No solution, projects, production code, tests, or experiments exist yet.",
     "steps": [
       {
-        "text": "Create the classic solution file in the learner workspace.",
-        "code": "dotnet new sln -n PinkMachine19.TimeClock -f sln"
+        "text": "In a Bash-compatible terminal, define names for the solution file and all six project folders. These are temporary terminal variables, not C# variables. For now, notice that name=value stores text and $name reuses it; C# variables are taught properly in Session 03. Keep this terminal open for the remaining steps.",
+        "code": "solution_name=\"PinkMachine19.TimeClock\"\nsolution_file=\"${solution_name}.sln\"\ndomain_project=\"src/${solution_name}.Domain\"\napp_project=\"src/${solution_name}.App\"\ninfrastructure_project=\"src/${solution_name}.Infrastructure\"\nweb_project=\"src/${solution_name}.Web\"\nscratchpad_project=\"src/${solution_name}.ScratchPad\"\ndomain_tests_project=\"tests/${solution_name}.Domain.Tests\""
       },
       {
-        "text": "Create the four production projects, the permanent ScratchPad console project, and the Domain test project. ScratchPad is a notebook that stays in the solution for the entire course.",
-        "code": "dotnet new classlib -o src/PinkMachine19.TimeClock.Domain\ndotnet new console -o src/PinkMachine19.TimeClock.App\ndotnet new classlib -o src/PinkMachine19.TimeClock.Infrastructure\ndotnet new web -o src/PinkMachine19.TimeClock.Web\ndotnet new console -o src/PinkMachine19.TimeClock.ScratchPad\ndotnet new xunit -o tests/PinkMachine19.TimeClock.Domain.Tests"
+        "text": "Create the classic solution file using solution_name. Quoting the variable keeps the command safe if a future name contains spaces.",
+        "code": "dotnet new sln -n \"$solution_name\" -f sln"
       },
       {
-        "text": "Add all six projects to the solution. Creating a project does not add it automatically.",
-        "code": "dotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\ndotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj\ndotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.Infrastructure/PinkMachine19.TimeClock.Infrastructure.csproj\ndotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj\ndotnet sln PinkMachine19.TimeClock.sln add src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj\ndotnet sln PinkMachine19.TimeClock.sln add tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj"
+        "text": "Create the four production projects, the permanent ScratchPad console project, and the Domain test project using the folder variables. ScratchPad is a notebook that stays in the solution for the entire course.",
+        "code": "dotnet new classlib -o \"$domain_project\"\ndotnet new console -o \"$app_project\"\ndotnet new classlib -o \"$infrastructure_project\"\ndotnet new web -o \"$web_project\"\ndotnet new console -o \"$scratchpad_project\"\ndotnet new xunit -o \"$domain_tests_project\""
       },
       {
-        "text": "List and build the solution. Expect six project paths and zero build errors.",
-        "code": "dotnet sln PinkMachine19.TimeClock.sln list\ndotnet build PinkMachine19.TimeClock.sln"
+        "text": "Add all six projects to solution_file. Each project path reuses both its folder variable and solution_name. Creating a project does not add it automatically.",
+        "code": "dotnet sln \"$solution_file\" add \"$domain_project/${solution_name}.Domain.csproj\"\ndotnet sln \"$solution_file\" add \"$app_project/${solution_name}.App.csproj\"\ndotnet sln \"$solution_file\" add \"$infrastructure_project/${solution_name}.Infrastructure.csproj\"\ndotnet sln \"$solution_file\" add \"$web_project/${solution_name}.Web.csproj\"\ndotnet sln \"$solution_file\" add \"$scratchpad_project/${solution_name}.ScratchPad.csproj\"\ndotnet sln \"$solution_file\" add \"$domain_tests_project/${solution_name}.Domain.Tests.csproj\""
+      },
+      {
+        "text": "List and build solution_file. Expect six project paths and zero build errors.",
+        "code": "dotnet sln \"$solution_file\" list\ndotnet build \"$solution_file\""
       }
     ],
     "expectedBehavior": "One persistent learner solution contains four production projects, one ScratchPad project, and one test project. It builds before any business code is added.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+    "validation": "solution_file=\"PinkMachine19.TimeClock.sln\"\ndotnet build \"$solution_file\" --configuration Release && dotnet test \"$solution_file\" --configuration Release --no-build"
   },
   "expectedFiles": [
     {

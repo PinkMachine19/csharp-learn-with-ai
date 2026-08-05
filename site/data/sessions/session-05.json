@@ -33,7 +33,7 @@
   ],
   "preQuiz": [
     {
-      "prompt": "What is scheduledHours in CalculateVariance(entry, scheduledHours)?",
+      "prompt": "What is scheduledHours in CalculateVariance(recordedHours, scheduledHours)?",
       "options": [
         "An argument at the call site",
         "A return type",
@@ -70,36 +70,50 @@
         "A method groups statements behind a name. A good name lets the caller express intent while the body owns calculation details.",
         "Extraction is useful when it clarifies responsibility, not merely to make code shorter."
       ],
-      "code": "decimal varianceHours = CalculateVariance(entry, scheduledHours);"
+      "code": "decimal varianceHours = CalculateVariance(recordedHours, scheduledHours);"
     },
     {
       "title": "Parameters receive values",
       "paragraphs": [
         "Arguments are expressions at the call site. Parameters are local names in the method declaration. By default, C# passes the resulting values by value.",
-        "The ClockEntry argument value is a reference, so the method and caller can refer to the same object; deeper reference behavior is taught later."
+        "In this session, both arguments and parameters are decimal values. Reference-type behavior is a separate topic taught in a later session."
       ],
-      "code": "static decimal CalculateVariance(ClockEntry entry, decimal scheduledHours)"
+      "code": "static decimal CalculateVariance(decimal recordedHours, decimal scheduledHours)"
     },
     {
       "title": "Scope limits dependencies",
       "paragraphs": [
-        "recordedHours exists only inside CalculateVariance. scheduleStatus exists only inside ClassifyVariance. Those boundaries prevent temporary details from leaking into unrelated statements.",
+        "difference exists only inside CalculateVariance. The varianceHours parameter inside ClassifyVariance is separate from variables at the call site. Those boundaries prevent temporary details from leaking into unrelated statements.",
         "return ends the method and supplies its result to the caller."
       ],
-      "code": "decimal recordedHours = (decimal)entry.GetDuartion().TotalHours;\nreturn recordedHours - scheduledHours;"
+      "code": "decimal difference = recordedHours - scheduledHours;\nreturn difference;"
     }
   ],
   "lab": {
     "objective": "Refactor the ScratchPad calculations into named methods while preserving every earlier experiment's output.",
     "startingCondition": "ScratchPad contains labeled numeric and decision sections written as top-level statements.",
     "steps": [
-      "Keep the observable examples and extract repeated calculation into a local method.",
-      "Add parameters for recorded and scheduled hours and return the decimal difference.",
-      "Extract classification into a second local method.",
-      "Call both methods from the existing labeled sections and verify scope boundaries.",
+      "Open src/PinkMachine19.TimeClock.ScratchPad/Program.cs. Keep all earlier session headings, values, and output statements.",
       {
-        "text": "Run ScratchPad and the solution tests.",
-        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release"
+        "text": "In the Session 03 section, replace the direct subtraction with a call to CalculateVariance. recordedHours and scheduledHours are arguments at this call site.",
+        "code": "decimal varianceHours = CalculateVariance(recordedHours, scheduledHours);"
+      },
+      {
+        "text": "In the Session 04 section, replace the switch expression with a call to ClassifyVariance. Keep the existing Console.WriteLine statements below it.",
+        "code": "string scheduleStatus = ClassifyVariance(decisionVarianceHours);"
+      },
+      {
+        "text": "At the bottom of Program.cs, add CalculateVariance. Its two parameters receive the argument values, its local difference exists only inside the method, and return sends the result back to the caller.",
+        "code": "static decimal CalculateVariance(decimal recordedHours, decimal scheduledHours)\n{\n    decimal difference = recordedHours - scheduledHours;\n    return difference;\n}"
+      },
+      {
+        "text": "Below CalculateVariance, add ClassifyVariance. It receives one decimal value and returns the status string selected by the switch expression.",
+        "code": "static string ClassifyVariance(decimal varianceHours)\n{\n    return varianceHours switch\n    {\n        > 0m => \"over schedule\",\n        < 0m => \"under schedule\",\n        _ => \"on schedule\"\n    };\n}"
+      },
+      "Read each call and method declaration aloud: identify the method name, each argument, each parameter, and the return value. Confirm that difference cannot be used outside CalculateVariance.",
+      {
+        "text": "Run ScratchPad and confirm its earlier output is preserved. Then build and test the full solution.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
       }
     ],
     "expectedBehavior": "All ScratchPad examples still run, but calculation and classification now use named local methods.",
@@ -125,14 +139,14 @@
   ],
   "postQuiz": [
     {
-      "prompt": "Where is recordedHours available after extraction?",
+      "prompt": "Where is difference available after extraction?",
       "options": [
         "Only inside CalculateVariance",
         "Every project",
         "Only in the solution file"
       ],
       "correct": 0,
-      "explanation": "It is a local declared in that method body."
+      "explanation": "It is a local declared inside CalculateVariance, so code outside that method cannot use it directly."
     },
     {
       "prompt": "What changes if CalculateVariance returns scheduledHours - recordedHours?",
@@ -160,7 +174,7 @@
     "When would a method with many parameters signal a design problem?",
     "How does return type constrain callers?"
   ],
-  "whatBreaks": "Removing CalculateVariance leaves the caller without the numeric result. Removing a return statement prevents a non-void method from compiling. Moving recordedHours outside the method widens scope and weakens the boundary even if behavior remains the same.",
+  "whatBreaks": "Removing CalculateVariance leaves the caller without the numeric result. Removing a return statement prevents a non-void method from compiling. Moving difference outside the method widens scope and weakens the boundary even if behavior remains the same.",
   "summary": "Methods name behavior. Arguments produce values for parameters, locals stay within scope, and return values carry results back to callers.",
   "learningEnvironment": "scratchpad",
   "buildState": {

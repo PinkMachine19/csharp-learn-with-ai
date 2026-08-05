@@ -93,14 +93,28 @@
     "objective": "Extend the preserved ScratchPad numeric example with decisions and pattern-based classification.",
     "startingCondition": "ScratchPad already calculates varianceHours in its Session 03 section. No production requirement needs schedule classification yet.",
     "steps": [
-      "Keep all earlier experiments.",
-      "Add a Session 04 section that classifies a local variance value as over, under, or on schedule.",
-      "For now, use one decimal variable and test one value at a time. A data structure, such as an array, can hold several values together, but data structures and loops have not been introduced yet; later sessions will explain them properly. Do not use one here: change the same variable to a positive value, zero, and a negative value, running the program after each change.",
-      "Predict positive, zero, and negative outcomes before writing the switch expression.",
-      "Compare the result from each run with the prediction.",
+      "Open src/PinkMachine19.TimeClock.ScratchPad/Program.cs. Keep every earlier experiment and add Session 04 below them.",
       {
-        "text": "Run ScratchPad and build the solution.",
-        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release"
+        "text": "Add a Session 04 heading and one decimal value to classify. The positive value represents recorded time above scheduled time.",
+        "code": "// Session 04 — Control flow and pattern decisions\ndecimal decisionVarianceHours = 0.5m;"
+      },
+      "For now, use one decimal variable and test one value at a time. A data structure, such as an array, can hold several values together, but data structures and loops have not been introduced yet. Later sessions will explain them properly. Do not use one here.",
+      "Before adding the decision, predict the status for 0.5m, 0m, and -0.5m. Write those three predictions in your notes.",
+      {
+        "text": "Below the variable, add a switch expression. Read the arms from top to bottom: positive, negative, then the fallback for zero.",
+        "code": "string scheduleStatus = decisionVarianceHours switch\n{\n    > 0m => \"over schedule\",\n    < 0m => \"under schedule\",\n    _ => \"on schedule\"\n};"
+      },
+      {
+        "text": "Print both the input and the selected status so you can observe which path ran.",
+        "code": "Console.WriteLine($\"Variance: {decisionVarianceHours:+0.00;-0.00;0.00}\");\nConsole.WriteLine($\"Status: {scheduleStatus}\");"
+      },
+      {
+        "text": "Run the program with 0.5m. Then change only decisionVarianceHours to 0m and run again. Finally change it to -0.5m and run a third time. Compare each result with your prediction.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"
+      },
+      {
+        "text": "After checking all three values, leave one of them in the notebook and confirm the full solution still builds.",
+        "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
       }
     ],
     "expectedBehavior": "ScratchPad retains prior work and demonstrates all three decision paths; production remains unchanged.",
