@@ -92,6 +92,7 @@
   "lab": {
     "objective": "Practice method declarations, parameters, local scope, and return values in seven isolated Session 05 classes.",
     "startingCondition": "Keep every earlier ScratchPad section unchanged. Session 05 begins in a new src/PinkMachine19.TimeClock.ScratchPad/Session05 folder; Program.cs is edited only to construct each lab class and call Run from the application's top-level Main entry point.",
+    "collapseInstructions": true,
     "labs": [
       {
         "title": "Create the Session 05 Scratch Area",
