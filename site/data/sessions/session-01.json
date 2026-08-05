@@ -91,36 +91,60 @@
       ]
     },
     {
-      "title": "Professional layout: folders follow responsibility",
+      "title": "Folder map: which folders belong inside each project folder",
       "paragraphs": [
-        "A new project starts as one flat folder. Add a subfolder when real code needs a useful home—not because a universal .NET checklist says the folder must exist. Folder names are team conventions, and different projects need different subsets.",
-        "Use the TimeClock project's responsibility to decide where a folder belongs:"
+        "Each dotnet new command creates a project folder containing a .csproj file. The src/ folder contains the five source project folders. The tests/ folder contains the test project folder.",
+        "A project folder may later contain smaller subfolders that group related C# files. The table names every project folder created in Session 01 and shows which subfolders may belong inside it later. Do not create the optional subfolders now; create each one only when the course adds its first real file."
       ],
-      "list": [
-        {
-          "term": "Domain — PinkMachine19.TimeClock.Domain",
-          "text": "Models/ holds business concepts such as Employee and ClockEntry. Exceptions/ can hold business-specific failures. Why here? These types express TimeClock rules without knowing about databases or HTTP. Add each folder only when its first real type is introduced."
-        },
-        {
-          "term": "Infrastructure — PinkMachine19.TimeClock.Infrastructure",
-          "text": "Repositories/ holds concrete persistence implementations, alongside database-specific code. Why here? Infrastructure is allowed to know how data is stored; Domain is not. Create it when the course adds its first concrete persistence type."
-        },
-        {
-          "term": "Web/API — PinkMachine19.TimeClock.Web",
-          "text": "Requests/ and Responses/ hold HTTP input and output shapes; Validators/ checks incoming data; Mappings/ translates boundary types; Configuration/ or Options/ holds typed settings. Why here? These concerns exist at the HTTP boundary. Add only the folders required by actual endpoints and configuration."
-        },
-        {
-          "term": "Application or host — PinkMachine19.TimeClock.App",
-          "text": "Startup and dependency wiring normally stay near Program.cs. Use-case Services/ may live here while the solution is small, or in a separate Application project if orchestration grows. Why here? Coordinating a workflow is different from enforcing a business rule. No extra host folder is required yet."
-        },
-        {
-          "term": "Shared or situational — location depends on contents",
-          "text": "Interfaces/, Constants/, Extensions/, and Helpers/ can appear in several projects. Put an interface with the code that owns the contract; put a constant or extension near the responsibility it supports. Helpers/ is a last resort for focused utility code, not a default dumping ground."
-        }
-      ],
+      "table": {
+        "headers": [
+          "Project folder created now",
+          "Project type",
+          "Possible subfolders later",
+          "What belongs in this project folder"
+        ],
+        "rows": [
+          [
+            "src/PinkMachine19.TimeClock.Domain/",
+            "Class library",
+            "Models/, Exceptions/, Interfaces/, domain Services/",
+            "Business concepts and business rules that do not depend on databases, terminals, or HTTP."
+          ],
+          [
+            "src/PinkMachine19.TimeClock.App/",
+            "Console application",
+            "Usually none at first; application Services/ only if coordination grows",
+            "Program startup, dependency wiring, and console workflow coordination."
+          ],
+          [
+            "src/PinkMachine19.TimeClock.Infrastructure/",
+            "Class library",
+            "Repositories/ and database-specific folders",
+            "Concrete storage and persistence code that is allowed to know about database technology."
+          ],
+          [
+            "src/PinkMachine19.TimeClock.Web/",
+            "ASP.NET Core web application",
+            "Requests/, Responses/, Validators/, Mappings/, Configuration/, Options/",
+            "HTTP endpoints and the input, output, validation, mapping, and configuration files used at the web boundary."
+          ],
+          [
+            "src/PinkMachine19.TimeClock.ScratchPad/",
+            "Console application",
+            "None required",
+            "Permanent learning experiments. Production projects must not depend on this project folder."
+          ],
+          [
+            "tests/PinkMachine19.TimeClock.Domain.Tests/",
+            "xUnit test project",
+            "None required at first; organize test folders only when the suite grows",
+            "Test files that verify Domain behavior. This project folder belongs under tests/, not src/."
+          ]
+        ]
+      },
       "closingParagraphs": [
-        "Services/ needs a name check before a location check. A domain service that contains business rules belongs in Domain. An application service that coordinates a use case often belongs in the host or a later Application project. The name alone does not decide the architecture.",
-        "None of these names is mandatory, and Session 01 does not create empty purpose folders. Later sessions add structure when TimeClock gains real code that justifies it."
+        "The word Services does not identify one automatic folder location. A domain service folder contains business rules and belongs inside the Domain project folder. An application service folder coordinates a workflow and may belong inside the App project folder or a later Application project folder.",
+        "Interfaces/, Constants/, Extensions/, and Helpers/ are also not automatic folders. Place a file in the project folder that owns its responsibility, and add a subfolder only when multiple related files make that grouping useful."
       ]
     },
     {
