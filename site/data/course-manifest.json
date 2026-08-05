@@ -69,6 +69,7 @@
     ["R5","records-modern-construction-and-collection-expressions","Records, Modern Construction & Collection Expressions","R4","supplemental C# 9–13 production reference"]
   ],
   "sideLabs": [
-    ["04C","choosing-if-switch-statement-or-switch-expression","Choosing if/else, a switch Statement, or a switch Expression",4,"optional decision-syntax comparison attached to Session 04"]
+    ["04C","choosing-if-switch-statement-or-switch-expression","Choosing if/else, a switch Statement, or a switch Expression",4,"optional decision-syntax comparison attached to Session 04"],
+    ["05B","properties-backing-fields-and-auto-properties","Properties, Backing Fields, and Auto-Properties",5,"optional property-syntax comparison attached to Session 05"]
   ]
 }

@@ -1,0 +1,216 @@
+{
+  "number": "05B",
+  "category": "Optional Session 05 sidebar lab",
+  "estimatedTime": "25–30 minutes",
+  "sidebarDescription": "See how properties provide method-like behavior through field-like syntax, and compare explicit backing fields with C# 3.0 auto-properties.",
+  "connection": "Session 05 introduced named methods and their boundaries. This optional sidebar uses that mental model to explain property accessors: get and set contain method-like behavior, while callers use the convenient syntax of reading or assigning a field.",
+  "objectives": [
+    "Distinguish a field, a backing field, a property, and an auto-implemented property.",
+    "Explain how get and set provide method-like behavior behind field-like calling syntax.",
+    "Use the setter's value keyword to receive the value being assigned.",
+    "Recognize that auto-implemented properties arrived in C# 3.0 in November 2007.",
+    "Choose an explicit backing field when an accessor needs custom behavior."
+  ],
+  "visuals": [
+    {
+      "diagram": "property",
+      "title": "A property controls access",
+      "explanation": "Callers read and assign the property as if it were a field, while get and set define what happens at that boundary."
+    },
+    {
+      "diagram": "call",
+      "title": "Accessors behave like methods",
+      "explanation": "Reading a property invokes its get accessor. Assigning a property invokes its set accessor and supplies the assigned value through the value keyword."
+    },
+    {
+      "diagram": "comparison",
+      "title": "Explicit and automatic storage",
+      "explanation": "An explicit property names its private backing field. An auto-property asks the compiler to create inaccessible storage and simple accessors."
+    },
+    {
+      "diagram": "blueprint",
+      "title": "The public contract stays simple",
+      "explanation": "Both forms expose the same ClockIn property to callers, so storage details can remain inside the class."
+    }
+  ],
+  "preQuiz": [
+    {
+      "prompt": "When code assigns entry.ClockIn = time, which accessor receives time?",
+      "options": ["get", "set", "The constructor automatically"],
+      "correct": 1,
+      "explanation": "Assignment invokes set. Inside that accessor, the special value keyword represents time."
+    },
+    {
+      "prompt": "What does an auto-property remove from code you must write?",
+      "options": ["The property itself", "The class", "The explicit backing field and trivial accessor bodies"],
+      "correct": 2,
+      "explanation": "The compiler supplies hidden storage and the simple get/set implementations."
+    },
+    {
+      "prompt": "When is an explicit backing field useful?",
+      "options": ["When an accessor needs validation or other custom behavior", "Only when storing strings", "Whenever a class has a constructor"],
+      "correct": 0,
+      "explanation": "A named backing field gives custom accessor code a place to read or store the value."
+    }
+  ],
+  "concept": [
+    {
+      "title": "A field is storage; a property is controlled access",
+      "paragraphs": [
+        "A field is a variable declared directly inside a class. It stores data. A property is a class member that controls how callers read or assign a value.",
+        "Properties look like fields at the call site, but their accessors contain executable behavior. This is why method-like behavior with field-like syntax is a useful mental model. More precisely, properties are first-class C# members whose accessors compile to methods."
+      ],
+      "code": "entry.ClockIn = new DateTime(2026, 8, 5, 9, 0, 0); // invokes set\nDateTime start = entry.ClockIn;                    // invokes get"
+    },
+    {
+      "title": "The older explicit backing-field form",
+      "paragraphs": [
+        "Before auto-implemented properties, a simple property required a field plus complete get and set bodies. The private field stores the value; the public property defines the class's external contract.",
+        "Inside set, value is a special implicit parameter containing the value on the right side of the assignment. The name _clockIn is an ordinary private-field naming convention, not special C# syntax."
+      ],
+      "code": "private DateTime _clockIn;\n\npublic DateTime ClockIn\n{\n    get\n    {\n        return _clockIn;\n    }\n    set\n    {\n        _clockIn = value;\n    }\n}"
+    },
+    {
+      "title": "C# 3.0 introduced auto-properties",
+      "paragraphs": [
+        "Auto-implemented properties were introduced with C# 3.0 in November 2007, alongside Visual Studio 2008 and .NET Framework 3.5.",
+        "When no custom accessor behavior is needed, the shorter declaration asks the compiler to create a hidden backing field and trivial accessors. Code inside the class cannot refer to that compiler-generated field by name."
+      ],
+      "code": "public DateTime ClockIn { get; set; }"
+    },
+    {
+      "title": "The caller uses both forms the same way",
+      "paragraphs": [
+        "Changing from an explicit property to an auto-property does not change ordinary caller syntax. Both are assigned with = and read through the property name.",
+        "Use an auto-property for plain storage. Use an explicit backing field when get or set needs validation, normalization, logging, lazy calculation, or another deliberate behavior."
+      ],
+      "table": {
+        "headers": ["Form", "Storage", "Best fit"],
+        "rows": [
+          ["Public field", "The field itself", "Rare simple data shapes where uncontrolled access is intentional"],
+          ["Explicit property", "A private field you declare", "Custom get or set behavior"],
+          ["Auto-property (C# 3.0+)", "A hidden field generated by the compiler", "Simple property storage without custom accessors"]
+        ]
+      }
+    }
+  ],
+  "lab": {
+    "objective": "Build explicit and automatic ClockIn properties in separate classes, then call a session-specific comparison from ScratchPad's entry point.",
+    "startingCondition": "Keep every Session 05 class and Program.cs call unchanged. Create a new Session05B folder for this optional experiment; skipping it must not affect Session 06.",
+    "collapseInstructions": true,
+    "labs": [
+      {
+        "title": "Write an Explicit Backing-Field Property",
+        "objective": "Write the older property form one piece at a time so the storage and accessor behavior remain visible.",
+        "practice": ["Declaring a private backing field", "Returning storage through get", "Receiving an assignment through value", "Separating storage from public access"],
+        "task": "Create Session05BExplicitEntry with a private _clockIn field and a public ClockIn property that reads and writes that field.",
+        "comment": "// Lab 1 of 3 - Write an Explicit Backing-Field Property",
+        "instructions": [
+          "Create the src/PinkMachine19.TimeClock.ScratchPad/Session05B folder.",
+          "Create Session05BExplicitEntry.cs inside the new folder.",
+          "Paste the lab comment at the top of the file.",
+          "Declare a class named Session05BExplicitEntry.",
+          "Inside the class, declare a private DateTime field named _clockIn.",
+          "Below the field, declare a public DateTime property named ClockIn.",
+          "Add a get accessor to ClockIn.",
+          "Inside get, return _clockIn.",
+          "Add a set accessor to ClockIn.",
+          "Inside set, assign value to _clockIn.",
+          "Save the file."
+        ],
+        "solution": "// Session05BExplicitEntry.cs\n// Lab 1 of 3 - Write an Explicit Backing-Field Property\nclass Session05BExplicitEntry\n{\n    private DateTime _clockIn;\n\n    public DateTime ClockIn\n    {\n        get\n        {\n            return _clockIn;\n        }\n        set\n        {\n            _clockIn = value;\n        }\n    }\n}"
+      },
+      {
+        "title": "Write the Equivalent Auto-Property",
+        "objective": "Create the same public property contract using the shorter syntax introduced in C# 3.0.",
+        "practice": ["Declaring an auto-property", "Recognizing compiler-generated storage", "Comparing equivalent public contracts"],
+        "task": "Create Session05BAutoEntry with a ClockIn auto-property and identify what the compiler supplies.",
+        "comment": "// Lab 2 of 3 - Write the Equivalent Auto-Property",
+        "instructions": [
+          "Keep Session05BExplicitEntry.cs unchanged.",
+          "Create Session05BAutoEntry.cs inside the Session05B folder.",
+          "Paste the lab comment at the top of the file.",
+          "Declare a class named Session05BAutoEntry.",
+          "Inside the class, declare a public DateTime property named ClockIn.",
+          "Give ClockIn semicolon-only get and set accessors.",
+          "Point to the part that asks the compiler to create the hidden storage.",
+          "Save the file."
+        ],
+        "solution": "// Session05BAutoEntry.cs\n// Lab 2 of 3 - Write the Equivalent Auto-Property\nclass Session05BAutoEntry\n{\n    public DateTime ClockIn { get; set; }\n}"
+      },
+      {
+        "title": "Compare Both Properties from Main",
+        "objective": "Use both property forms through identical caller syntax, then preserve the comparison behind one session-specific Run method.",
+        "practice": ["Assigning properties", "Reading properties", "Calling a new class from Main", "Preserving cumulative ScratchPad work"],
+        "task": "Create Session05BPropertyDemo, compare both ClockIn properties in Run, and append one construction and Run call to Program.cs.",
+        "comment": "// Lab 3 of 3 - Compare Both Properties from Main",
+        "instructions": [
+          "Create Session05BPropertyDemo.cs inside the Session05B folder.",
+          "Paste the lab comment at the top of the file.",
+          "Declare a class named Session05BPropertyDemo.",
+          "Add a public parameterless Run method.",
+          "Inside Run, display a Side Lab 05B heading.",
+          "Construct one Session05BExplicitEntry object.",
+          "Assign a DateTime value to its ClockIn property.",
+          "Display its ClockIn property.",
+          "Construct one Session05BAutoEntry object.",
+          "Assign the same DateTime value to its ClockIn property.",
+          "Display its ClockIn property.",
+          "Before running, predict whether the two displayed values will differ.",
+          "Open src/PinkMachine19.TimeClock.ScratchPad/Program.cs.",
+          "Keep every existing Session 05 construction and Run call unchanged.",
+          "Move to the end of Program.cs.",
+          "Construct one Session05BPropertyDemo object.",
+          "Call Run on the Session05BPropertyDemo object.",
+          "Save both files.",
+          {"text": "Run ScratchPad and compare the two values.", "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"},
+          {"text": "Build the complete solution.", "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"}
+        ],
+        "solution": "// Session05BPropertyDemo.cs\n// Lab 3 of 3 - Compare Both Properties from Main\nclass Session05BPropertyDemo\n{\n    public void Run()\n    {\n        Console.WriteLine(\"Side Lab 05B\");\n        DateTime exampleTime = new DateTime(2026, 8, 5, 9, 0, 0);\n\n        var explicitEntry = new Session05BExplicitEntry();\n        explicitEntry.ClockIn = exampleTime;\n        Console.WriteLine($\"Explicit property: {explicitEntry.ClockIn}\");\n\n        var autoEntry = new Session05BAutoEntry();\n        autoEntry.ClockIn = exampleTime;\n        Console.WriteLine($\"Auto-property: {autoEntry.ClockIn}\");\n    }\n}\n\n// Add to Program.cs without removing earlier calls\nvar session05B = new Session05BPropertyDemo();\nsession05B.Run();"
+      }
+    ],
+    "expectedBehavior": "ScratchPad preserves every earlier exercise and displays the same DateTime through the explicit property and the auto-property.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+  },
+  "expectedFiles": [
+    {"path": "src/PinkMachine19.TimeClock.ScratchPad/Session05B/Session05BExplicitEntry.cs", "action": "Add", "why": "Show the explicit private backing field and accessor bodies."},
+    {"path": "src/PinkMachine19.TimeClock.ScratchPad/Session05B/Session05BAutoEntry.cs", "action": "Add", "why": "Show the equivalent C# 3.0 auto-property."},
+    {"path": "src/PinkMachine19.TimeClock.ScratchPad/Session05B/Session05BPropertyDemo.cs", "action": "Add", "why": "Compare both forms behind one Run method."},
+    {"path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs", "action": "Modify", "why": "Preserve earlier calls, then construct Session05BPropertyDemo and call Run."}
+  ],
+  "commit": "Not applicable — optional side lab; no required TimeClock path changes.",
+  "review": [
+    "The explicit property stores data in _clockIn and exposes it only through ClockIn.",
+    "The set accessor assigns value to the backing field.",
+    "The auto-property has the same public name and type without a named backing field.",
+    "Program.cs preserves all earlier calls and appends the Side Lab 05B call.",
+    "The explanation distinguishes property accessors from ordinary fields and methods."
+  ],
+  "postQuiz": [
+    {
+      "prompt": "Why is a property reasonably described as method-like behavior with field-like syntax?",
+      "options": ["Its get and set accessors execute behavior, while callers read and assign it by name", "Every property is a public field", "Properties can only call methods"],
+      "correct": 0,
+      "explanation": "The accessors contain behavior, but caller syntax resembles reading or assigning a field."
+    },
+    {
+      "prompt": "What does value mean inside a set accessor?",
+      "options": ["The property's type name", "The value being assigned by the caller", "The previous backing-field value"],
+      "correct": 1,
+      "explanation": "value is the setter's implicit input and contains the right side of the assignment."
+    },
+    {
+      "prompt": "When were auto-implemented properties introduced?",
+      "options": ["C# 1.0 in 2002", "C# 3.0 in November 2007", "C# 8.0 in 2019"],
+      "correct": 1,
+      "explanation": "C# 3.0 introduced auto-implemented properties in November 2007."
+    }
+  ],
+  "reflections": [
+    "Which parts of the explicit property become hidden when you use an auto-property?",
+    "Why might validation justify keeping an explicit backing field?",
+    "Why is a property not the same thing as a public field, even when their caller syntax looks similar?"
+  ],
+  "whatBreaks": "Skipping this optional side lab does not break the required TimeClock path. You would only lose the side-by-side practice of tracing an assignment through set, storage, and get.",
+  "summary": "A property exposes method-like get and set behavior through field-like caller syntax. Explicit properties use a backing field you declare; C# 3.0 auto-properties, introduced in November 2007, let the compiler generate hidden storage for simple accessors."
+}
