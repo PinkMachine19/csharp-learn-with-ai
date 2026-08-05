@@ -92,7 +92,7 @@
       "title": "The Domain project owns the business models",
       "paragraphs": [
         "Address, Employee, and ClockEntry belong inside the PinkMachine19.TimeClock.Domain project because they describe the business. In VS Code, that project appears as the src/PinkMachine19.TimeClock.Domain folder. The folder path tells you where to create the files; the .csproj file defines which project owns and compiles them.",
-        "Session 02 already added a ProjectReference from App to Domain. That reference is what allows Session06ModelDemo in the App project to consume the Domain classes. Do not add the reference again: open the App project file and verify the existing ProjectReference before writing the demo."
+        "The App project needs a ProjectReference to Domain before Session06ModelDemo can consume Address, Employee, or ClockEntry. In the lab, add that reference explicitly, then inspect the App project file so you can connect the command with the ProjectReference it creates."
       ],
       "code": "<ProjectReference Include=\"..\\PinkMachine19.TimeClock.Domain\\PinkMachine19.TimeClock.Domain.csproj\" />"
     }
@@ -163,12 +163,19 @@
         "title": "Run the Session 06 Model Demo",
         "objective": "Use a new session-specific demo class to construct the models, while Program.cs remains the entry point that starts the exercise.",
         "practice": ["Constructing objects", "Reading initial property state", "Calling a session class from Main", "Preserving earlier classes"],
-        "task": "Verify that App already references Domain, create Session06ModelDemo in the App project, and use its Run method to construct and display one Employee and one open ClockEntry. Then append its construction and Run call to App/Program.cs.",
+        "task": "Add a project reference from App to Domain, create Session06ModelDemo in the App project, and use its Run method to construct and display one Employee and one open ClockEntry. Then append its construction and Run call to App/Program.cs.",
         "comment": "// Lab 4 of 4 - Run the Session 06 Model Demo",
         "instructions": [
+          {
+            "text": "From the repository root, define variables for the App and Domain project files.",
+            "code": "$appProject = \"src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj\"\n$domainProject = \"src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\""
+          },
+          {
+            "text": "Add a project reference from App to Domain.",
+            "code": "dotnet add $appProject reference $domainProject"
+          },
           "Open src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj.",
-          "Find the existing ProjectReference to PinkMachine19.TimeClock.Domain.csproj.",
-          "Do not add a second ProjectReference.",
+          "Find the ProjectReference to PinkMachine19.TimeClock.Domain.csproj created by the command.",
           "Create Session06ModelDemo.cs directly inside the src/PinkMachine19.TimeClock.App project folder.",
           "Paste the lab comment at the top of Session06ModelDemo.cs.",
           "Declare a public class named Session06ModelDemo.",
@@ -207,6 +214,11 @@
       "path": "src/PinkMachine19.TimeClock.Domain/ClockEntry.cs",
       "action": "Add",
       "why": "Place the employee clock-in business model in the Domain project."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj",
+      "action": "Modify",
+      "why": "Add the ProjectReference that allows App to consume the Domain project."
     },
     {
       "path": "src/PinkMachine19.TimeClock.App/Session06ModelDemo.cs",
