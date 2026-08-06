@@ -70,7 +70,7 @@
         "ClockEntry is a class: a reusable definition. entry is a variable whose value refers to one ClockEntry object.",
         "Keeping that vocabulary precise prevents confusion between changing a definition and creating an instance."
       ],
-      "code": "public class ClockEntry\n{\n    public int EmployeeId { get; }\n    public DateTime ClockIn { get; }\n    public DateTime? ClockOut { get; private set; }\n\n    public ClockEntry(int employeeId, DateTime clockIn)\n    {\n        EmployeeId = employeeId;\n        ClockIn = clockIn;\n        // ClockOut is left null on purpose -- that is what \"open\" means.\n    }\n}"
+      "code": "public class ClockEntry\n{\n    public int EmployeeId { get; }\n    public DateTime ClockIn { get; }\n\n    public ClockEntry(int employeeId, DateTime clockIn)\n    {\n        EmployeeId = employeeId;\n        ClockIn = clockIn;\n    }\n}"
     },
     {
       "title": "Constructors establish invariants",
@@ -83,10 +83,19 @@
     {
       "title": "Properties communicate intent",
       "paragraphs": [
-        "EmployeeId and ClockIn are get-only: set once by the constructor, readable forever after. ClockOut is get-with-a-private-setter: readable by anyone, but only ClockEntry itself (through ClockOutEmployee) can change it.",
-        "ClockEntryService.ClockIn uses exactly this shape: it builds a new ClockEntry and hands it to the repository -- a pure create, with no existing record to look up."
+        "EmployeeId and ClockIn are get-only: the constructor establishes them, callers may read them, and ordinary code cannot assign new values later. Name and Address use get and set because this model currently permits those values to change.",
+        "Session 06 stops at the state known during clock-in. ClockOut, a private setter, and completion rules arrive in Session 07, where their purpose can be explained instead of copied prematurely."
       ],
-      "code": "// Services/ClockEntryService.cs -- the real ClockIn implementation\npublic void ClockIn(int employeeId)\n{\n    var entry = new ClockEntry(employeeId, DateTime.Now);\n    _clockEntryRepository.SaveClockEntry(entry);\n}"
+      "table": {
+        "headers": ["Property", "Declaration", "Why"],
+        "rows": [
+          ["Employee.EmployeeId", "int with get", "Required by the constructor and unchanged afterward"],
+          ["Employee.Name", "string with get and set", "Required by the constructor and currently allowed to change"],
+          ["Employee.Address", "Address with get and set", "Required by the constructor and currently allowed to change"],
+          ["ClockEntry.EmployeeId", "int with get", "Required clock-in identity"],
+          ["ClockEntry.ClockIn", "DateTime with get", "Required clock-in time"]
+        ]
+      }
     },
     {
       "title": "The Domain project owns the business models",
@@ -106,7 +115,7 @@
         "title": "Create the Address Model",
         "objective": "Create the first small production model without removing or rewriting an earlier class.",
         "practice": ["Declaring a class", "Representing related values with properties", "Using a constructor to establish initial state"],
-        "task": "Add Address.cs to the PinkMachine19.TimeClock.Domain project with the address values required by the product brief.",
+        "task": "Add Address.cs to the PinkMachine19.TimeClock.Domain project with required Street and City properties established by its constructor.",
         "comment": "// Lab 1 of 4 - Create the Address Model",
         "instructions": [
           "Leave Class1.cs and every existing file unchanged.",
@@ -114,11 +123,13 @@
           "Create Address.cs directly inside that Domain project folder.",
           "Paste the lab comment at the top of Address.cs.",
           "Declare a public class named Address.",
-          "Add one required address property at a time using the names from the product brief.",
-          "Add a constructor that receives the required address values.",
+          "Add a public string property named Street with a get accessor.",
+          "Add a public string property named City with a get accessor.",
+          "Add a constructor with string parameters named street and city.",
           "Assign each constructor parameter to its matching property.",
           "Save Address.cs."
-        ]
+        ],
+        "solution": "// Address.cs\n// Lab 1 of 4 - Create the Address Model\npublic class Address\n{\n    public string Street { get; }\n    public string City { get; }\n\n    public Address(string street, string city)\n    {\n        Street = street;\n        City = city;\n    }\n}"
       },
       {
         "title": "Create the Employee Model",
@@ -131,13 +142,14 @@
           "Create Employee.cs directly inside the src/PinkMachine19.TimeClock.Domain project folder.",
           "Paste the lab comment at the top of Employee.cs.",
           "Declare a public class named Employee.",
-          "Add the employee identity property from the product brief.",
-          "Add the employee name property from the product brief.",
-          "Add an Address property whose type is Address.",
-          "Add a constructor that receives the required employee values.",
+          "Add a public int property named EmployeeId with a get accessor.",
+          "Add a public string property named Name with get and set accessors.",
+          "Add a public Address property named Address with get and set accessors.",
+          "Add a constructor with parameters named employeeId, name, and address.",
           "Assign each constructor parameter to its matching property.",
           "Save Employee.cs."
-        ]
+        ],
+        "solution": "// Employee.cs\n// Lab 2 of 4 - Create the Employee Model\npublic class Employee\n{\n    public int EmployeeId { get; }\n    public string Name { get; set; }\n    public Address Address { get; set; }\n\n    public Employee(int employeeId, string name, Address address)\n    {\n        EmployeeId = employeeId;\n        Name = name;\n        Address = address;\n    }\n}"
       },
       {
         "title": "Create the Open Clock Entry Model",
@@ -150,14 +162,15 @@
           "Create ClockEntry.cs directly inside the src/PinkMachine19.TimeClock.Domain project folder.",
           "Paste the lab comment at the top of ClockEntry.cs.",
           "Declare a public class named ClockEntry.",
-          "Add an int property named EmployeeId.",
-          "Add a DateTime property named ClockIn.",
+          "Add a public int property named EmployeeId with a get accessor.",
+          "Add a public DateTime property named ClockIn with a get accessor.",
           "Add a constructor that receives employeeId and clockIn.",
           "Assign employeeId to EmployeeId.",
           "Assign clockIn to ClockIn.",
           "Do not add ClockOut or duration behavior in this session.",
           "Save ClockEntry.cs."
-        ]
+        ],
+        "solution": "// ClockEntry.cs\n// Lab 3 of 4 - Create the Open Clock Entry Model\npublic class ClockEntry\n{\n    public int EmployeeId { get; }\n    public DateTime ClockIn { get; }\n\n    public ClockEntry(int employeeId, DateTime clockIn)\n    {\n        EmployeeId = employeeId;\n        ClockIn = clockIn;\n    }\n}"
       },
       {
         "title": "Run the Session 06 Model Demo",
