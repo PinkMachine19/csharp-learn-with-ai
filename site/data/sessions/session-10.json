@@ -100,7 +100,14 @@
       "Add one string comparison with an explicit StringComparison choice.",
       {
         "text": "Run ScratchPad, build, and test.",
-        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "Reveal only after attempting the lab or when you are genuinely blocked. Compare the important decisions with your code instead of replacing your entire files.",
+            "code": "// WorkSummary.cs\nnamespace PinkMachine19.TimeClock.Domain;\n\npublic sealed record WorkSummary(int EmployeeId, decimal Hours);\n\n// Add as a new Session 10 section at the end of ScratchPad/Program.cs.\nWorkSummary firstSummary = new(1, 8m);\nWorkSummary secondSummary = new(1, 8m);\n\nConsole.WriteLine($\"Records equal with ==: {firstSummary == secondSummary}\");\nConsole.WriteLine($\"Records equal with Equals: {firstSummary.Equals(secondSummary)}\");\n\nDateTime sharedClockIn = new(2026, 1, 15, 9, 0, 0);\nClockEntry firstEntry = new(1, sharedClockIn);\nClockEntry secondEntry = new(1, sharedClockIn);\n\nConsole.WriteLine($\"Classes equal with ==: {firstEntry == secondEntry}\");\nConsole.WriteLine($\"Classes equal with Equals: {firstEntry.Equals(secondEntry)}\");\n\nbool sameCity = string.Equals(\n    \"Springfield\",\n    \"springfield\",\n    StringComparison.OrdinalIgnoreCase);\n\nConsole.WriteLine($\"Cities match ignoring case: {sameCity}\");"
+          }
+        ]
       }
     ],
     "expectedBehavior": "WorkSummary becomes a real production result type, while ScratchPad preserves the equality comparison.",
