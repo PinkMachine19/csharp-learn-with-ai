@@ -4,63 +4,63 @@
   "estimatedTime": "35 minutes",
   "connection": "ScratchPad contains prior experiments and the student knows local methods. No TimeClock requirement currently needs ref, out, or in parameters. Add an isolated ScratchPad parameter-passing experiment without distorting a production repository API.",
   "objectives": [
-    "Explain why out lets a method report a lookup result and success/failure without a nullable return type or a thrown exception.",
-    "Write TryGetOpenEntry(int employeeId, out ClockEntry? entry), a new method modeled on GetClockEntry's real nullable-return shape but demonstrating the out alternative.",
-    "Explain why ref would let a method reassign a caller's ClockEntry? variable entirely, not just mutate the object it currently refers to.",
-    "Explain why in is not needed anywhere in this codebase, since no method here takes a large struct by value."
+    "Compare ordinary value parameters with out, ref, and in parameters.",
+    "Use out to report a success result and an additional parsed value.",
+    "Use ref to demonstrate deliberate caller-visible reassignment.",
+    "Use in to pass a value through a readonly reference, then explain why the production domain does not currently need that optimization."
   ],
   "visuals": [
     {
       "diagram": "call",
       "title": "out reports a second value on the way out",
-      "explanation": "bool TryGetOpenEntry(int employeeId, out ClockEntry? entry) returns whether the lookup succeeded AND assigns entry -- two pieces of information from one call."
+      "explanation": "bool TryParseHours(string text, out decimal hours) returns whether parsing succeeded and assigns hours -- two pieces of information from one call."
     },
     {
       "diagram": "branch",
       "title": "The caller must handle both outcomes",
-      "explanation": "if (repository.TryGetOpenEntry(1, out var entry)) uses entry only inside the branch where TryGetOpenEntry returned true -- the compiler enforces entry is definitely assigned by that point."
+      "explanation": "if (TryParseHours(text, out var hours)) uses hours in the success branch. The method must assign its out parameter before every return."
     },
     {
       "diagram": "variable",
-      "title": "ref lets a method replace what the caller's variable refers to",
-      "explanation": "A ref ClockEntry? parameter could reassign the caller's variable to a completely different object, not just mutate the current one."
+      "title": "ref lets a method change caller-visible storage",
+      "explanation": "A ref int parameter can replace the value stored in the caller's variable, so the change remains visible after the method returns."
     },
     {
       "diagram": "invariant",
-      "title": "in protects a large struct from being copied",
-      "explanation": "None of this codebase's parameters are large structs, so in has no real use here -- it exists for a category of problem this domain does not have."
+      "title": "in passes a readonly reference",
+      "explanation": "The method can read the caller's value but cannot reassign through the in parameter. Avoiding copies can matter for larger structs; this lab demonstrates the mechanism without claiming the TimeClock domain needs it."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "What does TryGetOpenEntry(1, out var entry) let you avoid, compared to the real async GetClockEntry(1)?",
+      "prompt": "What does TryParseHours(text, out var hours) communicate?",
       "options": [
-        "Nothing conceptually different -- it is a synchronous alternative to the same nullable-result idea, useful for comparing the two patterns side by side",
-        "It avoids ever needing a null check",
-        "It makes the lookup run faster"
+        "A Boolean success result and an additional parsed value",
+        "A guarantee that every string is a valid decimal",
+        "A request to mutate the input text"
       ],
       "correct": 0,
-      "explanation": "Both patterns communicate 'found or not found' -- out ClockEntry? plus a bool return is one C# idiom for it; a nullable return type (the real GetClockEntry's choice) is another."
+      "explanation": "The bool reports success while the out parameter carries the parsed decimal."
     },
     {
-      "prompt": "Inside if (repository.TryGetOpenEntry(1, out var entry)) { ... }, what does the compiler guarantee about entry?",
+      "prompt": "What must a method do with every out parameter before it returns?",
       "options": [
-        "entry is definitely assigned to a non-null ClockEntry inside the if block, because out parameters must be assigned before the method returns",
-        "entry might still be null even though TryGetOpenEntry returned true",
-        "entry is only valid outside the if block"
+        "Assign it on every return path",
+        "Read its caller-provided starting value",
+        "Convert it into a reference type"
       ],
       "correct": 0,
-      "explanation": "C# requires every out parameter to be assigned before the method returns -- combined with a true return value, this is the whole point of the Try-pattern."
+      "explanation": "C# enforces definite assignment for out parameters."
     },
     {
-      "prompt": "Why does this course's real domain have no genuine use for the in modifier?",
+      "prompt": "What restriction does in place on the method parameter?",
       "options": [
-        "in exists to avoid copying large structs by value; every struct-like value this codebase passes around (int, DateTime) is small enough that copying is already cheap and idiomatic",
-        "in is deprecated in modern C#",
-        "in only works with reference types"
+        "The method can read it but cannot reassign through it",
+        "The caller cannot read the value afterward",
+        "The method must assign it before returning"
       ],
       "correct": 0,
-      "explanation": "in is a performance tool for large structs -- this codebase's value types (int, DateTime) are exactly the small, cheap-to-copy kind in was never meant to optimize."
+      "explanation": "in passes a readonly reference. It is often considered when copying a larger struct would matter."
     }
   ],
   "concept": [
@@ -78,34 +78,130 @@
         "A Try-style method can return success as bool and place the found value in an out parameter.",
         "This is useful when absence is expected, but it should not be added to a production API unless callers genuinely need that shape."
       ],
-      "code": "static bool TryRead(string text, out int value) =>\n    int.TryParse(text, out value);"
+      "code": "static bool TryParseHours(string text, out decimal hours) =>\n    decimal.TryParse(text, out hours);"
     },
     {
-      "title": "ref and in communicate special intent",
+      "title": "ref permits caller-visible reassignment",
       "paragraphs": [
-        "ref permits the method to replace caller-visible storage. in passes by reference while preventing reassignment through that parameter.",
-        "Both are specialized tools. ScratchPad lets you observe them without distorting TimeClock contracts."
+        "ref lets a method read and replace the value stored in the caller's variable. The caller must initialize the variable first, and both the declaration and call site use ref so the unusual behavior remains visible.",
+        "Use ref only when changing the caller's variable is genuinely part of the method's contract."
       ],
       "code": "static void Increment(ref int value) => value++;"
+    },
+    {
+      "title": "in passes a readonly reference",
+      "paragraphs": [
+        "in passes an existing value by reference while preventing the method from assigning a replacement through that parameter. The method can still read and display the value.",
+        "Avoiding a copy can help with larger structs. This ScratchPad example uses decimal only to make the syntax observable; the TimeClock production API has no measured need to use in for its small, ordinary values."
+      ],
+      "code": "static void DisplayMeasurement(in decimal measurement)\n{\n    Console.WriteLine(measurement);\n    // measurement = 99m; // Does not compile: in is readonly here.\n}"
     }
   ],
   "lab": {
-    "objective": "Add an isolated ScratchPad parameter-passing experiment without distorting a production repository API.",
-    "startingCondition": "ScratchPad contains prior experiments and the student knows local methods. No TimeClock requirement currently needs ref, out, or in parameters.",
-    "steps": [
-      "Add a Session 09 heading and keep all previous sections.",
-      "Write one small method for ordinary by-value input, one Try-style out method, and one ref mutation.",
-      "Predict caller-visible state before each call.",
-      "Run the examples and annotate which changes cross the method boundary.",
+    "objective": "Build four isolated ScratchPad observations that compare ordinary, out, ref, and in parameter behavior.",
+    "startingCondition": "Keep every earlier ScratchPad class and Program.cs call unchanged. Create a Session09 folder and one Session09ParameterDemo class; no production API needs to change for this language experiment.",
+    "collapseInstructions": true,
+    "labs": [
       {
-        "text": "Run ScratchPad and build the production solution unchanged.",
-        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release"
+        "title": "Observe an Ordinary Value Parameter",
+        "objective": "See that reassigning an ordinary value parameter changes only the method's local copy.",
+        "practice": ["Passing an argument by value", "Reassigning a parameter", "Comparing caller and method state"],
+        "task": "Create Session09ParameterDemo and show that ChangeCopy cannot replace the caller's int variable.",
+        "comment": "// Lab 1 of 4 - Observe an Ordinary Value Parameter",
+        "instructions": [
+          "Create the src/PinkMachine19.TimeClock.ScratchPad/Session09 folder.",
+          "Create Session09ParameterDemo.cs inside the Session09 folder.",
+          "Paste the lab comment at the top of the file.",
+          "Declare a public class named Session09ParameterDemo.",
+          "Add a public parameterless Run method.",
+          "Inside Run, declare an int variable named originalValue with the value 10.",
+          "Call a method named ChangeCopy with originalValue.",
+          "Display originalValue after the call.",
+          "Below Run, add a public void method named ChangeCopy with one int parameter named value.",
+          "Inside ChangeCopy, assign 99 to value.",
+          "Display value inside ChangeCopy.",
+          "Open ScratchPad/Program.cs.",
+          "Keep every earlier construction and Run call unchanged.",
+          "Construct one Session09ParameterDemo object at the end of Program.cs.",
+          "Call Run on the Session09ParameterDemo object.",
+          "Predict which output displays 99 and which displays 10."
+        ],
+        "solution": "// Session09ParameterDemo.cs\n// Lab 1 of 4 - Observe an Ordinary Value Parameter\npublic class Session09ParameterDemo\n{\n    public void Run()\n    {\n        int originalValue = 10;\n        ChangeCopy(originalValue);\n        Console.WriteLine($\"Caller after ordinary call: {originalValue}\");\n    }\n\n    public void ChangeCopy(int value)\n    {\n        value = 99;\n        Console.WriteLine($\"Inside ordinary method: {value}\");\n    }\n}\n\n// Append to Program.cs\nvar session09 = new Session09ParameterDemo();\nsession09.Run();"
+      },
+      {
+        "title": "Return an Additional Value with out",
+        "objective": "Use the Try-pattern to return success as bool and a parsed decimal through an out parameter.",
+        "practice": ["Declaring an out parameter", "Definite assignment", "Calling with out var", "Handling success and failure"],
+        "task": "Add TryParseHours and use its Boolean result before displaying the parsed hours.",
+        "comment": "// Lab 2 of 4 - Return an Additional Value with out",
+        "instructions": [
+          "Paste the lab comment above the new out example in Session09ParameterDemo.cs.",
+          "Inside Run, call TryParseHours with the text 8.5 and an out variable named parsedHours.",
+          "Store the Boolean return value in a variable named parsedSuccessfully.",
+          "Display parsedSuccessfully.",
+          "Display parsedHours.",
+          "Below ChangeCopy, add a public bool method named TryParseHours.",
+          "Give TryParseHours one string parameter named text.",
+          "Give TryParseHours one out decimal parameter named hours.",
+          "Inside TryParseHours, return the result of decimal.TryParse using text and out hours.",
+          "Identify the bool as the normal return value.",
+          "Identify hours as the additional value assigned on the way out."
+        ],
+        "solution": "// Add inside Run.\nbool parsedSuccessfully = TryParseHours(\"8.5\", out decimal parsedHours);\nConsole.WriteLine($\"Parsed successfully: {parsedSuccessfully}\");\nConsole.WriteLine($\"Parsed hours: {parsedHours:F2}\");\n\n// Add below ChangeCopy.\npublic bool TryParseHours(string text, out decimal hours)\n{\n    return decimal.TryParse(text, out hours);\n}"
+      },
+      {
+        "title": "Change Caller-Visible Storage with ref",
+        "objective": "Use ref when changing the caller's variable is an explicit part of the method contract.",
+        "practice": ["Declaring a ref parameter", "Calling with ref", "Observing caller-visible reassignment"],
+        "task": "Add Increment and observe that changing its ref parameter changes the caller's counter variable.",
+        "comment": "// Lab 3 of 4 - Change Caller-Visible Storage with ref",
+        "instructions": [
+          "Paste the lab comment above the new ref example in Session09ParameterDemo.cs.",
+          "Inside Run, declare an int variable named counter with the value 1.",
+          "Call Increment with ref counter.",
+          "Display counter after the call.",
+          "Below TryParseHours, add a public void method named Increment.",
+          "Give Increment one ref int parameter named value.",
+          "Inside Increment, increase value by one.",
+          "Identify ref at both the method declaration and the call site.",
+          "Predict why counter displays 2 instead of 1."
+        ],
+        "solution": "// Add inside Run.\nint counter = 1;\nIncrement(ref counter);\nConsole.WriteLine($\"Counter after ref call: {counter}\");\n\n// Add below TryParseHours.\npublic void Increment(ref int value)\n{\n    value++;\n}"
+      },
+      {
+        "title": "Read Through an in Parameter",
+        "objective": "Demonstrate in as a readonly-reference parameter, then decide whether the production domain has a reason to use it.",
+        "practice": ["Declaring an in parameter", "Calling with in", "Readonly parameter behavior", "Separating demonstration from production need"],
+        "task": "Add DisplayMeasurement, pass one decimal with in, and record why the example teaches syntax rather than a required TimeClock optimization.",
+        "comment": "// Lab 4 of 4 - Read Through an in Parameter",
+        "instructions": [
+          "Paste the lab comment above the new in example in Session09ParameterDemo.cs.",
+          "Inside Run, declare a decimal variable named measurement with the value 12.5m.",
+          "Call DisplayMeasurement with in measurement.",
+          "Below Increment, add a public void method named DisplayMeasurement.",
+          "Give DisplayMeasurement one in decimal parameter named measurement.",
+          "Inside DisplayMeasurement, display measurement with F2.",
+          "Add a comment showing that assigning 99m to measurement would not compile.",
+          "Keep the non-compiling assignment commented out.",
+          "Explain that in prevents reassignment through the parameter.",
+          "Explain that this small decimal example demonstrates the mechanism but does not establish a production performance need.",
+          "Save Session09ParameterDemo.cs.",
+          "Save Program.cs.",
+          {"text": "Run ScratchPad and compare all four parameter behaviors.", "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"},
+          {"text": "Build the complete solution without changing production contracts.", "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"}
+        ],
+        "solution": "// Add inside Run.\ndecimal measurement = 12.5m;\nDisplayMeasurement(in measurement);\n\n// Add below Increment.\npublic void DisplayMeasurement(in decimal measurement)\n{\n    Console.WriteLine($\"Measurement through in: {measurement:F2}\");\n    // measurement = 99m; // Does not compile: the in parameter is readonly.\n}"
       }
     ],
     "expectedBehavior": "ScratchPad demonstrates ref, out, in, and ordinary value passing; production contracts remain requirement-driven.",
     "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release"
   },
   "expectedFiles": [
+    {
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session09/Session09ParameterDemo.cs",
+      "action": "Add",
+      "why": "Keep ordinary, out, ref, and in observations in one Session 09-specific class."
+    },
     {
       "path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs",
       "action": "Modify",
@@ -125,40 +221,40 @@
   ],
   "postQuiz": [
     {
-      "prompt": "Why does TryGetOpenEntry return bool instead of just returning ClockEntry??",
+      "prompt": "Why does TryParseHours return bool while also using out decimal hours?",
       "options": [
-        "Both are valid designs for the same problem -- the Try-pattern with out is one C# idiom, a nullable return (the real GetClockEntry's choice) is another; this session teaches the out alternative specifically",
-        "ClockEntry? cannot be returned from a synchronous method",
-        "bool is required by the out keyword"
+        "The bool reports success while hours carries the parsed value",
+        "A decimal cannot be returned normally",
+        "out automatically makes parsing succeed"
       ],
       "correct": 0,
-      "explanation": "There is no technical requirement to use bool+out over a nullable return -- it is an idiom choice, and this session's point is recognizing both idioms."
+      "explanation": "This is the Try-pattern: one result reports success and the out parameter carries an additional result."
     },
     {
-      "prompt": "What would go wrong if TryGetOpenEntry's implementation had a code path that returned true without assigning entry?",
+      "prompt": "What would happen if TryParseHours had a return path that did not assign hours?",
       "options": [
         "The code would not compile -- C# requires every out parameter to be definitely assigned before the method returns, on every path",
-        "entry would default to a valid open ClockEntry automatically",
+        "hours would automatically become a successful parsed value",
         "Nothing -- out parameters are optional to assign"
       ],
       "correct": 0,
       "explanation": "Definite assignment of out parameters is enforced by the compiler, not just a convention -- this is exactly why callers can trust entry after a true return."
     },
     {
-      "prompt": "Could ref have been used instead of out for TryGetOpenEntry's entry parameter?",
+      "prompt": "Why is out a better fit than ref for the parsedHours result?",
       "options": [
-        "Technically yes, but it would require the caller to initialize entry before the call, for no benefit -- out is the correct, idiomatic choice when the method fully determines the value",
+        "ref would require the caller to initialize the variable first, while the parsing method determines the output completely",
         "No, ref and out are interchangeable in every situation with no difference",
         "No, ref only works with value types"
       ],
       "correct": 0,
-      "explanation": "ref requires the variable to already have a value going in; out does not -- since TryGetOpenEntry's caller has no meaningful value to provide beforehand, out is the right tool."
+      "explanation": "ref requires a meaningful incoming variable value; out fits a method that produces the value on the way out."
     }
   ],
   "reflections": [
     {
-      "question": "Now that you have both GetClockEntry (nullable return) and TryGetOpenEntry (out parameter) side by side, which would you choose for a new method, and why?",
-      "answer": "For one optional result, a nullable return is often the simpler signature because the caller receives one value and performs a null check. Choose a Try method when expected absence should be emphasized as a Boolean success result or when that pattern matches the surrounding API. The better choice is the one that makes absence and caller handling clearest, not a universal syntax rule."
+      "question": "After writing TryParseHours, when would you choose a bool-plus-out Try method instead of a nullable return?",
+      "answer": "Choose a Try method when expected failure should be explicit as a Boolean result and the surrounding API follows that convention. A nullable return can be simpler when one optional value is all the caller needs. The better choice is the one that makes absence and caller handling clearest, not a universal syntax rule."
     },
     {
       "question": "Can you think of a genuine (not contrived) use for ref anywhere in this codebase as it might grow?",
@@ -169,11 +265,13 @@
       "answer": "in exists mainly to avoid copying larger value types while preventing reassignment through the parameter. This domain currently passes small values such as int and DateTime, so the extra modifier would add ceremony without solving a demonstrated problem. Understanding when not to use a specialized feature is part of using it correctly."
     }
   ],
-  "whatBreaks": "Adding a code path in TryGetOpenEntry that returns true without assigning entry would fail to compile -- the definite-assignment rule catches this at compile time rather than allowing a null-reference bug at runtime. Confusing ref with out would lead you to expect a caller-provided initial value for entry that TryGetOpenEntry does not need or use.",
-  "summary": "out lets a method return a second value (here, whether an open entry was found) alongside its normal return type, with the compiler enforcing definite assignment. ref would let a method reassign a caller's variable to an entirely different object -- a capability this codebase's real, ordinary-reference mutation patterns (Session 8) never need. in exists to avoid copying large structs, and this domain's small value types (int, DateTime) never pay that cost in the first place.",
+  "whatBreaks": "Failing to assign an out parameter on every return path prevents compilation. Removing ref from either Increment's declaration or call breaks the explicit caller-visible reassignment contract. Assigning to an in parameter also fails to compile because that parameter is readonly inside the method.",
+  "summary": "Ordinary parameters receive a copy of the argument value. out adds a compiler-enforced output, ref permits deliberate caller-visible reassignment, and in passes a readonly reference. ScratchPad demonstrates all four; production code should use the specialized modifiers only when their contracts solve a real problem.",
   "learningEnvironment": "scratchpad",
   "buildState": {
-    "creates": [],
+    "creates": [
+      "Session09ParameterDemo"
+    ],
     "extends": [
       "parameter-passing experiment"
     ]
