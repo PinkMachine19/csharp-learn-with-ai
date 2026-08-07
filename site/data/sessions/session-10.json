@@ -76,6 +76,7 @@
       "title": "WorkSummary: a record gets value equality automatically",
       "paragraphs": [
         "public sealed record WorkSummary(int EmployeeId, decimal Hours) is a positional record. Declaring it with record instead of class is what generates member-wise Equals, GetHashCode, and == overloads -- no extra code required.",
+        "The sealed keyword means another type cannot inherit from WorkSummary. It is not an access modifier, and it is not responsible for the generated equality. public controls where the record can be used, sealed prevents inheritance, and record supplies the value-based record behavior. WorkSummary is sealed because it is intended to be a complete result type rather than a base type for other records.",
         "This is the real, meaningful contrast this session teaches: the same 'compare these two objects' question gets a different default answer depending on whether the type is declared class or record."
       ],
       "code": "public sealed record WorkSummary(int EmployeeId, decimal Hours);\n\nWorkSummary a = new(1, 8m);\nWorkSummary b = new(1, 8m);\nConsole.WriteLine(a == b); // true -- record-generated value equality"
