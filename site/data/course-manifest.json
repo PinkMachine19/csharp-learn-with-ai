@@ -69,6 +69,7 @@
     ["R5","records-modern-construction-and-collection-expressions","Records, Modern Construction & Collection Expressions","R4","supplemental C# 9–13 production reference"]
   ],
   "sideLabs": [
+    ["01B","vscode-fluency-navigate-manipulate-debug-recover","VS Code Fluency: Navigate, Manipulate, Run, and Recover",1,"optional editor-workflow practice attached to Session 01"],
     ["03B","formatting-console-output-in-csharp","Formatting Console Output in C#",3,"optional console-formatting reference attached to Session 03"],
     ["04C","choosing-if-switch-statement-or-switch-expression","Choosing if/else, a switch Statement, or a switch Expression",4,"optional decision-syntax comparison attached to Session 04"],
     ["05B","properties-backing-fields-and-auto-properties","Properties, Backing Fields, and Auto-Properties",5,"optional property-syntax comparison attached to Session 05"]

@@ -1,0 +1,269 @@
+{
+  "number": "01B",
+  "category": "Optional Session 01 sidebar lab",
+  "estimatedTime": "25–30 minutes",
+  "nextSessionLabel": "Session 02",
+  "sidebarDescription": "Reduce editor friction by learning four repeatable VS Code workflows: navigate, manipulate, run or debug deliberately, and recover through the Command Palette.",
+  "connection": "Session 01 created a multi-project solution containing App, Domain, Infrastructure, Web, ScratchPad, and Tests. Before Session 02 begins moving among those projects, this optional sidebar separates C# difficulty from editor-state friction.",
+  "objectives": [
+    "Use a small set of high-value commands to navigate files, symbols, definitions, and editing positions.",
+    "Control common editor UI state without depending on the mouse.",
+    "Explain why F5 does not simply run the file currently visible in a multi-project solution.",
+    "Deliberately select a Run and Debug project or use an explicit dotnet command.",
+    "Use the Command Palette as the primary recovery and command-discovery tool."
+  ],
+  "visuals": [
+    {
+      "diagram": "path",
+      "title": "Navigate by intent",
+      "explanation": "Open a file by name, find a symbol, visit its definition, and return. These actions are more reusable than memorizing where every file sits in the Explorer."
+    },
+    {
+      "diagram": "folders",
+      "title": "Manipulate editor state",
+      "explanation": "The sidebar, terminal, bottom panel, and editor groups are views you can show, hide, split, focus, and restore without changing project files."
+    },
+    {
+      "diagram": "pipeline",
+      "title": "Run and Debug have targets",
+      "explanation": "In a multi-project solution, the visible file and selected debug target are separate state. F5 follows the selected configuration, not your gaze."
+    },
+    {
+      "diagram": "feedback",
+      "title": "Recover through the Command Palette",
+      "explanation": "When a shortcut is forgotten, intercepted by RDP, or hidden behind confusing UI state, Ctrl+Shift+P lets you search for the action by name."
+    }
+  ],
+  "preQuiz": [
+    {
+      "prompt": "You forgot the shortcut for splitting an editor. What is the best general fallback?",
+      "options": ["Open the Command Palette and search for split editor", "Restart the solution", "Edit the project file"],
+      "correct": 0,
+      "explanation": "The Command Palette lets you find and run commands by intent without memorizing every binding."
+    },
+    {
+      "prompt": "In a solution containing App and ScratchPad, what does F5 debug?",
+      "options": ["Always the file currently visible", "The currently selected launch or project configuration", "Every project simultaneously"],
+      "correct": 1,
+      "explanation": "VS Code remembers debugging state. The active editor does not necessarily determine the debug target."
+    },
+    {
+      "prompt": "Which approach most explicitly identifies the console project you intend to run?",
+      "options": ["dotnet run --project followed by its .csproj path", "Opening its Program.cs", "Selecting text in the editor"],
+      "correct": 0,
+      "explanation": "An explicit project path avoids ambiguity about which executable project should run."
+    }
+  ],
+  "concept": [
+    {
+      "title": "The main lesson: memorize less, recover better",
+      "paragraphs": [
+        "You do not need to memorize every VS Code shortcut. Learn a small set of high-value navigation commands, understand that VS Code remembers UI and debugging state, and use Ctrl+Shift+P to discover or execute everything else.",
+        "This course already provides a searchable Shortcuts widget on session pages. Use that widget as a reference; use this sidebar to practice workflows and understand how commands work together."
+      ],
+      "code": "Ctrl+Shift+P  →  type what you want to do  →  choose the command"
+    },
+    {
+      "title": "1. Navigate",
+      "paragraphs": [
+        "Navigation commands answer different questions: Which file? Which symbol? Where is this defined? Where was I before? Word-boundary movement handles small movements inside one line.",
+        "Use Ctrl+P and type part of a filename instead of expanding folders repeatedly. In Quick Open, @ searches symbols in the selected file; Ctrl+Shift+O opens that symbol search directly."
+      ],
+      "table": {
+        "headers": ["Intent", "Shortcut", "Use"],
+        "rows": [
+          ["Open a file by name", "Ctrl+P", "Type part of Program.cs, Class1.cs, or a project filename"],
+          ["Find a symbol in this file", "Ctrl+Shift+O", "Jump to a class, method, or member"],
+          ["Find a symbol in the workspace", "Ctrl+T", "Search across indexed workspace symbols"],
+          ["Go to definition", "F12", "Visit the declaration behind a type or member"],
+          ["Go back or forward", "Alt+Left / Alt+Right", "Return after visiting another file or definition"],
+          ["Switch recent editors", "Ctrl+Tab", "Move between recently used files"],
+          ["Move by word", "Ctrl+Left / Ctrl+Right", "Move through an identifier or statement without the mouse"],
+          ["Select by word", "Ctrl+Shift+Left / Ctrl+Shift+Right", "Expand a selection by meaningful text boundaries"]
+        ]
+      }
+    },
+    {
+      "title": "2. Manipulate",
+      "paragraphs": [
+        "Editor layout is temporary UI state. Splitting an editor does not copy a file, and hiding a panel does not delete anything. Treat layout commands as reversible tools.",
+        "Shortcut bindings can vary by keyboard, extension, operating system, or remote environment. If a binding fails, search for the command name in Ctrl+Shift+P."
+      ],
+      "table": {
+        "headers": ["Intent", "Shortcut", "Command Palette fallback"],
+        "rows": [
+          ["Show or hide the sidebar", "Ctrl+B", "View: Toggle Primary Side Bar Visibility"],
+          ["Show or hide the terminal", "Ctrl+`", "View: Toggle Terminal"],
+          ["Show or hide the bottom panel", "Ctrl+J", "View: Toggle Panel Visibility"],
+          ["Split the active editor", "Ctrl+\\", "View: Split Editor Right"],
+          ["Focus editor groups", "Ctrl+1 / Ctrl+2", "View: Focus First/Second Editor Group"],
+          ["Restore one editor group", "Alt+Shift+1", "View: Single Column"],
+          ["Format the document", "Shift+Alt+F", "Format Document"]
+        ]
+      }
+    },
+    {
+      "title": "3. Run / Debug",
+      "paragraphs": [
+        "Run means execute the program. Debug means execute it with a debugger attached so breakpoints can pause the program and expose its state. Run Without Debugging and Start Debugging are related but different actions.",
+        "In this solution, App, ScratchPad, Tests, and Web are different runnable or testable targets. F5 does not mean run the code I am looking at. It uses the launch or project configuration currently selected in Run and Debug, and VS Code may remember a selection from earlier work.",
+        "Open Run and Debug with Ctrl+Shift+D and deliberately inspect the selected target before using F5. If a test or run dropdown behaves inconsistently, do not trust it blindly: reselect the target or use an explicit terminal command."
+      ],
+      "table": {
+        "headers": ["Action", "Shortcut or command", "Meaning"],
+        "rows": [
+          ["Open Run and Debug", "Ctrl+Shift+D", "Inspect and select the intended project/configuration"],
+          ["Start debugging", "F5", "Run the selected target with the debugger attached"],
+          ["Run without debugging", "Ctrl+F5", "Run the selected target without breakpoint debugging"],
+          ["Toggle a breakpoint", "F9", "Pause when execution reaches the selected executable line"],
+          ["Step over", "F10", "Execute the current line without entering called methods"],
+          ["Stop debugging", "Shift+F5", "End the active debugging session"],
+          ["Run an explicit project", "dotnet run --project <project.csproj>", "Name the target directly instead of relying on remembered editor state"]
+        ]
+      }
+    },
+    {
+      "title": "4. Recover",
+      "paragraphs": [
+        "Ctrl+Shift+P is the main fallback when you forget a shortcut, have too many commands to memorize, or are connected through RDP and a key combination does not reach VS Code reliably.",
+        "Search by intent: toggle terminal, single column, format document, select debug configuration, or reload window. The Command Palette also shows the shortcut currently assigned in your installation, when one exists.",
+        "Recovery is a normal workflow skill. A missing panel, unexpected split, or stale debug selection is usually reversible editor state—not damaged source code."
+      ],
+      "code": "Ctrl+Shift+P\nSearch: View: Single Column\nSearch: View: Toggle Terminal\nSearch: Format Document\nSearch: Debug: Select and Start Debugging\nSearch: Developer: Reload Window"
+    }
+  ],
+  "lab": {
+    "objective": "Practice four VS Code workflows in the completed Session 01 solution without changing application behavior.",
+    "startingCondition": "Complete Session 01 first and open the solution root in VS Code. The generated template files are enough for this optional exercise; no new C# concept or permanent source change is required.",
+    "collapseInstructions": true,
+    "labs": [
+      {
+        "title": "Navigate Without Hunting Through Folders",
+        "objective": "Move among files, symbols, definitions, and editing positions using intent-based navigation.",
+        "practice": ["Quick Open", "Symbol search", "Definition navigation", "History navigation", "Word-boundary movement"],
+        "task": "Open generated files by name, visit a symbol or definition, return to the starting location, and manipulate a selection without using the mouse.",
+        "instructions": [
+          "Press Ctrl+P.",
+          "Type part of PinkMachine19.TimeClock.ScratchPad/Program.cs.",
+          "Open the ScratchPad Program.cs result.",
+          "Press Ctrl+P again.",
+          "Open Class1.cs from the Domain project.",
+          "Press Ctrl+Shift+O.",
+          "Select the Class1 symbol if it appears in the symbol list.",
+          "Return to ScratchPad/Program.cs with Ctrl+Tab.",
+          "Place the cursor on Console.",
+          "Press F12 to visit its definition or metadata.",
+          "Press Alt+Left to return to Program.cs.",
+          "Move across the template output statement with Ctrl+Left and Ctrl+Right.",
+          "Select one word with Ctrl+Shift+Right.",
+          "Press Escape to clear the selection without editing the file."
+        ]
+      },
+      {
+        "title": "Manipulate and Restore the Workspace",
+        "objective": "Treat panels and editor groups as reversible UI state rather than something that requires mouse-driven repair.",
+        "practice": ["Sidebar visibility", "Terminal visibility", "Editor splitting", "Editor-group focus", "Document formatting", "Layout restoration"],
+        "task": "Hide and restore common views, compare two Program.cs files side by side, format a document, and return to one editor group.",
+        "instructions": [
+          "Press Ctrl+B to hide the sidebar.",
+          "Press Ctrl+B again to restore the sidebar.",
+          "Press Ctrl+` to open the integrated terminal.",
+          "Open App/Program.cs with Ctrl+P.",
+          "Press Ctrl+\\ to split the active editor.",
+          "Open ScratchPad/Program.cs in the second editor group with Ctrl+P.",
+          "Use Ctrl+1 and Ctrl+2 to move focus between the editor groups.",
+          "Press Shift+Alt+F to format the active Program.cs.",
+          "Press Alt+Shift+1 to restore a single editor group.",
+          "If any shortcut fails, use Ctrl+Shift+P to run the equivalent command by name."
+        ]
+      },
+      {
+        "title": "Choose the Run or Debug Target Deliberately",
+        "objective": "Separate the visible editor from VS Code's remembered execution target and practice one breakpoint-driven debugging cycle.",
+        "practice": ["Explicit project execution", "Run and Debug target selection", "Breakpoints", "Start and stop debugging", "Remembered VS Code state"],
+        "task": "Run ScratchPad explicitly, select ScratchPad in Run and Debug, pause on its template output, and verify that F5 follows the selected target rather than the visible file.",
+        "instructions": [
+          "Open the integrated terminal at the solution root.",
+          {"text": "Run ScratchPad by naming its project explicitly.", "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj"},
+          "Confirm that the ScratchPad template output appears.",
+          "Press Ctrl+Shift+D to open Run and Debug.",
+          "Inspect the currently selected launch or project configuration.",
+          "Select PinkMachine19.TimeClock.ScratchPad deliberately.",
+          "Open ScratchPad/Program.cs.",
+          "Place the cursor on its Console.WriteLine statement.",
+          "Press F9 to add a breakpoint.",
+          "Press F5 to start debugging the selected target.",
+          "Confirm that execution pauses on the ScratchPad breakpoint.",
+          "Press F10 once to step over the output statement.",
+          "Press Shift+F5 to stop debugging.",
+          "Open App/Program.cs without changing the selected debug target.",
+          "Explain why pressing F5 at this moment may still start ScratchPad.",
+          "Remove the breakpoint with F9.",
+          "If the target selector behaves inconsistently, return to Run and Debug or use the explicit dotnet run --project command."
+        ]
+      },
+      {
+        "title": "Recover Through the Command Palette",
+        "objective": "Use command discovery to recover from forgotten shortcuts, RDP interception, hidden panels, and confusing layout state.",
+        "practice": ["Command discovery", "RDP-safe fallback", "Panel recovery", "Layout recovery", "Debug-state recovery"],
+        "task": "Recover several common VS Code states by searching for commands instead of memorizing another set of shortcuts.",
+        "instructions": [
+          "Press Ctrl+Shift+P.",
+          "Search for View: Toggle Primary Side Bar Visibility.",
+          "Run the matching command.",
+          "Open the Command Palette again.",
+          "Search for View: Single Column.",
+          "Run the matching command.",
+          "Open the Command Palette again.",
+          "Search for Format Document.",
+          "Notice the shortcut displayed beside the command in your installation.",
+          "Press Escape without running the format command again.",
+          "Open the Command Palette again.",
+          "Search for a command containing Select and Start Debugging.",
+          "Identify how you would use it to replace a stale debug target.",
+          "If RDP blocks a shortcut, repeat the action through the Command Palette.",
+          "Restore the sidebar, terminal, and one-column layout before finishing."
+        ]
+      }
+    ],
+    "expectedBehavior": "The learner can navigate and control the multi-project workspace, explicitly run ScratchPad, deliberately select a debug target, use a breakpoint, and recover common UI states without changing application behavior.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj"
+  },
+  "expectedFiles": [],
+  "commit": "Not applicable — optional workflow lab; no source files should change.",
+  "review": [
+    "No source or project file was intentionally changed.",
+    "Ctrl+P was used for file navigation rather than repeated Explorer browsing.",
+    "The learner can explain that F5 follows the selected debug configuration, not the visible file.",
+    "ScratchPad was run once with an explicit project path.",
+    "A breakpoint was added, reached, and removed.",
+    "Ctrl+Shift+P was used as a recovery path rather than treated as one more shortcut to memorize."
+  ],
+  "postQuiz": [
+    {
+      "prompt": "Why is Ctrl+Shift+P more important than memorizing every VS Code shortcut?",
+      "options": ["It lets you search for and execute commands by intent", "It compiles every project", "It permanently resets all settings"],
+      "correct": 0,
+      "explanation": "The Command Palette is a discoverable fallback for forgotten, unbound, or intercepted commands."
+    },
+    {
+      "prompt": "You are viewing App/Program.cs, but ScratchPad is still selected in Run and Debug. What can F5 start?",
+      "options": ["ScratchPad", "Only App because its file is visible", "No project under any circumstances"],
+      "correct": 0,
+      "explanation": "The selected debug target is independent of the active editor and may persist from earlier work."
+    },
+    {
+      "prompt": "What is the safest response when an RDP session intercepts a shortcut?",
+      "options": ["Find and run the command through Ctrl+Shift+P", "Delete launch settings", "Assume VS Code removed the feature"],
+      "correct": 0,
+      "explanation": "The Command Palette avoids dependence on a particular key combination reaching the remote editor."
+    }
+  ],
+  "reflections": [
+    "Which five commands would remove the most friction from your current workflow?",
+    "How will you verify the selected debug target before pressing F5 in a multi-project solution?",
+    "Which confusing VS Code states can you now recognize as reversible UI state rather than code problems?"
+  ],
+  "whatBreaks": "Skipping this optional sidebar does not break Session 02 or the TimeClock application. The cost is practical friction: slower navigation, more mouse dependence, and a greater chance of running or debugging a remembered project target unintentionally.",
+  "summary": "Navigate to the file or symbol you need, manipulate reversible editor state, choose Run and Debug targets deliberately, and recover through Ctrl+Shift+P. A small command set plus an understanding of VS Code state is more useful than memorizing a giant shortcut list."
+}
