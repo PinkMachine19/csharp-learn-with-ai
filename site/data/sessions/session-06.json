@@ -84,7 +84,8 @@
       "title": "Properties communicate intent",
       "paragraphs": [
         "EmployeeId and ClockIn are get-only: the constructor establishes them, callers may read them, and ordinary code cannot assign new values later. Name and Address use get and set because this model currently permits those values to change.",
-        "Session 06 stops at the state known during clock-in. ClockOut, a private setter, and completion rules arrive in Session 07, where their purpose can be explained instead of copied prematurely."
+        "Session 06 stops at the state known during clock-in. ClockOut, a private setter, and completion rules arrive in Session 07, where their purpose can be explained instead of copied prematurely.",
+        "This course intentionally uses the original application's minimal Address shape: Street and City. A production postal address might also require state or region, postal code, and country, but those values are outside the current verified requirements and are not added speculatively."
       ],
       "table": {
         "headers": ["Property", "Declaration", "Why"],
