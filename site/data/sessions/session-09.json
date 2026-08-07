@@ -4,7 +4,7 @@
   "estimatedTime": "35 minutes",
   "connection": "ScratchPad contains prior experiments and the student knows local methods. No TimeClock requirement currently needs ref, out, or in parameters. Add an isolated ScratchPad parameter-passing experiment without distorting a production repository API.",
   "objectives": [
-    "Compare ordinary value parameters with out, ref, and in parameters.",
+    "Compare ordinary parameters with out, ref, and in for both value-type and reference-type arguments.",
     "Use out to report a success result and an additional parsed value.",
     "Use ref to demonstrate deliberate caller-visible reassignment.",
     "Use in to pass a value through a readonly reference, then explain why the production domain does not currently need that optimization."
@@ -67,23 +67,31 @@
     {
       "title": "Ordinary parameters receive values",
       "paragraphs": [
-        "By default, a method receives a copy of the argument value. Reassigning the parameter does not replace the caller's variable.",
-        "For a class variable, the copied value is a reference, so both sides can still observe mutation of the same object."
+        "By default, every C# method receives a copy of the argument value. For a value type such as int, the number itself is copied. For a reference type such as Employee, the reference is copied, so caller and method still point to the same object.",
+        "Reassigning an ordinary parameter never replaces the caller's variable. A method receiving an Employee normally can mutate the shared Employee object, but assigning a different Employee to its local parameter does not replace the caller's reference."
       ],
+      "table": {
+        "headers": ["Argument type", "What ordinary passing copies", "Important result"],
+        "rows": [
+          ["Value type", "The value itself", "Caller and parameter have independent values"],
+          ["Reference type", "The reference", "Both references can reach the same mutable object"]
+        ]
+      },
       "code": "static void Inspect(int value) { value = 99; }"
     },
     {
       "title": "out returns an additional value",
       "paragraphs": [
         "A Try-style method can return success as bool and place the found value in an out parameter.",
-        "This is useful when absence is expected, but it should not be added to a production API unless callers genuinely need that shape."
+        "out works with value types and reference types. This is useful when absence or failure is expected, but it should not be added to a production API unless callers genuinely need that shape."
       ],
       "code": "static bool TryParseHours(string text, out decimal hours) =>\n    decimal.TryParse(text, out hours);"
     },
     {
       "title": "ref permits caller-visible reassignment",
       "paragraphs": [
-        "ref lets a method read and replace the value stored in the caller's variable. The caller must initialize the variable first, and both the declaration and call site use ref so the unusual behavior remains visible.",
+        "ref works with value types and reference types. It lets a method read and replace the value stored in the caller's variable. With ref int, the method can replace the caller's number; with ref Employee, it can make the caller's variable refer to a different Employee.",
+        "A normal Employee parameter already allows mutation of the shared Employee object. ref is needed only when replacing the caller's Employee reference itself is part of the contract. The caller must initialize the variable first, and both the declaration and call site use ref so that behavior remains visible.",
         "Use ref only when changing the caller's variable is genuinely part of the method's contract."
       ],
       "code": "static void Increment(ref int value) => value++;"
@@ -91,7 +99,8 @@
     {
       "title": "in passes a readonly reference",
       "paragraphs": [
-        "in passes an existing value by reference while preventing the method from assigning a replacement through that parameter. The method can still read and display the value.",
+        "in works with value types and reference types. It passes an existing value by reference while preventing the method from assigning a replacement through that parameter. The method can still read and display the value.",
+        "For a reference type, in makes the parameter reference readonly; it does not make the referenced object immutable. The method cannot replace the parameter with another object, but it can still mutate that object's publicly mutable members.",
         "Avoiding a copy can help with larger structs. This ScratchPad example uses decimal only to make the syntax observable; the TimeClock production API has no measured need to use in for its small, ordinary values."
       ],
       "code": "static void DisplayMeasurement(in decimal measurement)\n{\n    Console.WriteLine(measurement);\n    // measurement = 99m; // Does not compile: in is readonly here.\n}"
@@ -145,7 +154,8 @@
           "Give TryParseHours one out decimal parameter named hours.",
           "Inside TryParseHours, return the result of decimal.TryParse using text and out hours.",
           "Identify the bool as the normal return value.",
-          "Identify hours as the additional value assigned on the way out."
+          "Identify hours as the additional value assigned on the way out.",
+          "Note that out can also produce a reference-type value; it is not limited to decimal or other value types."
         ],
         "solution": "// Add inside Run.\nbool parsedSuccessfully = TryParseHours(\"8.5\", out decimal parsedHours);\nConsole.WriteLine($\"Parsed successfully: {parsedSuccessfully}\");\nConsole.WriteLine($\"Parsed hours: {parsedHours:F2}\");\n\n// Add below ChangeCopy.\npublic bool TryParseHours(string text, out decimal hours)\n{\n    return decimal.TryParse(text, out hours);\n}"
       },
@@ -164,7 +174,8 @@
           "Give Increment one ref int parameter named value.",
           "Inside Increment, increase value by one.",
           "Identify ref at both the method declaration and the call site.",
-          "Predict why counter displays 2 instead of 1."
+          "Predict why counter displays 2 instead of 1.",
+          "Explain that ref could also replace a caller's reference-type variable, not merely mutate the object it already references."
         ],
         "solution": "// Add inside Run.\nint counter = 1;\nIncrement(ref counter);\nConsole.WriteLine($\"Counter after ref call: {counter}\");\n\n// Add below TryParseHours.\npublic void Increment(ref int value)\n{\n    value++;\n}"
       },
@@ -184,6 +195,7 @@
           "Add a comment showing that assigning 99m to measurement would not compile.",
           "Keep the non-compiling assignment commented out.",
           "Explain that in prevents reassignment through the parameter.",
+          "Explain that in also works with reference types but does not make their objects immutable.",
           "Explain that this small decimal example demonstrates the mechanism but does not establish a production performance need.",
           "Save Session09ParameterDemo.cs.",
           "Save Program.cs.",

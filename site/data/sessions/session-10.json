@@ -83,6 +83,7 @@
     {
       "title": "String comparison is a choice you make explicitly",
       "paragraphs": [
+        "For now, think of HashSet<T> as a collection that keeps each value only once. If you add a value it already considers equal to an existing value, it does not add a duplicate. You will learn HashSet<T> in more detail in Session 12.",
         "EmployeeDirectory's Cities set is constructed with new HashSet<string>(StringComparer.OrdinalIgnoreCase) specifically so \"Springfield\" and \"springfield\" collapse into one entry.",
         "Without that explicit comparer, HashSet<string>'s default ordinal comparison would treat them as two different cities -- exactly the kind of silent data-quality bug case-insensitive matching exists to prevent."
       ],
