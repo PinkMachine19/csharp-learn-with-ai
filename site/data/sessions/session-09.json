@@ -156,9 +156,18 @@
     }
   ],
   "reflections": [
-    "Now that you have both GetClockEntry (nullable return) and TryGetOpenEntry (out parameter) side by side, which would you choose for a new method, and why?",
-    "Can you think of a genuine (not contrived) use for ref anywhere in this codebase as it might grow?",
-    "Why does 'this domain doesn't need in' feel like a legitimate lesson outcome rather than an incomplete one?"
+    {
+      "question": "Now that you have both GetClockEntry (nullable return) and TryGetOpenEntry (out parameter) side by side, which would you choose for a new method, and why?",
+      "answer": "For one optional result, a nullable return is often the simpler signature because the caller receives one value and performs a null check. Choose a Try method when expected absence should be emphasized as a Boolean success result or when that pattern matches the surrounding API. The better choice is the one that makes absence and caller handling clearest, not a universal syntax rule."
+    },
+    {
+      "question": "Can you think of a genuine (not contrived) use for ref anywhere in this codebase as it might grow?",
+      "answer": "There is no strong ref use in the current domain because its important models are classes: ordinary reference passing already lets methods mutate the same object. A future performance-sensitive component working with large structs, arrays, or spans might use ref access to avoid copies or update storage directly, but that should follow a measured requirement rather than be added speculatively."
+    },
+    {
+      "question": "Why does 'this domain doesn't need in' feel like a legitimate lesson outcome rather than an incomplete one?",
+      "answer": "in exists mainly to avoid copying larger value types while preventing reassignment through the parameter. This domain currently passes small values such as int and DateTime, so the extra modifier would add ceremony without solving a demonstrated problem. Understanding when not to use a specialized feature is part of using it correctly."
+    }
   ],
   "whatBreaks": "Adding a code path in TryGetOpenEntry that returns true without assigning entry would fail to compile -- the definite-assignment rule catches this at compile time rather than allowing a null-reference bug at runtime. Confusing ref with out would lead you to expect a caller-provided initial value for entry that TryGetOpenEntry does not need or use.",
   "summary": "out lets a method return a second value (here, whether an open entry was found) alongside its normal return type, with the compiler enforcing definite assignment. ref would let a method reassign a caller's variable to an entirely different object -- a capability this codebase's real, ordinary-reference mutation patterns (Session 8) never need. in exists to avoid copying large structs, and this domain's small value types (int, DateTime) never pay that cost in the first place.",

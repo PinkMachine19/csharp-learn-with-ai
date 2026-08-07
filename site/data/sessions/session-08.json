@@ -5,7 +5,7 @@
   "connection": "Production contains Employee, Address, and ClockEntry from Sessions 06–07. ScratchPad already references Domain and retains Sessions 03–05. Add a preserved ScratchPad experiment that observes value copying and reference sharing through the production models.",
   "objectives": [
     "Predict, before running any code, whether assigning one Employee variable to another copies the object or shares it.",
-    "Use Employee.Rename to observe that two variables referring to the same Employee see the same mutation.",
+    "Assign Employee.Name through one alias to observe that two variables referring to the same Employee see the same mutation.",
     "Explain why ClockEntry.EmployeeId (an int) and ClockIn (a DateTime) are copied by value when a ClockEntry itself is passed around, even though ClockEntry is a class.",
     "Distinguish 'the ClockEntry reference was copied' from 'the ClockEntry's field values were copied' -- they are not the same claim."
   ],
@@ -18,7 +18,7 @@
     {
       "diagram": "instances",
       "title": "A mutation through one name is visible through the other",
-      "explanation": "alias.Rename(\"Nguyen\") changes the object both variables point to -- employee.Name reads the new value too."
+      "explanation": "Assigning alias.Name changes the object both variables point to -- employee.Name reads the new value too."
     },
     {
       "diagram": "call",
@@ -33,14 +33,14 @@
   ],
   "preQuiz": [
     {
-      "prompt": "After Employee alias = employee; alias.Rename(\"Nguyen\");, what does employee.Name return?",
+      "prompt": "After Employee alias = employee; alias.Name = \"Avery Nguyen\";, what does employee.Name return?",
       "options": [
         "\"Nguyen\" -- employee and alias refer to the same Employee object",
         "The original name -- alias is an independent copy",
-        "A compile error -- Rename cannot be called through an alias"
+        "A compile error -- properties cannot be assigned through an alias"
       ],
       "correct": 0,
-      "explanation": "Assigning employee to alias copies the reference, not the object -- both variables point at one Employee, so Rename's mutation is visible through either name."
+      "explanation": "Assigning employee to alias copies the reference, not the object -- both variables point at one Employee, so assigning Name through alias is visible through either name."
     },
     {
       "prompt": "If you pass a ClockEntry to a method and that method reads entry.EmployeeId into a local int, then changes the local int, does the original ClockEntry.EmployeeId change?",
@@ -68,9 +68,9 @@
       "title": "Assigning a class variable copies the reference",
       "paragraphs": [
         "Employee alias = employee copies the reference stored in employee -- a pointer to one Employee object in memory -- into alias. It does not create a second Employee.",
-        "Employee.Rename is a real, existing method that mutates Name in place. Calling it through alias changes the same object employee refers to, because there was only ever one object."
+        "Assigning Name through alias changes the same object employee refers to, because there was only ever one object."
       ],
-      "code": "Employee employee = new(1, \"Avery Chen\", new Address());\nEmployee alias = employee;\n\nalias.Rename(\"Avery Nguyen\");\n\nConsole.WriteLine(employee.Name); // \"Avery Nguyen\" -- same object, either name"
+      "code": "Employee employee = new(1, \"Avery Chen\", new Address(\"123 Main Street\", \"Springfield\"));\nEmployee alias = employee;\n\nalias.Name = \"Avery Nguyen\";\n\nConsole.WriteLine(employee.Name); // \"Avery Nguyen\" -- same object, either name"
     },
     {
       "title": "Assigning a value-type field copies the value",
@@ -113,11 +113,11 @@
           "Change only the copied int variable.",
           "Display both int values.",
           "Write a comment recording what the output demonstrates about value copying.",
-          "Construct one Address object.",
+          "Construct one Address object using sample street and city values.",
           "Construct one Employee object using that Address.",
           "Assign the Employee reference to a second Employee variable.",
           "Before changing the employee through the second variable, write a comment predicting what the first variable will observe.",
-          "Change the employee name through the second variable.",
+          "Assign a new value to the Name property through the second Employee variable.",
           "Display the employee name through both variables.",
           "Write a comment recording what the output demonstrates about reference sharing.",
           "Open src/PinkMachine19.TimeClock.ScratchPad/Program.cs.",
@@ -169,7 +169,7 @@
       "explanation": "There is exactly one ClockEntry object per clock-in; every method that touches it afterward is operating on that same shared reference."
     },
     {
-      "prompt": "If Employee.Address were reassigned (employee.Address = new Address {...}) through one alias, what would a second alias see?",
+      "prompt": "If Employee.Address were reassigned with new Address(\"456 Oak Street\", \"Riverton\") through one alias, what would a second alias see?",
       "options": [
         "The new Address -- Address itself is also a reference-type property being reassigned on the one shared Employee object",
         "The old Address -- Address is a value type",
@@ -179,7 +179,7 @@
       "explanation": "Address is assigned to Employee's Address property, and Employee itself is shared -- so any alias reading employee.Address afterward sees the newly assigned reference."
     },
     {
-      "prompt": "Does calling entry.GetDuartion() copy the ClockEntry?",
+      "prompt": "Does calling entry.GetDuration() copy the ClockEntry?",
       "options": [
         "No -- entry is passed implicitly as the reference this method call operates on; no copy of the object occurs",
         "Yes -- every method call copies its receiver",
@@ -190,12 +190,21 @@
     }
   ],
   "reflections": [
-    "Why does Employee.Rename mutating in place matter for anything other than this one lesson -- where else in the app does that behavior get relied on?",
-    "What would you have to change about ClockEntry for two separately-constructed ClockEntry objects with the same EmployeeId and ClockIn to be considered 'equal'?",
-    "How does knowing SaveClockEntry stores a live reference (not a copy) change how you would reason about a bug where an entry's ClockOut value seems to change unexpectedly?"
+    {
+      "question": "Why does assigning Employee.Name through one alias matter for anything other than this one lesson -- where else in the app could that behavior be observed?",
+      "answer": "Any code that stores or passes the same Employee reference can observe in-place property mutation through that reference. For example, an Employee kept in EmployeeDirectory remains the same object after Name changes, so later lookups observe the new value without replacing the dictionary entry. The same reasoning applies whenever a service, collection, or caller shares that Employee object."
+    },
+    {
+      "question": "What would you have to change about ClockEntry for two separately-constructed ClockEntry objects with the same EmployeeId and ClockIn to be considered 'equal'?",
+      "answer": "ClockEntry would need value-equality behavior, such as overriding Equals and GetHashCode and usually the == and != operators, or being redesigned as a record. The equality definition would also need to decide whether ClockOut participates. That choice is consequential because collections could then treat two distinct clock-entry events with matching values as one item."
+    },
+    {
+      "question": "How does knowing SaveClockEntry stores a live reference (not a copy) change how you would reason about a bug where an entry's ClockOut value seems to change unexpectedly?",
+      "answer": "Trace every alias to that ClockEntry instead of assuming the repository owns an isolated copy. A caller that still holds the original reference, or code that retrieves the same reference, can mutate the object seen by the repository. If isolation were required, the design would need copying, immutability, or a narrower mutation boundary."
+    }
   ],
-  "whatBreaks": "Assuming Employee assignment copies the object would lead you to expect alias.Rename(...) to leave employee.Name unchanged -- it does not, and code relying on that wrong assumption would silently read stale names. Assuming ClockEntry.EmployeeId is somehow 'live' after being copied into a local variable would lead to bugs trying to use that local as if it still tracked the entry. Forgetting that SaveClockEntry holds a live reference (not a defensive copy) means any code that later mutates a ClockEntry object directly is also mutating what the repository has stored.",
-  "summary": "Employee is a reference type: assigning it copies the reference, so Employee.Rename's mutation through one alias is visible through every other alias. ClockEntry's EmployeeId and ClockIn are value types: copying them copies the number or date itself, independent of ClockEntry's own reference-type identity. SaveClockEntry stores the exact reference ClockIn constructs -- the mechanism that lets Clockout later mutate the same object.",
+  "whatBreaks": "Assuming Employee assignment copies the object would lead you to expect assigning alias.Name to leave employee.Name unchanged -- it does not, and code relying on that wrong assumption would silently read stale names. Assuming ClockEntry.EmployeeId is somehow 'live' after being copied into a local variable would lead to bugs trying to use that local as if it still tracked the entry. Forgetting that SaveClockEntry holds a live reference (not a defensive copy) means any code that later mutates a ClockEntry object directly is also mutating what the repository has stored.",
+  "summary": "Employee is a reference type: assigning it copies the reference, so changing Name through one alias is visible through every other alias. ClockEntry's EmployeeId and ClockIn are value types: copying them copies the number or date itself, independent of ClockEntry's own reference-type identity. SaveClockEntry stores the exact reference ClockIn constructs -- the mechanism that lets Clockout later mutate the same object.",
   "learningEnvironment": "scratchpad",
   "buildState": {
     "creates": [],

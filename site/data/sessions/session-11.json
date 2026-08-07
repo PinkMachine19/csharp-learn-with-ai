@@ -158,9 +158,18 @@
     }
   ],
   "reflections": [
-    "Why does this session deliberately not fix the public-field problem it identifies -- what would you lose by fixing it here instead of in Session 17?",
-    "What would you need to add to ClockEntryRepository to make _clockEntries.Add(...) impossible from outside the class, while keeping SaveClockEntry's own behavior unchanged?",
-    "Where else in this codebase might a similarly 'too-permissive' field or property be hiding?"
+    {
+      "question": "Why does this session deliberately not fix the public-field problem it identifies -- what would you lose by fixing it here instead of in Session 17?",
+      "answer": "Session 11 is isolating how List<T> storage and mutation work. Fixing encapsulation at the same time would mix that learning goal with access design and hide the concrete problem before the learner has observed it. Preserving the flaw gives Session 17 a motivated before-and-after refactor rather than an abstract rule."
+    },
+    {
+      "question": "What would you need to add to ClockEntryRepository to make _clockEntries.Add(...) impossible from outside the class, while keeping SaveClockEntry's own behavior unchanged?",
+      "answer": "Make the mutable list field private, for example private readonly List<ClockEntry> _clockEntries = new();. SaveClockEntry can continue calling _clockEntries.Add internally. External code should receive only purpose-specific methods or a read-only view when it genuinely needs to inspect entries."
+    },
+    {
+      "question": "Where else in this codebase might a similarly 'too-permissive' field or property be hiding?",
+      "answer": "Good candidates to audit include publicly exposed collections and settable model properties such as Employee.Name or Employee.Address. The question is whether callers truly need unrestricted replacement or mutation. A public setter is not automatically wrong, but it should correspond to an intentional operation rather than convenience alone."
+    }
   ],
   "whatBreaks": "Directly clearing or mutating _clockEntries from outside ClockEntryRepository bypasses SaveClockEntry entirely, and would silently corrupt GetClockEntry/GetEmployeeClockEntries's results for any code that assumed only SaveClockEntry could add entries. Replacing List<ClockEntry> with a fixed-size array would break SaveClockEntry's Add call the moment more entries are saved than the array's original length allows.",
   "summary": "List<ClockEntry> is ClockEntryRepository's entire storage: SaveClockEntry mutates it with Add, while GetEmployeeClockEntries and GetClockEntry read it with LINQ's Where and FirstOrDefault without changing it. The field's real public accessibility is a genuine, currently-unfixed encapsulation gap -- named honestly here, and revisited as an explicit fix in Session 17.",

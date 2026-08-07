@@ -180,6 +180,14 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 .blur-solution > pre { filter: blur(6px); user-select: none; pointer-events: none; transition: filter 160ms ease; }
 .blur-solution:not([data-revealed]) .copy-code-button { display: none; }
 .blur-solution[data-revealed] > pre { filter: none; user-select: text; pointer-events: auto; }
+.reflection-list > li { margin-bottom: 18px; }
+.reflection-list > li > p { margin-bottom: 8px; }
+.blur-reflection { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); padding: 12px 14px; overflow: hidden; }
+.blur-reflection > button { width: 100%; display: flex; justify-content: space-between; gap: 1rem; padding: 0 0 8px; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--text); text-align: left; cursor: pointer; font-weight: 600; }
+.blur-reflection > button small { color: var(--accent); font-weight: 600; }
+.blur-reflection-answer { filter: blur(6px); user-select: none; pointer-events: none; transition: filter 160ms ease; color: var(--text-muted); }
+.blur-reflection-answer p { margin: 10px 0 0; }
+.blur-reflection[data-revealed] .blur-reflection-answer { filter: none; user-select: text; pointer-events: auto; }
 
 /* Steps (labs) */
 .step { display: flex; gap: 12px; margin-bottom: 12px; }

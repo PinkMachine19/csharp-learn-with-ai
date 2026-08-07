@@ -158,9 +158,18 @@
     }
   ],
   "reflections": [
-    "Where else in this codebase might a List currently used for something a Dictionary would serve better, or vice versa?",
-    "Why does EmployeeDirectory.Add check the return value of TryAdd before deciding whether to add the city to Cities?",
-    "How does TryFind's Try-pattern connect back to what Session 9 taught about out parameters?"
+    {
+      "question": "Where else in this codebase might a List currently used for something a Dictionary would serve better, or vice versa?",
+      "answer": "ClockEntryRepository needs multiple chronological entries per employee, so one flat List remains reasonable for append-and-filter behavior. If repeated lookup by employee became a measured bottleneck, a Dictionary<int, List<ClockEntry>> could group entries by EmployeeId. Conversely, a Dictionary is unnecessary when order, duplicates, and sequential processing are the actual requirements."
+    },
+    {
+      "question": "Why does EmployeeDirectory.Add check the return value of TryAdd before deciding whether to add the city to Cities?",
+      "answer": "TryAdd returns false when the EmployeeId already exists. Adding the city only after success keeps Cities consistent with employees that were actually accepted. If the city were added first, a rejected duplicate employee could introduce a city that no stored employee represents."
+    },
+    {
+      "question": "How does TryFind's Try-pattern connect back to what Session 9 taught about out parameters?",
+      "answer": "TryFind returns a Boolean indicating success and assigns the found Employee through an out parameter. The compiler requires that out value to be assigned on every return path. This is the same success-plus-additional-result shape introduced in Session 9 and used by Dictionary.TryGetValue itself."
+    }
   ],
   "whatBreaks": "Replacing TryAdd with Add in EmployeeDirectory.Add would turn a duplicate-EmployeeId scenario from a handled, expected outcome (false return) into an unhandled ArgumentException, violating the throw-vs-return distinction Session 24 establishes. Replacing HashSet<string> with List<string> for Cities would let the same city accumulate duplicate entries every time a new employee from that city is added, silently inflating Cities.Count. Removing StringComparer.OrdinalIgnoreCase from the HashSet constructor would let differently-cased city names count as distinct cities again.",
   "summary": "EmployeeDirectory's Dictionary<int, Employee> gives TryFind fast lookup by EmployeeId, using TryAdd to reject duplicate keys gracefully instead of throwing. Its HashSet<string> Cities field guarantees each city name appears at most once, complementing Session 10's case-insensitive comparer choice. TryFind itself directly reuses the out-parameter Try-pattern Session 9 introduced.",

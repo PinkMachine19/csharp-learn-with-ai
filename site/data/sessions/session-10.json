@@ -161,9 +161,18 @@
     }
   ],
   "reflections": [
-    "Why might a real codebase deliberately choose reference equality for ClockEntry rather than adding value equality?",
-    "What would you need to add to ClockEntry to make two field-identical instances equal, and what would you risk changing by doing so?",
-    "Where else in this codebase might case-insensitive string comparison matter, beyond EmployeeDirectory's city set?"
+    {
+      "question": "Why might a real codebase deliberately choose reference equality for ClockEntry rather than adding value equality?",
+      "answer": "A ClockEntry can represent one specific business event with its own identity and lifecycle. Two entries may coincidentally share EmployeeId and ClockIn while still being distinct records, and ClockOut can change later. Reference equality preserves that distinction unless the domain explicitly defines a stable value-based identity."
+    },
+    {
+      "question": "What would you need to add to ClockEntry to make two field-identical instances equal, and what would you risk changing by doing so?",
+      "answer": "You would define value equality by overriding Equals and GetHashCode and normally == and !=, or redesign ClockEntry as a record. You must choose the participating members and keep their hash behavior stable. Otherwise, distinct events could collapse in a HashSet or compare equal unexpectedly, and mutating an equality member after dictionary insertion could make the object difficult to find."
+    },
+    {
+      "question": "Where else in this codebase might case-insensitive string comparison matter, beyond EmployeeDirectory's city set?",
+      "answer": "It could matter for user-entered employee-name searches, email-like identifiers, external codes, or other text whose business meaning ignores letter case. It should not be applied automatically: passwords, case-sensitive external identifiers, and display text can require different rules. The domain requirement should choose the comparer explicitly."
+    }
   ],
   "whatBreaks": "Assuming ClockEntry has value equality (because it superficially looks like a simple data holder) would lead to bugs anywhere code tries to deduplicate or compare ClockEntry objects by field value instead of by reference. Removing WorkSummary's record declaration in favor of class would silently break any test or code that currently relies on WorkSummary equality by value, including the real HoursByEmployee grouping test from Session 22. Removing EmployeeDirectory's StringComparer.OrdinalIgnoreCase would let differently-cased city names silently multiply instead of being treated as one city.",
   "summary": "class gives you reference equality unless you explicitly override it -- confirmed true for both the real ClockEntry and Employee. record gives you value equality automatically, which is exactly why WorkSummary (Session 22's grouping result) compares equal across separately-constructed instances with the same values. String comparison is ordinal and case-sensitive by default; EmployeeDirectory's StringComparer.OrdinalIgnoreCase is a deliberate, visible choice to treat city names case-insensitively.",

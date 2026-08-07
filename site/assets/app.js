@@ -95,6 +95,19 @@ document.querySelectorAll(".blur-solution > button").forEach((button) => {
   });
 });
 
+document.querySelectorAll(".blur-reflection > button").forEach((button) => {
+  button.addEventListener("click", () => {
+    const reflection = button.closest(".blur-reflection");
+    const answer = reflection?.querySelector(".blur-reflection-answer");
+    const revealed = reflection?.hasAttribute("data-revealed");
+    reflection?.toggleAttribute("data-revealed", !revealed);
+    button.setAttribute("aria-expanded", String(!revealed));
+    answer?.setAttribute("aria-hidden", String(revealed));
+    const hint = button.querySelector("small");
+    if (hint) hint.textContent = revealed ? "Reveal blurred answer" : "Blur answer";
+  });
+});
+
 document.querySelectorAll("[data-copy-instruction]").forEach((button) => {
   button.addEventListener("click", async () => {
     const instruction = button.closest(".lab-instruction")?.querySelector("p")?.textContent?.trim();
