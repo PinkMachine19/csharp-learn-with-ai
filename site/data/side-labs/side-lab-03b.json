@@ -1,0 +1,231 @@
+{
+  "number": "03B",
+  "category": "Optional Session 03 sidebar lab",
+  "estimatedTime": "25–30 minutes",
+  "nextSessionLabel": "Session 03.5",
+  "sidebarDescription": "Keep a practical reference for strings, numeric formats, newlines, and multiline console reports while seeing how C# formatting syntax evolved.",
+  "connection": "Session 03 introduced interpolation and F2 while printing TimeClock values. This optional sidebar expands that small introduction into a reusable console-output reference without interrupting the required variables and numeric-types lesson.",
+  "objectives": [
+    "Recognize the major generations of C# string and console-formatting syntax.",
+    "Choose interpolation and format specifiers for clear modern output.",
+    "Use escape sequences for quick newlines and raw strings for readable multiline text.",
+    "Explain that formatting normally changes displayed text rather than the underlying value.",
+    "Recognize older formatting forms without treating old syntax as automatically bad."
+  ],
+  "visuals": [
+    {
+      "diagram": "path",
+      "title": "C# formatting accumulated over time",
+      "explanation": "Basic strings and positional formatting arrived first, interpolation improved readability, and raw strings later reduced escaping for multiline and quote-heavy text."
+    },
+    {
+      "diagram": "expression",
+      "title": "Interpolation places values where they appear",
+      "explanation": "The expression inside braces is evaluated and inserted at that position, so the source resembles the resulting output."
+    },
+    {
+      "diagram": "representations",
+      "title": "Formatting changes representation",
+      "explanation": "F2, N2, C2, and P1 control the text shown to a person. They do not normally alter the numeric value stored in the variable."
+    },
+    {
+      "diagram": "comparison",
+      "title": "Different syntax can produce the same text",
+      "explanation": "Concatenation, composite formatting, string.Format, and interpolation can produce equivalent output. Their main differences are readability, ceremony, and where each remains useful."
+    }
+  ],
+  "preQuiz": [
+    {
+      "prompt": "What does F2 change when used in {hours:F2}?",
+      "options": ["The displayed representation", "The variable's numeric type", "The project reference"],
+      "correct": 0,
+      "explanation": "F2 displays a fixed-point value with two decimal places; it does not change the stored number."
+    },
+    {
+      "prompt": "Which modern syntax places an expression directly where its text will appear?",
+      "options": ["String interpolation", "A project file", "A namespace"],
+      "correct": 0,
+      "explanation": "Interpolation embeds an expression inside braces within a string prefixed by $."
+    },
+    {
+      "prompt": "Which feature is designed for readable multiline or escape-heavy text?",
+      "options": ["A raw string literal", "A decimal suffix", "A switch arm"],
+      "correct": 0,
+      "explanation": "Raw string literals reduce escaping and let multiline source resemble the resulting text."
+    }
+  ],
+  "concept": [
+    {
+      "title": "Why C# has several ways to produce text",
+      "paragraphs": [
+        "C# did not receive every string feature at once. More than twenty years of language evolution added new tools while preserving older source code and useful existing techniques.",
+        "That history is why a search for how to format a C# string returns several apparently different answers. The forms overlap, but each reflects a different generation or solves a particular readability problem."
+      ],
+      "code": "2002 — C# 1.0\nBasic strings, concatenation, escapes, verbatim strings, and positional formatting\n                         ↓\n2015 — C# 6.0\nString interpolation places expressions directly in readable text\n                         ↓\n2022 — C# 11\nRaw and interpolated raw strings simplify multiline and escape-heavy text"
+    },
+    {
+      "title": "Master historical reference",
+      "paragraphs": [
+        "Rows shaded in green and marked ★ are the forms that matter most during this course. The other forms remain valid and are useful either in particular situations or when reading established C# code.",
+        "Old does not mean bad: ordinary strings and escape sequences date to C# 1.0 and remain completely normal in modern programs."
+      ],
+      "table": {
+        "headers": ["Feature", "Example", "Introduced", "Year", "Practical priority", "Why or when it is useful"],
+        "highlightRows": [0, 2, 6, 7, 8, 9],
+        "rows": [
+          ["Regular string literal", "\"Hello\"", "C# 1.0", "2002", "★ Core modern tool", "Normal short text; still the everyday string form"],
+          ["Concatenation", "\"Hours: \" + hours", "C# 1.0", "2002", "Common; keep it simple", "Directly joins pieces, but long output becomes difficult to scan"],
+          ["Escape sequences", "\"Hello\\nWorld\"", "C# 1.0", "2002", "★ Core modern tool", "Represents newlines, tabs, quotes, backslashes, and other special characters"],
+          ["Verbatim string", "@\"C:\\Reports\\Hours.txt\"", "C# 1.0", "2002", "Useful when needed", "Reduces backslash escaping in Windows paths and supports multiline text"],
+          ["Composite formatting", "Console.WriteLine(\"{0:F2}\", hours)", "C# 1.0 / .NET", "2002", "Recognition / situational", "Uses numbered placeholders; common in older code and APIs that accept format arguments"],
+          ["string.Format()", "string.Format(\"{0:F2}\", hours)", "C# 1.0 / .NET", "2002", "Recognition / situational", "Creates a formatted string using positional placeholders before it is written or stored"],
+          ["String interpolation", "$\"Hours: {hours}\"", "C# 6.0", "2015", "★ Preferred for new code", "Places expressions where their output appears, reducing positional-placeholder ceremony"],
+          ["Formatting in interpolation", "$\"Hours: {hours:F2}\"", "C# 6.0", "2015", "★ Preferred for new code", "Combines readable value placement with control over its displayed representation"],
+          ["Raw string literal", "\"\"\"Hello\"\"\"", "C# 11", "2022", "★ Modern multiline tool", "Makes multiline, quote-heavy, JSON-like, or escape-heavy text resemble its output"],
+          ["Interpolated raw string", "$\"\"\"Hello {name}\"\"\"", "C# 11", "2022", "★ Modern multiline tool", "Combines readable raw text with embedded expressions and format specifiers"]
+        ]
+      }
+    },
+    {
+      "title": "The small modern mental model to remember",
+      "paragraphs": [
+        "The history is useful for recognition. Day to day, a much smaller mental model covers most console-report work in this course."
+      ],
+      "table": {
+        "headers": ["Remember", "Meaning"],
+        "rows": [
+          ["$\"...\"", "Insert or interpolate values and expressions"],
+          ["{value:F2}, {value:C2}, {value:N2}, {value:P1}", "Control how a value is displayed"],
+          ["\\n", "Insert a quick newline inside an ordinary string"],
+          ["\"\"\" ... \"\"\"", "Write raw or multiline text with less escaping"],
+          ["$\"\"\" ... {value} ... \"\"\"", "Combine raw multiline text with interpolation"]
+        ]
+      }
+    },
+    {
+      "title": "Practical numeric format specifiers",
+      "paragraphs": [
+        "A format specifier controls presentation. It normally does not round or replace the value stored in the variable; calculations still use that underlying value.",
+        "Formatting can be culture-sensitive. Currency symbols, decimal separators, thousands separators, and percentage presentation can differ with the active culture, so the example output below reflects a typical en-US environment."
+      ],
+      "table": {
+        "headers": ["Format", "Meaning", "Example output"],
+        "rows": [
+          ["F2", "Fixed-point with two decimal places", "12.35"],
+          ["N2", "Number with separators and two decimal places", "1,234.50"],
+          ["C2", "Currency with two decimal places", "$12.50"],
+          ["P1", "Percentage with one decimal place", "25.0%"]
+        ]
+      },
+      "closingParagraphs": [
+        "Dates and times have their own format specifiers too, but this sidebar stays focused on the numeric output repeatedly used by the early TimeClock labs."
+      ],
+      "code": "decimal hours = 12.345m;\ndecimal completion = 0.25m;\n\nConsole.WriteLine($\"Fixed: {hours:F2}\");\nConsole.WriteLine($\"Number: {hours:N2}\");\nConsole.WriteLine($\"Currency: {hours:C2}\");\nConsole.WriteLine($\"Percent: {completion:P1}\");"
+    },
+    {
+      "title": "Quick newline versus raw multiline text",
+      "paragraphs": [
+        "Use \\n when a short ordinary string needs a quick line break. Use a raw string when the text spans several lines or escaping begins to obscure what the output will look like.",
+        "Prefix the opening quotes with $ when a raw string also needs interpolation. Format specifiers continue to work inside the interpolation braces."
+      ],
+      "code": "Console.WriteLine($\"Employee: {employeeName}\\nRecorded hours: {recordedHours:F2}\");\n\nstring report = $\"\"\"\nEmployee: {employeeName}\nRecorded hours: {recordedHours:F2}\nScheduled hours: {scheduledHours:F2}\nVariance: {varianceHours:+0.00;-0.00;0.00}\n\"\"\";\n\nConsole.WriteLine(report);"
+    },
+    {
+      "title": "Optional: If You Want to See the Older Ways",
+      "paragraphs": [
+        "The following statements can produce the same visible line. You do not need to master all four forms to complete the sidebar.",
+        "Concatenation is direct, composite formatting and string.Format use numbered placeholders, and interpolation puts the expression beside the surrounding text. Newer syntax generally reduces ceremony, while older forms remain valid and recognizable."
+      ],
+      "code": "Console.WriteLine(\"Recorded hours: \" + recordedHours.ToString(\"F2\"));\nConsole.WriteLine(\"Recorded hours: {0:F2}\", recordedHours);\nConsole.WriteLine(string.Format(\"Recorded hours: {0:F2}\", recordedHours));\nConsole.WriteLine($\"Recorded hours: {recordedHours:F2}\");"
+    }
+  ],
+  "lab": {
+    "objective": "Produce one readable TimeClock console report using interpolation, numeric format specifiers, a quick newline, and raw multiline text.",
+    "startingCondition": "Complete Session 03 first. Keep its numeric-expression section unchanged, then append this optional Side Lab 03B section to ScratchPad/Program.cs. Classes are not required because they are introduced later in Session 06.",
+    "collapseInstructions": true,
+    "labs": [
+      {
+        "title": "Build a Readable Hours Report",
+        "objective": "Practice the small modern formatting toolkit that will reduce friction in later console labs.",
+        "practice": ["String interpolation", "Numeric format specifiers", "Quick newlines", "Raw multiline strings", "Interpolated raw multiline strings"],
+        "task": "Append a Side Lab 03B section to ScratchPad/Program.cs and display an employee hours report without changing the underlying decimal values.",
+        "comment": "// Side Lab 03B - Formatting Console Output in C#",
+        "instructions": [
+          "Open src/PinkMachine19.TimeClock.ScratchPad/Program.cs.",
+          "Move to the end of the file without deleting or replacing the Session 03 section.",
+          "Add two blank lines.",
+          "Paste the side-lab comment.",
+          "Declare a string variable named formatEmployeeName with a sample employee name.",
+          "Declare a decimal variable named formatMeasuredHours with a value containing more than two decimal places.",
+          "Declare a decimal variable named formatRecordedHours.",
+          "Declare a decimal variable named formatScheduledHours.",
+          "Declare formatVarianceHours by subtracting formatScheduledHours from formatRecordedHours.",
+          "Display formatEmployeeName and formatMeasuredHours in one interpolated string.",
+          "Apply F2 to formatMeasuredHours inside the interpolation braces.",
+          "Before running, predict whether F2 changes the value stored in formatMeasuredHours.",
+          "Write one Console.WriteLine statement that uses \\n to display the employee name and measured hours on separate lines.",
+          "Declare a string named formatRawHeading using a non-interpolated raw multiline string.",
+          "Give formatRawHeading a heading and one explanatory line.",
+          "Display formatRawHeading.",
+          "Declare a string named formatReport using an interpolated raw multiline string.",
+          "Add an Employee line that interpolates formatEmployeeName.",
+          "Add a Measured hours line that formats formatMeasuredHours with F2.",
+          "Add a Recorded hours line that formats formatRecordedHours with F2.",
+          "Add a Scheduled hours line that formats formatScheduledHours with F2.",
+          "Add a Variance line that uses the positive;negative;zero format from Session 03.",
+          "Display formatReport.",
+          "Save Program.cs.",
+          {"text": "Run ScratchPad and compare the report with your prediction.", "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"},
+          "Confirm that the report is readable and that later calculations can still use the original decimal values.",
+          {"text": "Build the complete solution.", "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"}
+        ],
+        "solution": "// Add at the end of Program.cs without removing Session 03.\n// Side Lab 03B - Formatting Console Output in C#\nstring formatEmployeeName = \"Ada Lovelace\";\ndecimal formatMeasuredHours = 8.256m;\ndecimal formatRecordedHours = 8.5m;\ndecimal formatScheduledHours = 8m;\ndecimal formatVarianceHours = formatRecordedHours - formatScheduledHours;\n\nConsole.WriteLine($\"Measured: {formatEmployeeName} — {formatMeasuredHours:F2}\");\nConsole.WriteLine($\"Employee: {formatEmployeeName}\\nMeasured hours: {formatMeasuredHours:F2}\");\n\nstring formatRawHeading = \"\"\"\nTimeClock hours report\nValues are displayed below.\n\"\"\";\nConsole.WriteLine(formatRawHeading);\n\nstring formatReport = $\"\"\"\nEmployee: {formatEmployeeName}\nMeasured hours: {formatMeasuredHours:F2}\nRecorded hours: {formatRecordedHours:F2}\nScheduled hours: {formatScheduledHours:F2}\nVariance: {formatVarianceHours:+0.00;-0.00;0.00}\n\"\"\";\nConsole.WriteLine(formatReport);"
+      }
+    ],
+    "expectedBehavior": "ScratchPad preserves Session 03 and prints a readable Side Lab 03B report. Values display with the requested formatting while the underlying decimal variables remain available for calculations.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+  },
+  "expectedFiles": [
+    {
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs",
+      "action": "Modify",
+      "why": "Append the optional formatting report without changing the required Session 03 section."
+    }
+  ],
+  "commit": "Not applicable — optional side lab; no required TimeClock path changes.",
+  "review": [
+    "The Session 03 section remains unchanged.",
+    "Interpolation places expressions where their output appears.",
+    "F2 and the variance format affect display rather than the stored decimal values.",
+    "The quick newline uses \\n inside an ordinary interpolated string.",
+    "The raw heading uses triple quotes without interpolation.",
+    "The final report uses an interpolated raw multiline string."
+  ],
+  "postQuiz": [
+    {
+      "prompt": "Why are there several valid ways to format text in C#?",
+      "options": ["The language accumulated features while preserving older useful syntax", "Only one works on each operating system", "Every numeric type requires a different string language"],
+      "correct": 0,
+      "explanation": "C# evolved over decades, adding readability improvements while retaining compatibility and situationally useful forms."
+    },
+    {
+      "prompt": "When is an interpolated raw string especially useful?",
+      "options": ["A multiline report containing C# values", "Adding a project reference", "Declaring a decimal literal"],
+      "correct": 0,
+      "explanation": "Interpolated raw strings keep multiline source readable while still embedding expressions."
+    },
+    {
+      "prompt": "Why might C2 display differently on another computer?",
+      "options": ["Currency formatting can use the active culture", "The decimal value changes when compiled", "Raw strings disable currency"],
+      "correct": 0,
+      "explanation": "Culture can affect currency symbols and numeric separators without changing the underlying value."
+    }
+  ],
+  "reflections": [
+    "Which three formatting forms will you reach for most often during the next few sessions?",
+    "When is \\n clearer than a raw multiline string, and when does raw text become easier to read?",
+    "Why can several generations of syntax remain useful in the same modern language?"
+  ],
+  "whatBreaks": "Skipping this optional sidebar does not break Session 03.5 or the required TimeClock path. You would only lose the consolidated historical reference and extra practice producing readable console reports.",
+  "summary": "C# console formatting accumulated from ordinary strings, escapes, concatenation, and positional formatting to C# 6 interpolation and C# 11 raw strings. For modern course work, remember interpolation, format specifiers, quick \\n newlines, and raw or interpolated raw multiline strings."
+}
