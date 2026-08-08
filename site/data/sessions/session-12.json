@@ -84,9 +84,11 @@
       "title": "TryFind: the out-pattern from Session 9, applied to a real lookup",
       "paragraphs": [
         "TryFind(int employeeId, out Employee? employee) reuses exactly the pattern Session 9 introduced with TryGetOpenEntry -- a bool result plus an out parameter, so callers can check 'was this employee found' without a nullable-return null check.",
-        "TryGetValue on Dictionary<TKey,TValue> is itself built on the same Try-pattern -- EmployeeDirectory's TryFind is a thin wrapper exposing that same idiom at the EmployeeDirectory level."
+        "TryGetValue on Dictionary<TKey,TValue> is itself built on the same Try-pattern -- EmployeeDirectory's TryFind is a thin wrapper exposing that same idiom at the EmployeeDirectory level.",
+        "The educational reason for using out here is recognition and practice. Try-style APIs appear throughout .NET, including Dictionary.TryGetValue and numeric TryParse methods, so you need to be comfortable reading the bool-plus-out shape even if you do not design every method that way.",
+        "This is not a rule that repositories must use out parameters. A repository could reasonably expose Employee? Find(int employeeId) and return either the Employee or null. That design is often simpler for application code. Choose the API that communicates absence most clearly and fits the codebase; this lab deliberately chooses TryFind to connect Session 9's out parameter to the dictionary API you will encounter frequently."
       ],
-      "code": "public bool TryFind(int employeeId, out Employee? employee) => employees.TryGetValue(employeeId, out employee);"
+      "code": "// Try-pattern used in this lab\npublic bool TryFind(int employeeId, out Employee? employee) =>\n    employees.TryGetValue(employeeId, out employee);\n\n// Also a reasonable repository design\npublic Employee? Find(int employeeId) =>\n    employees.GetValueOrDefault(employeeId);"
     }
   ],
   "lab": {
@@ -111,7 +113,7 @@
         "code": "public bool TryAdd(Employee employee, out string message)\n{\n    throw new NotImplementedException();\n}"
       },
       {
-        "text": "Stub TryFind with the Try-pattern from Session 09. Employee? is nullable because the requested ID might not exist.",
+        "text": "Stub TryFind with the Try-pattern from Session 09. Employee? is nullable because the requested ID might not exist. This lab uses out to practice the common Dictionary.TryGetValue shape, not because every repository lookup must use an out parameter; returning Employee? directly would also be a reasonable design.",
         "code": "public bool TryFind(int employeeId, out Employee? employee)\n{\n    throw new NotImplementedException();\n}"
       },
       {
