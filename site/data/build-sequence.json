@@ -23,7 +23,7 @@
     {"number":10,"environment":"mixed","creates":["WorkSummary"],"extends":["equality experiment using production values"]},
     {"number":11,"environment":"production","creates":["ClockEntryRepository"],"extends":["ClockEntry collection behavior"]},
     {"number":12,"environment":"production","creates":["EmployeeRepository"],"extends":["employee lookup and uniqueness"]},
-    {"number":13,"environment":"production","extends":["repository enumeration contracts"]},
+    {"number":13,"environment":"scratchpad","extends":["ScratchPad repository enumeration-contract experiment"]},
     {"number":14,"environment":"scratchpad","extends":["generic method experiment"]},
     {"number":15,"environment":"scratchpad","extends":["generic constraint experiment"]},
     {"number":16,"environment":"scratchpad","extends":["variance experiment"]},
