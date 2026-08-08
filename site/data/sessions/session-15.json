@@ -2,7 +2,7 @@
   "number": 15,
   "category": "Collections and generics",
   "estimatedTime": "35 minutes",
-  "connection": "Session 14 created ScratchPad's GenericExperiments with Later<T>. Production code is unchanged. Extend the permanent generic experiment with a constraint and observe exactly what the constraint enables.",
+  "connection": "Session 14 created ScratchPad's Session14GenericMethodDemo with Later<T>. Production code is unchanged. Extend the permanent generic experiment with a constraint and observe exactly what the constraint enables.",
   "objectives": [
     "Explain what where T : IComparable<T> promises the compiler about any type T used to call Later<T>.",
     "Remove the constraint experimentally and read the exact compile error left.CompareTo(right) produces without it.",
@@ -91,7 +91,7 @@
   ],
   "lab": {
     "objective": "Extend the permanent generic experiment with a constraint and observe exactly what the constraint enables.",
-    "startingCondition": "Session 14 created ScratchPad's GenericExperiments with Later<T>. Production code is unchanged.",
+    "startingCondition": "Session 14 created ScratchPad/Session14/Session14GenericMethodDemo.cs with Later<T>. Production code is unchanged.",
     "steps": [
       "Keep the Session 14 calls and add the IComparable<T> constraint.",
       "Use CompareTo inside Later<T> and confirm the constrained code builds.",
@@ -107,7 +107,7 @@
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.ScratchPad/GenericExperiments.cs",
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session14/Session14GenericMethodDemo.cs",
       "action": "Modify",
       "why": "Extend rather than replace the generic notebook entry."
     },

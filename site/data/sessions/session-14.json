@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "blueprint",
+      "diagram": "generictypes",
       "title": "Generic types are filled in at each use site",
       "explanation": "List<ClockEntry>, Dictionary<int, Employee>, and Task<ClockEntry?> are the same three generic type definitions (List<T>, Dictionary<TKey,TValue>, Task<TResult>) each instantiated differently."
     },
     {
-      "diagram": "call",
+      "diagram": "genericinference",
       "title": "A generic method infers T from its arguments",
       "explanation": "GenericRules.Later(entryA.ClockIn, entryB.ClockIn) infers T as DateTime from the arguments' actual type -- no explicit Later<DateTime> is required."
     },
     {
-      "diagram": "return",
+      "diagram": "taskresult",
       "title": "Task<ClockEntry?> says exactly what eventually arrives",
       "explanation": "The T in Task<T> is the type of value the asynchronous operation eventually produces -- here, possibly-null ClockEntry, matching GetClockEntry's real nullable contract."
     },
     {
-      "diagram": "instances",
+      "diagram": "closedgenerics",
       "title": "One method definition, many closed types",
       "explanation": "Later<DateTime> and Later<int> are two different closed generic methods generated from the one open Later<T> definition, at compile time."
     }
@@ -90,24 +90,69 @@
     }
   ],
   "lab": {
+    "clickHighlightInstructions": true,
+    "stepCheckboxes": true,
     "objective": "Preserve a generic-method experiment in ScratchPad because the production domain has no natural generic algorithm yet.",
-    "startingCondition": "Production repositories and models exist. ScratchPad retains earlier language experiments; no verified requirement needs a custom generic type or method.",
+    "startingCondition": "Session 13 established the session-specific ScratchPad class and Run method pattern. Preserve Domain and App unchanged; create a Session 14 ScratchPad class and append one Run call to the existing ScratchPad entry point.",
     "steps": [
-      "Add a Session 14 section to ScratchPad.",
-      "Write Later<T> once and call it with int and DateTime.",
-      "Predict the selected value for each call.",
-      "Keep the experiment isolated and document why it is not production code.",
+      "Open the ScratchPad project.",
+      "Create a Session14 folder in the ScratchPad project.",
+      "Create Session14GenericMethodDemo.cs inside the new folder.",
+      "Import the PinkMachine19.TimeClock.Domain namespace so the experiment can use ClockEntry.",
+      "Declare a public sealed Session14GenericMethodDemo class.",
       {
-        "text": "Run ScratchPad and leave production unchanged.",
-        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"
+        "text": "Stub Run first so this class follows the session-specific ScratchPad pattern established in Session 13.",
+        "code": "public void Run()\n{\n    throw new NotImplementedException();\n}"
+      },
+      {
+        "text": "Below Run, stub a private static generic method named Later. Its type parameter T lets one method accept and return the same caller-supplied type. The constraint tells the compiler that values of T provide CompareTo; Session 15 examines constraints in depth.",
+        "code": "private static T Later<T>(T left, T right)\n    where T : IComparable<T>\n{\n    throw new NotImplementedException();\n}"
+      },
+      {
+        "text": "Build before implementing either method. A successful build proves that the generic method signature and its constraint are valid independently of the method behavior.",
+        "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+      },
+      "Replace the throw in Later with a call to left.CompareTo(right).",
+      "Return left when CompareTo produces zero or a positive number.",
+      "Return right otherwise.",
+      "Before implementing Run, explain why Later returns T rather than object: the selected value keeps the same compile-time type supplied by the caller.",
+      "Replace the throw in Run by creating a ClockEntry for employee 14 at 8:00 AM on January 14, 2026.",
+      "Create a second ClockEntry for employee 27 at 9:30 AM on January 14, 2026.",
+      "Predict which EmployeeId the generic method should select when given the two integer IDs.",
+      {
+        "text": "Call Later with the two EmployeeId values and store the result in an int. Do not write Later<int>; let the compiler infer T as int from the arguments.",
+        "code": "int higherEmployeeId = Later(firstEntry.EmployeeId, secondEntry.EmployeeId);"
+      },
+      "Display higherEmployeeId.",
+      "Predict which ClockIn value the generic method should select when given the two timestamps.",
+      {
+        "text": "Call the same Later method with the two ClockIn values and store the result in a DateTime. This time the compiler infers T as DateTime.",
+        "code": "DateTime laterClockIn = Later(firstEntry.ClockIn, secondEntry.ClockIn);"
+      },
+      "Display laterClockIn.",
+      "Explain why no second method was needed: the method body depends on the comparable capability promised by T, not specifically on int or DateTime.",
+      "Open ScratchPad/Program.cs.",
+      "Keep every earlier session construction and Run call unchanged.",
+      "At the end of Program.cs, construct one Session14GenericMethodDemo object.",
+      "Call Run on the Session14GenericMethodDemo object.",
+      {
+        "text": "Run ScratchPad, then build and test the complete solution. Confirm that the integer call selects employee 27 and the DateTime call selects 9:30 AM. Attempt the lab before opening the solution below.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "Use this to compare the generic type inference and comparison decisions with your attempt. Do not replace an entire existing Program.cs; append only the Session 14 construction and Run call after its earlier code.",
+            "code": "// ScratchPad/Session14/Session14GenericMethodDemo.cs\nusing PinkMachine19.TimeClock.Domain;\n\npublic sealed class Session14GenericMethodDemo\n{\n    public void Run()\n    {\n        var firstEntry = new ClockEntry(\n            14,\n            new DateTime(2026, 1, 14, 8, 0, 0));\n\n        var secondEntry = new ClockEntry(\n            27,\n            new DateTime(2026, 1, 14, 9, 30, 0));\n\n        int higherEmployeeId = Later(\n            firstEntry.EmployeeId,\n            secondEntry.EmployeeId);\n\n        DateTime laterClockIn = Later(\n            firstEntry.ClockIn,\n            secondEntry.ClockIn);\n\n        Console.WriteLine($\"Higher employee ID: {higherEmployeeId}\");\n        Console.WriteLine($\"Later clock-in: {laterClockIn}\");\n    }\n\n    private static T Later<T>(T left, T right)\n        where T : IComparable<T>\n    {\n        return left.CompareTo(right) >= 0 ? left : right;\n    }\n}\n\n// Append to ScratchPad/Program.cs without removing earlier calls.\nvar session14 = new Session14GenericMethodDemo();\nsession14.Run();"
+          }
+        ]
       }
     ],
-    "expectedBehavior": "One generic definition works for multiple types in ScratchPad; TimeClock production APIs remain non-generic until requirements demand otherwise.",
-    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "ScratchPad displays employee 27 as the higher ID and January 14, 2026 at 9:30 AM as the later ClockIn. Both results come from one generic Later<T> definition; Domain and App remain unchanged.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.ScratchPad/GenericExperiments.cs",
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session14/Session14GenericMethodDemo.cs",
       "action": "Add",
       "why": "Preserve a focused generic-method experiment."
     },
@@ -117,7 +162,7 @@
       "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
-  "commit": "session-13: teach generic types and methods",
+  "commit": "session-14: teach generic types and methods",
   "review": [
     "The lab uses scratchpad because that is the most natural environment for this concept.",
     "Every referenced application artifact was created in this session or an earlier session.",
