@@ -99,7 +99,17 @@
       "Add Save to append an entry.",
       "Add methods to retrieve an employee's entries and locate an open entry.",
       "Update App to save open and completed entries and display the resulting count.",
-      "Keep the list private; callers interact through repository behavior."
+      {
+        "text": "Keep the list private so callers interact through repository behavior. Run the App, then build and test the solution. Attempt the lab before opening the solution below.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "Use this to compare the important decisions with your attempt. Do not replace an entire existing Program.cs; add the Session 11 section after its earlier code.",
+            "code": "// Repositories/ClockEntryRepository.cs\nnamespace PinkMachine19.TimeClock.Domain;\n\npublic sealed class ClockEntryRepository\n{\n    private readonly List<ClockEntry> _clockEntries = new();\n\n    public void SaveClockEntry(ClockEntry clockEntry)\n    {\n        _clockEntries.Add(clockEntry);\n    }\n\n    public IEnumerable<ClockEntry> GetEmployeeClockEntries(\n        int employeeId,\n        DateTime startDate,\n        DateTime endDate)\n    {\n        return _clockEntries.Where(entry =>\n            entry.EmployeeId == employeeId &&\n            entry.ClockOut is not null &&\n            entry.ClockIn >= startDate &&\n            entry.ClockIn <= endDate);\n    }\n\n    public ClockEntry? GetOpenClockEntry(int employeeId)\n    {\n        return _clockEntries.FirstOrDefault(entry =>\n            entry.EmployeeId == employeeId && entry.ClockOut is null);\n    }\n}\n\n// Add as a new Session 11 section at the end of App/Program.cs.\nvar repository = new ClockEntryRepository();\n\nvar completedEntry = new ClockEntry(1, new DateTime(2026, 1, 15, 9, 0, 0));\ncompletedEntry.ClockOutEmployee(new DateTime(2026, 1, 15, 17, 0, 0));\n\nvar openEntry = new ClockEntry(1, new DateTime(2026, 1, 16, 9, 0, 0));\n\nrepository.SaveClockEntry(completedEntry);\nrepository.SaveClockEntry(openEntry);\n\nIEnumerable<ClockEntry> completedEntries = repository.GetEmployeeClockEntries(\n    1,\n    new DateTime(2026, 1, 1),\n    new DateTime(2026, 1, 31));\n\nClockEntry? currentOpenEntry = repository.GetOpenClockEntry(1);\n\nConsole.WriteLine($\"Completed entries: {completedEntries.Count()}\");\nConsole.WriteLine($\"Open entry found: {currentOpenEntry is not null}\");"
+          }
+        ]
+      }
     ],
     "expectedBehavior": "Production stores and retrieves clock entries through behavior rather than exposing its List.",
     "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
