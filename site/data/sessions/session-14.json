@@ -6,8 +6,8 @@
   "objectives": [
     "Identify at least three generic types already in real, everyday use across this codebase, and state what concrete type argument each is instantiated with.",
     "Explain what ClockEntry communicates in IEnumerable<ClockEntry>: every value produced by the sequence has that element type.",
-    "Read Session14GenericMethodDemo.Later<T>(T left, T right) one piece at a time and explain what each use of T means.",
-    "Call Later<T> with both DateTime (ClockIn timestamps) and int (EmployeeId values) and confirm one method definition serves both."
+    "Read Session14GenericMethodDemo.SelectGreater<T>(T left, T right) one piece at a time and explain what each use of T means.",
+    "Call SelectGreater<T> with both DateTime (ClockIn timestamps) and int (EmployeeId values) and confirm one method definition serves both."
   ],
   "visuals": [
     {
@@ -18,7 +18,7 @@
     {
       "diagram": "genericinference",
       "title": "A generic method infers T from its arguments",
-      "explanation": "Later(entryA.ClockIn, entryB.ClockIn) infers T as DateTime from the arguments' actual type -- no explicit Later<DateTime> is required."
+      "explanation": "SelectGreater(entryA.ClockIn, entryB.ClockIn) infers T as DateTime from the arguments' actual type -- no explicit SelectGreater<DateTime> is required."
     },
     {
       "diagram": "narrowcontract",
@@ -28,7 +28,7 @@
     {
       "diagram": "closedgenerics",
       "title": "One method definition, many closed types",
-      "explanation": "Later<DateTime> and Later<int> are two different closed generic methods generated from the one open Later<T> definition, at compile time."
+      "explanation": "SelectGreater<DateTime> and SelectGreater<int> are two different closed generic methods generated from the one open SelectGreater<T> definition, at compile time."
     }
   ],
   "preQuiz": [
@@ -53,10 +53,10 @@
       "explanation": "The type argument preserves element type information: foreach can give the caller a ClockEntry directly, while Session 13's narrower IEnumerable contract still does not promise Add or indexing."
     },
     {
-      "prompt": "Can Session14GenericMethodDemo.Later<T> be called with both DateTime and int arguments, using the same method definition?",
+      "prompt": "Can Session14GenericMethodDemo.SelectGreater<T> be called with both DateTime and int arguments, using the same method definition?",
       "options": [
-        "Yes -- as long as the argument type implements IComparable<T> (both DateTime and int do), the compiler generates a specific closed version of Later<T> for each type used",
-        "No -- a separate Later method must be written for each type",
+        "Yes -- as long as the argument type implements IComparable<T> (both DateTime and int do), the compiler generates a specific closed version of SelectGreater<T> for each type used",
+        "No -- a separate SelectGreater method must be written for each type",
         "Only with int, since DateTime cannot be compared"
       ],
       "correct": 0,
@@ -75,18 +75,18 @@
     {
       "title": "Start with the problem: two methods would repeat one decision",
       "paragraphs": [
-        "The ScratchPad experiment needs the greater of two employee IDs and the later of two clock-in times. You could write LaterInt and LaterDateTime, but both methods would make the same decision: compare two values and return the one that comes later or ranks higher.",
+        "The ScratchPad experiment needs the greater of two employee IDs and the later of two clock-in times. You could write SelectGreaterInt and SelectGreaterDateTime, but both methods would make the same decision: compare two values and return the one that comes later or ranks higher.",
         "The only meaningful difference between those two methods is the value type. A generic method replaces that changing type name with a type parameter, allowing one definition to preserve the caller's actual type."
       ],
-      "code": "// Repeated, type-specific shapes we want to avoid\nint LaterInt(int left, int right)\nDateTime LaterDateTime(DateTime left, DateTime right)\n\n// One generic shape preserves whichever type the caller supplies\nT Later<T>(T left, T right)"
+      "code": "// Repeated, type-specific shapes we want to avoid\nint SelectGreaterInt(int left, int right)\nDateTime SelectGreaterDateTime(DateTime left, DateTime right)\n\n// One generic shape preserves whichever type the caller supplies\nT SelectGreater<T>(T left, T right)"
     },
     {
-      "title": "Read Later<T> from left to right",
+      "title": "Read SelectGreater<T> from left to right",
       "paragraphs": [
-        "The first T is the return type: Later gives back the same type it compares. <T> after the method name declares T as this method's type parameter. The two parameter types say left and right must both be that same T.",
+        "The first T is the return type: SelectGreater gives back the same type it compares. <T> after the method name declares T as this method's type parameter. The two parameter types say left and right must both be that same T.",
         "For one call, every T in the signature becomes int. For another call, every T becomes DateTime. T is not a special runtime value and it does not mean 'any mixture of types'; it is a compile-time placeholder consistently filled for one call."
       ],
-      "code": "private static T Later<T>(T left, T right)\n//             ↑       ↑       ↑\n//          returns T  both inputs are the same T"
+      "code": "private static T SelectGreater<T>(T left, T right)\n//             ↑       ↑       ↑\n//          returns T  both inputs are the same T"
     },
     {
       "title": "The constraint gives T one required capability",
@@ -94,12 +94,12 @@
         "Without more information, the compiler must assume T could be any type, so it cannot assume that left has a CompareTo method. The where T : IComparable<T> constraint narrows the allowed types to values that know how to compare themselves with another value of the same type.",
         "Both int and DateTime satisfy that contract. Session 15 focuses on constraints; for this session, read this line as: T may vary, but it must be comparable to another T."
       ],
-      "code": "private static T Later<T>(T left, T right)\n    where T : IComparable<T>\n//            └─ T must support CompareTo(T other)"
+      "code": "private static T SelectGreater<T>(T left, T right)\n    where T : IComparable<T>\n//            └─ T must support CompareTo(T other)"
     },
     {
       "title": "CompareTo returns an ordering signal, not a Boolean",
       "paragraphs": [
-        "left.CompareTo(right) returns a negative number when left comes before right, zero when they are equal, and a positive number when left comes after right. Later only needs to distinguish 'left is at least as late or high' from 'right is later or higher.'",
+        "left.CompareTo(right) returns a negative number when left comes before right, zero when they are equal, and a positive number when left comes after right. SelectGreater only needs to distinguish 'left is at least as late or high' from 'right is later or higher.'",
         "That is why the condition uses >= 0. Equal values return left; a positive result returns left; a negative result returns right. The same three-way signal works for 14 versus 27 and for 8:00 AM versus 9:30 AM."
       ],
       "code": "int comparison = left.CompareTo(right);\n\n// comparison < 0  → right is later/higher\n// comparison == 0 → values are equal; return left\n// comparison > 0  → left is later/higher\nreturn comparison >= 0 ? left : right;"
@@ -107,10 +107,18 @@
     {
       "title": "The compiler infers T separately for each call",
       "paragraphs": [
-        "When Later receives two EmployeeId values, both arguments are int, so the compiler treats that call as Later<int> and the result remains int. When it receives two ClockIn values, both are DateTime, so that call behaves as Later<DateTime> and the result remains DateTime.",
+        "When SelectGreater receives two EmployeeId values, both arguments are int, so the compiler treats that call as SelectGreater<int> and the result remains int. When it receives two ClockIn values, both are DateTime, so that call behaves as SelectGreater<DateTime> and the result remains DateTime.",
         "You normally omit <int> and <DateTime> at the call site because the argument types provide enough information. This is generic method type inference: one method definition, checked as two type-safe uses without converting values to object or casting the results back."
       ],
-      "code": "int higherId = Later(firstEntry.EmployeeId, secondEntry.EmployeeId);\n// T is inferred as int\n\nDateTime laterClockIn = Later(firstEntry.ClockIn, secondEntry.ClockIn);\n// T is inferred as DateTime"
+      "code": "int higherId = SelectGreater(firstEntry.EmployeeId, secondEntry.EmployeeId);\n// T is inferred as int\n\nDateTime laterClockIn = SelectGreater(firstEntry.ClockIn, secondEntry.ClockIn);\n// T is inferred as DateTime"
+    },
+    {
+      "title": "This is a teaching method, not an automatic production utility",
+      "paragraphs": [
+        "SelectGreater<T> is useful here because its small body exposes generic syntax, type inference, a constraint, and CompareTo. That educational value does not mean every production application should create this helper.",
+        "In production, first check whether .NET already provides the operation you need. Math.Max handles many numeric types, a direct comparison can select between two DateTime values, and Comparer<T>.Default can perform a general comparison. Create a custom method only when its name and behavior express a real application need more clearly than the available framework operation."
+      ],
+      "code": "int higherId = Math.Max(firstId, secondId);\nDateTime laterClockIn = firstClockIn >= secondClockIn\n    ? firstClockIn\n    : secondClockIn;\n\n// SelectGreater<T> remains valuable here because the goal is to learn generics."
     }
   ],
   "lab": {
@@ -124,41 +132,42 @@
       "Create Session14GenericMethodDemo.cs inside the new folder.",
       "Import the PinkMachine19.TimeClock.Domain namespace so the experiment can use ClockEntry.",
       "Declare a public sealed Session14GenericMethodDemo class.",
-      "Before writing Later, describe the repeated problem in plain English: choose the later or higher of two values without writing separate logic for int and DateTime.",
+      "Before writing SelectGreater, describe the repeated problem in plain English: choose the later or higher of two values without writing separate logic for int and DateTime.",
       {
         "text": "Stub Run first so this class follows the session-specific ScratchPad pattern established in Session 13.",
         "code": "public void Run()\n{\n    throw new NotImplementedException();\n}"
       },
       {
-        "text": "Below Run, stub a private static generic method named Later. Read the signature from left to right: it returns T, declares T in <T>, and requires both parameters to be that same T. The constraint tells the compiler that T supplies CompareTo; Session 15 examines constraints in depth.",
-        "code": "private static T Later<T>(T left, T right)\n    where T : IComparable<T>\n{\n    throw new NotImplementedException();\n}"
+        "text": "Below Run, stub a private static generic method named SelectGreater. Read the signature from left to right: it returns T, declares T in <T>, and requires both parameters to be that same T. The constraint tells the compiler that T supplies CompareTo; Session 15 examines constraints in depth.",
+        "code": "private static T SelectGreater<T>(T left, T right)\n    where T : IComparable<T>\n{\n    throw new NotImplementedException();\n}"
       },
       {
         "text": "Build before implementing either method. A successful build proves that the generic method signature and its constraint are valid independently of the method behavior.",
         "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
       },
-      "Inside Later, call left.CompareTo(right) and store its integer result in a local variable named comparison.",
+      "Inside SelectGreater, call left.CompareTo(right) and store its integer result in a local variable named comparison.",
       "Before continuing, state what a negative comparison value means.",
       "State what a zero comparison value means.",
       "State what a positive comparison value means.",
       "Return left when comparison is zero or positive.",
       "Return right when comparison is negative.",
-      "Before implementing Run, explain why Later returns T rather than object: the selected value keeps the same compile-time type supplied by the caller.",
+      "Before implementing Run, explain why SelectGreater returns T rather than object: the selected value keeps the same compile-time type supplied by the caller.",
       "Replace the throw in Run by creating a ClockEntry for employee 14 at 8:00 AM on January 14, 2026.",
       "Create a second ClockEntry for employee 27 at 9:30 AM on January 14, 2026.",
       "Predict which EmployeeId the generic method should select when given the two integer IDs.",
       {
-        "text": "Call Later with the two EmployeeId values and store the result in an int. Do not write Later<int>; let the compiler infer T as int from the arguments.",
-        "code": "int higherEmployeeId = Later(firstEntry.EmployeeId, secondEntry.EmployeeId);"
+        "text": "Call SelectGreater with the two EmployeeId values and store the result in an int. Do not write SelectGreater<int>; let the compiler infer T as int from the arguments.",
+        "code": "int higherEmployeeId = SelectGreater(firstEntry.EmployeeId, secondEntry.EmployeeId);"
       },
       "Display higherEmployeeId.",
       "Predict which ClockIn value the generic method should select when given the two timestamps.",
       {
-        "text": "Call the same Later method with the two ClockIn values and store the result in a DateTime. This time the compiler infers T as DateTime.",
-        "code": "DateTime laterClockIn = Later(firstEntry.ClockIn, secondEntry.ClockIn);"
+        "text": "Call the same SelectGreater method with the two ClockIn values and store the result in a DateTime. This time the compiler infers T as DateTime.",
+        "code": "DateTime laterClockIn = SelectGreater(firstEntry.ClockIn, secondEntry.ClockIn);"
       },
       "Display laterClockIn.",
       "Explain why no second method was needed: the method body depends on the comparable capability promised by T, not specifically on int or DateTime.",
+      "Record why SelectGreater<T> belongs in ScratchPad: it teaches generic mechanics, while production code should first use an existing .NET operation when one communicates the intent clearly.",
       "Open ScratchPad/Program.cs.",
       "Keep every earlier session construction and Run call unchanged.",
       "At the end of Program.cs, construct one Session14GenericMethodDemo object.",
@@ -170,12 +179,12 @@
           {
             "title": "Solution",
             "text": "Use this to compare the generic type inference and comparison decisions with your attempt. Do not replace an entire existing Program.cs; append only the Session 14 construction and Run call after its earlier code.",
-            "code": "// ScratchPad/Session14/Session14GenericMethodDemo.cs\nusing PinkMachine19.TimeClock.Domain;\n\npublic sealed class Session14GenericMethodDemo\n{\n    public void Run()\n    {\n        var firstEntry = new ClockEntry(\n            14,\n            new DateTime(2026, 1, 14, 8, 0, 0));\n\n        var secondEntry = new ClockEntry(\n            27,\n            new DateTime(2026, 1, 14, 9, 30, 0));\n\n        int higherEmployeeId = Later(\n            firstEntry.EmployeeId,\n            secondEntry.EmployeeId);\n\n        DateTime laterClockIn = Later(\n            firstEntry.ClockIn,\n            secondEntry.ClockIn);\n\n        Console.WriteLine($\"Higher employee ID: {higherEmployeeId}\");\n        Console.WriteLine($\"Later clock-in: {laterClockIn}\");\n    }\n\n    private static T Later<T>(T left, T right)\n        where T : IComparable<T>\n    {\n        int comparison = left.CompareTo(right);\n        return comparison >= 0 ? left : right;\n    }\n}\n\n// Append to ScratchPad/Program.cs without removing earlier calls.\nvar session14 = new Session14GenericMethodDemo();\nsession14.Run();"
+            "code": "// ScratchPad/Session14/Session14GenericMethodDemo.cs\nusing PinkMachine19.TimeClock.Domain;\n\npublic sealed class Session14GenericMethodDemo\n{\n    public void Run()\n    {\n        var firstEntry = new ClockEntry(\n            14,\n            new DateTime(2026, 1, 14, 8, 0, 0));\n\n        var secondEntry = new ClockEntry(\n            27,\n            new DateTime(2026, 1, 14, 9, 30, 0));\n\n        int higherEmployeeId = SelectGreater(\n            firstEntry.EmployeeId,\n            secondEntry.EmployeeId);\n\n        DateTime laterClockIn = SelectGreater(\n            firstEntry.ClockIn,\n            secondEntry.ClockIn);\n\n        Console.WriteLine($\"Higher employee ID: {higherEmployeeId}\");\n        Console.WriteLine($\"SelectGreater clock-in: {laterClockIn}\");\n    }\n\n    private static T SelectGreater<T>(T left, T right)\n        where T : IComparable<T>\n    {\n        int comparison = left.CompareTo(right);\n        return comparison >= 0 ? left : right;\n    }\n}\n\n// Append to ScratchPad/Program.cs without removing earlier calls.\nvar session14 = new Session14GenericMethodDemo();\nsession14.Run();"
           }
         ]
       }
     ],
-    "expectedBehavior": "ScratchPad displays employee 27 as the higher ID and January 14, 2026 at 9:30 AM as the later ClockIn. Both results come from one generic Later<T> definition; Domain and App remain unchanged.",
+    "expectedBehavior": "ScratchPad displays employee 27 as the higher ID and January 14, 2026 at 9:30 AM as the later ClockIn. Both results come from one generic SelectGreater<T> definition; Domain and App remain unchanged.",
     "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
@@ -208,7 +217,7 @@
       "explanation": "List<T> and Dictionary<TKey,TValue> are distinct generic types -- the shared idea is only that both defer their element/key/value types to a type parameter, filled in at each declaration."
     },
     {
-      "prompt": "What would happen if Session14GenericMethodDemo.Later<T> had no constraint at all (just Later<T>(T left, T right))?",
+      "prompt": "What would happen if Session14GenericMethodDemo.SelectGreater<T> had no constraint at all (just SelectGreater<T>(T left, T right))?",
       "options": [
         "left.CompareTo(right) would fail to compile -- without a constraint, the compiler only knows T could be any type, including one with no CompareTo method at all",
         "It would work exactly the same for every type",
@@ -218,23 +227,23 @@
       "explanation": "This is exactly what Session 15 studies next -- without the where T : IComparable<T> constraint, the compiler cannot assume CompareTo exists on an arbitrary T."
     },
     {
-      "prompt": "Does calling Later(entryA.ClockIn, entryB.ClockIn) require writing Later<DateTime>(...) explicitly?",
+      "prompt": "Does calling SelectGreater(entryA.ClockIn, entryB.ClockIn) require writing SelectGreater<DateTime>(...) explicitly?",
       "options": [
         "No -- the compiler infers T as DateTime from the argument types automatically; explicit type arguments are only needed when inference is ambiguous or impossible",
         "Yes -- generic methods always require an explicit type argument",
         "No -- but only because DateTime is a built-in type"
       ],
       "correct": 0,
-      "explanation": "Type inference from arguments is standard for generic methods in C# -- explicit type arguments (Later<DateTime>(...)) are optional here and rarely needed."
+      "explanation": "Type inference from arguments is standard for generic methods in C# -- explicit type arguments (SelectGreater<DateTime>(...)) are optional here and rarely needed."
     }
   ],
   "reflections": [
-    "Why does writing Later<T> once, instead of LaterDateTime and LaterInt separately, matter beyond saving a few lines of code?",
-    "What other places in this codebase might benefit from a generic helper like Later<T>, once you start looking for duplicated type-specific logic?",
+    "Why does writing SelectGreater<T> once, instead of SelectGreaterDateTime and SelectGreaterInt separately, matter beyond saving a few lines of code?",
+    "What other places in this codebase might benefit from a generic helper like SelectGreater<T>, once you start looking for duplicated type-specific logic?",
     "How does IEnumerable<ClockEntry> communicate more to a reader than a non-generic collection whose element type is unknown?"
   ],
-  "whatBreaks": "Calling Session14GenericMethodDemo.Later with two Employee arguments (instead of their EmployeeId or another IComparable value) fails to compile, because Employee implements no comparison logic -- this is the constraint doing its job, not a limitation to work around. Removing the where T : IComparable<T> constraint would let Later<T> accept any T at its boundary, but left.CompareTo(right) inside the method body would then fail to compile, since the compiler could no longer assume CompareTo exists.",
-  "summary": "Generic types are not a new concept this session invents -- List<ClockEntry>, Dictionary<int, Employee>, and IEnumerable<ClockEntry> were already doing real work in earlier sessions. Session14GenericMethodDemo.Later<T> demonstrates the other half of generics: T consistently replaces the return and parameter types, the constraint supplies comparison capability, CompareTo reports ordering, and the compiler infers int or DateTime separately at each call.",
+  "whatBreaks": "Calling Session14GenericMethodDemo.SelectGreater with two Employee arguments (instead of their EmployeeId or another IComparable value) fails to compile, because Employee implements no comparison logic -- this is the constraint doing its job, not a limitation to work around. Removing the where T : IComparable<T> constraint would let SelectGreater<T> accept any T at its boundary, but left.CompareTo(right) inside the method body would then fail to compile, since the compiler could no longer assume CompareTo exists.",
+  "summary": "Generic types are not a new concept this session invents -- List<ClockEntry>, Dictionary<int, Employee>, and IEnumerable<ClockEntry> were already doing real work in earlier sessions. Session14GenericMethodDemo.SelectGreater<T> demonstrates the other half of generics: T consistently replaces the return and parameter types, the constraint supplies comparison capability, CompareTo reports ordering, and the compiler infers int or DateTime separately at each call.",
   "learningEnvironment": "scratchpad",
   "buildState": {
     "creates": [],
