@@ -6,7 +6,7 @@
   "objectives": [
     "Identify at least three generic types already in real, everyday use across this codebase, and state what concrete type argument each is instantiated with.",
     "Explain what ClockEntry communicates in IEnumerable<ClockEntry>: every value produced by the sequence has that element type.",
-    "Read GenericRules.Later<T>(T left, T right) and explain why it can compare 'left' and 'right' generically without knowing T is DateTime or int in advance.",
+    "Read Session14GenericMethodDemo.Later<T>(T left, T right) one piece at a time and explain what each use of T means.",
     "Call Later<T> with both DateTime (ClockIn timestamps) and int (EmployeeId values) and confirm one method definition serves both."
   ],
   "visuals": [
@@ -18,7 +18,7 @@
     {
       "diagram": "genericinference",
       "title": "A generic method infers T from its arguments",
-      "explanation": "GenericRules.Later(entryA.ClockIn, entryB.ClockIn) infers T as DateTime from the arguments' actual type -- no explicit Later<DateTime> is required."
+      "explanation": "Later(entryA.ClockIn, entryB.ClockIn) infers T as DateTime from the arguments' actual type -- no explicit Later<DateTime> is required."
     },
     {
       "diagram": "narrowcontract",
@@ -53,7 +53,7 @@
       "explanation": "The type argument preserves element type information: foreach can give the caller a ClockEntry directly, while Session 13's narrower IEnumerable contract still does not promise Add or indexing."
     },
     {
-      "prompt": "Can GenericRules.Later<T> be called with both DateTime and int arguments, using the same method definition?",
+      "prompt": "Can Session14GenericMethodDemo.Later<T> be called with both DateTime and int arguments, using the same method definition?",
       "options": [
         "Yes -- as long as the argument type implements IComparable<T> (both DateTime and int do), the compiler generates a specific closed version of Later<T> for each type used",
         "No -- a separate Later method must be written for each type",
@@ -73,26 +73,50 @@
       "code": "List<ClockEntry> _clockEntries;              // List<T> with T = ClockEntry\nDictionary<int, Employee> employees;         // Dictionary<TKey,TValue> with TKey=int, TValue=Employee\nIEnumerable<ClockEntry> entries;             // IEnumerable<T> with T = ClockEntry"
     },
     {
-      "title": "A generic method: one definition, many closed forms",
+      "title": "Start with the problem: two methods would repeat one decision",
       "paragraphs": [
-        "GenericRules.Later<T>(T left, T right) where T : IComparable<T> works for any type T that can compare itself to another T -- DateTime and int both implement IComparable<T> in the .NET base class library.",
-        "Calling Later(entryA.ClockIn, entryB.ClockIn) lets the compiler infer T as DateTime from the argument types; calling Later(employeeA.EmployeeId, employeeB.EmployeeId) infers T as int. No explicit type argument is required at either call site."
+        "The ScratchPad experiment needs the greater of two employee IDs and the later of two clock-in times. You could write LaterInt and LaterDateTime, but both methods would make the same decision: compare two values and return the one that comes later or ranks higher.",
+        "The only meaningful difference between those two methods is the value type. A generic method replaces that changing type name with a type parameter, allowing one definition to preserve the caller's actual type."
       ],
-      "code": "// src/PinkMachine19.TimeClock.Domain/GenericRules.cs\npublic static T Later<T>(T left, T right) where T : IComparable<T> =>\n    left.CompareTo(right) >= 0 ? left : right;\n\n// Two closed forms generated from one open definition\nDateTime latest = GenericRules.Later(entryA.ClockIn, entryB.ClockIn);\nint higherId = GenericRules.Later(employeeA.EmployeeId, employeeB.EmployeeId);"
+      "code": "// Repeated, type-specific shapes we want to avoid\nint LaterInt(int left, int right)\nDateTime LaterDateTime(DateTime left, DateTime right)\n\n// One generic shape preserves whichever type the caller supplies\nT Later<T>(T left, T right)"
     },
     {
-      "title": "Why not just write two separate methods?",
+      "title": "Read Later<T> from left to right",
       "paragraphs": [
-        "A non-generic LaterDate(DateTime, DateTime) and LaterId(int, int) would duplicate the exact same >= 0 comparison logic twice, with only the type name different.",
-        "Later<T> expresses that duplication as one piece of logic, parameterized over any comparable type -- this is the same motivation as IEnumerable<T> in Session 13: write the capability once, apply it to many concrete types."
+        "The first T is the return type: Later gives back the same type it compares. <T> after the method name declares T as this method's type parameter. The two parameter types say left and right must both be that same T.",
+        "For one call, every T in the signature becomes int. For another call, every T becomes DateTime. T is not a special runtime value and it does not mean 'any mixture of types'; it is a compile-time placeholder consistently filled for one call."
       ],
-      "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+      "code": "private static T Later<T>(T left, T right)\n//             ↑       ↑       ↑\n//          returns T  both inputs are the same T"
+    },
+    {
+      "title": "The constraint gives T one required capability",
+      "paragraphs": [
+        "Without more information, the compiler must assume T could be any type, so it cannot assume that left has a CompareTo method. The where T : IComparable<T> constraint narrows the allowed types to values that know how to compare themselves with another value of the same type.",
+        "Both int and DateTime satisfy that contract. Session 15 focuses on constraints; for this session, read this line as: T may vary, but it must be comparable to another T."
+      ],
+      "code": "private static T Later<T>(T left, T right)\n    where T : IComparable<T>\n//            └─ T must support CompareTo(T other)"
+    },
+    {
+      "title": "CompareTo returns an ordering signal, not a Boolean",
+      "paragraphs": [
+        "left.CompareTo(right) returns a negative number when left comes before right, zero when they are equal, and a positive number when left comes after right. Later only needs to distinguish 'left is at least as late or high' from 'right is later or higher.'",
+        "That is why the condition uses >= 0. Equal values return left; a positive result returns left; a negative result returns right. The same three-way signal works for 14 versus 27 and for 8:00 AM versus 9:30 AM."
+      ],
+      "code": "int comparison = left.CompareTo(right);\n\n// comparison < 0  → right is later/higher\n// comparison == 0 → values are equal; return left\n// comparison > 0  → left is later/higher\nreturn comparison >= 0 ? left : right;"
+    },
+    {
+      "title": "The compiler infers T separately for each call",
+      "paragraphs": [
+        "When Later receives two EmployeeId values, both arguments are int, so the compiler treats that call as Later<int> and the result remains int. When it receives two ClockIn values, both are DateTime, so that call behaves as Later<DateTime> and the result remains DateTime.",
+        "You normally omit <int> and <DateTime> at the call site because the argument types provide enough information. This is generic method type inference: one method definition, checked as two type-safe uses without converting values to object or casting the results back."
+      ],
+      "code": "int higherId = Later(firstEntry.EmployeeId, secondEntry.EmployeeId);\n// T is inferred as int\n\nDateTime laterClockIn = Later(firstEntry.ClockIn, secondEntry.ClockIn);\n// T is inferred as DateTime"
     }
   ],
   "lab": {
     "clickHighlightInstructions": true,
     "stepCheckboxes": true,
-    "objective": "Preserve a generic-method experiment in ScratchPad because the production domain has no natural generic algorithm yet.",
+    "objective": "Build one ScratchPad method that selects between two values while preserving their type, then call that same method with employee IDs and clock-in times.",
     "startingCondition": "Session 13 established the session-specific ScratchPad class and Run method pattern. Preserve Domain and App unchanged; create a Session 14 ScratchPad class and append one Run call to the existing ScratchPad entry point.",
     "steps": [
       "Open the ScratchPad project.",
@@ -100,21 +124,25 @@
       "Create Session14GenericMethodDemo.cs inside the new folder.",
       "Import the PinkMachine19.TimeClock.Domain namespace so the experiment can use ClockEntry.",
       "Declare a public sealed Session14GenericMethodDemo class.",
+      "Before writing Later, describe the repeated problem in plain English: choose the later or higher of two values without writing separate logic for int and DateTime.",
       {
         "text": "Stub Run first so this class follows the session-specific ScratchPad pattern established in Session 13.",
         "code": "public void Run()\n{\n    throw new NotImplementedException();\n}"
       },
       {
-        "text": "Below Run, stub a private static generic method named Later. Its type parameter T lets one method accept and return the same caller-supplied type. The constraint tells the compiler that values of T provide CompareTo; Session 15 examines constraints in depth.",
+        "text": "Below Run, stub a private static generic method named Later. Read the signature from left to right: it returns T, declares T in <T>, and requires both parameters to be that same T. The constraint tells the compiler that T supplies CompareTo; Session 15 examines constraints in depth.",
         "code": "private static T Later<T>(T left, T right)\n    where T : IComparable<T>\n{\n    throw new NotImplementedException();\n}"
       },
       {
         "text": "Build before implementing either method. A successful build proves that the generic method signature and its constraint are valid independently of the method behavior.",
         "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
       },
-      "Replace the throw in Later with a call to left.CompareTo(right).",
-      "Return left when CompareTo produces zero or a positive number.",
-      "Return right otherwise.",
+      "Inside Later, call left.CompareTo(right) and store its integer result in a local variable named comparison.",
+      "Before continuing, state what a negative comparison value means.",
+      "State what a zero comparison value means.",
+      "State what a positive comparison value means.",
+      "Return left when comparison is zero or positive.",
+      "Return right when comparison is negative.",
       "Before implementing Run, explain why Later returns T rather than object: the selected value keeps the same compile-time type supplied by the caller.",
       "Replace the throw in Run by creating a ClockEntry for employee 14 at 8:00 AM on January 14, 2026.",
       "Create a second ClockEntry for employee 27 at 9:30 AM on January 14, 2026.",
@@ -142,7 +170,7 @@
           {
             "title": "Solution",
             "text": "Use this to compare the generic type inference and comparison decisions with your attempt. Do not replace an entire existing Program.cs; append only the Session 14 construction and Run call after its earlier code.",
-            "code": "// ScratchPad/Session14/Session14GenericMethodDemo.cs\nusing PinkMachine19.TimeClock.Domain;\n\npublic sealed class Session14GenericMethodDemo\n{\n    public void Run()\n    {\n        var firstEntry = new ClockEntry(\n            14,\n            new DateTime(2026, 1, 14, 8, 0, 0));\n\n        var secondEntry = new ClockEntry(\n            27,\n            new DateTime(2026, 1, 14, 9, 30, 0));\n\n        int higherEmployeeId = Later(\n            firstEntry.EmployeeId,\n            secondEntry.EmployeeId);\n\n        DateTime laterClockIn = Later(\n            firstEntry.ClockIn,\n            secondEntry.ClockIn);\n\n        Console.WriteLine($\"Higher employee ID: {higherEmployeeId}\");\n        Console.WriteLine($\"Later clock-in: {laterClockIn}\");\n    }\n\n    private static T Later<T>(T left, T right)\n        where T : IComparable<T>\n    {\n        return left.CompareTo(right) >= 0 ? left : right;\n    }\n}\n\n// Append to ScratchPad/Program.cs without removing earlier calls.\nvar session14 = new Session14GenericMethodDemo();\nsession14.Run();"
+            "code": "// ScratchPad/Session14/Session14GenericMethodDemo.cs\nusing PinkMachine19.TimeClock.Domain;\n\npublic sealed class Session14GenericMethodDemo\n{\n    public void Run()\n    {\n        var firstEntry = new ClockEntry(\n            14,\n            new DateTime(2026, 1, 14, 8, 0, 0));\n\n        var secondEntry = new ClockEntry(\n            27,\n            new DateTime(2026, 1, 14, 9, 30, 0));\n\n        int higherEmployeeId = Later(\n            firstEntry.EmployeeId,\n            secondEntry.EmployeeId);\n\n        DateTime laterClockIn = Later(\n            firstEntry.ClockIn,\n            secondEntry.ClockIn);\n\n        Console.WriteLine($\"Higher employee ID: {higherEmployeeId}\");\n        Console.WriteLine($\"Later clock-in: {laterClockIn}\");\n    }\n\n    private static T Later<T>(T left, T right)\n        where T : IComparable<T>\n    {\n        int comparison = left.CompareTo(right);\n        return comparison >= 0 ? left : right;\n    }\n}\n\n// Append to ScratchPad/Program.cs without removing earlier calls.\nvar session14 = new Session14GenericMethodDemo();\nsession14.Run();"
           }
         ]
       }
@@ -180,7 +208,7 @@
       "explanation": "List<T> and Dictionary<TKey,TValue> are distinct generic types -- the shared idea is only that both defer their element/key/value types to a type parameter, filled in at each declaration."
     },
     {
-      "prompt": "What would happen if GenericRules.Later<T> had no constraint at all (just Later<T>(T left, T right))?",
+      "prompt": "What would happen if Session14GenericMethodDemo.Later<T> had no constraint at all (just Later<T>(T left, T right))?",
       "options": [
         "left.CompareTo(right) would fail to compile -- without a constraint, the compiler only knows T could be any type, including one with no CompareTo method at all",
         "It would work exactly the same for every type",
@@ -201,12 +229,12 @@
     }
   ],
   "reflections": [
-    "Why does writing Later<T> once, instead of LaterDate and LaterId separately, matter beyond saving a few lines of code?",
+    "Why does writing Later<T> once, instead of LaterDateTime and LaterInt separately, matter beyond saving a few lines of code?",
     "What other places in this codebase might benefit from a generic helper like Later<T>, once you start looking for duplicated type-specific logic?",
     "How does IEnumerable<ClockEntry> communicate more to a reader than a non-generic collection whose element type is unknown?"
   ],
-  "whatBreaks": "Calling GenericRules.Later with two Employee arguments (instead of their EmployeeId or another IComparable value) fails to compile, because Employee implements no comparison logic -- this is the constraint doing its job, not a limitation to work around. Removing the where T : IComparable<T> constraint would let Later<T> compile against any T, but left.CompareTo(right) inside the method body would then fail to compile, since the compiler could no longer assume CompareTo exists.",
-  "summary": "Generic types are not a new concept this session invents -- List<ClockEntry>, Dictionary<int, Employee>, and IEnumerable<ClockEntry> were already doing real work in earlier sessions. GenericRules.Later<T> demonstrates the other half of generics: one method definition, reused unmodified across every type (DateTime, int, and any future IComparable<T>) that satisfies its constraint.",
+  "whatBreaks": "Calling Session14GenericMethodDemo.Later with two Employee arguments (instead of their EmployeeId or another IComparable value) fails to compile, because Employee implements no comparison logic -- this is the constraint doing its job, not a limitation to work around. Removing the where T : IComparable<T> constraint would let Later<T> accept any T at its boundary, but left.CompareTo(right) inside the method body would then fail to compile, since the compiler could no longer assume CompareTo exists.",
+  "summary": "Generic types are not a new concept this session invents -- List<ClockEntry>, Dictionary<int, Employee>, and IEnumerable<ClockEntry> were already doing real work in earlier sessions. Session14GenericMethodDemo.Later<T> demonstrates the other half of generics: T consistently replaces the return and parameter types, the constraint supplies comparison capability, CompareTo reports ordering, and the compiler infers int or DateTime separately at each call.",
   "learningEnvironment": "scratchpad",
   "buildState": {
     "creates": [],
