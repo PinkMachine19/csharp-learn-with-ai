@@ -122,6 +122,26 @@ document.querySelectorAll("[data-copy-instruction]").forEach((button) => {
   });
 });
 
+document.querySelectorAll("[data-click-highlight-instructions] .lab-instruction > p, [data-click-highlight-instructions] .lab-instructions > li > p").forEach((instruction) => {
+  instruction.tabIndex = 0;
+  instruction.setAttribute("role", "button");
+  instruction.setAttribute("aria-pressed", "false");
+  instruction.title = "Click to highlight this instruction";
+
+  const toggleHighlight = () => {
+    const highlighted = instruction.classList.toggle("instruction-highlighted");
+    instruction.setAttribute("aria-pressed", String(highlighted));
+    instruction.title = highlighted ? "Click to remove this highlight" : "Click to highlight this instruction";
+  };
+
+  instruction.addEventListener("click", toggleHighlight);
+  instruction.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    toggleHighlight();
+  });
+});
+
 document.querySelectorAll("pre").forEach((block) => {
   const code = block.querySelector("code");
   if (!code) return;

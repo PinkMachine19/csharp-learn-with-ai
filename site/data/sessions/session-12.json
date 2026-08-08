@@ -92,6 +92,7 @@
   "lab": {
     "objective": "Create an in-memory EmployeeRepository with dictionary lookup and deliberate name uniqueness.",
     "startingCondition": "Employee exists, and ClockEntryRepository demonstrates List storage. The main application code does not yet have an employee lookup component.",
+    "clickHighlightInstructions": true,
     "steps": [
       "Create EmployeeRepository.cs in the Domain project's Repositories folder.",
       "Add the PinkMachine19.TimeClock.Domain namespace.",

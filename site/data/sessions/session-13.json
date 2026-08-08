@@ -90,6 +90,7 @@
     }
   ],
   "lab": {
+    "clickHighlightInstructions": true,
     "objective": "Narrow repository query results to IEnumerable<ClockEntry> so consumers depend on enumeration rather than storage details.",
     "startingCondition": "ClockEntryRepository stores entries in a private List and returns employee entries, while callers need only enumerate them.",
     "steps": [

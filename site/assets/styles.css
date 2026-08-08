@@ -195,6 +195,13 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 .step-body { min-width: 0; width: 100%; font-size: 15px; padding-top: 2px; }
 .lab-instruction { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .lab-instruction > p { margin: 0; }
+[data-click-highlight-instructions] .lab-instruction > p,
+[data-click-highlight-instructions] .lab-instructions > li > p { cursor: pointer; border-radius: 4px; padding: 3px 5px; margin-left: -5px; transition: background-color 120ms ease, color 120ms ease; }
+[data-click-highlight-instructions] .lab-instruction > p:hover,
+[data-click-highlight-instructions] .lab-instruction > p:focus-visible,
+[data-click-highlight-instructions] .lab-instructions > li > p:hover,
+[data-click-highlight-instructions] .lab-instructions > li > p:focus-visible { outline: 2px solid #d6a700; outline-offset: 2px; }
+[data-click-highlight-instructions] .instruction-highlighted { background: #ffe58f; color: #1f2328; }
 .copy-instruction-button { flex: 0 0 auto; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text-muted); padding: 5px 10px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
 .copy-instruction-button:hover, .copy-instruction-button:focus-visible { color: var(--text); border-color: var(--accent); }
 @media (max-width: 640px) { .lab-instruction { flex-direction: column; } }
