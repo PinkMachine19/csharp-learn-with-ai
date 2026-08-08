@@ -191,17 +191,24 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 
 /* Steps (labs) */
 .step { display: flex; gap: 12px; margin-bottom: 12px; }
+.step-checkbox { flex: 0 0 auto; display: grid; place-items: center; width: 24px; height: 24px; cursor: pointer; }
+.step-checkbox input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.step-checkbox span { width: 18px; height: 18px; border: 2px solid var(--border); border-radius: 4px; background: var(--surface); display: grid; place-items: center; }
+.step-checkbox input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.step-checkbox input:checked + span { border-color: var(--green); background: var(--green); }
+.step-checkbox input:checked + span::after { content: "✓"; color: #0d1117; font-size: 13px; font-weight: 900; }
+.step.step-completed .step-num { border-color: var(--green); color: var(--green); }
+.step.step-completed .lab-instruction > p { text-decoration: line-through; text-decoration-thickness: 1px; opacity: 0.72; }
 .step-num { flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--border); color: var(--accent); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 .step-body { min-width: 0; width: 100%; font-size: 15px; padding-top: 2px; }
 .lab-instruction { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .lab-instruction > p { margin: 0; }
-[data-click-highlight-instructions] .lab-instruction > p,
-[data-click-highlight-instructions] .lab-instructions > li > p { cursor: pointer; border-radius: 4px; padding: 3px 5px; margin-left: -5px; transition: background-color 120ms ease, color 120ms ease; }
-[data-click-highlight-instructions] .lab-instruction > p:hover,
-[data-click-highlight-instructions] .lab-instruction > p:focus-visible,
-[data-click-highlight-instructions] .lab-instructions > li > p:hover,
-[data-click-highlight-instructions] .lab-instructions > li > p:focus-visible { outline: 2px solid #d6a700; outline-offset: 2px; }
+[data-click-highlight-instructions] .lab-instruction,
+[data-click-highlight-instructions] .lab-instructions > li { cursor: pointer; border-radius: 4px; padding: 5px; margin-left: -5px; transition: background-color 120ms ease, color 120ms ease; }
+[data-click-highlight-instructions] .lab-instruction:focus-visible,
+[data-click-highlight-instructions] .lab-instructions > li:focus-visible { outline: 2px solid #d6a700; outline-offset: 2px; }
 [data-click-highlight-instructions] .instruction-highlighted { background: #ffe58f; color: #1f2328; }
+[data-click-highlight-instructions] .instruction-highlighted p { color: #1f2328; }
 .copy-instruction-button { flex: 0 0 auto; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text-muted); padding: 5px 10px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
 .copy-instruction-button:hover, .copy-instruction-button:focus-visible { color: var(--text); border-color: var(--accent); }
 @media (max-width: 640px) { .lab-instruction { flex-direction: column; } }

@@ -91,6 +91,7 @@
   ],
   "lab": {
     "clickHighlightInstructions": true,
+    "stepCheckboxes": true,
     "objective": "Observe repository query results through IEnumerable<ClockEntry> in ScratchPad so the experiment reveals enumeration capability without manufacturing a new application requirement.",
     "startingCondition": "Session 11 already made GetEmployeeClockEntries return IEnumerable<ClockEntry> while keeping its List private. Preserve Domain and App unchanged; create a Session 13 ScratchPad class and append one Run call to the existing ScratchPad entry point.",
     "steps": [

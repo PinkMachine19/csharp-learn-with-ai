@@ -122,7 +122,7 @@ document.querySelectorAll("[data-copy-instruction]").forEach((button) => {
   });
 });
 
-document.querySelectorAll("[data-click-highlight-instructions] .lab-instruction > p, [data-click-highlight-instructions] .lab-instructions > li > p").forEach((instruction) => {
+document.querySelectorAll("[data-click-highlight-instructions] .lab-instruction, [data-click-highlight-instructions] .lab-instructions > li").forEach((instruction) => {
   instruction.tabIndex = 0;
   instruction.setAttribute("role", "button");
   instruction.setAttribute("aria-pressed", "false");
@@ -134,11 +134,37 @@ document.querySelectorAll("[data-click-highlight-instructions] .lab-instruction 
     instruction.title = highlighted ? "Click to remove this highlight" : "Click to highlight this instruction";
   };
 
-  instruction.addEventListener("click", toggleHighlight);
+  instruction.addEventListener("click", (event) => {
+    if (event.target.closest("a, button, input, label, pre, code")) return;
+    toggleHighlight();
+  });
   instruction.addEventListener("keydown", (event) => {
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
     toggleHighlight();
+  });
+});
+
+document.querySelectorAll("[data-step-checkboxes]").forEach((stepList, listIndex) => {
+  const storageKey = `lab-step-progress:${window.location.pathname}:${listIndex}`;
+  let completedSteps = [];
+
+  try {
+    completedSteps = JSON.parse(localStorage.getItem(storageKey) || "[]");
+  } catch {
+    completedSteps = [];
+  }
+
+  stepList.querySelectorAll("[data-step-checkbox]").forEach((checkbox) => {
+    checkbox.checked = completedSteps.includes(checkbox.dataset.stepCheckbox);
+    checkbox.closest(".step")?.classList.toggle("step-completed", checkbox.checked);
+
+    checkbox.addEventListener("change", () => {
+      checkbox.closest(".step")?.classList.toggle("step-completed", checkbox.checked);
+      const checked = [...stepList.querySelectorAll("[data-step-checkbox]:checked")]
+        .map((item) => item.dataset.stepCheckbox);
+      localStorage.setItem(storageKey, JSON.stringify(checked));
+    });
   });
 });
 
