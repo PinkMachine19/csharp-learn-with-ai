@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "call",
+      "diagram": "covariance",
       "title": "out permits widening the output type",
       "explanation": "ISource<Employee> source = ...; ISource<object> widened = source; -- legal because ISource<out T> only ever produces (returns) a T, never accepts one."
     },
     {
-      "diagram": "branch",
+      "diagram": "contravariance",
       "title": "in permits narrowing the input type",
       "explanation": "ISink<object> sink = ...; ISink<Employee> narrowed = sink; -- legal because ISink<in T> only ever accepts (consumes) a T as a parameter, never returns one."
     },
     {
-      "diagram": "invariant",
+      "diagram": "varianceflow",
       "title": "The direction of data flow decides which variance is safe",
       "explanation": "A type that only produces T can safely be treated as producing something less specific (object); a type that only consumes T can safely be treated as consuming something more specific."
     },
     {
-      "diagram": "type",
+      "diagram": "invariantrepo",
       "title": "learner solution interfaces have no supertype/subtype relationship to vary over",
       "explanation": "IClockEntryRepository is not generic over Employee/object the way ISource<T> is -- there is no ClockEntry-vs-object substitution question for variance to answer there."
     }
@@ -65,20 +65,38 @@
   ],
   "concept": [
     {
-      "title": "out T: safe when a type only produces T",
+      "title": "Start from invariance: different closed generic types are normally unrelated",
       "paragraphs": [
-        "ISource<out T> { T Get(); } has exactly one member, and it only returns a T -- it never accepts a T as an argument anywhere.",
-        "Because of that one-directional shape, the compiler allows ISource<Employee> to be used wherever ISource<object> is expected: anything you could do with an ISource<object> (call Get() and get back some object) still works when the object happens to be an Employee."
+        "Employee inherits from object, but that does not normally make Container<Employee> inherit from Container<object>. By default, a generic type parameter is invariant: its closed types must match exactly.",
+        "Variance is a narrowly controlled exception for interfaces and delegates. The compiler permits it only when the interface uses T in a direction that makes the conversion type-safe."
       ],
-      "code": "// src/PinkMachine19.TimeClock.Domain/VarianceExamples.cs\npublic interface ISource<out T> { T Get(); }\n\nISource<Employee> employeeSource = new SingleSource<Employee>(someEmployee);\nISource<object> widened = employeeSource;   // legal: covariance\nobject value = widened.Get();               // still just reads an Employee, typed as object"
+      "code": "Employee employee = new Employee(/* ... */);\nobject value = employee;                 // ordinary reference conversion\n\n// Generic conversion is NOT automatic:\n// Box<Employee> is not automatically Box<object>"
     },
     {
-      "title": "in T: safe when a type only consumes T",
+      "title": "out T describes an output-only type parameter",
+      "paragraphs": [
+        "ISource<out T> { T Get(); } has exactly one member, and it only returns a T -- it never accepts a T as an argument anywhere.",
+        "The out keyword appears on the generic interface declaration. It is not an out method parameter like Session 9 studied. Here it means T is allowed only in output positions such as a return type.",
+        "Because of that one-directional shape, the compiler allows ISource<Employee> to be used wherever ISource<object> is expected: calling Get still returns a valid object because every Employee is an object."
+      ],
+      "code": "// ScratchPad/Session16/Session16VarianceDemo.cs\npublic interface ISource<out T> { T Get(); }\n\nISource<Employee> employeeSource = new SingleSource<Employee>(someEmployee);\nISource<object> widened = employeeSource;   // legal: covariance\nobject value = widened.Get();               // reads an Employee through object"
+    },
+    {
+      "title": "in T describes an input-only type parameter",
       "paragraphs": [
         "ISink<in T> { void Add(T item); } has exactly one member, and it only accepts a T -- it never returns one.",
-        "Because it never hands a T back out, an ISink<object> (which can Add any object at all) can stand in for an ISink<Employee> (which only ever needs to Add Employee objects) -- accepting a wider type is always safe when nothing depends on getting a narrower type back."
+        "The in keyword also appears on the generic interface declaration; it is not the in method-parameter modifier from Session 9. Here it limits T to input positions such as Add's parameter.",
+        "Because it never hands a T back out, an ISink<object> (which can Add any object at all) can stand in for an ISink<Employee> (which only ever needs to Add Employee objects). The assignment direction looks reversed because the capability being requested becomes narrower."
       ],
       "code": "public interface ISink<in T> { void Add(T item); }\n\nISink<object> objectSink = new CountingSink<object>();\nISink<Employee> narrowed = objectSink;      // legal: contravariance\nnarrowed.Add(someEmployee);                 // objectSink.Add ultimately runs, accepting the Employee fine"
+    },
+    {
+      "title": "Test safety by asking what the caller is allowed to do",
+      "paragraphs": [
+        "For ISource<object>, the caller may only request an object. An Employee source can always satisfy that request. The reverse is unsafe because an object source might return a string, DateTime, or anything else that is not Employee.",
+        "For ISink<Employee>, the caller may only submit Employee values. An object sink can always accept those. The reverse is unsafe because an Employee-only sink cannot accept every object an ISink<object> caller is permitted to submit."
+      ],
+      "code": "// Safe producer question: can it always return what was promised?\nISource<object> objects = employeeSource;\n\n// Safe consumer question: can it accept every value the caller may send?\nISink<Employee> employees = objectSink;"
     },
     {
       "title": "learner solution interfaces are neither -- and that's expected",
@@ -90,24 +108,74 @@
     }
   ],
   "lab": {
-    "objective": "Add a self-contained covariance and contravariance experiment to ScratchPad.",
-    "startingCondition": "ScratchPad contains numeric, flow, method, parameter, equality, and generic experiments. No TimeClock production boundary benefits naturally from custom variance interfaces.",
+    "clickHighlightInstructions": true,
+    "stepCheckboxes": true,
+    "objective": "Build one producer and one consumer interface in ScratchPad, then prove that covariance and contravariance permit assignments in opposite directions for type-safe reasons.",
+    "startingCondition": "Sessions 14–15 established generic type parameters and constraints. Preserve those classes and production code; create a Session 16 ScratchPad class because the TimeClock domain has no genuine need for custom variant interfaces.",
     "steps": [
-      "Create VarianceExperiments.cs in ScratchPad.",
-      "Define producer and consumer interfaces with out and in annotations.",
-      "Write the allowed assignment directions and predict why they are safe.",
-      "Keep reverse-direction examples commented with the compiler error they would cause.",
+      "Open the ScratchPad project.",
+      "Create a Session16 folder in the ScratchPad project.",
+      "Create Session16VarianceDemo.cs inside the new folder.",
+      "Import the PinkMachine19.TimeClock.Domain namespace.",
       {
-        "text": "Run ScratchPad and ensure earlier experiments still compile.",
-        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"
+        "text": "Declare ISource<out T> with one Get method. Read out as a restriction on the interface declaration: T may be produced as a return value but may not be accepted as a normal input parameter.",
+        "code": "public interface ISource<out T>\n{\n    T Get();\n}"
+      },
+      "Declare a public sealed SingleSource<T> class that implements ISource<T>.",
+      "Add a private readonly T field to SingleSource<T>.",
+      "Add a constructor that stores one T value in the field.",
+      "Implement Get by returning the stored value.",
+      {
+        "text": "Declare ISink<in T> with one Add method. Read in as a restriction on the interface declaration: T may be consumed through a parameter but may not be returned as T.",
+        "code": "public interface ISink<in T>\n{\n    void Add(T item);\n}"
+      },
+      "Declare a public sealed CountingSink<T> class that implements ISink<T>.",
+      "Add a public Count property with a private setter to CountingSink<T>.",
+      "Implement Add by increasing Count by one.",
+      "Declare a public sealed Session16VarianceDemo class.",
+      {
+        "text": "Stub Run before performing either assignment experiment.",
+        "code": "public void Run()\n{\n    throw new NotImplementedException();\n}"
+      },
+      {
+        "text": "Build the interface and implementation contracts before writing the call-site experiments.",
+        "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+      },
+      "Replace the throw in Run by creating one Employee with a valid Address.",
+      "Create a SingleSource<Employee> containing that employee.",
+      "Predict whether an ISource<Employee> can be assigned to ISource<object>.",
+      "Assign the employee source to an ISource<object> variable.",
+      "Call Get through the ISource<object> variable and display the returned object's runtime type.",
+      "Type the reverse ISource<object>-to-ISource<Employee> assignment and observe that it does not compile.",
+      "Comment out only the invalid source assignment.",
+      "Create a CountingSink<object>.",
+      "Predict whether that object sink can be assigned to ISink<Employee>.",
+      "Assign the object sink to an ISink<Employee> variable.",
+      "Pass the employee to Add through the ISink<Employee> variable.",
+      "Display the concrete counting sink's Count value.",
+      "Type the reverse ISink<Employee>-to-ISink<object> assignment and observe that it does not compile.",
+      "Comment out only the invalid sink assignment.",
+      "Explain the two directions in plain English: a producer may become less specific on output; a consumer capable of accepting anything may satisfy a more specific input contract.",
+      "Open ScratchPad/Program.cs.",
+      "Keep every earlier session construction and Run call unchanged.",
+      "Construct one Session16VarianceDemo object at the end of Program.cs.",
+      "Call Run on the Session16VarianceDemo object.",
+      {
+        "text": "Run ScratchPad, then build and test the complete solution with both invalid reverse assignments commented out. Attempt the lab before opening the solution.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
+        "reveals": [{
+          "title": "Solution",
+          "text": "Compare the two safe assignment directions with your predictions. The invalid reverse assignments remain commented so the final course state builds.",
+          "code": "// ScratchPad/Session16/Session16VarianceDemo.cs\nusing PinkMachine19.TimeClock.Domain;\n\npublic interface ISource<out T>\n{\n    T Get();\n}\n\npublic sealed class SingleSource<T> : ISource<T>\n{\n    private readonly T _value;\n\n    public SingleSource(T value)\n    {\n        _value = value;\n    }\n\n    public T Get()\n    {\n        return _value;\n    }\n}\n\npublic interface ISink<in T>\n{\n    void Add(T item);\n}\n\npublic sealed class CountingSink<T> : ISink<T>\n{\n    public int Count { get; private set; }\n\n    public void Add(T item)\n    {\n        Count++;\n    }\n}\n\npublic sealed class Session16VarianceDemo\n{\n    public void Run()\n    {\n        var employee = new Employee(16, \"Avery\", new Address { City = \"Springfield\" });\n\n        ISource<Employee> employeeSource = new SingleSource<Employee>(employee);\n        ISource<object> objectSource = employeeSource;\n        object produced = objectSource.Get();\n        Console.WriteLine($\"Produced runtime type: {produced.GetType().Name}\");\n\n        // Unsafe direction: an object source might produce something other than Employee.\n        // ISource<Employee> invalidSource = objectSource;\n\n        var countingObjectSink = new CountingSink<object>();\n        ISink<Employee> employeeSink = countingObjectSink;\n        employeeSink.Add(employee);\n        Console.WriteLine($\"Consumed employees: {countingObjectSink.Count}\");\n\n        // Unsafe direction: an Employee sink cannot accept every possible object.\n        // ISink<object> invalidSink = employeeSink;\n    }\n}\n\n// Append to ScratchPad/Program.cs without removing earlier calls.\nvar session16 = new Session16VarianceDemo();\nsession16.Run();"
+        }]
       }
     ],
-    "expectedBehavior": "Variance is observable without introducing artificial production abstractions.",
-    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "The covariant source produces an Employee viewed as object; the contravariant sink accepts one Employee and reports Count 1. Both unsafe reverse assignments fail during the experiment and remain commented in the final state.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.ScratchPad/VarianceExperiments.cs",
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session16/Session16VarianceDemo.cs",
       "action": "Add",
       "why": "Preserve an isolated variance experiment."
     },
@@ -117,7 +185,7 @@
       "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
-  "commit": "session-15: teach variance at api boundaries",
+  "commit": "session-16: teach variance at api boundaries",
   "review": [
     "The lab uses scratchpad because that is the most natural environment for this concept.",
     "Every referenced application artifact was created in this session or an earlier session.",

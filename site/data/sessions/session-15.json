@@ -2,7 +2,7 @@
   "number": 15,
   "category": "Collections and generics",
   "estimatedTime": "35 minutes",
-  "connection": "Session 14 created ScratchPad's Session14GenericMethodDemo with Later<T>. Production code is unchanged. Extend the permanent generic experiment with a constraint and observe exactly what the constraint enables.",
+  "connection": "Session 14 created a constrained Later<T> method in its own ScratchPad class. Preserve that completed experiment and create a Session 15 copy whose constraint can be removed temporarily without damaging earlier work.",
   "objectives": [
     "Explain what where T : IComparable<T> promises the compiler about any type T used to call Later<T>.",
     "Remove the constraint experimentally and read the exact compile error left.CompareTo(right) produces without it.",
@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "invariant",
+      "diagram": "constraintcontract",
       "title": "A constraint is a promise the caller must keep",
       "explanation": "where T : IComparable<T> tells the compiler: whatever T ends up being, it will have a CompareTo method -- Later<T>'s body is only allowed to compile because of that promise."
     },
     {
-      "diagram": "call",
+      "diagram": "constraintremoval",
       "title": "Without the constraint, CompareTo is not guaranteed to exist",
       "explanation": "Remove where T : IComparable<T> and left.CompareTo(right) stops compiling -- the compiler no longer knows T has a CompareTo method at all."
     },
     {
-      "diagram": "branch",
+      "diagram": "constrainteligibility",
       "title": "DateTime and int qualify; Employee does not",
       "explanation": "System.DateTime and System.Int32 both implement IComparable<T> in the .NET base class library. Employee implements no such interface."
     },
     {
-      "diagram": "type",
+      "diagram": "constraintcategory",
       "title": "Constraints select a category of types, not one type",
       "explanation": "where T : IComparable<T> does not name DateTime or int specifically -- it opens Later<T> to any type, present or future, that satisfies the same promise."
     }
@@ -70,7 +70,7 @@
         "Without where T : IComparable<T>, the compiler treats an unconstrained T as offering nothing beyond object's own members (ToString, Equals, GetHashCode) -- CompareTo is not among them.",
         "Adding the constraint is what makes left.CompareTo(right) a legal call: the compiler now knows, for certain, that whatever concrete type T turns out to be, it will have that method."
       ],
-      "code": "// Removing the constraint breaks the method body, not just its declaration\npublic static T Later<T>(T left, T right) /* where T : IComparable<T> removed */ =>\n    left.CompareTo(right) >= 0 ? left : right;   // CS0117: 'T' does not contain a definition for 'CompareTo'"
+      "code": "// Removing the constraint breaks the method body, not just its declaration.\nprivate static T Later<T>(T left, T right) /* constraint removed */ =>\n    left.CompareTo(right) >= 0 ? left : right;\n    // Compiler: T has no guaranteed CompareTo member."
     },
     {
       "title": "DateTime and int qualify; Employee does not -- and that's correct",
@@ -78,7 +78,7 @@
         "System.DateTime implements IComparable<DateTime>; System.Int32 (what int aliases) implements IComparable<Int32>. Both were designed with a natural ordering (earlier/later, smaller/larger).",
         "Employee has no such natural ordering defined anywhere in the production code -- and inventing one (by EmployeeId? by Name alphabetically?) would be a real design decision, not something to guess at inside this session."
       ],
-      "code": "// Compiles: DateTime and int both implement IComparable<T>\nGenericRules.Later(entryA.ClockIn, entryB.ClockIn);\nGenericRules.Later(employeeA.EmployeeId, employeeB.EmployeeId);\n\n// Does not compile: Employee implements no IComparable<Employee>\n// GenericRules.Later(employeeA, employeeB);"
+      "code": "// Inside Session15ConstraintDemo.Run: int satisfies IComparable<int>\nint higherNumber = Later(15, 27);\n\n// Does not compile: Employee implements no IComparable<Employee>\n// Employee laterEmployee = Later(firstEmployee, secondEmployee);"
     },
     {
       "title": "Other constraint kinds this codebase does not currently need",
@@ -90,26 +90,65 @@
     }
   ],
   "lab": {
-    "objective": "Extend the permanent generic experiment with a constraint and observe exactly what the constraint enables.",
-    "startingCondition": "Session 14 created ScratchPad/Session14/Session14GenericMethodDemo.cs with Later<T>. Production code is unchanged.",
+    "clickHighlightInstructions": true,
+    "stepCheckboxes": true,
+    "objective": "Prove what a generic constraint does by building a valid constrained method, temporarily removing its promise, and observing failures in both the method body and an invalid caller.",
+    "startingCondition": "Session 14's completed class already contains a valid Later<T>. Keep it unchanged; create a Session 15 ScratchPad class so intentional compiler failures remain isolated to this session.",
     "steps": [
-      "Keep the Session 14 calls and add the IComparable<T> constraint.",
-      "Use CompareTo inside Later<T> and confirm the constrained code builds.",
-      "Temporarily remove the constraint and observe the compiler error, then restore it.",
-      "Try a type without the required contract and record why it is rejected.",
+      "Open the ScratchPad project.",
+      "Create a Session15 folder in the ScratchPad project.",
+      "Create Session15ConstraintDemo.cs inside the new folder.",
+      "Import the PinkMachine19.TimeClock.Domain namespace.",
+      "Declare a public sealed Session15ConstraintDemo class.",
       {
-        "text": "Run ScratchPad after restoring the valid constraint.",
-        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"
+        "text": "Stub Run using the established session-specific ScratchPad pattern.",
+        "code": "public void Run()\n{\n    throw new NotImplementedException();\n}"
+      },
+      {
+        "text": "Stub a private static Later<T> method with the IComparable<T> constraint. The method is repeated here deliberately so you can break Session 15 without editing the completed Session 14 class.",
+        "code": "private static T Later<T>(T left, T right)\n    where T : IComparable<T>\n{\n    throw new NotImplementedException();\n}"
+      },
+      "Replace the throw in Later with a local comparison variable assigned from left.CompareTo(right).",
+      "Return left when comparison is zero or positive.",
+      "Return right when comparison is negative.",
+      {
+        "text": "Build the valid constrained method before running either compiler experiment.",
+        "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+      },
+      "Temporarily comment out only the where T : IComparable<T> line.",
+      "Build and read the compiler error on left.CompareTo(right).",
+      "Explain the error in one sentence: without the constraint, the compiler cannot promise that an arbitrary T has CompareTo.",
+      "Restore the constraint.",
+      "Build again and confirm that the method body compiles.",
+      "Replace the throw in Run by creating two integer values.",
+      "Call Later with the two integers and display the selected value.",
+      "Create two Employee objects with different IDs, names, and valid Address objects.",
+      "Predict whether Later(firstEmployee, secondEmployee) will compile.",
+      "Type that Employee call and observe the constraint error at the call site.",
+      "Explain why the compiler cannot guess whether employees should be ordered by ID, name, or another business rule.",
+      "Comment out only the invalid Employee call.",
+      "Open ScratchPad/Program.cs.",
+      "Keep every earlier session construction and Run call unchanged.",
+      "Construct one Session15ConstraintDemo object at the end of Program.cs.",
+      "Call Run on the Session15ConstraintDemo object.",
+      {
+        "text": "Run ScratchPad, then build and test the complete solution with the constraint restored and the intentionally invalid Employee call commented out. Attempt the lab before opening the solution.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
+        "reveals": [{
+          "title": "Solution",
+          "text": "Compare this with your completed experiment. The commented Employee call represents the failure you observed; keep the valid constraint restored before moving on.",
+          "code": "// ScratchPad/Session15/Session15ConstraintDemo.cs\nusing PinkMachine19.TimeClock.Domain;\n\npublic sealed class Session15ConstraintDemo\n{\n    public void Run()\n    {\n        int higherNumber = Later(15, 27);\n        Console.WriteLine($\"Higher number: {higherNumber}\");\n\n        var firstEmployee = new Employee(15, \"Avery\", new Address { City = \"Springfield\" });\n        var secondEmployee = new Employee(27, \"Morgan\", new Address { City = \"Riverton\" });\n\n        // Does not compile: Employee does not implement IComparable<Employee>.\n        // Employee laterEmployee = Later(firstEmployee, secondEmployee);\n    }\n\n    private static T Later<T>(T left, T right)\n        where T : IComparable<T>\n    {\n        int comparison = left.CompareTo(right);\n        return comparison >= 0 ? left : right;\n    }\n}\n\n// Append to ScratchPad/Program.cs without removing earlier calls.\nvar session15 = new Session15ConstraintDemo();\nsession15.Run();"
+        }]
       }
     ],
-    "expectedBehavior": "The preserved experiment shows that constraints grant safe operations and restrict callers.",
-    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "Removing the constraint breaks CompareTo inside Later; restoring it permits int callers; passing Employee still fails at the call site because Employee does not implement IComparable<Employee>. The final valid run displays 27.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session14/Session14GenericMethodDemo.cs",
-      "action": "Modify",
-      "why": "Extend rather than replace the generic notebook entry."
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session15/Session15ConstraintDemo.cs",
+      "action": "Add",
+      "why": "Isolate intentional constraint failures while preserving Session 14's completed experiment."
     },
     {
       "path": "site/data/sessions/session-15.json",
@@ -117,7 +156,7 @@
       "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
-  "commit": "session-14: teach generic constraints",
+  "commit": "session-15: teach generic constraints",
   "review": [
     "The lab uses scratchpad because that is the most natural environment for this concept.",
     "Every referenced application artifact was created in this session or an earlier session.",
@@ -129,7 +168,7 @@
       "options": [
         "No -- Later<T>'s existing where T : IComparable<T> constraint would already accept any type that implements that interface, including a newly-comparable Employee",
         "Yes -- a new LaterEmployee overload would need to be written",
-        "No -- but only after recompiling GenericRules.cs itself"
+        "No -- but only after adding a second Later method"
       ],
       "correct": 0,
       "explanation": "This is the real payoff of constraining by interface rather than by concrete type: any future type that satisfies IComparable<T> becomes usable with Later<T> automatically, with zero changes to Later<T> itself."
