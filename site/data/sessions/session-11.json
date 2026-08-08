@@ -96,8 +96,11 @@
     "startingCondition": "ClockEntry exists and can be completed. No production component stores more than one entry yet.",
     "steps": [
       "Create a Repositories folder in the Domain project, then create ClockEntryRepository.cs inside it with the PinkMachine19.TimeClock.Domain namespace and a private List<ClockEntry>.",
-      "Add Save to append an entry.",
-      "Add methods to retrieve an employee's entries and locate an open entry.",
+      "Add SaveClockEntry(ClockEntry clockEntry), returning void, and append clockEntry to the private list.",
+      "Add GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate), returning IEnumerable<ClockEntry>.",
+      "Inside GetEmployeeClockEntries, return entries for that employee that are completed and whose ClockIn falls from startDate through endDate, including both boundaries.",
+      "Add GetOpenClockEntry(int employeeId), returning ClockEntry? because the employee might not have an open entry.",
+      "Inside GetOpenClockEntry, return the first entry for that employee whose ClockOut is null, or null when no match exists.",
       "Update App to save open and completed entries and display the resulting count.",
       {
         "text": "Keep the list private so callers interact through repository behavior. Run the App, then build and test the solution. Attempt the lab before opening the solution below.",
