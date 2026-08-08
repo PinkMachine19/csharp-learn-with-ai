@@ -101,6 +101,14 @@
       "code": "public IEnumerable<ClockEntry> GetEmployeeClockEntries(...)\n{\n    return _clockEntries.Where(...);\n}"
     },
     {
+      "title": "ClockOut tells the repository whether an entry is open or complete",
+      "paragraphs": [
+        "ClockEntry.ClockOut is nullable because an employee who has clocked in but not yet clocked out has no ending time. ClockOut is null therefore means the entry is open; ClockOut is not null means the entry is complete.",
+        "GetEmployeeClockEntries returns completed history, so its filter must include entry.ClockOut is not null. GetOpenClockEntry is searching for the current unfinished entry, so its filter must include entry.ClockOut is null. The two methods deliberately select opposite states from the same collection."
+      ],
+      "code": "// Completed history\nentry.ClockOut is not null\n\n// Current open entry\nentry.ClockOut is null"
+    },
+    {
       "title": "A public field is a real, named smell, not a rewrite target today",
       "paragraphs": [
         "This session names the problem without fixing it: nothing stops calling code from writing repository._clockEntries.Clear() directly, deleting every clock entry without going through any method at all.",
@@ -138,8 +146,8 @@
         "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
       },
       "Replace the throw inside SaveClockEntry with one Add call that appends clockEntry to _clockEntries.",
-      "Replace the throw inside GetEmployeeClockEntries with a return statement that filters by employee, completed status, and the inclusive ClockIn date range.",
-      "Replace the throw inside GetOpenClockEntry with a return statement that finds the first entry for that employee whose ClockOut is null, or returns null when none exists.",
+      "Replace the throw inside GetEmployeeClockEntries with a return statement that includes only entries whose EmployeeId matches employeeId, whose ClockOut is not null, and whose ClockIn is between startDate and endDate inclusive.",
+      "Replace the throw inside GetOpenClockEntry with a return statement that finds the first entry whose EmployeeId matches employeeId and whose ClockOut is null, or returns null when no such entry exists.",
       "Update App to save open and completed entries and display the resulting count.",
       {
         "text": "Keep the list private so callers interact through repository behavior. Run the App, then build and test the solution. Attempt the lab before opening the solution below.",

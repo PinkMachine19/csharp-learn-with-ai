@@ -91,20 +91,61 @@
   ],
   "lab": {
     "objective": "Create an in-memory EmployeeRepository with dictionary lookup and deliberate name uniqueness.",
-    "startingCondition": "Employee exists, and ClockEntryRepository demonstrates List storage. Employees still have no production lookup component.",
+    "startingCondition": "Employee exists, and ClockEntryRepository demonstrates List storage. The main application code does not yet have an employee lookup component.",
     "steps": [
-      "Create EmployeeRepository with Dictionary<int, Employee> for identity lookup.",
-      "Use HashSet<string> with an explicit comparer to enforce the chosen name-uniqueness rule.",
-      "Add employees and reject duplicate IDs or names with clear messages.",
-      "Retrieve an employee by ID from App and print the result.",
-      "Build and preserve the earlier clock-entry workflow."
+      "Create EmployeeRepository.cs in the Domain project's Repositories folder.",
+      "Add the PinkMachine19.TimeClock.Domain namespace.",
+      "Declare the public sealed EmployeeRepository class.",
+      {
+        "text": "Inside the class, declare a private readonly dictionary keyed by EmployeeId. The field initializer gives every repository object its own dictionary.",
+        "code": "private readonly Dictionary<int, Employee> _employees = new();"
+      },
+      {
+        "text": "Declare a private readonly set for employee names. OrdinalIgnoreCase makes names that differ only by letter casing count as duplicates.",
+        "code": "private readonly HashSet<string> _employeeNames = new(StringComparer.OrdinalIgnoreCase);"
+      },
+      {
+        "text": "Stub TryAdd first. Its bool reports success, while message explains the result to the caller.",
+        "code": "public bool TryAdd(Employee employee, out string message)\n{\n    throw new NotImplementedException();\n}"
+      },
+      {
+        "text": "Stub TryFind with the Try-pattern from Session 09. Employee? is nullable because the requested ID might not exist.",
+        "code": "public bool TryFind(int employeeId, out Employee? employee)\n{\n    throw new NotImplementedException();\n}"
+      },
+      {
+        "text": "Build the solution before implementing either method. A successful build confirms the fields and method contracts compile.",
+        "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+      },
+      "Replace the throw in TryAdd with a check that returns false and assigns a duplicate-name message when _employeeNames already contains employee.Name.",
+      "After the name check, call _employees.TryAdd using employee.EmployeeId as the key and employee as the value.",
+      "When TryAdd returns false, assign a duplicate-ID message and return false.",
+      "After both duplicate checks succeed, add employee.Name to _employeeNames.",
+      "Assign a success message and return true from TryAdd.",
+      "Replace the throw in TryFind by returning _employees.TryGetValue(employeeId, out employee).",
+      "At the end of App/Program.cs, create a new Session 12 section without deleting the earlier application workflow.",
+      "In the new App section, create one valid employee and add it through TryAdd.",
+      "Attempt to add another employee with the same ID and display the rejection message.",
+      "Attempt to add another employee whose name differs only by casing and display the rejection message.",
+      "Call TryFind with the stored ID and display the employee when it is found.",
+      "Call TryFind with a missing ID and confirm that it returns false and assigns null to the out variable.",
+      {
+        "text": "Run the main application code, then build and test the complete solution. Attempt the lab before opening the solution below.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "Use this to compare the important decisions with your attempt. Do not replace an entire existing Program.cs; add only the Session 12 section after its earlier code.",
+            "code": "// Repositories/EmployeeRepository.cs\nnamespace PinkMachine19.TimeClock.Domain;\n\npublic sealed class EmployeeRepository\n{\n    private readonly Dictionary<int, Employee> _employees = new();\n    private readonly HashSet<string> _employeeNames = new(StringComparer.OrdinalIgnoreCase);\n\n    public bool TryAdd(Employee employee, out string message)\n    {\n        if (_employeeNames.Contains(employee.Name))\n        {\n            message = $\"Employee name '{employee.Name}' already exists.\";\n            return false;\n        }\n\n        if (!_employees.TryAdd(employee.EmployeeId, employee))\n        {\n            message = $\"Employee ID {employee.EmployeeId} already exists.\";\n            return false;\n        }\n\n        _employeeNames.Add(employee.Name);\n        message = $\"Added {employee.Name}.\";\n        return true;\n    }\n\n    public bool TryFind(int employeeId, out Employee? employee)\n    {\n        return _employees.TryGetValue(employeeId, out employee);\n    }\n}\n\n// Add as a new Session 12 section at the end of App/Program.cs.\nvar employeeRepository = new EmployeeRepository();\n\nvar firstEmployee = new Employee(1, \"Taylor\", new Address { City = \"Springfield\" });\nvar duplicateId = new Employee(1, \"Jordan\", new Address { City = \"Riverton\" });\nvar duplicateName = new Employee(2, \"taylor\", new Address { City = \"Lakeside\" });\n\nemployeeRepository.TryAdd(firstEmployee, out string firstMessage);\nConsole.WriteLine(firstMessage);\n\nemployeeRepository.TryAdd(duplicateId, out string duplicateIdMessage);\nConsole.WriteLine(duplicateIdMessage);\n\nemployeeRepository.TryAdd(duplicateName, out string duplicateNameMessage);\nConsole.WriteLine(duplicateNameMessage);\n\nif (employeeRepository.TryFind(1, out Employee? foundEmployee))\n{\n    Console.WriteLine($\"Found: {foundEmployee.Name}\");\n}\n\nbool foundMissing = employeeRepository.TryFind(999, out Employee? missingEmployee);\nConsole.WriteLine($\"Missing employee found: {foundMissing}\");\nConsole.WriteLine($\"Missing employee is null: {missingEmployee is null}\");"
+          }
+        ]
+      }
     ],
-    "expectedBehavior": "Production has requirement-driven List, Dictionary, and HashSet use with no collection chosen merely for demonstration.",
+    "expectedBehavior": "The main application code has requirement-driven List, Dictionary, and HashSet use with no collection chosen merely for demonstration.",
     "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/EmployeeRepository.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/Repositories/EmployeeRepository.cs",
       "action": "Add",
       "why": "Provide employee lookup and uniqueness."
     },
