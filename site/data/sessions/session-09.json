@@ -7,7 +7,8 @@
     "Compare ordinary parameters with out, ref, and in for both value-type and reference-type arguments.",
     "Use out to report a success result and an additional parsed value.",
     "Use ref to demonstrate deliberate caller-visible reassignment.",
-    "Use in to pass a value through a readonly reference, then explain why the production domain does not currently need that optimization."
+    "Use in to pass a value through a readonly reference, then explain why the production domain does not currently need that optimization.",
+    "Rank Try-pattern calls as everyday fluency, custom out APIs as a design choice, and ref/in parameters as recognition-first or specialized tools."
   ],
   "visuals": [
     {
@@ -83,16 +84,19 @@
       "title": "out returns an additional value",
       "paragraphs": [
         "A Try-style method can return success as bool and place the found value in an out parameter.",
-        "out works with value types and reference types. This is useful when absence or failure is expected, but it should not be added to a production API unless callers genuinely need that shape."
+        "out works with value types and reference types. This is useful when absence or failure is expected, but it should not be added to a production API unless callers genuinely need that shape.",
+        "The most important practical skill is calling existing Try APIs comfortably. Numeric TryParse, Guid.TryParse, DateTime.TryParse or TryParseExact, Enum.TryParse, Dictionary.TryGetValue (Session 12), JSON property lookup, and concurrent collection operations all use related success-without-exception conventions.",
+        "Designing your own bool-plus-out method is a separate judgment. When one optional value is the entire result, Employee? Find(int employeeId) may be clearer. When several named outcomes or error details matter, a small result type may be clearer than several out parameters."
       ],
-      "code": "static bool TryParseHours(string text, out decimal hours) =>\n    decimal.TryParse(text, out hours);"
+      "code": "// Common at a text boundary: worth writing comfortably\nif (decimal.TryParse(importedHoursText, out decimal hours))\n{\n    Console.WriteLine($\"Imported hours: {hours:F2}\");\n}\n\n// A later repository could reasonably choose a nullable return instead\npublic Employee? Find(int employeeId);"
     },
     {
       "title": "ref permits caller-visible reassignment",
       "paragraphs": [
         "ref works with value types and reference types. It lets a method read and replace the value stored in the caller's variable. With ref int, the method can replace the caller's number; with ref Employee, it can make the caller's variable refer to a different Employee.",
         "A normal Employee parameter already allows mutation of the shared Employee object. ref is needed only when replacing the caller's Employee reference itself is part of the contract. The caller must initialize the variable first, and both the declaration and call site use ref so that behavior remains visible.",
-        "Use ref only when changing the caller's variable is genuinely part of the method's contract."
+        "Use ref only when changing the caller's variable is genuinely part of the method's contract. In ordinary business application code, returning the revised value is often clearer. ref appears more often in interop, Interlocked APIs, buffer-oriented code, and measured performance work than in domain services.",
+        "Write this example once to understand the semantics. You do not need to memorize how to design ref APIs; recognize the caller-visible reassignment contract and look up specialized syntax when a real requirement appears."
       ],
       "code": "static void Increment(ref int value) => value++;"
     },
@@ -101,9 +105,30 @@
       "paragraphs": [
         "in works with value types and reference types. It passes an existing value by reference while preventing the method from assigning a replacement through that parameter. The method can still read and display the value.",
         "For a reference type, in makes the parameter reference readonly; it does not make the referenced object immutable. The method cannot replace the parameter with another object, but it can still mutate that object's publicly mutable members.",
-        "Avoiding a copy can help with larger structs. This ScratchPad example uses decimal only to make the syntax observable; the TimeClock production API has no measured need to use in for its small, ordinary values."
+        "Avoiding a copy can help with larger structs. This ScratchPad example uses decimal only to make the syntax observable; the TimeClock production API has no measured need to use in for its small, ordinary values.",
+        "Treat in parameters as specialized and recognition-first. They are most plausible in performance-sensitive APIs involving larger structs after measurement shows copying matters. For ordinary IDs, decimal values, DateTime values, and class references, the extra modifier normally adds ceremony without useful benefit."
       ],
       "code": "static void DisplayMeasurement(in decimal measurement)\n{\n    Console.WriteLine(measurement);\n    // measurement = 99m; // Does not compile: in is readonly here.\n}"
+    },
+    {
+      "title": "What should I actually remember?",
+      "paragraphs": [
+        "Enterprise fluency does not mean reproducing every parameter modifier from memory. Rank the patterns by how likely you are to write them in ordinary application work.",
+        "Session 16 later uses in T and out T on generic interfaces. Those keywords describe generic variance and are not the in, out, or ref parameter-passing mechanisms practiced here."
+      ],
+      "table": {
+        "headers": ["Concept", "Fluency target", "Practical reason"],
+        "rows": [
+          ["Ordinary parameters", "Write comfortably", "Used by nearly every method"],
+          ["Calling TryParse and TryGetValue with out", "Write comfortably", "Common .NET parsing and dictionary APIs"],
+          ["Reading a custom Try... method", "Recognize and understand", "A familiar success-without-exception convention"],
+          ["Designing a custom out API", "Use practical judgment", "Nullable values, tuples, or result types may communicate the contract more clearly"],
+          ["ref parameter", "Recognize and understand", "Intentional caller-variable replacement; uncommon in business-domain methods"],
+          ["in parameter", "Specialized / look it up", "Primarily a measured large-struct performance tool"],
+          ["ref returns, ref locals, ref readonly, scoped", "Specialized / look it up", "Low-level or performance-oriented APIs beyond this session's required fluency"]
+        ],
+        "highlightRows": [0, 1]
+      }
     }
   ],
   "lab": {
@@ -155,7 +180,8 @@
           "Inside TryParseHours, return the result of decimal.TryParse using text and out hours.",
           "Identify the bool as the normal return value.",
           "Identify hours as the additional value assigned on the way out.",
-          "Note that out can also produce a reference-type value; it is not limited to decimal or other value types."
+          "Note that out can also produce a reference-type value; it is not limited to decimal or other value types.",
+          "Mark calling TryParse-style APIs as a pattern you should be able to write comfortably from memory."
         ],
         "solution": "// Add inside Run.\nbool parsedSuccessfully = TryParseHours(\"8.5\", out decimal parsedHours);\nConsole.WriteLine($\"Parsed successfully: {parsedSuccessfully}\");\nConsole.WriteLine($\"Parsed hours: {parsedHours:F2}\");\n\n// Add below ChangeCopy.\npublic bool TryParseHours(string text, out decimal hours)\n{\n    return decimal.TryParse(text, out hours);\n}"
       },
@@ -175,7 +201,8 @@
           "Inside Increment, increase value by one.",
           "Identify ref at both the method declaration and the call site.",
           "Predict why counter displays 2 instead of 1.",
-          "Explain that ref could also replace a caller's reference-type variable, not merely mutate the object it already references."
+          "Explain that ref could also replace a caller's reference-type variable, not merely mutate the object it already references.",
+          "Treat this as a semantics exercise: recognize ref and explain caller-visible reassignment, but do not assume ordinary domain methods should use it."
         ],
         "solution": "// Add inside Run.\nint counter = 1;\nIncrement(ref counter);\nConsole.WriteLine($\"Counter after ref call: {counter}\");\n\n// Add below TryParseHours.\npublic void Increment(ref int value)\n{\n    value++;\n}"
       },
@@ -197,6 +224,8 @@
           "Explain that in prevents reassignment through the parameter.",
           "Explain that in also works with reference types but does not make their objects immutable.",
           "Explain that this small decimal example demonstrates the mechanism but does not establish a production performance need.",
+          "Classify in as specialized syntax that you can look up if measured large-struct copying makes it relevant.",
+          "Write a final note ranking ordinary parameters and existing Try API calls as write-comfortably skills, ref as recognize-and-understand, and in as specialized/look-up-when-needed.",
           "Save Session09ParameterDemo.cs.",
           "Save Program.cs.",
           {"text": "Run ScratchPad and compare all four parameter behaviors.", "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"},
