@@ -69,10 +69,19 @@
       "paragraphs": [
         "Create this temporary implementation in the Domain project's Repositories folder: src/PinkMachine19.TimeClock.Domain/Repositories/ClockEntryRepository.cs. Keep its namespace as PinkMachine19.TimeClock.Domain; a folder helps organize files but does not have to change the namespace.",
         "This placement is curriculum scaffolding, not a rule that concrete repositories belong in Domain. Session 11 is isolating List<T> and in-memory storage before the course introduces infrastructure boundaries. A finished architecture normally keeps the repository contract with the code that depends on it and places database or other external storage implementations in Infrastructure.",
-        "_clockEntries is declared public readonly List<ClockEntry> _clockEntries = new(); -- readonly means the field itself can never be reassigned to point at a different list, but the list's contents remain fully mutable through Add, Remove, Clear, and indexing.",
+        "The original source declares _clockEntries as public readonly. In this guided lab, declare it private readonly so only repository methods can reach the mutable list. readonly means the field cannot later be reassigned to a different list; it does not prevent Add, Remove, Clear, or changes to the objects inside the list.",
         "Every real method on ClockEntryRepository -- SaveClockEntry, GetClockEntry, GetEmployeeClockEntries -- reads or writes this one list. There is no other storage anywhere in the class."
       ],
-      "code": "// Repositories/ClockEntryRepository.cs -- the real, complete storage\npublic readonly List<ClockEntry> _clockEntries = new();"
+      "code": "// The lab keeps the mutable collection inside the repository.\nprivate readonly List<ClockEntry> _clockEntries = new();"
+    },
+    {
+      "title": "A field initializer runs as each object is constructed",
+      "paragraphs": [
+        "The declaration private readonly List<ClockEntry> _clockEntries = new(); is a field initializer. Each time new ClockEntryRepository() constructs a repository, that repository receives its own new list before the constructor body would run.",
+        "You could instead declare the field and assign it inside a constructor. Both forms are valid because a readonly field may be assigned either at its declaration or inside the containing type's constructor. The field initializer is shorter when construction needs no parameter or decision; a constructor is clearer when initialization depends on constructor input or requires several coordinated statements.",
+        "The field must be declared on the class because all repository methods need to use the same list after construction finishes. A list declared as a constructor-local variable would disappear from scope when the constructor ended and the other methods could not access it."
+      ],
+      "code": "// Concise field-initializer form used in this lab\nprivate readonly List<ClockEntry> _clockEntries = new();\n\n// Equivalent constructor-assignment form\nprivate readonly List<ClockEntry> _clockEntries;\n\npublic ClockEntryRepository()\n{\n    _clockEntries = new List<ClockEntry>();\n}"
     },
     {
       "title": "Add and Where operate on the same list, for different purposes",
@@ -81,6 +90,15 @@
         "GetEmployeeClockEntries's _clockEntries.Where(...) is a LINQ extension method available on any IEnumerable<T>, including List<T> -- it does not mutate anything; it returns a new, deferred query over the existing elements (Session 23)."
       ],
       "code": "// Real Add: mutates the list\npublic void SaveClockEntry(ClockEntry clockEntry) => _clockEntries.Add(clockEntry);\n\n// Real Where: reads the list, returns a query, does not mutate\npublic IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate) =>\n    _clockEntries.Where(entry => entry.EmployeeId == employeeId && entry.ClockOut != null\n        && entry.ClockIn >= startDate && entry.ClockIn <= endDate);"
+    },
+    {
+      "title": "Return the capability callers need, not the storage type",
+      "paragraphs": [
+        "GetEmployeeClockEntries returns IEnumerable<ClockEntry> because callers need to enumerate the matching entries, not control the repository's List. The repository remains free to use a List today and a different storage mechanism later without promising callers a List-specific API.",
+        "IEnumerable<T> supports foreach and LINQ operations such as Count, but it does not expose List<T> methods such as Add, Remove, Clear, or indexed assignment. It also does not make ClockEntry objects immutable; a caller that receives a ClockEntry can still use whatever public behavior that object exposes.",
+        "Where naturally produces IEnumerable<ClockEntry>, so the method can return the filtered sequence without copying it into another List. The fact that this query runs later when enumerated is taught in Session 23."
+      ],
+      "code": "public IEnumerable<ClockEntry> GetEmployeeClockEntries(...)\n{\n    return _clockEntries.Where(...);\n}"
     },
     {
       "title": "A public field is a real, named smell, not a rewrite target today",
@@ -95,12 +113,33 @@
     "objective": "Create the first in-memory ClockEntryRepository using a private List<ClockEntry> required for saving and retrieving entries.",
     "startingCondition": "ClockEntry exists and can be completed. No production component stores more than one entry yet.",
     "steps": [
-      "Create a Repositories folder in the Domain project, then create ClockEntryRepository.cs inside it with the PinkMachine19.TimeClock.Domain namespace and a private List<ClockEntry>.",
-      "Add SaveClockEntry(ClockEntry clockEntry), returning void, and append clockEntry to the private list.",
-      "Add GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate), returning IEnumerable<ClockEntry>.",
-      "Inside GetEmployeeClockEntries, return entries for that employee that are completed and whose ClockIn falls from startDate through endDate, including both boundaries.",
-      "Add GetOpenClockEntry(int employeeId), returning ClockEntry? because the employee might not have an open entry.",
-      "Inside GetOpenClockEntry, return the first entry for that employee whose ClockOut is null, or null when no match exists.",
+      "Create a Repositories folder in the Domain project.",
+      "Create ClockEntryRepository.cs inside the Repositories folder.",
+      "Add the PinkMachine19.TimeClock.Domain namespace.",
+      "Declare the public sealed ClockEntryRepository class.",
+      {
+        "text": "Inside the class, declare and initialize the private readonly list. This field initializer gives every repository object its own list.",
+        "code": "private readonly List<ClockEntry> _clockEntries = new();"
+      },
+      {
+        "text": "Stub SaveClockEntry first. Throwing NotImplementedException lets the method compile while clearly marking that its behavior is not written yet.",
+        "code": "public void SaveClockEntry(ClockEntry clockEntry)\n{\n    throw new NotImplementedException();\n}"
+      },
+      {
+        "text": "Stub GetEmployeeClockEntries with its final parameter and return types.",
+        "code": "public IEnumerable<ClockEntry> GetEmployeeClockEntries(\n    int employeeId,\n    DateTime startDate,\n    DateTime endDate)\n{\n    throw new NotImplementedException();\n}"
+      },
+      {
+        "text": "Stub GetOpenClockEntry with a nullable return type because no open entry may exist.",
+        "code": "public ClockEntry? GetOpenClockEntry(int employeeId)\n{\n    throw new NotImplementedException();\n}"
+      },
+      {
+        "text": "Build the solution now. A successful build confirms the class and all three method contracts are valid before behavior is added.",
+        "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+      },
+      "Replace the throw inside SaveClockEntry with one Add call that appends clockEntry to _clockEntries.",
+      "Replace the throw inside GetEmployeeClockEntries with a return statement that filters by employee, completed status, and the inclusive ClockIn date range.",
+      "Replace the throw inside GetOpenClockEntry with a return statement that finds the first entry for that employee whose ClockOut is null, or returns null when none exists.",
       "Update App to save open and completed entries and display the resulting count.",
       {
         "text": "Keep the list private so callers interact through repository behavior. Run the App, then build and test the solution. Attempt the lab before opening the solution below.",
