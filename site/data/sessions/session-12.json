@@ -96,6 +96,7 @@
       "Create EmployeeRepository.cs in the Domain project's Repositories folder.",
       "Add the PinkMachine19.TimeClock.Domain namespace.",
       "Declare the public sealed EmployeeRepository class.",
+      "Side note — sealed means this concrete in-memory repository cannot be used as a base class. Use sealed when a class is intended to be used as-is and you have not designed a safe inheritance contract with protected or virtual extension points. It is not required for every repository. Later, alternative storage implementations will implement a repository interface instead of inheriting from this class.",
       {
         "text": "Inside the class, declare a private readonly dictionary keyed by EmployeeId. The field initializer gives every repository object its own dictionary.",
         "code": "private readonly Dictionary<int, Employee> _employees = new();"

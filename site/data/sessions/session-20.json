@@ -2,7 +2,7 @@
   "number": 20,
   "category": "dependency boundaries",
   "estimatedTime": "40 minutes",
-  "connection": "Production has models, repositories, repository interfaces, and clock-entry/employee services created in earlier sessions. App still constructs dependencies manually. Compose the production application with dependency injection and add PayrollService for the verified total-hours use case.",
+  "connection": "Production has models, repositories, repository interfaces, and clock-entry/employee services created in earlier sessions. Optional Side Lab 19B frames their public, private, protected, and internal declarations as dependency boundaries. App still constructs dependencies manually. Compose the production application with dependency injection and add PayrollService for the verified total-hours use case.",
   "objectives": [
     "Explain why a class should depend on an interface, not a concrete implementation, when another class constructs it for it.",
     "Trace how Program.cs's ServiceCollection registrations connect an interface to a concrete class at resolution time.",

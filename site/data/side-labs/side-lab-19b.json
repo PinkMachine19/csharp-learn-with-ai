@@ -1,0 +1,262 @@
+{
+  "number": "19B",
+  "category": "Optional Session 19 sidebar lab",
+  "estimatedTime": "30–35 minutes",
+  "sidebarDescription": "Read access modifiers as API boundaries, distinguish accessibility from mutability, and observe internal across real project boundaries.",
+  "connection": "Sessions 06–07 introduced private setters, Session 17 made encapsulation concrete, Session 18 introduced public interfaces, and Session 19 introduced protected members and inheritance. This optional synthesis turns those separate ideas into one enterprise code-reading model before Session 20 applies dependency boundaries through constructor injection.",
+  "nextSessionLabel": "Session 20",
+  "objectives": [
+    "Read public, private, protected, and internal as statements about which code may depend on a member or type.",
+    "Distinguish permission to read a property from permission to mutate it.",
+    "Use a public operation with a private helper to protect an object invariant.",
+    "Predict and observe that internal code is accessible inside its project assembly but not from another project assembly.",
+    "Recognize sealed as an inheritance restriction, not an access modifier."
+  ],
+  "visuals": [
+    {
+      "diagram": "invariant",
+      "title": "Expose the operation, protect the rule",
+      "explanation": "A public Rename operation can enforce name rules through a private helper, while a private setter prevents callers from bypassing that operation."
+    },
+    {
+      "diagram": "solution",
+      "title": "internal stops at the assembly boundary",
+      "explanation": "Infrastructure code can construct its internal implementation, while App can use only the public factory and public interface returned across the project boundary."
+    },
+    {
+      "diagram": "branch",
+      "title": "protected is an inheritance boundary",
+      "explanation": "A derived class may use a protected member; ordinary callers cannot make that member part of their dependency surface."
+    },
+    {
+      "diagram": "blueprint",
+      "title": "public and sealed answer different questions",
+      "explanation": "public says other code may use the class. sealed says another class may not derive from it."
+    }
+  ],
+  "preQuiz": [
+    {
+      "prompt": "App references Domain. Can App access an internal Domain class?",
+      "options": ["Yes, because both projects are in one solution", "No, because internal normally stops at the Domain assembly boundary", "Only when the class is sealed"],
+      "correct": 1,
+      "explanation": "Projects normally compile into separate assemblies. A project reference does not turn internal into public."
+    },
+    {
+      "prompt": "What does public DateTime? ClockOut { get; private set; } allow an App caller to do?",
+      "options": ["Read ClockOut but not assign it directly", "Assign ClockOut but not read it", "Neither read nor assign it"],
+      "correct": 0,
+      "explanation": "The property is public for reading, while its setter is accessible only inside ClockEntry."
+    },
+    {
+      "prompt": "What question does sealed answer?",
+      "options": ["Who can call this?", "Can another class inherit from this?", "Can this property be assigned?"],
+      "correct": 1,
+      "explanation": "sealed restricts inheritance. It is not an access modifier."
+    }
+  ],
+  "concept": [
+    {
+      "title": "Access modifiers describe dependency permission",
+      "paragraphs": [
+        "When reading enterprise C#, treat an access modifier as an architectural signal: which code is intended to depend on this type or member? public creates the widest API commitment; private keeps an implementation detail inside one type; protected reserves an extension point for derived types; internal keeps a type or member inside one assembly.",
+        "The safest default question is not 'Can I make this public?' but 'Which callers genuinely need this capability?' A smaller public surface leaves fewer dependencies to preserve and fewer ways to bypass business rules."
+      ],
+      "table": {
+        "headers": ["Modifier", "Practical boundary", "Typical intent"],
+        "rows": [
+          ["public", "Any code that can reference the containing API", "Supported capability for external callers"],
+          ["private", "Only the containing type", "Implementation detail or invariant helper"],
+          ["protected", "The containing type and derived types", "Deliberate inheritance extension point"],
+          ["internal", "The same compiled assembly/project", "Implementation shared inside one component but hidden from consumers"]
+        ],
+        "highlightRows": [0, 1, 2, 3]
+      }
+    },
+    {
+      "title": "Accessibility and mutability are different",
+      "paragraphs": [
+        "Being allowed to see a value is not the same as being allowed to replace it. ClockEntry.ClockOut is publicly readable, but its private setter means only ClockEntry can assign it. Callers must use ClockOutEmployee, where the object protects its completion rules.",
+        "The same pattern is common for entity state: public reading, restricted mutation, and a named public operation that validates the change. Encapsulation is not merely hiding data; it prevents callers from creating invalid state."
+      ],
+      "code": "public DateTime? ClockOut { get; private set; }\n\npublic void ClockOutEmployee(DateTime clockOut)\n{\n    // Check the invariant before assigning ClockOut.\n}"
+    },
+    {
+      "title": "Patterns You Will See Constantly",
+      "paragraphs": [
+        "These combinations communicate intent quickly. Read the combination as one boundary decision rather than translating every keyword independently."
+      ],
+      "table": {
+        "headers": ["Pattern", "What it communicates", "If everything were public"],
+        "rows": [
+          ["public class + private fields", "Use the type through its supported members; storage stays replaceable", "Callers could mutate storage and bypass behavior"],
+          ["public property + private set", "Everyone may read; only the type controls assignment", "Callers could bypass state-transition rules"],
+          ["public property + protected set", "Everyone may read; the type family controls assignment", "Unrelated callers could alter derived-object state"],
+          ["public method + private helper", "The operation is supported; its mechanism is not an API", "Callers could couple themselves to validation details"],
+          ["public interface + internal implementation", "Consumers depend on the contract; the assembly owns the implementation", "Consumers could construct and couple to the implementation"],
+          ["protected member in a base class", "Derived types receive a deliberate extension point", "Every caller would gain a capability meant only for subclasses"],
+          ["internal infrastructure class", "The component may use it; other projects should not", "Implementation details become cross-project commitments"]
+        ],
+        "highlightRows": [0, 1, 3, 4, 5, 6]
+      }
+    },
+    {
+      "title": "internal means assembly, not solution",
+      "paragraphs": [
+        "A .NET project normally compiles into its own assembly. Domain, App, Infrastructure, ScratchPad, and Tests can live in one solution while still having separate internal boundaries.",
+        "Code inside Infrastructure may construct an internal Infrastructure class. App cannot name that class merely because it references Infrastructure. Infrastructure can instead expose a public factory returning a public Domain interface, allowing App to depend on the abstraction without seeing the implementation type."
+      ],
+      "code": "public interface IEmployeeRepository { /* public contract */ }\n\ninternal sealed class Session19BEmployeeRepository : IEmployeeRepository\n{\n    // Infrastructure implementation hidden from other assemblies.\n}"
+    },
+    {
+      "title": "sealed is a companion decision, not accessibility",
+      "paragraphs": [
+        "public sealed class Employee means other code may use Employee, but another class may not derive from it. public answers who can access the type; sealed answers whether inheritance is permitted.",
+        "Seal a concrete class when it is intended to be used as-is and no safe inheritance contract has been designed. A sealed class may still implement an interface. Do not infer that sealed means interfaces are absent."
+      ],
+      "code": "public sealed class ClockEntryRepository : IClockEntryRepository\n{\n}"
+    },
+    {
+      "title": "Recognition Only / Good to Know",
+      "paragraphs": [
+        "These combinations are useful to recognize but do not deserve most of this lab's practice time. protected internal means same assembly OR derived code in another assembly. private protected means derived code, but only inside the same assembly.",
+        "A private constructor can force construction through a factory or static member. A protected constructor reserves construction for the type itself and derived types. Use restricted constructors only when there is a real construction rule to enforce."
+      ]
+    }
+  ],
+  "lab": {
+    "objective": "Predict and observe practical accessibility boundaries using existing TimeClock state, real project assemblies, and one small inheritance example.",
+    "startingCondition": "Complete Sessions 17–19 first. Preserve all existing Domain, App, Infrastructure, and ScratchPad behavior; this optional lab adds clearly named learning artifacts and may be skipped without blocking Session 20.",
+    "collapseInstructions": true,
+    "labs": [
+      {
+        "title": "Protect Mutation Behind a Public Operation",
+        "objective": "Separate public reading from controlled mutation and keep validation behind the operation that needs it.",
+        "practice": ["Public reading with private mutation", "Public operations", "Private helper methods", "Invariant protection"],
+        "task": "Observe ClockEntry's existing private setter, then build a small Employee-name example whose public Rename method owns validation and assignment.",
+        "comment": "// Lab 1 of 3 - Protect Mutation Behind a Public Operation",
+        "instructions": [
+          "Create src/PinkMachine19.TimeClock.ScratchPad/Session19B.",
+          "Create Session19BEmployeeName.cs inside the new folder.",
+          "Paste the lab comment at the top of the file.",
+          "Declare a class named Session19BEmployeeName.",
+          "Add a public string Name property with a private setter.",
+          "Add a public constructor that receives a name and calls Rename.",
+          "Add a public void Rename method receiving newName.",
+          "Add a private static string NormalizeName helper.",
+          "Inside NormalizeName, reject null, empty, or whitespace text with ArgumentException.",
+          "Return the trimmed name from NormalizeName.",
+          "Inside Rename, assign the NormalizeName result to Name.",
+          "Create Session19BAccessDemo.cs in the same folder.",
+          "In a public Run method, construct Session19BEmployeeName and display Name.",
+          "Before typing an assignment to Name, predict whether its private setter is accessible from Session19BAccessDemo.",
+          "Type the direct Name assignment, observe the compiler error, then comment out only that invalid line and keep it as evidence.",
+          "Call Rename with a valid name and display the result.",
+          "Construct an existing ClockEntry and display ClockOut.",
+          "Predict whether direct assignment to ClockOut will compile.",
+          "Type the direct ClockOut assignment, observe the compiler error, then comment out only that invalid line.",
+          "Call ClockOutEmployee and display ClockOut again.",
+          "Append one Session19BAccessDemo construction and Run call to ScratchPad/Program.cs without deleting earlier calls.",
+          {"text": "Run ScratchPad after both invalid assignments have been commented out.", "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"}
+        ],
+        "solution": "// Session19BEmployeeName.cs\n// Lab 1 of 3 - Protect Mutation Behind a Public Operation\npublic sealed class Session19BEmployeeName\n{\n    public string Name { get; private set; } = \"\";\n\n    public Session19BEmployeeName(string name)\n    {\n        Rename(name);\n    }\n\n    public void Rename(string newName)\n    {\n        Name = NormalizeName(newName);\n    }\n\n    private static string NormalizeName(string name)\n    {\n        if (string.IsNullOrWhiteSpace(name))\n        {\n            throw new ArgumentException(\"A name is required.\", nameof(name));\n        }\n\n        return name.Trim();\n    }\n}\n\n// Session19BAccessDemo.cs\nusing PinkMachine19.TimeClock.Domain;\n\npublic sealed class Session19BAccessDemo\n{\n    public void Run()\n    {\n        var employeeName = new Session19BEmployeeName(\"  Taylor  \" );\n        Console.WriteLine(employeeName.Name);\n        // employeeName.Name = \"Jordan\"; // Does not compile: setter is private.\n        employeeName.Rename(\"Jordan\");\n        Console.WriteLine(employeeName.Name);\n\n        var entry = new ClockEntry(1, new DateTime(2026, 1, 15, 9, 0, 0));\n        Console.WriteLine(entry.ClockOut);\n        // entry.ClockOut = new DateTime(2026, 1, 15, 17, 0, 0); // Does not compile.\n        entry.ClockOutEmployee(new DateTime(2026, 1, 15, 17, 0, 0));\n        Console.WriteLine(entry.ClockOut);\n    }\n}\n\n// Append to ScratchPad/Program.cs.\nvar session19B = new Session19BAccessDemo();\nsession19B.Run();"
+      },
+      {
+        "title": "Observe internal Across Project Boundaries",
+        "objective": "Use the compiler to prove that internal permits same-assembly access but blocks another project from naming the implementation.",
+        "practice": ["Assembly boundaries", "Internal implementation types", "Public interfaces", "Public factories"],
+        "task": "Create an internal Infrastructure repository behind a public factory, then consume only its public interface from App.",
+        "comment": "// Lab 2 of 3 - Observe internal Across Project Boundaries",
+        "instructions": [
+          "Create a LearningExamples folder in the Infrastructure project.",
+          "Create Session19BEmployeeRepository.cs inside that folder.",
+          "Use the PinkMachine19.TimeClock.Infrastructure namespace.",
+          "Declare an internal sealed Session19BEmployeeRepository implementing IEmployeeRepository.",
+          "Give the internal implementation a constructor that receives one Employee.",
+          "Implement GetEmployeeById by returning that employee when the ID matches and throwing KeyNotFoundException otherwise.",
+          "Below the internal class, declare a public static Session19BEmployeeRepositoryFactory.",
+          "Add a public Create method that receives an Employee and returns IEmployeeRepository.",
+          "Inside Create, construct Session19BEmployeeRepository. Notice that this compiles because the factory and implementation are in the same Infrastructure assembly.",
+          "At the end of App/Program.cs, create a Session 19B section without deleting earlier application code.",
+          "Use the public factory to create the repository and let var infer the public IEmployeeRepository return type.",
+          "Use GetEmployeeById and display the returned employee name.",
+          "Predict whether App can directly construct Session19BEmployeeRepository.",
+          "Attempt the direct construction from App, observe the inaccessible-type compiler error, then comment out only that invalid line.",
+          "Explain why a project reference allows App to see the public factory but does not allow it to see the internal implementation.",
+          {"text": "Run App after the invalid construction has been commented out.", "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release"}
+        ],
+        "solution": "// Infrastructure/LearningExamples/Session19BEmployeeRepository.cs\n// Lab 2 of 3 - Observe internal Across Project Boundaries\nnamespace PinkMachine19.TimeClock.Infrastructure;\n\nusing PinkMachine19.TimeClock.Domain;\n\ninternal sealed class Session19BEmployeeRepository : IEmployeeRepository\n{\n    private readonly Employee _employee;\n\n    public Session19BEmployeeRepository(Employee employee)\n    {\n        _employee = employee;\n    }\n\n    public Employee GetEmployeeById(int employeeId)\n    {\n        if (employeeId != _employee.EmployeeId)\n        {\n            throw new KeyNotFoundException($\"Employee {employeeId} was not found.\");\n        }\n\n        return _employee;\n    }\n}\n\npublic static class Session19BEmployeeRepositoryFactory\n{\n    public static IEmployeeRepository Create(Employee employee)\n    {\n        return new Session19BEmployeeRepository(employee);\n    }\n}\n\n// Add to App/Program.cs\nvar accessEmployee = new Employee(19, \"Morgan\", new Address { City = \"Springfield\" });\nvar accessRepository = PinkMachine19.TimeClock.Infrastructure.Session19BEmployeeRepositoryFactory.Create(accessEmployee);\nConsole.WriteLine(accessRepository.GetEmployeeById(19).Name);\n\n// Does not compile from App: the implementation is internal to Infrastructure.\n// var hiddenRepository = new PinkMachine19.TimeClock.Infrastructure.Session19BEmployeeRepository(accessEmployee);"
+      },
+      {
+        "title": "Recognize protected and sealed Intent",
+        "objective": "Observe a protected extension point from derived and unrelated code, then distinguish that boundary from sealed inheritance prevention.",
+        "practice": ["Protected members", "Protected setters", "Derived-class access", "Sealed classes"],
+        "task": "Create one tiny base/derived pair in ScratchPad and predict which operations ordinary callers and derived code may perform.",
+        "comment": "// Lab 3 of 3 - Recognize protected and sealed Intent",
+        "instructions": [
+          "Create Session19BLabelBase.cs in the ScratchPad Session19B folder.",
+          "Declare an abstract Session19BLabelBase class.",
+          "Add a public string Label property with a protected setter.",
+          "Add a protected SetLabel method that trims and assigns a new label.",
+          "Create Session19BEmployeeLabel.cs in the same folder.",
+          "Declare Session19BEmployeeLabel as a sealed class derived from Session19BLabelBase.",
+          "Add a public Rename method that calls the inherited protected SetLabel method.",
+          "In Session19BAccessDemo.Run, construct Session19BEmployeeLabel and read Label.",
+          "Predict whether ordinary caller code can assign Label or call SetLabel.",
+          "Attempt both operations, observe their protection-level compiler errors, then comment out only those two invalid lines.",
+          "Call the public Rename method and display Label.",
+          "Explain why Session19BEmployeeLabel is publicly usable even though sealed prevents another class from deriving from it.",
+          {"text": "Run ScratchPad, then build the entire solution with every intentional compiler-error line commented out.", "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release"}
+        ],
+        "solution": "// Session19BLabelBase.cs\n// Lab 3 of 3 - Recognize protected and sealed Intent\npublic abstract class Session19BLabelBase\n{\n    public string Label { get; protected set; } = \"\";\n\n    protected void SetLabel(string label)\n    {\n        Label = label.Trim();\n    }\n}\n\n// Session19BEmployeeLabel.cs\npublic sealed class Session19BEmployeeLabel : Session19BLabelBase\n{\n    public void Rename(string name)\n    {\n        SetLabel(name);\n    }\n}\n\n// Add inside Session19BAccessDemo.Run()\nvar label = new Session19BEmployeeLabel();\nConsole.WriteLine(label.Label);       // public get is accessible\n// label.Label = \"Taylor\";         // Does not compile: set is protected.\n// label.SetLabel(\"Taylor\");        // Does not compile: method is protected.\nlabel.Rename(\"Taylor\");           // public operation uses protected behavior\nConsole.WriteLine(label.Label);"
+      }
+    ],
+    "expectedBehavior": "ScratchPad demonstrates controlled mutation and protected access; Infrastructure can construct its internal implementation; App can use only the public factory and interface across the assembly boundary.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+  },
+  "expectedFiles": [
+    {"path": "src/PinkMachine19.TimeClock.ScratchPad/Session19B/Session19BEmployeeName.cs", "action": "Add", "why": "Demonstrate public behavior, private mutation, and a private helper."},
+    {"path": "src/PinkMachine19.TimeClock.ScratchPad/Session19B/Session19BAccessDemo.cs", "action": "Add", "why": "Collect prediction-based accessibility observations behind one Run method."},
+    {"path": "src/PinkMachine19.TimeClock.ScratchPad/Session19B/Session19BLabelBase.cs", "action": "Add", "why": "Demonstrate protected members and a protected setter."},
+    {"path": "src/PinkMachine19.TimeClock.ScratchPad/Session19B/Session19BEmployeeLabel.cs", "action": "Add", "why": "Demonstrate derived access and sealed inheritance intent."},
+    {"path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs", "action": "Modify", "why": "Append the optional Session19BAccessDemo call without removing earlier experiments."},
+    {"path": "src/PinkMachine19.TimeClock.Infrastructure/LearningExamples/Session19BEmployeeRepository.cs", "action": "Add", "why": "Demonstrate a public interface with an internal implementation across assemblies."},
+    {"path": "src/PinkMachine19.TimeClock.App/Program.cs", "action": "Modify", "why": "Observe which Infrastructure types App can name across the project boundary."}
+  ],
+  "commit": "Not applicable — optional side lab; no required TimeClock path changes.",
+  "review": [
+    "Public members expose only capabilities that callers genuinely need.",
+    "Private setters and helpers keep invariant enforcement inside the owning type.",
+    "The internal Infrastructure implementation can be constructed inside Infrastructure but not named from App.",
+    "The public factory returns a public interface rather than exposing its internal implementation type.",
+    "Protected members are used only by the base/derived type family.",
+    "The explanation distinguishes sealed inheritance restriction from accessibility."
+  ],
+  "postQuiz": [
+    {
+      "prompt": "Why can Infrastructure's public factory construct Session19BEmployeeRepository while App cannot?",
+      "options": ["The factory is in the same assembly as the internal class; App is in a different assembly", "Factories ignore all access modifiers", "App does not support classes"],
+      "correct": 0,
+      "explanation": "internal permits access anywhere in the declaring assembly, including the public factory, but blocks ordinary access from another assembly."
+    },
+    {
+      "prompt": "Why expose Rename publicly while keeping NormalizeName private?",
+      "options": ["Callers need the supported rename operation, not a dependency on its validation mechanism", "Private methods execute faster", "Public methods cannot validate input"],
+      "correct": 0,
+      "explanation": "The public API names the supported capability. Its private helper remains replaceable implementation detail."
+    },
+    {
+      "prompt": "Can a sealed class implement a public interface?",
+      "options": ["Yes; sealed blocks class inheritance, not interface implementation", "No; sealed means completely private", "Only if every method is protected"],
+      "correct": 0,
+      "explanation": "Accessibility, interface implementation, and class inheritance are separate design dimensions."
+    }
+  ],
+  "reflections": [
+    "When you encounter public in enterprise code, what long-term dependency is the declaring component promising to support?",
+    "Which TimeClock state would be easiest to corrupt if its setter or backing collection became public?",
+    "Why is same solution different from same assembly when reasoning about internal?",
+    "When would protected be a more accurate boundary than public, and when would composition avoid the extension point entirely?"
+  ],
+  "whatBreaks": "Skipping this optional side lab does not break Session 20. You would lose the compiler-confirmed assembly-boundary observation and the synthesis connecting private mutation, protected extension points, internal implementations, public contracts, and sealed classes.",
+  "summary": "Access modifiers define who may depend on, call, or mutate a type member. public establishes an external API, private protects implementation and invariants, protected reserves inheritance extension points, and internal keeps implementation inside one assembly. sealed is a separate inheritance decision. Expose only what other code actually needs to depend on."
+}
