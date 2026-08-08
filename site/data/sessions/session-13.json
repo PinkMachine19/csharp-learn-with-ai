@@ -91,23 +91,71 @@
   ],
   "lab": {
     "clickHighlightInstructions": true,
-    "objective": "Narrow repository query results to IEnumerable<ClockEntry> so consumers depend on enumeration rather than storage details.",
-    "startingCondition": "ClockEntryRepository stores entries in a private List and returns employee entries, while callers need only enumerate them.",
+    "objective": "Consume repository query results through IEnumerable<ClockEntry> so calling code depends on enumeration rather than List-specific storage or mutation.",
+    "startingCondition": "Session 11 already made GetEmployeeClockEntries return IEnumerable<ClockEntry> while keeping its List private. Session 13 must use and test that narrow contract rather than changing the same signature again.",
     "steps": [
-      "Change the employee-entry query contract to IEnumerable<ClockEntry>.",
-      "Keep the private List implementation inside the repository.",
-      "Update App to enumerate the returned sequence without casting it back to List.",
-      "Explain which mutation capabilities disappeared from the caller's view.",
-      "Build and run the existing workflow."
+      "Open Repositories/ClockEntryRepository.cs in the Domain project.",
+      "Confirm that _clockEntries remains a private List<ClockEntry>.",
+      "Confirm that GetEmployeeClockEntries declares IEnumerable<ClockEntry> as its return type.",
+      "Do not change the repository signature; Session 11 already established the contract that this session examines.",
+      "Create a Session13 folder in the App project.",
+      "Create ClockEntryPrinter.cs inside the new folder.",
+      "Add the PinkMachine19.TimeClock.App namespace.",
+      "Declare a public sealed ClockEntryPrinter class.",
+      {
+        "text": "Stub Display with an IEnumerable<ClockEntry> parameter. The consumer asks only for the capability it needs: enumeration.",
+        "code": "public void Display(IEnumerable<ClockEntry> entries)\n{\n    throw new NotImplementedException();\n}"
+      },
+      {
+        "text": "Build before implementing Display. A successful build proves the consumer contract compiles independently of its behavior.",
+        "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+      },
+      "Replace the throw in Display with a foreach loop over entries.",
+      "Inside the loop, display each entry's EmployeeId, ClockIn, and ClockOut.",
+      "At the end of App/Program.cs, add a new Session 13 section without deleting earlier application code.",
+      "Construct a new ClockEntryRepository for the Session 13 observation.",
+      "Create one ClockEntry for employee 13 whose ClockIn is inside January 2026.",
+      "Complete that entry by calling ClockOutEmployee.",
+      "Save the completed entry through SaveClockEntry.",
+      "Create and save one open ClockEntry for the same employee so the repository filter has an entry to exclude.",
+      {
+        "text": "Call GetEmployeeClockEntries and deliberately declare the result as IEnumerable<ClockEntry>. This makes the caller's permitted capabilities visible in its variable type.",
+        "code": "IEnumerable<ClockEntry> session13Entries = session13Repository.GetEmployeeClockEntries(\n    13,\n    new DateTime(2026, 1, 1),\n    new DateTime(2026, 1, 31));"
+      },
+      "Before continuing, predict whether session13Entries.Add(...) will compile.",
+      "Type an Add call, observe that IEnumerable<ClockEntry> has no Add method, then comment out only that invalid line.",
+      "Predict whether session13Entries[0] will compile.",
+      "Type an index access, observe that IEnumerable<ClockEntry> has no indexer, then comment out only that invalid line.",
+      "Predict whether session13Entries.Count will compile as a property.",
+      "Type the Count property access, observe that IEnumerable<ClockEntry> has no Count property, then comment out only that invalid line.",
+      "Use the LINQ Count() extension method and display the result without casting the sequence to List<ClockEntry>.",
+      "Construct ClockEntryPrinter and pass session13Entries to Display.",
+      "Explain why the caller can enumerate but cannot assume Add, indexing, or a Count property even if the repository happens to use List internally.",
+      {
+        "text": "Run App, then build and test the complete solution with every intentional compiler-error line commented out. Attempt the lab before opening the solution below.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "Use this to compare the important contract decisions with your attempt. Do not replace an entire existing Program.cs; append only the Session 13 section after its earlier code.",
+            "code": "// App/Session13/ClockEntryPrinter.cs\nnamespace PinkMachine19.TimeClock.App;\n\nusing PinkMachine19.TimeClock.Domain;\n\npublic sealed class ClockEntryPrinter\n{\n    public void Display(IEnumerable<ClockEntry> entries)\n    {\n        foreach (ClockEntry entry in entries)\n        {\n            Console.WriteLine(\n                $\"Employee {entry.EmployeeId}: {entry.ClockIn} to {entry.ClockOut}\");\n        }\n    }\n}\n\n// Add as a new Session 13 section at the end of App/Program.cs.\nvar session13Repository = new ClockEntryRepository();\n\nvar session13CompletedEntry = new ClockEntry(\n    13,\n    new DateTime(2026, 1, 15, 9, 0, 0));\nsession13CompletedEntry.ClockOutEmployee(\n    new DateTime(2026, 1, 15, 17, 0, 0));\n\nvar session13OpenEntry = new ClockEntry(\n    13,\n    new DateTime(2026, 1, 16, 9, 0, 0));\n\nsession13Repository.SaveClockEntry(session13CompletedEntry);\nsession13Repository.SaveClockEntry(session13OpenEntry);\n\nIEnumerable<ClockEntry> session13Entries =\n    session13Repository.GetEmployeeClockEntries(\n        13,\n        new DateTime(2026, 1, 1),\n        new DateTime(2026, 1, 31));\n\n// These do not compile through the IEnumerable<ClockEntry> contract.\n// session13Entries.Add(session13OpenEntry);\n// ClockEntry firstEntry = session13Entries[0];\n// int countProperty = session13Entries.Count;\n\nConsole.WriteLine($\"Completed entries: {session13Entries.Count()}\");\n\nvar session13Printer = new PinkMachine19.TimeClock.App.ClockEntryPrinter();\nsession13Printer.Display(session13Entries);"
+          }
+        ]
+      }
     ],
-    "expectedBehavior": "Callers enumerate repository results without depending on List-specific mutation.",
+    "expectedBehavior": "App enumerates one completed entry through IEnumerable<ClockEntry>; the open entry is excluded, and callers cannot use List-specific Add, indexing, or Count-property capabilities.",
     "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
       "path": "src/PinkMachine19.TimeClock.Domain/Repositories/ClockEntryRepository.cs",
-      "action": "Modify",
-      "why": "Expose an enumeration contract."
+      "action": "Review",
+      "why": "Confirm the private List implementation and existing IEnumerable return contract without changing them."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.App/Session13/ClockEntryPrinter.cs",
+      "action": "Add",
+      "why": "Consume clock entries through enumeration-only capability."
     },
     {
       "path": "src/PinkMachine19.TimeClock.App/Program.cs",
