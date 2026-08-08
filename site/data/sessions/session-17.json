@@ -109,7 +109,7 @@
       "why": "Compose employee and entries around a real invariant."
     },
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryRepository.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/Repositories/ClockEntryRepository.cs",
       "action": "Modify",
       "why": "Preserve collection encapsulation."
     },

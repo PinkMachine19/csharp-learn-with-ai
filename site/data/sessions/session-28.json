@@ -108,7 +108,7 @@
       "why": "Accept cancellation."
     },
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryRepository.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/Repositories/ClockEntryRepository.cs",
       "action": "Modify",
       "why": "Observe cancellation."
     },

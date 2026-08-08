@@ -104,7 +104,7 @@
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryRepository.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/Repositories/ClockEntryRepository.cs",
       "action": "Modify",
       "why": "Expose an enumeration contract."
     },

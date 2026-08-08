@@ -67,6 +67,8 @@
     {
       "title": "List<ClockEntry> is the repository's only storage",
       "paragraphs": [
+        "Create this temporary implementation in the Domain project's Repositories folder: src/PinkMachine19.TimeClock.Domain/Repositories/ClockEntryRepository.cs. Keep its namespace as PinkMachine19.TimeClock.Domain; a folder helps organize files but does not have to change the namespace.",
+        "This placement is curriculum scaffolding, not a rule that concrete repositories belong in Domain. Session 11 is isolating List<T> and in-memory storage before the course introduces infrastructure boundaries. A finished architecture normally keeps the repository contract with the code that depends on it and places database or other external storage implementations in Infrastructure.",
         "_clockEntries is declared public readonly List<ClockEntry> _clockEntries = new(); -- readonly means the field itself can never be reassigned to point at a different list, but the list's contents remain fully mutable through Add, Remove, Clear, and indexing.",
         "Every real method on ClockEntryRepository -- SaveClockEntry, GetClockEntry, GetEmployeeClockEntries -- reads or writes this one list. There is no other storage anywhere in the class."
       ],
@@ -93,7 +95,7 @@
     "objective": "Create the first in-memory ClockEntryRepository using a private List<ClockEntry> required for saving and retrieving entries.",
     "startingCondition": "ClockEntry exists and can be completed. No production component stores more than one entry yet.",
     "steps": [
-      "Create ClockEntryRepository in Domain with a private List<ClockEntry>.",
+      "Create a Repositories folder in the Domain project, then create ClockEntryRepository.cs inside it with the PinkMachine19.TimeClock.Domain namespace and a private List<ClockEntry>.",
       "Add Save to append an entry.",
       "Add methods to retrieve an employee's entries and locate an open entry.",
       "Update App to save open and completed entries and display the resulting count.",
@@ -104,7 +106,7 @@
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryRepository.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/Repositories/ClockEntryRepository.cs",
       "action": "Add",
       "why": "Store entries in memory."
     },
