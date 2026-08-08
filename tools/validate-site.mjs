@@ -105,7 +105,7 @@ for (const file of htmlFiles) {
   for (const href of [...html.matchAll(/(?:href|src)="([^"]+)"/g)].map((match) => match[1])) {
     if (/^(?:https?:|mailto:|#)/.test(href)) continue;
     if (!href.startsWith(manifest.course.basePath)) errors.push(`${relative} asset/link does not honor base path: ${href}`);
-    const local = href.slice(manifest.course.basePath.length).split("#", 1)[0];
+    const local = href.slice(manifest.course.basePath.length).split(/[?#]/, 1)[0];
     const target = local.endsWith("/") ? `${local}index.html` : local;
     try { await access(path.join(dist, target)); }
     catch { errors.push(`${relative} has broken internal reference: ${href}`); }
