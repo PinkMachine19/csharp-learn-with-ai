@@ -168,6 +168,40 @@ document.querySelectorAll("[data-step-checkboxes]").forEach((stepList, listIndex
   });
 });
 
+document.querySelectorAll("[data-concept-checkboxes]").forEach((conceptList, listIndex) => {
+  const storageKey = `concept-paragraph-progress:${window.location.pathname}:${listIndex}`;
+  const checkboxes = [...conceptList.querySelectorAll("[data-concept-checkbox]")];
+  const progress = conceptList.querySelector("[data-concept-progress]");
+  let completedParagraphs = [];
+
+  try {
+    completedParagraphs = JSON.parse(localStorage.getItem(storageKey) || "[]");
+  } catch {
+    completedParagraphs = [];
+  }
+
+  const updateProgress = () => {
+    const completed = checkboxes.filter((checkbox) => checkbox.checked).length;
+    if (progress) progress.textContent = `Reading progress: ${completed} of ${checkboxes.length}`;
+  };
+
+  checkboxes.forEach((checkbox) => {
+    checkbox.checked = completedParagraphs.includes(checkbox.dataset.conceptCheckbox);
+    checkbox.closest("[data-concept-paragraph]")?.classList.toggle("concept-paragraph-completed", checkbox.checked);
+
+    checkbox.addEventListener("change", () => {
+      checkbox.closest("[data-concept-paragraph]")?.classList.toggle("concept-paragraph-completed", checkbox.checked);
+      const checked = checkboxes
+        .filter((item) => item.checked)
+        .map((item) => item.dataset.conceptCheckbox);
+      localStorage.setItem(storageKey, JSON.stringify(checked));
+      updateProgress();
+    });
+  });
+
+  updateProgress();
+});
+
 document.querySelectorAll("pre").forEach((block) => {
   const code = block.querySelector("code");
   if (!code) return;

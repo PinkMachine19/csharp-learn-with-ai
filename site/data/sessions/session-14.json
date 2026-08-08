@@ -2,6 +2,7 @@
   "number": 14,
   "category": "Collections and generics",
   "estimatedTime": "40 minutes",
+  "conceptParagraphCheckboxes": true,
   "connection": "Production repositories and models exist. ScratchPad retains earlier language experiments; no verified requirement needs a custom generic type or method. Preserve a generic-method experiment in ScratchPad because the production domain has no natural generic algorithm yet.",
   "objectives": [
     "Identify at least three generic types already in real, everyday use across this codebase, and state what concrete type argument each is instantiated with.",
