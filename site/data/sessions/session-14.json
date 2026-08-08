@@ -5,7 +5,7 @@
   "connection": "Production repositories and models exist. ScratchPad retains earlier language experiments; no verified requirement needs a custom generic type or method. Preserve a generic-method experiment in ScratchPad because the production domain has no natural generic algorithm yet.",
   "objectives": [
     "Identify at least three generic types already in real, everyday use across this codebase, and state what concrete type argument each is instantiated with.",
-    "Explain why IClockEntryRepository.GetClockEntry returns Task<ClockEntry?> specifically, not just Task -- what the type argument communicates.",
+    "Explain what ClockEntry communicates in IEnumerable<ClockEntry>: every value produced by the sequence has that element type.",
     "Read GenericRules.Later<T>(T left, T right) and explain why it can compare 'left' and 'right' generically without knowing T is DateTime or int in advance.",
     "Call Later<T> with both DateTime (ClockIn timestamps) and int (EmployeeId values) and confirm one method definition serves both."
   ],
@@ -13,7 +13,7 @@
     {
       "diagram": "generictypes",
       "title": "Generic types are filled in at each use site",
-      "explanation": "List<ClockEntry>, Dictionary<int, Employee>, and Task<ClockEntry?> are the same three generic type definitions (List<T>, Dictionary<TKey,TValue>, Task<TResult>) each instantiated differently."
+      "explanation": "List<ClockEntry>, Dictionary<int, Employee>, and IEnumerable<ClockEntry> are generic type definitions whose placeholders have been filled with the concrete types this application needs."
     },
     {
       "diagram": "genericinference",
@@ -21,9 +21,9 @@
       "explanation": "GenericRules.Later(entryA.ClockIn, entryB.ClockIn) infers T as DateTime from the arguments' actual type -- no explicit Later<DateTime> is required."
     },
     {
-      "diagram": "taskresult",
-      "title": "Task<ClockEntry?> says exactly what eventually arrives",
-      "explanation": "The T in Task<T> is the type of value the asynchronous operation eventually produces -- here, possibly-null ClockEntry, matching GetClockEntry's real nullable contract."
+      "diagram": "narrowcontract",
+      "title": "IEnumerable<ClockEntry> identifies its element type",
+      "explanation": "Session 13 established that IEnumerable<T> promises enumeration. Supplying ClockEntry for T tells the compiler and caller that each value produced during enumeration is a ClockEntry."
     },
     {
       "diagram": "closedgenerics",
@@ -33,9 +33,9 @@
   ],
   "preQuiz": [
     {
-      "prompt": "What are List<T>, Dictionary<TKey,TValue>, and Task<TResult> called before a concrete type is supplied?",
+      "prompt": "What are List<T>, Dictionary<TKey,TValue>, and IEnumerable<T> called before concrete types are supplied?",
       "options": [
-        "Open generic types -- they define a shape with placeholder type parameters that must be filled in (with ClockEntry, or int and Employee, or ClockEntry?) at the point of use",
+        "Open generic types -- they define a shape with placeholder type parameters that must be filled in (with ClockEntry, or int and Employee) at the point of use",
         "Interfaces",
         "Abstract classes"
       ],
@@ -43,14 +43,14 @@
       "explanation": "A generic type definition like List<T> is not usable on its own -- List<ClockEntry> is the closed, concrete type actually declared and used."
     },
     {
-      "prompt": "Why does IClockEntryRepository.GetClockEntry return Task<ClockEntry?> instead of plain Task?",
+      "prompt": "What does ClockEntry communicate in the type IEnumerable<ClockEntry>?",
       "options": [
-        "Task<T> carries a result value once the asynchronous operation completes; plain Task represents an operation with no result at all -- GetClockEntry needs to eventually hand back a ClockEntry? value, so it needs the generic form",
-        "Task<ClockEntry?> and Task are interchangeable",
-        "Task<T> is required for every async method regardless of return value"
+        "ClockEntry fills the T placeholder and tells the compiler that enumeration produces ClockEntry values",
+        "It means the sequence must contain exactly one ClockEntry",
+        "It gives IEnumerable an Add method for ClockEntry values"
       ],
       "correct": 0,
-      "explanation": "ClockIn's IClockEntryService.ClockIn method, by contrast, is synchronous void -- and Clockout returns plain Task because it produces no result value, only completion. GetClockEntry needs Task<ClockEntry?> specifically because it DOES produce a result."
+      "explanation": "The type argument preserves element type information: foreach can give the caller a ClockEntry directly, while Session 13's narrower IEnumerable contract still does not promise Add or indexing."
     },
     {
       "prompt": "Can GenericRules.Later<T> be called with both DateTime and int arguments, using the same method definition?",
@@ -67,10 +67,10 @@
     {
       "title": "Generic types already everywhere in this codebase",
       "paragraphs": [
-        "ClockEntryRepository._clockEntries is List<ClockEntry> -- List<T> with T filled in as ClockEntry. EmployeeDirectory's employees field is Dictionary<int, Employee> -- Dictionary<TKey,TValue> with two type arguments supplied. IClockEntryRepository.GetClockEntry returns Task<ClockEntry?> -- Task<TResult> with TResult filled in as the nullable ClockEntry type.",
-        "None of these are new concepts introduced by this session -- they are the same generic types Sessions 5-12 already used, named explicitly here for the first time."
+        "ClockEntryRepository._clockEntries is List<ClockEntry> -- List<T> with T filled in as ClockEntry. EmployeeDirectory's employees field is Dictionary<int, Employee> -- Dictionary<TKey,TValue> with two type arguments supplied. IClockEntryRepository.GetEmployeeClockEntries returns IEnumerable<ClockEntry> -- IEnumerable<T> with T filled in as ClockEntry.",
+        "None of these are new concepts introduced by this session -- they are the same collection types earlier sessions already used, now being recognized explicitly as generic types."
       ],
-      "code": "List<ClockEntry> _clockEntries;              // List<T> with T = ClockEntry\nDictionary<int, Employee> employees;         // Dictionary<TKey,TValue> with TKey=int, TValue=Employee\nTask<ClockEntry?> GetClockEntry(int employeeId, ...);  // Task<TResult> with TResult = ClockEntry?"
+      "code": "List<ClockEntry> _clockEntries;              // List<T> with T = ClockEntry\nDictionary<int, Employee> employees;         // Dictionary<TKey,TValue> with TKey=int, TValue=Employee\nIEnumerable<ClockEntry> entries;             // IEnumerable<T> with T = ClockEntry"
     },
     {
       "title": "A generic method: one definition, many closed forms",
@@ -203,10 +203,10 @@
   "reflections": [
     "Why does writing Later<T> once, instead of LaterDate and LaterId separately, matter beyond saving a few lines of code?",
     "What other places in this codebase might benefit from a generic helper like Later<T>, once you start looking for duplicated type-specific logic?",
-    "How does Task<ClockEntry?> communicate more to a reader than plain Task would, at the exact call site where GetClockEntry is awaited?"
+    "How does IEnumerable<ClockEntry> communicate more to a reader than a non-generic collection whose element type is unknown?"
   ],
   "whatBreaks": "Calling GenericRules.Later with two Employee arguments (instead of their EmployeeId or another IComparable value) fails to compile, because Employee implements no comparison logic -- this is the constraint doing its job, not a limitation to work around. Removing the where T : IComparable<T> constraint would let Later<T> compile against any T, but left.CompareTo(right) inside the method body would then fail to compile, since the compiler could no longer assume CompareTo exists.",
-  "summary": "Generic types are not a new concept this session invents -- List<ClockEntry>, Dictionary<int, Employee>, and Task<ClockEntry?> were already doing real work throughout Sessions 5-12. GenericRules.Later<T> demonstrates the other half of generics: one method definition, reused unmodified across every type (DateTime, int, and any future IComparable<T>) that satisfies its constraint.",
+  "summary": "Generic types are not a new concept this session invents -- List<ClockEntry>, Dictionary<int, Employee>, and IEnumerable<ClockEntry> were already doing real work in earlier sessions. GenericRules.Later<T> demonstrates the other half of generics: one method definition, reused unmodified across every type (DateTime, int, and any future IComparable<T>) that satisfies its constraint.",
   "learningEnvironment": "scratchpad",
   "buildState": {
     "creates": [],
