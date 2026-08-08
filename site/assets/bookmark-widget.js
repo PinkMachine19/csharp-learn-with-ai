@@ -53,6 +53,9 @@
   function assignBlockIds(lessonId) {
     var nodes = document.querySelectorAll(SELECTOR);
     for (var i = 0; i < nodes.length; i++) {
+      if (nodes[i].closest('[data-click-highlight-instructions]')) {
+        continue;
+      }
       if (!nodes[i].dataset.bmId) {
         nodes[i].dataset.bmId = 'bm-' + lessonId + '-' + i;
       }
@@ -143,6 +146,9 @@
         return;
       }
       if (e.target.closest('a, button, input, textarea, label, select, .quiz-option')) {
+        return;
+      }
+      if (e.target.closest('[data-click-highlight-instructions]')) {
         return;
       }
 
