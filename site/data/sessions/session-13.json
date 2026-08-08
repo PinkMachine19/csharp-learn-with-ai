@@ -132,7 +132,10 @@
       "Type an index access, observe that IEnumerable<ClockEntry> has no indexer, then comment out only that invalid line.",
       "Predict whether session13Entries.Count will compile as a property.",
       "Type the Count property access, observe that IEnumerable<ClockEntry> has no Count property, then comment out only that invalid line.",
-      "Use the LINQ Count() extension method and display the result without casting the sequence to List<ClockEntry>.",
+      {
+        "text": "Use the LINQ Count() extension method and display the result without casting the sequence to List<ClockEntry>. Note the distinction: session13Entries.Count does not compile because IEnumerable<T> has no Count property, but session13Entries.Count() does compile because LINQ supplies an extension method that can enumerate any IEnumerable<T> and count its items. The generic type argument is inferred, so write Count(), not Count<ClockEntry>().",
+        "code": "Console.WriteLine($\"Completed entries: {session13Entries.Count()}\");"
+      },
       "Pass session13Entries to Display.",
       "Explain why the caller can enumerate but cannot assume Add, indexing, or a Count property even if the repository happens to use List internally.",
       "Open ScratchPad/Program.cs.",
