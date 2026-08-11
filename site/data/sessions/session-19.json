@@ -78,7 +78,7 @@
         "A derived class uses override to fulfill the abstract contract. It inherits concrete members without copying them.",
         "The hierarchy should represent a genuine is-a relationship, not a desire to reuse a few lines."
       ],
-      "code": "sealed class UpperFormatter : Formatter\n{\n    public override string Format(string value) => Trim(value).ToUpperInvariant();\n}"
+      "code": "sealed class UpperFormatter : Formatter\n{\n    public override string Format(string value) => Normalize(value).ToUpperInvariant();\n}"
     },
     {
       "title": "Interfaces and abstract classes solve different problems",
@@ -123,7 +123,7 @@
           {
             "title": "Solution",
             "text": "Use this only after your own attempt.",
-            "code": "public sealed class Session19InheritanceDemo\n{\n    public void Run()\n    {\n        Formatter formatter = new UpperFormatter();\n        Console.WriteLine(formatter.Format(\"  Time Clock  \"));\n\n        formatter = new LowerFormatter();\n        Console.WriteLine(formatter.Format(\"  Time Clock  \"));\n    }\n}\n\npublic abstract class Formatter\n{\n    public abstract string Format(string value);\n    protected static string Normalize(string value) => value.Trim();\n}\n\npublic sealed class UpperFormatter : Formatter\n{\n    public override string Format(string value) => Normalize(value).ToUpperInvariant();\n}\n\npublic sealed class LowerFormatter : Formatter\n{\n    public override string Format(string value) => Normalize(value).ToLowerInvariant();\n}"
+            "code": "// Session19/Session19InheritanceDemo.cs\npublic sealed class Session19InheritanceDemo\n{\n    public void Run()\n    {\n        Formatter formatter = new UpperFormatter();\n        Console.WriteLine(formatter.Format(\"  Time Clock  \"));\n\n        formatter = new LowerFormatter();\n        Console.WriteLine(formatter.Format(\"  Time Clock  \"));\n    }\n}\n\npublic abstract class Formatter\n{\n    public abstract string Format(string value);\n    protected static string Normalize(string value) => value.Trim();\n}\n\npublic sealed class UpperFormatter : Formatter\n{\n    public override string Format(string value) => Normalize(value).ToUpperInvariant();\n}\n\npublic sealed class LowerFormatter : Formatter\n{\n    public override string Format(string value) => Normalize(value).ToLowerInvariant();\n}\n\n// Append to ScratchPad/Program.cs without removing earlier calls.\nvar session19 = new Session19InheritanceDemo();\nsession19.Run();"
           }
         ]
       }
@@ -133,7 +133,7 @@
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.ScratchPad/ScratchPad/Session19/Session19InheritanceDemo.cs",
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session19/Session19InheritanceDemo.cs",
       "action": "Add",
       "why": "Isolate the inheritance experiment."
     },
