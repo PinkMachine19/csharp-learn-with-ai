@@ -2,185 +2,211 @@
   "number": 18,
   "category": "Object-oriented design",
   "estimatedTime": "40 minutes",
-  "connection": "EmployeeRepository, ClockEntryRepository, and the domain models exist as concrete production code. App currently coordinates them directly. Introduce production repository and service interfaces where the application now has real collaborators to abstract.",
+  "connection": "Session 17 left working concrete repositories in Domain and App can construct them directly. This session extracts one honest interface from ClockEntryRepository's existing public methods; it does not pretend that services, policy classes, or multiple implementations already exist.",
   "objectives": [
-    "List all four real interfaces in PinkMachine19.TimeClock.Domain and their real implementing classes, including the real EmployeeRepositor typo.",
-    "Explain what 'polymorphism' means concretely for ClockEntryService: it depends on IClockEntryRepository, and works correctly regardless of which implementation Program.cs registers.",
-    "Swap StandardHoursPolicy for FlexibleHoursPolicy in a call site and confirm the caller's code does not change, only its behavior.",
-    "Explain why EmployeeRepositor's real class-name typo does not affect polymorphism at all -- the interface name is what callers depend on, not the class name."
+    "Explain an interface as a contract that lists required members without owning the implementation.",
+    "Extract IClockEntryRepository from the three public operations ClockEntryRepository already provides.",
+    "Make ClockEntryRepository satisfy that contract without changing its behavior.",
+    "Use an interface-typed variable and explain what is replaceable now and what is not yet built."
   ],
   "visuals": [
     {
-      "diagram": "branch",
-      "title": "Four real interfaces, four real implementations",
-      "explanation": "IClockEntryRepository -> ClockEntryRepository, IClockEntryService -> ClockEntryService, IEmployeeRepository -> EmployeeRepositor (typo, real), IEmployeeService -> EmployeeService."
+      "diagram": "contract",
+      "title": "Extract the contract from working behavior",
+      "explanation": "IClockEntryRepository repeats the signatures already used to save an entry, query completed entries, and locate an open entry. No speculative service API is invented."
     },
     {
       "diagram": "call",
-      "title": "Callers depend on the interface, never the class name",
-      "explanation": "ClockEntryService's constructor parameter is IClockEntryRepository -- it would compile and run identically no matter what the concrete class implementing it is named, typo or not."
-    },
-    {
-      "diagram": "instances",
-      "title": "Two IHoursPolicy implementations, one call site",
-      "explanation": "IHoursPolicy policy = flexible ? new FlexibleHoursPolicy() : new StandardHoursPolicy(8m); -- the line that calls policy.GetVariance(...) never changes."
+      "title": "The implementation still does the work",
+      "explanation": "The interface contains no List and no method bodies. ClockEntryRepository retains the private collection and implements each operation."
     },
     {
       "diagram": "type",
-      "title": "Polymorphism is resolved at the call, not the declaration",
-      "explanation": "The actual GetVariance implementation that runs depends on which concrete object policy refers to at runtime, not on the declared IHoursPolicy type."
+      "title": "Declared type versus runtime object",
+      "explanation": "IClockEntryRepository repository = new ClockEntryRepository(); exposes only the contract while the runtime object remains ClockEntryRepository."
+    },
+    {
+      "diagram": "branch",
+      "title": "One implementation is enough to learn the boundary",
+      "explanation": "There is only one implementation today. The interface creates a substitution seam for later tests or persistence; it does not prove that a second implementation already exists."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Does EmployeeRepositor's real class-name typo (missing the 'y' in Repository) affect how IEmployeeRepository consumers behave?",
+      "prompt": "Where should the members of IClockEntryRepository come from?",
       "options": [
-        "No -- consumers depend on the IEmployeeRepository interface and its GetEmployeeById method, never on the concrete class's name; the typo is cosmetic to anyone using the interface",
-        "Yes -- it would cause a runtime error every time GetEmployeeById is called",
-        "Yes -- the interface itself must share the same name as its implementation"
+        "The public repository behavior the application already uses",
+        "A guessed future service",
+        "Every method on every domain class"
       ],
       "correct": 0,
-      "explanation": "This is a real, verified fact about the source: EmployeeRepositor's typo has shipped in production-adjacent code without breaking anything, precisely because C# does not require implementation class names to relate to their interface names at all."
+      "explanation": "Extracting an interface from working behavior keeps the contract small and truthful."
     },
     {
-      "prompt": "What single line changes when swapping StandardHoursPolicy for FlexibleHoursPolicy at a call site that only ever calls policy.GetVariance(...)?",
+      "prompt": "Does an interface-typed variable construct an interface object?",
       "options": [
-        "Only the line that constructs the policy object (new StandardHoursPolicy(8m) becomes new FlexibleHoursPolicy()) -- every line that calls policy.GetVariance(...) afterward is unchanged",
-        "Every line in the calling method needs to change",
-        "GetVariance's method signature must change"
+        "No; it still refers to an object created from a concrete class",
+        "Yes; interfaces are constructed with new",
+        "Only in tests"
       ],
       "correct": 0,
-      "explanation": "This is the entire value of programming against IHoursPolicy: the construction site is the only place that names a concrete type; every subsequent use goes through the interface."
+      "explanation": "The declared type controls visible capabilities; the concrete object supplies the implementation."
     },
     {
-      "prompt": "How many real, distinct interfaces in PinkMachine19.TimeClock.Domain have exactly one concrete implementing class each?",
+      "prompt": "How many IClockEntryRepository implementations exist at the start of this lab?",
       "options": [
-        "Four -- IClockEntryRepository, IClockEntryService, IEmployeeRepository, IEmployeeService each have exactly one real implementation, confirmed by reading the source directly",
-        "Zero -- none of these are actually interfaces",
-        "Eight -- each has two implementations"
+        "One: ClockEntryRepository",
+        "Two",
+        "Four"
       ],
       "correct": 0,
-      "explanation": "Even with only one implementation each today, all four are still real interfaces, giving Session 20's dependency injection and Session 30's test doubles a seam to substitute against."
+      "explanation": "The lesson must describe the learner's real code, not a future architecture."
     }
   ],
   "concept": [
     {
-      "title": "Extract contracts from behavior that exists",
+      "title": "An interface states a contract",
       "paragraphs": [
-        "The repositories already save and retrieve production models, so their interfaces describe observed behavior instead of speculative architecture.",
-        "A consumer depends on the contract; the composition root chooses the implementation."
+        "An interface says which operations an implementation must provide. It does not store the repository List or explain how those operations work.",
+        "Use the exact signatures already present on ClockEntryRepository so the abstraction follows real behavior."
       ],
-      "code": "public interface IClockEntryRepository\n{\n    void Save(ClockEntry entry);\n    IEnumerable<ClockEntry> ForEmployee(int employeeId);\n}"
+      "code": "public interface IClockEntryRepository\n{\n    void SaveClockEntry(ClockEntry clockEntry);\n    IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate);\n    ClockEntry? GetOpenClockEntry(int employeeId);\n}"
     },
     {
-      "title": "Services coordinate use cases",
+      "title": "The concrete repository implements the contract",
       "paragraphs": [
-        "ClockEntry owns its state rules. ClockEntryService coordinates finding, creating, completing, and saving entries.",
-        "That division keeps the model focused and persistence replaceable."
+        "Adding : IClockEntryRepository asks the compiler to verify that ClockEntryRepository supplies every required member with a compatible signature.",
+        "The methods and private collection do not need to move into the interface."
       ],
-      "code": "public sealed class ClockEntryService(IClockEntryRepository entries)"
+      "code": "public sealed class ClockEntryRepository : IClockEntryRepository"
     },
     {
-      "title": "Polymorphism appears at the call site",
+      "title": "Polymorphism starts with the caller's view",
       "paragraphs": [
-        "The service can work with the in-memory repository today and an EF-backed repository later because both satisfy the same required behavior.",
-        "No fictional policy hierarchy is needed to prove the point."
+        "An interface-typed variable can refer to any object that implements the interface. Today it refers to ClockEntryRepository; later a test double or database repository could occupy the same slot.",
+        "This session creates the boundary only. Session 20 gives a service a genuine reason to depend on it."
       ],
       "code": "IClockEntryRepository repository = new ClockEntryRepository();"
     }
   ],
   "lab": {
-    "objective": "Introduce production repository and service interfaces where the application now has real collaborators to abstract.",
-    "startingCondition": "EmployeeRepository, ClockEntryRepository, and the domain models exist as concrete production code. App currently coordinates them directly.",
-    "steps": [
-      "Extract IEmployeeRepository and IClockEntryRepository from behavior App already uses.",
-      "Make both in-memory repositories implement their contracts.",
-      "Create ClockEntryService to coordinate clock-in and clock-out through IClockEntryRepository.",
-      "Create EmployeeService only for verified employee lookup/registration behavior.",
-      "Update App to depend on the interfaces and services, then build."
+    "clickHighlightInstructions": true,
+    "stepCheckboxes": true,
+    "objective": "Extract one accurate repository interface from code that already works, then use that contract from App.",
+    "startingCondition": "Domain contains ClockEntryRepository with SaveClockEntry, GetEmployeeClockEntries, and GetOpenClockEntry. No repository interface or production service exists yet.",
+    "keyPointTitle": "Do not invent abstractions ahead of behavior",
+    "keyPoints": [
+      "Copy signatures, not method bodies, into the interface.",
+      "Keep repository storage private inside ClockEntryRepository.",
+      "Use one interface now; services and additional implementations arrive only when a later lesson creates a reason."
     ],
-    "expectedBehavior": "Interfaces are extracted from working production behavior, and services coordinate real use cases rather than demonstrating polymorphism artificially.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+    "steps": [
+      "Open Repositories/ClockEntryRepository.cs and list its three public methods.",
+      "Confirm _clockEntries remains private so the interface does not expose storage.",
+      "Create IClockEntryRepository.cs in the Domain project.",
+      "Use the same namespace as ClockEntryRepository.",
+      "Declare public interface IClockEntryRepository.",
+      "Add the SaveClockEntry signature without copying its body.",
+      "Add the GetEmployeeClockEntries signature with its existing parameter and return types.",
+      "Add the GetOpenClockEntry signature, including the nullable ClockEntry? return type.",
+      "Build to catch any signature or namespace mistakes before changing the class.",
+      "Add : IClockEntryRepository to the ClockEntryRepository declaration.",
+      "Build again and let the compiler verify all three members.",
+      "Open App/Program.cs and preserve every earlier session section.",
+      "Append a clearly labeled Session 18 section.",
+      "Declare an IClockEntryRepository variable and assign a new ClockEntryRepository to it.",
+      "Call one existing repository operation through the interface variable.",
+      "Explain in a comment why repository-specific members would not be visible through that variable.",
+      {
+        "text": "Run App, then build and test the solution. Open the solution only after making your own attempt.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "Compare the contract and implementation declaration with your work. Keep your existing repository method bodies and earlier Program.cs sections.",
+            "code": "// IClockEntryRepository.cs\nnamespace PinkMachine19.TimeClock.Domain;\n\npublic interface IClockEntryRepository\n{\n    void SaveClockEntry(ClockEntry clockEntry);\n    IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate);\n    ClockEntry? GetOpenClockEntry(int employeeId);\n}\n\n// Change only the declaration in ClockEntryRepository.cs.\npublic sealed class ClockEntryRepository : IClockEntryRepository\n\n// Append in App/Program.cs.\nIClockEntryRepository repository = new ClockEntryRepository();\nClockEntry? openEntry = repository.GetOpenClockEntry(18);\nConsole.WriteLine(openEntry is null ? \"No open entry\" : \"Open entry found\");"
+          }
+        ]
+      }
+    ],
+    "expectedBehavior": "The repository still behaves exactly as before, the compiler confirms it satisfies IClockEntryRepository, and App calls it through the interface contract.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
       "path": "src/PinkMachine19.TimeClock.Domain/IClockEntryRepository.cs",
       "action": "Add",
-      "why": "Abstract entry persistence behavior."
+      "why": "Declare the existing repository operations as one contract."
     },
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/IEmployeeRepository.cs",
-      "action": "Add",
-      "why": "Abstract employee persistence behavior."
+      "path": "src/PinkMachine19.TimeClock.Domain/Repositories/ClockEntryRepository.cs",
+      "action": "Modify",
+      "why": "Declare that the concrete repository implements the contract."
     },
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryService.cs",
-      "action": "Add",
-      "why": "Coordinate clocking use cases."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Domain/EmployeeService.cs",
-      "action": "Add",
-      "why": "Coordinate employee use cases."
+      "path": "src/PinkMachine19.TimeClock.App/Program.cs",
+      "action": "Modify",
+      "why": "Exercise the repository through an interface-typed variable."
     },
     {
       "path": "site/data/sessions/session-18.json",
       "action": "Modify",
-      "why": "Keep the lesson synchronized with the cumulative build step."
+      "why": "Keep the lesson synchronized with the real cumulative build."
     }
   ],
-  "commit": "session-17: teach interfaces and polymorphism",
+  "commit": "session-18: teach interfaces and polymorphism",
   "review": [
-    "The lab uses production because that is the most natural environment for this concept.",
-    "Every referenced application artifact was created in this session or an earlier session.",
-    "Earlier production code, tests, and ScratchPad experiments remain intact."
+    "The interface matches the three existing repository signatures.",
+    "No service, employee interface, policy hierarchy, or second implementation is claimed to exist.",
+    "Earlier production code and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
-      "prompt": "If a third IHoursPolicy implementation were added tomorrow (say, OvertimeHoursPolicy), how many existing call sites that call policy.GetVariance(...) would need to change?",
+      "prompt": "What does : IClockEntryRepository add to ClockEntryRepository?",
       "options": [
-        "Zero -- any code written against the IHoursPolicy interface accepts any implementation without modification; only the code that decides WHICH implementation to construct would need updating",
-        "All of them -- every call site would need a new branch",
-        "Exactly one -- the interface declaration itself"
+        "A compiler-checked promise that the class supplies the contract",
+        "A second List",
+        "Automatic database storage"
       ],
       "correct": 0,
-      "explanation": "This is the practical payoff of polymorphism: adding a new implementation is additive, not a breaking change to existing interface-typed code."
+      "explanation": "The class still owns the implementation; the compiler checks the promised members."
     },
     {
-      "prompt": "Why does EmployeeRepositor's typo matter for a code reviewer, even though it doesn't matter for runtime behavior?",
+      "prompt": "Why not create four interfaces in this session?",
       "options": [
-        "It is a real, minor maintainability smell -- future readers searching for 'EmployeeRepository' by exact name will not find it, even though the code works correctly",
-        "It causes GetEmployeeById to return null",
-        "It prevents the class from implementing IEmployeeRepository"
+        "Only the clock-entry repository has been selected as a real boundary needed by the next session",
+        "C# allows only one interface",
+        "Interfaces cannot describe services"
       ],
       "correct": 0,
-      "explanation": "The lesson distinguishes correctness (unaffected) from maintainability (mildly affected) -- both are real, separate concerns worth naming honestly."
+      "explanation": "A small honest abstraction is easier to understand than speculative architecture."
     },
     {
-      "prompt": "What would ClockEntryService lose if its constructor took ClockEntryRepository directly instead of IClockEntryRepository?",
+      "prompt": "What can later replace ClockEntryRepository without changing an interface-based consumer?",
       "options": [
-        "The ability for Session 30's test doubles (a fake repository) to substitute in during testing, and the ability for a future EF Core-backed repository (Session 31) to substitute in during production",
-        "Nothing -- ClockEntryRepository already implements every member ClockEntryService needs",
-        "The ability to call SaveClockEntry"
+        "Any implementation of IClockEntryRepository",
+        "Any arbitrary class",
+        "Only a subclass of ClockEntryRepository"
       ],
       "correct": 0,
-      "explanation": "Depending on the concrete class still compiles and runs today, but permanently forecloses substitution -- exactly the cost Session 20 discusses for dependency direction."
+      "explanation": "Interface polymorphism depends on satisfying the contract, not inheriting the implementation."
     }
   ],
   "reflections": [
-    "Why does 'the interface name matters, the class name doesn't' feel counterintuitive at first, given how often class names are chosen carefully?",
-    "Where else in this codebase besides IHoursPolicy could a second, alternative implementation plausibly be added without touching any existing call site?",
-    "What would you look for in a code review to confirm a new class is genuinely programmed against an interface, not accidentally coupled to one concrete implementation?"
+    "Which repository details remain deliberately hidden from IClockEntryRepository?",
+    "Why is having only one implementation today not proof that the interface is fake?",
+    "What evidence would justify extracting another interface later?"
   ],
-  "whatBreaks": "Changing ClockEntryService's constructor to depend on the concrete ClockEntryRepository class instead of IClockEntryRepository would still compile today, but it would permanently prevent Session 30's test doubles and Session 31's EF Core-backed repository from ever substituting in without changing ClockEntryService itself. Renaming EmployeeRepositor to fix its typo would require no changes anywhere else in the codebase precisely because nothing depends on that class name directly -- proof, by omission, that the typo was always harmless to behavior.",
-  "summary": "PinkMachine19.TimeClock.Domain has four real interfaces, each with one real implementation, verified directly against source -- including EmployeeRepositor's real class-name typo, which never mattered because nothing depends on implementation class names. IHoursPolicy's two implementations, StandardHoursPolicy and FlexibleHoursPolicy, demonstrate polymorphism concretely: one call site, policy.GetVariance(...), produces different results depending only on which object policy actually refers to at runtime.",
+  "whatBreaks": "If a signature in IClockEntryRepository differs from the existing method, ClockEntryRepository cannot satisfy the contract. If App declares the variable as ClockEntryRepository instead, behavior still works but the caller is coupled to that concrete implementation.",
+  "summary": "Session 18 extracts one truthful IClockEntryRepository contract from the three operations already implemented by ClockEntryRepository. The concrete repository keeps its private storage and behavior; App merely narrows its view to the interface. Services and alternate implementations are not claimed to exist yet.",
   "learningEnvironment": "production",
   "buildState": {
     "creates": [
-      "repository and service interfaces",
-      "ClockEntryService",
-      "EmployeeService"
+      "IClockEntryRepository"
     ],
-    "extends": []
+    "extends": [
+      "ClockEntryRepository",
+      "App composition"
+    ]
   }
 }

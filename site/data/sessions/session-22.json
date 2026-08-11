@@ -2,124 +2,154 @@
   "number": 22,
   "category": "relational transformations",
   "estimatedTime": "40 minutes",
-  "connection": "WorkSummary, EmployeeRepository, ClockEntryRepository, and single-employee total-hours behavior already exist from earlier production sessions. Add the verified multi-employee work-summary report using grouping, joining, and aggregation.",
+  "connection": "Session 21 can filter, order, project, and total clock entries. No WorkSummary type exists yet, so this session explicitly creates the report result before using GroupBy and Join.",
   "objectives": [
-    "Use GroupBy to partition a mixed list of ClockEntry objects by EmployeeId, the same key CalculateTotalHours filters on for a single employee.",
-    "Reuse GetDuartion().TotalHours as the per-group Sum projection, exactly as PayrollService does for one employee.",
-    "Use Join to correlate a list of Employee objects with a list of computed WorkSummary totals by matching EmployeeId.",
-    "Explain why grouping many employees is a genuine extension beyond what the real PayrollService class currently does."
+    "Create the WorkSummary result type before querying into it.",
+    "Use GroupBy to partition completed entries by employee.",
+    "Aggregate each group into total hours.",
+    "Use Join to correlate independent employee and summary sequences by ID."
   ],
   "visuals": [
     {
       "diagram": "branch",
-      "title": "GroupBy partitions by EmployeeId",
-      "explanation": "entries.GroupBy(entry => entry.EmployeeId) -- the same key CalculateTotalHours filters on for one employee, applied to every employee at once."
+      "title": "GroupBy creates one bucket per employee",
+      "explanation": "Every completed ClockEntry is routed to the group whose key equals its EmployeeId."
     },
     {
       "diagram": "pipeline",
-      "title": "Each group sums with the real GetDuartion projection",
-      "explanation": "group.Sum(entry => (decimal)entry.GetDuartion().TotalHours) -- identical to PayrollService.CalculateTotalHours's own Sum lambda."
+      "title": "Each group becomes one WorkSummary",
+      "explanation": "Select converts a group key and its summed durations into a report result."
     },
     {
-      "diagram": "instances",
-      "title": "Join correlates two independent sequences by key",
-      "explanation": "employees.Join(summaries, e => e.EmployeeId, s => s.EmployeeId, ...) -- inner-join semantics: unmatched employees are silently excluded."
+      "diagram": "call",
+      "title": "Join matches two independent sequences",
+      "explanation": "Employee IDs connect employee names to WorkSummary totals without embedding an Employee object in the report."
     },
     {
-      "diagram": "return",
-      "title": "A genuine extension beyond the real PayrollService",
-      "explanation": "CalculateTotalHours only ever handles one employeeId; HoursByEmployee and EmployeeLabels answer a multi-employee question it does not."
+      "diagram": "snapshot",
+      "title": "The report is materialized deliberately",
+      "explanation": "ToList creates the finished report snapshot after filtering, grouping, projection, and ordering."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "What does entries.GroupBy(e => e.EmployeeId) produce?",
+      "prompt": "What becomes the key of each clock-entry group?",
       "options": [
-        "One group per distinct EmployeeId, each group holding that employee's entries",
-        "A single flat list with duplicates removed",
-        "A dictionary keyed by ClockIn timestamp"
+        "EmployeeId",
+        "ClockIn",
+        "Hours"
       ],
       "correct": 0,
-      "explanation": "GroupBy partitions the sequence by the key selector -- every entry with the same EmployeeId lands in the same group."
+      "explanation": "One group represents one employee."
     },
     {
-      "prompt": "How does HoursByEmployee turn each group into a total?",
+      "prompt": "Why must WorkSummary be created in this session?",
       "options": [
-        "group.Sum(entry => (decimal)entry.GetDuartion().TotalHours) -- the exact same GetDuartion().TotalHours projection PayrollService uses for one employee",
-        "By calling PayrollService.CalculateTotalHours directly on the group",
-        "By counting the entries in the group"
+        "No earlier session created it",
+        "GroupBy creates classes automatically",
+        "Join requires records"
       ],
       "correct": 0,
-      "explanation": "The per-group Sum reuses the identical projection PayrollService.CalculateTotalHours already uses -- grouping just applies it to every employee's entries at once instead of one filtered subset."
+      "explanation": "The lesson must not assume a missing result type."
     },
     {
-      "prompt": "What does employees.Join(summaries, e => e.EmployeeId, s => s.EmployeeId, ...) require of its two key selectors?",
+      "prompt": "What does an inner Join produce for an employee with no summary?",
       "options": [
-        "Both keys must be the same type (int, here) so the join can match employees to summaries by EmployeeId",
-        "The two sequences must already be sorted",
-        "Join can only correlate sequences of the same element type"
+        "No result row",
+        "A zero-hour row automatically",
+        "An exception"
       ],
       "correct": 0,
-      "explanation": "Join matches elements from two different sequences by comparing keys of the same type -- Employee.EmployeeId against WorkSummary.EmployeeId."
+      "explanation": "An inner join returns only matching keys."
     }
   ],
   "concept": [
     {
-      "title": "GroupBy generalizes PayrollService's single-employee filter",
+      "title": "GroupBy partitions before aggregation",
       "paragraphs": [
-        "PayrollService.CalculateTotalHours only ever handles one employeeId per call, because GetEmployeeClockEntries filters to one employeeId before anything is summed.",
-        "ClockEntryAnalytics.HoursByEmployee answers a question PayrollService cannot: totals for every employee at once. GroupBy(entry => entry.EmployeeId) is the key that makes that possible without changing PayrollService itself."
+        "After removing open entries, GroupBy(entry => entry.EmployeeId) creates one sequence per employee.",
+        "Each group exposes its EmployeeId through Key and its entries through enumeration."
       ],
-      "code": "// A new, clearly-labeled extension -- not present in the real PayrollService\npublic static IReadOnlyList<WorkSummary> HoursByEmployee(IEnumerable<ClockEntry> entries) => entries\n    .Where(entry => entry.ClockOut is not null)\n    .GroupBy(entry => entry.EmployeeId)\n    .Select(group => new WorkSummary(group.Key, group.Sum(entry => (decimal)entry.GetDuartion().TotalHours)))\n    .OrderBy(summary => summary.EmployeeId)\n    .ToList();"
+      "code": ".Where(entry => entry.Clockout is not null)\n.GroupBy(entry => entry.EmployeeId)"
     },
     {
-      "title": "Join correlates two independent sequences by key",
+      "title": "Select turns each group into a report result",
       "paragraphs": [
-        "EmployeeLabels takes a list of Employee objects and a list of WorkSummary totals -- two sequences with no direct reference to each other -- and correlates them by matching EmployeeId to EmployeeId.",
-        "This is the LINQ equivalent of a SQL inner join: only employees that appear in both sequences produce a result."
+        "WorkSummary is introduced explicitly in this session. It stores the employee key and total hours produced by summing that group.",
+        "Ordering by EmployeeId makes the report deterministic before ToList creates the snapshot."
       ],
-      "code": "public static IEnumerable<string> EmployeeLabels(IEnumerable<Employee> employees, IEnumerable<WorkSummary> summaries) =>\n    employees.Join(summaries, employee => employee.EmployeeId, summary => summary.EmployeeId,\n        (employee, summary) => $\"{employee.Name}: {summary.Hours:F1}\");"
+      "code": ".Select(group => new WorkSummary(\n    group.Key,\n    group.Sum(entry => entry.GetDuration().TotalHours)))\n.OrderBy(summary => summary.EmployeeId)\n.ToList();"
     },
     {
-      "title": "Verify with deterministic, small totals",
+      "title": "Join correlates independent sequences",
       "paragraphs": [
-        "The tests use exact hour counts (3 + 4 = 7) so a wrong GroupBy key or a wrong Sum projection produces an immediately obvious wrong total, not a hard-to-spot rounding difference.",
-        "This mirrors PayrollServiceTests.cs's own style: small, exact, easy-to-verify-by-hand shift lengths."
+        "Employee objects and WorkSummary objects are separate sequences. Join matches Employee.Identity to WorkSummary.EmployeeId and projects a display label.",
+        "Use the employee ID and name property names that exist in your current Employee class."
       ],
-      "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+      "code": "employees.Join(\n    summaries,\n    employee => employee.Identity,\n    summary => summary.EmployeeId,\n    (employee, summary) => $\"{employee.Name}: {summary.Hours:F1}\")"
     }
   ],
   "lab": {
-    "objective": "Add the verified multi-employee work-summary report using grouping, joining, and aggregation.",
-    "startingCondition": "WorkSummary, EmployeeRepository, ClockEntryRepository, and single-employee total-hours behavior already exist from earlier production sessions.",
+    "objective": "Create a WorkSummary result type, group completed entries into per-employee totals, then join those totals to employee names.",
+    "startingCondition": "Employee, ClockEntry, and the Session 21 LINQ queries exist. WorkSummary and ClockEntryAnalytics do not exist yet.",
     "steps": [
-      "Add a report method that groups completed entries by EmployeeId.",
-      "Aggregate each group into WorkSummary.",
-      "Join summaries with employees only when the output requires employee information.",
-      "Define empty-entry behavior explicitly.",
-      "Call the report from App and preserve the single-employee workflow."
+      "Create Reports/WorkSummary.cs in Domain.",
+      "Declare a public sealed WorkSummary class.",
+      "Add get-only EmployeeId and Hours properties.",
+      "Create a constructor that initializes both properties.",
+      "Build before writing the query.",
+      "Create Reports/ClockEntryAnalytics.cs.",
+      "Declare a public static ClockEntryAnalytics class.",
+      "Stub HoursByEmployee with an IEnumerable<ClockEntry> parameter.",
+      "Filter out entries whose Clockout is null before calling GetDuration.",
+      "Group the remaining entries by EmployeeId.",
+      "Project each group to a WorkSummary whose Hours is the sum of GetDuration().TotalHours.",
+      "Order the summaries by EmployeeId.",
+      "Materialize the report with ToList because this method returns a finished report snapshot.",
+      "Stub EmployeeLabels with employee and summary sequences.",
+      "Join employees to summaries by their matching IDs.",
+      "Project each match to a readable name-and-hours string.",
+      "Append a Session 22 App section that prints the report.",
+      {
+        "text": "Run App and verify the solution.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "Use the Employee ID/name and Clockout property names established in your source.",
+            "code": "public sealed class WorkSummary\n{\n    public WorkSummary(int employeeId, double hours)\n    {\n        EmployeeId = employeeId;\n        Hours = hours;\n    }\n\n    public int EmployeeId { get; }\n    public double Hours { get; }\n}\n\npublic static IReadOnlyList<WorkSummary> HoursByEmployee(IEnumerable<ClockEntry> entries) => entries\n    .Where(entry => entry.Clockout is not null)\n    .GroupBy(entry => entry.EmployeeId)\n    .Select(group => new WorkSummary(group.Key, group.Sum(entry => entry.GetDuration().TotalHours)))\n    .OrderBy(summary => summary.EmployeeId)\n    .ToList();"
+          }
+        ]
+      }
     ],
     "expectedBehavior": "Production can report completed hours per employee using existing models and repositories.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
+    "clickHighlightInstructions": true,
+    "stepCheckboxes": true
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryAnalytics.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/Reports/WorkSummary.cs",
       "action": "Add",
-      "why": "Produce multi-employee summaries."
+      "why": "Create the report result the old lesson incorrectly assumed already existed."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Domain/Reports/ClockEntryAnalytics.cs",
+      "action": "Add",
+      "why": "Implement grouping, aggregation, and joining."
     },
     {
       "path": "src/PinkMachine19.TimeClock.App/Program.cs",
       "action": "Modify",
-      "why": "Display the report."
+      "why": "Display the finished report."
     },
     {
       "path": "site/data/sessions/session-22.json",
       "action": "Modify",
-      "why": "Keep the lesson synchronized with the cumulative build step."
+      "why": "Make every prerequisite explicit."
     }
   ],
-  "commit": "session-21: teach grouping joining and aggregation",
+  "commit": "session-22: teach grouping joining and aggregation",
   "review": [
     "The lab uses production because that is the most natural environment for this concept.",
     "Every referenced application artifact was created in this session or an earlier session.",
@@ -127,48 +157,51 @@
   ],
   "postQuiz": [
     {
-      "prompt": "Why does HoursByEmployee filter entry.ClockOut is not null before grouping, the same way GetEmployeeClockEntries does?",
+      "prompt": "Why filter open entries before GroupBy and Sum?",
       "options": [
-        "Grouping an open entry would still work, but summing it with GetDuartion() would throw -- the filter has to run before the Sum either way",
-        "GroupBy requires every entry to be completed",
-        "It has no effect on the result"
+        "Their durations are incomplete",
+        "GroupBy cannot accept null",
+        "It changes the join key"
       ],
       "correct": 0,
-      "explanation": "The same reasoning from Session 21 applies here: GetDuartion throws on an open entry, so filtering happens before, not after, aggregation."
+      "explanation": "The aggregation must only call GetDuration on completed entries."
     },
     {
-      "prompt": "If an Employee has no matching WorkSummary (no completed entries yet), what does Join produce for them?",
+      "prompt": "What does Select receive after GroupBy?",
       "options": [
-        "Nothing -- Join is an inner join, so an employee with no summary is silently excluded from the result",
-        "A summary with zero hours is created automatically",
-        "An exception is thrown"
+        "One grouping at a time",
+        "One employee name",
+        "The repository"
       ],
       "correct": 0,
-      "explanation": "LINQ's Join has inner-join semantics: only keys present in both sequences appear in the output. An employee with zero completed shifts never appears in summaries, so they are dropped, not zero-filled."
+      "explanation": "Each grouping has a Key and the entries for that key."
     },
     {
-      "prompt": "Is HoursByEmployee something the real PayrollService class currently needs?",
+      "prompt": "Which keys should Join compare?",
       "options": [
-        "No -- PayrollService.CalculateTotalHours only ever handles one employeeId; this is a genuine, clearly-labeled extension for a multi-employee report",
-        "Yes, it replaces CalculateTotalHours",
-        "Yes, it is required by IClockEntryRepository"
+        "Employee's ID and WorkSummary.EmployeeId",
+        "Employee.Name and Hours",
+        "ClockIn and EmployeeId"
       ],
       "correct": 0,
-      "explanation": "This session builds on the real domain but adds new capability -- a payroll-summary-for-everyone report -- that the real, narrower PayrollService does not provide."
+      "explanation": "The shared identity establishes the relationship."
     }
   ],
   "reflections": [
-    "Why does grouping by EmployeeId reuse the exact same GetDuartion().TotalHours projection PayrollService already uses for one employee?",
-    "What would change about EmployeeLabels if two employees shared the same EmployeeId (a data integrity problem Join alone cannot catch)?",
-    "Where would a multi-employee report like this plug into the real application -- Program.cs, or a new WebApi endpoint from Session 33?"
+    "Why is WorkSummary a report result instead of another repository?",
+    "What does GroupBy remove from a manual nested-loop solution?",
+    "Would an employee with no entries need an inner join or a left join?"
   ],
-  "whatBreaks": "Removing the ClockOut is not null filter reintroduces GetDuartion's InvalidOperationException into the Sum call. Removing OrderBy makes the grouped totals order non-deterministic across runs, which would make the tests flaky. Using a plain foreach loop instead of Join to correlate employees and summaries would require a manual dictionary lookup -- reintroducing exactly the accidental complexity Join and GroupBy remove.",
-  "summary": "GroupBy and Join extend PayrollService's real single-employee Sum pipeline to a multi-employee report: GroupBy partitions by EmployeeId using the same GetDuartion().TotalHours projection, and Join correlates the resulting totals back to employee names by matching EmployeeId across two independent sequences.",
+  "whatBreaks": "Without WorkSummary the projection has no declared result type. Grouping before removing open entries lets GetDuration encounter incomplete data. Using the wrong join key drops or mismatches employee labels.",
+  "summary": "Session 22 now creates WorkSummary before using it, then builds a completed-entry report with GroupBy, Sum, ordering, and Join. Nothing is described as pre-existing unless an earlier session actually created it.",
   "learningEnvironment": "production",
   "buildState": {
-    "creates": [],
+    "creates": [
+      "WorkSummary",
+      "ClockEntryAnalytics"
+    ],
     "extends": [
-      "multi-employee work summaries"
+      "App reporting"
     ]
   }
 }

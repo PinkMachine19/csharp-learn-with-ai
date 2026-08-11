@@ -3,23 +3,20 @@ namespace PinkMachine19.TimeClock.Domain.Tests;
 public sealed class TimesheetTests
 {
     [Fact]
-    public void Composition_keeps_employee_and_entries_together()
+    public void TryAdd_accepts_matching_entry_and_rejects_mismatched_entry()
     {
         Employee employee = new(1, "A", new Address());
         Timesheet sheet = new(employee);
-        ClockEntry entry = new(1, DateTime.UnixEpoch);
+        ClockEntry matchingEntry = new(1, DateTime.UnixEpoch);
+        ClockEntry mismatchedEntry = new(2, DateTime.UnixEpoch);
 
-        sheet.Add(entry);
+        bool matchingAccepted = sheet.TryAdd(matchingEntry);
+        bool mismatchedAccepted = sheet.TryAdd(mismatchedEntry);
 
+        Assert.True(matchingAccepted);
+        Assert.False(mismatchedAccepted);
         Assert.Same(employee, sheet.Employee);
-        Assert.Same(entry, Assert.Single(sheet.Entries));
-    }
-
-    [Fact]
-    public void Encapsulation_rejects_another_employees_entry()
-    {
-        Timesheet sheet = new(new Employee(1, "A", new Address()));
-
-        Assert.Throws<ArgumentException>(() => sheet.Add(new ClockEntry(2, DateTime.UnixEpoch)));
+        Assert.Equal(1, sheet.Entries.Count);
+        Assert.Same(matchingEntry, sheet.Entries[0]);
     }
 }

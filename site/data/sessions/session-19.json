@@ -2,33 +2,33 @@
   "number": 19,
   "category": "Object-oriented design",
   "estimatedTime": "40 minutes",
-  "connection": "Production now uses interfaces for real variation. Forcing inheritance into those services would weaken the design, so this language comparison belongs in ScratchPad. Teach inheritance and abstract members in ScratchPad because TimeClock has no verified requirement for a class hierarchy.",
+  "connection": "Session 18 introduced interface-based polymorphism for a production repository. TimeClock still has no genuine class hierarchy, so inheritance is practiced in a Session 19 ScratchPad class instead of inventing policies in Domain.",
   "objectives": [
-    "Explain what HoursPolicyBase adds beyond what IHoursPolicy alone already provided: a shared, non-abstract Round helper both derived classes inherit for free.",
-    "Distinguish HoursPolicyBase's abstract GetVariance (each derived class must supply its own) from its concrete Round (shared, inherited, never overridden).",
-    "Confirm StandardHoursPolicy.GetVariance's override keyword is required, and explain what the compiler checks it against.",
-    "Preview why PayrollDbContext (Session 31) will be this codebase's first real, necessary use of inheritance -- EF Core requires a DbContext subclass, not just an interface implementation."
+    "Distinguish an abstract base class from an interface.",
+    "Implement an abstract member with override.",
+    "Reuse one protected concrete helper from two related derived formatters.",
+    "Judge why this demonstration belongs in ScratchPad rather than TimeClock production code."
   ],
   "visuals": [
     {
       "diagram": "blueprint",
-      "title": "An abstract class can mix required and shared members",
-      "explanation": "HoursPolicyBase declares GetVariance as abstract (each subclass must implement it) and Round as a concrete, shared protected method (subclasses inherit it unchanged)."
+      "title": "Formatter is an incomplete base",
+      "explanation": "Formatter requires Format but supplies Normalize. It cannot be constructed directly."
+    },
+    {
+      "diagram": "branch",
+      "title": "Two related types inherit one helper",
+      "explanation": "UpperFormatter and LowerFormatter both are Formatters and reuse Normalize rather than duplicating trimming behavior."
     },
     {
       "diagram": "call",
-      "title": "override is checked against the abstract declaration",
-      "explanation": "StandardHoursPolicy.GetVariance must use override, and its signature must match HoursPolicyBase's abstract declaration exactly, or the compiler rejects it."
+      "title": "override fulfills the abstract member",
+      "explanation": "The compiler checks each Format override against Formatter.Format."
     },
     {
-      "diagram": "instances",
-      "title": "Round is never duplicated",
-      "explanation": "Neither StandardHoursPolicy nor FlexibleHoursPolicy defines its own Round method -- both inherit the single implementation from HoursPolicyBase."
-    },
-    {
-      "diagram": "invariant",
-      "title": "An interface alone could not have done this",
-      "explanation": "IHoursPolicy could declare GetVariance, but interfaces (before default interface members) cannot supply Round's shared implementation the way an abstract base class can."
+      "diagram": "contract",
+      "title": "Interface or abstract class?",
+      "explanation": "Use an interface for a capability and substitution boundary; use an abstract class only for a genuine related family that benefits from shared implementation."
     }
   ],
   "preQuiz": [
@@ -70,7 +70,7 @@
         "An abstract member requires each derived type to provide behavior. A concrete member supplies shared behavior once.",
         "ScratchPad is appropriate because TimeClock's production variation is already modeled naturally with interfaces."
       ],
-      "code": "abstract class Formatter\n{\n    public abstract string Format(string value);\n    protected static string Trim(string value) => value.Trim();\n}"
+      "code": "abstract class Formatter\n{\n    public abstract string Format(string value);\n    protected static string Normalize(string value) => value.Trim();\n}"
     },
     {
       "title": "Derived types override required behavior",
@@ -89,34 +89,66 @@
     }
   ],
   "lab": {
-    "objective": "Teach inheritance and abstract members in ScratchPad because TimeClock has no verified requirement for a class hierarchy.",
-    "startingCondition": "Production now uses interfaces for real variation. Forcing inheritance into those services would weaken the design, so this language comparison belongs in ScratchPad.",
+    "clickHighlightInstructions": true,
+    "stepCheckboxes": true,
+    "objective": "Build one small formatter hierarchy to observe abstract, protected, inherited, and overridden members without changing the TimeClock design.",
+    "startingCondition": "Session 19 has no dedicated ScratchPad class. Production uses IClockEntryRepository and has no verified need for inheritance.",
+    "keyPointTitle": "Inheritance must represent a real relationship",
+    "keyPoints": [
+      "Formatter cannot be constructed because it is abstract.",
+      "Derived formatters must override Format.",
+      "Normalize is protected: derived classes can call it, unrelated callers cannot.",
+      "This ScratchPad example does not create a production HoursPolicy hierarchy."
+    ],
     "steps": [
-      "Create InheritanceExperiments.cs in ScratchPad.",
-      "Define one small abstract base type with one abstract and one concrete member.",
-      "Create two derived types and observe inherited versus overridden behavior.",
-      "Write a note comparing this closed hierarchy with the production interfaces from Session 18.",
+      "Create ScratchPad/Session19/Session19InheritanceDemo.cs.",
+      "Declare a public sealed Session19InheritanceDemo class.",
+      "Add a public Run method.",
+      "Below the demo class, declare an abstract Formatter class.",
+      "Add an abstract string Format(string value) member.",
+      "Add a protected static Normalize method that trims the supplied text.",
+      "Declare a sealed UpperFormatter class that inherits Formatter.",
+      "Override Format and return the normalized text in uppercase.",
+      "Declare a sealed LowerFormatter class that inherits Formatter.",
+      "Override Format and return the normalized text in lowercase.",
+      "In Run, declare a Formatter variable that refers to an UpperFormatter.",
+      "Call Format with text containing surrounding spaces and display the result.",
+      "Reassign the same variable to a LowerFormatter and display the second result.",
+      "Try to construct Formatter directly, observe the compiler error, then comment out that line.",
+      "Add a Session 19 call in ScratchPad/Program.cs without deleting earlier session calls.",
       {
-        "text": "Run ScratchPad and build production unchanged.",
-        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release"
+        "text": "Run ScratchPad and build the solution, then compare with the collapsed solution.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "Use this only after your own attempt.",
+            "code": "public sealed class Session19InheritanceDemo\n{\n    public void Run()\n    {\n        Formatter formatter = new UpperFormatter();\n        Console.WriteLine(formatter.Format(\"  Time Clock  \"));\n\n        formatter = new LowerFormatter();\n        Console.WriteLine(formatter.Format(\"  Time Clock  \"));\n    }\n}\n\npublic abstract class Formatter\n{\n    public abstract string Format(string value);\n    protected static string Normalize(string value) => value.Trim();\n}\n\npublic sealed class UpperFormatter : Formatter\n{\n    public override string Format(string value) => Normalize(value).ToUpperInvariant();\n}\n\npublic sealed class LowerFormatter : Formatter\n{\n    public override string Format(string value) => Normalize(value).ToLowerInvariant();\n}"
+          }
+        ]
       }
     ],
-    "expectedBehavior": "The student learns inheritance through a permanent isolated comparison while production continues using natural interfaces.",
-    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+    "expectedBehavior": "ScratchPad prints TIME CLOCK and time clock. Production remains unchanged.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.ScratchPad/InheritanceExperiments.cs",
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/ScratchPad/Session19/Session19InheritanceDemo.cs",
       "action": "Add",
-      "why": "Preserve inheritance syntax without inventing TimeClock policies."
+      "why": "Isolate the inheritance experiment."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs",
+      "action": "Modify",
+      "why": "Invoke the Session 19 demo."
     },
     {
       "path": "site/data/sessions/session-19.json",
       "action": "Modify",
-      "why": "Keep the lesson synchronized with the cumulative build step."
+      "why": "Keep the lesson aligned with the actual experiment."
     }
   ],
-  "commit": "session-18: teach abstract classes inheritance and overrides",
+  "commit": "session-19: teach abstract classes inheritance and overrides",
   "review": [
     "The lab uses scratchpad because that is the most natural environment for this concept.",
     "Every referenced application artifact was created in this session or an earlier session.",
@@ -155,12 +187,12 @@
     }
   ],
   "reflections": [
-    "Why did this course choose to add a new abstract class (HoursPolicyBase) rather than leave Session 19 without any real inheritance example at all?",
-    "What would you lose if HoursPolicyBase's Round method were duplicated separately inside StandardHoursPolicy and FlexibleHoursPolicy instead of shared?",
-    "Now that you've seen both an interface-only design (Session 18's original IHoursPolicy) and an abstract-class design (this session's HoursPolicyBase), when would you reach for each?"
+    "Why is Formatter a more honest inheritance example than inventing HoursPolicy classes in Domain?",
+    "What does Normalize share that an interface contract alone would not store?",
+    "What evidence would make inheritance appropriate in production?"
   ],
-  "whatBreaks": "Attempting new HoursPolicyBase() directly fails to compile, because abstract classes exist only to be extended, never instantiated on their own. Removing StandardHoursPolicy's override keyword from GetVariance produces a compile error, because the compiler can no longer connect that method to HoursPolicyBase's abstract declaration. Duplicating Round's logic separately inside each derived policy (instead of inheriting it) would reintroduce the exact kind of duplication generics (Session 14) and interfaces (Session 18) already exist to avoid.",
-  "summary": "HoursPolicyBase is a new, clearly-labeled abstract class -- nothing in the production code uses inheritance, so this session builds one specifically to demonstrate what an abstract class adds beyond an interface: a required abstract member (GetVariance) alongside a shared, concrete, inherited one (Round). Session 31's PayrollDbContext will be this codebase's first genuinely framework-required use of inheritance, previewed here so it does not feel unmotivated when it arrives.",
+  "whatBreaks": "Constructing Formatter directly fails because it is abstract. Omitting either Format override leaves a concrete derived class incomplete. Making Normalize private prevents derived formatters from using it; making it public exposes a helper callers do not need.",
+  "summary": "Session 19 uses a contained formatter hierarchy to show abstract requirements, protected shared implementation, and override. TimeClock production remains interface-based because no real class hierarchy has been established.",
   "learningEnvironment": "scratchpad",
   "buildState": {
     "creates": [],

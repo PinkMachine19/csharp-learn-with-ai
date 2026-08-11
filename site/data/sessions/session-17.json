@@ -6,7 +6,7 @@
   "objectives": [
     "Confirm that ClockEntryRepository's _clockEntries field remains private and explain why callers must use repository methods.",
     "Compare the repository's established private field with ClockEntry's ClockOut property, whose private setter also protects mutation.",
-    "Read Timesheet as composition: it owns an Employee and a List<ClockEntry>, and enforces (via Add) that every ClockEntry actually belongs to its Employee.",
+    "Read Timesheet as composition: it owns an Employee and a List<ClockEntry>, and enforces through TryAdd that every stored ClockEntry belongs to its Employee.",
     "Explain why Timesheet.TryAdd returns false rather than silently accepting a mismatched EmployeeId."
   ],
   "visuals": [
@@ -35,7 +35,7 @@
     {
       "prompt": "What external capability does ClockEntryRepository's private _clockEntries field prevent?",
       "options": [
-        "Direct access to _clockEntries.Clear(), .Add(...), or indexing from any code outside ClockEntryRepository -- the exact bypass Session 11 identified as a real, unfixed gap",
+        "Direct access to _clockEntries.Clear(), .Add(...), or indexing from any code outside ClockEntryRepository",
         "The ability to call GetEmployeeClockEntries",
         "Nothing observable changes"
       ],
@@ -50,7 +50,7 @@
         "ClockOut is read-only and can never change"
       ],
       "correct": 0,
-      "explanation": "This is a genuinely different situation from _clockEntries -- ClockEntry got its encapsulation right from Session 6; the repository's field is what needed the fix."
+      "explanation": "Both designs control mutation differently: the repository hides its field, while ClockEntry exposes a readable property whose setter remains private."
     },
     {
       "prompt": "Why does Timesheet.TryAdd return false when a ClockEntry's EmployeeId doesn't match the Timesheet's Employee?",
@@ -64,6 +64,24 @@
     }
   ],
   "concept": [
+    {
+      "title": "Three declarations protect three different boundaries",
+      "paragraphs": [
+        "The field and property work together, but private, readonly, and IReadOnlyList<ClockEntry> do different jobs. None of the three keywords or types replaces the others.",
+        "The List itself remains mutable inside Timesheet. readonly prevents assigning _entries to a different List after initialization; it does not freeze the current List or prevent Timesheet.TryAdd from calling _entries.Add."
+      ],
+      "table": {
+        "headers": ["Declaration", "What it protects"],
+        "rows": [
+          ["private", "Outside callers cannot directly access or mutate _entries."],
+          ["readonly List<ClockEntry>", "Timesheet cannot reassign the field after initialization; the existing List can still be mutated internally."],
+          ["IReadOnlyList<ClockEntry>", "Callers can count, index, and enumerate through Entries, but the public contract has no Add, Remove, or Clear."],
+          ["List<ClockEntry> property (do not use)", "Would expose mutation methods and let callers bypass TryAdd's ownership check."]
+        ],
+        "highlightRows": [0, 1, 2, 3]
+      },
+      "code": "private readonly List<ClockEntry> _entries = new();\npublic IReadOnlyList<ClockEntry> Entries => _entries;"
+    },
     {
       "title": "Reuse the repository boundary Session 11 already established",
       "paragraphs": [
@@ -102,6 +120,14 @@
     "stepCheckboxes": true,
     "objective": "Apply an established encapsulation pattern by creating a Timesheet that owns one Employee and accepts only that employee's ClockEntry objects.",
     "startingCondition": "ClockEntryRepository already keeps its List private. Employee and ClockEntry exist, but no Timesheet groups one employee with a protected entry collection.",
+    "keyPointTitle": "The field and property protect different things",
+    "keyPoints": [
+      "private prevents outside callers from directly accessing _entries.",
+      "readonly prevents field reassignment; it does not make the List contents immutable, so Timesheet can still call _entries.Add internally.",
+      "IReadOnlyList<ClockEntry> lets callers count, index, and enumerate Entries without exposing Add, Remove, or Clear.",
+      "Returning List<ClockEntry> would let callers bypass TryAdd and violate the one-employee ownership rule."
+    ],
+    "keyPointCode": "private readonly List<ClockEntry> _entries = new();\npublic IReadOnlyList<ClockEntry> Entries => _entries;",
     "steps": [
       "Open Repositories/ClockEntryRepository.cs in the Domain project.",
       "Locate the private readonly List<ClockEntry> field named _clockEntries.",
@@ -115,6 +141,7 @@
       {"text": "Stub a constructor that requires one Employee. The Timesheet-to-Employee relationship is established once during construction.", "code": "public Timesheet(Employee employee)\n{\n    throw new NotImplementedException();\n}"},
       "Declare a public get-only Employee property.",
       {"text": "Expose the entries through IReadOnlyList<ClockEntry>. This public contract permits reading and indexing but does not expose Add, Remove, or Clear.", "code": "public IReadOnlyList<ClockEntry> Entries => _entries;"},
+      "Build now, before creating TryAdd, to confirm the private field and public read-only collection contract compile together.",
       {"text": "Stub TryAdd. Its Boolean result will report whether the entry belongs to this Timesheet's Employee.", "code": "public bool TryAdd(ClockEntry entry)\n{\n    throw new NotImplementedException();\n}"},
       "Build again to confirm the Timesheet structure and method contracts compile.",
       "Replace the constructor throw by assigning the employee parameter to the Employee property.",
@@ -186,7 +213,7 @@
     {
       "prompt": "What would happen if Timesheet.Entries returned List<ClockEntry> instead of IReadOnlyList<ClockEntry>?",
       "options": [
-        "Callers could call Entries.Add(...) or Entries.Clear() directly, bypassing Timesheet.TryAdd's EmployeeId-matching check entirely -- reintroducing the exact kind of bypass Session 17 just fixed in ClockEntryRepository",
+        "Callers could call Entries.Add(...) or Entries.Clear() directly, bypassing Timesheet.TryAdd's EmployeeId-matching check entirely",
         "Nothing would change -- List<T> and IReadOnlyList<T> expose identical members",
         "The code would fail to compile"
       ],

@@ -204,6 +204,9 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 .concept-paragraph-completed .concept-paragraph-number { color: var(--green); }
 
 /* Steps (labs) */
+.lab-key-point { border-left: 4px solid var(--accent); margin-bottom: 20px; }
+.lab-key-point h3 { margin-top: 0; }
+.lab-key-point ul { margin-bottom: 14px; }
 .step { display: flex; gap: 12px; margin-bottom: 12px; }
 .step-checkbox { flex: 0 0 auto; display: grid; place-items: center; width: 24px; height: 24px; cursor: pointer; }
 .step-checkbox input { position: absolute; opacity: 0; width: 1px; height: 1px; }

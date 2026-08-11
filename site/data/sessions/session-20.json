@@ -2,129 +2,160 @@
   "number": 20,
   "category": "dependency boundaries",
   "estimatedTime": "40 minutes",
-  "connection": "Production has models, repositories, repository interfaces, and clock-entry/employee services created in earlier sessions. Optional Side Lab 19B frames their public, private, protected, and internal declarations as dependency boundaries. App still constructs dependencies manually. Compose the production application with dependency injection and add PayrollService for the verified total-hours use case.",
+  "connection": "Session 18 created IClockEntryRepository, and Session 19 compared interfaces with inheritance. App still creates the repository directly. This session creates the first service with a genuine repository dependency and supplies that dependency through its constructor.",
   "objectives": [
-    "Explain why a class should depend on an interface, not a concrete implementation, when another class constructs it for it.",
-    "Trace how Program.cs's ServiceCollection registrations connect an interface to a concrete class at resolution time.",
-    "Read PayrollService's constructor as a real example of a declared-but-unused dependency, and explain why that is a legitimate (if incomplete) design rather than a bug.",
-    "Explain the real Transient/Singleton mix in Program.cs and what would change if every registration were Singleton."
+    "Explain dependency direction: ClockEntryService knows IClockEntryRepository, not its concrete class.",
+    "Store an injected dependency in a private readonly field so service methods can use it after construction.",
+    "Coordinate clock-in and clock-out without exposing repository storage.",
+    "Compose ClockEntryRepository and ClockEntryService manually in Program.cs before learning a DI container."
   ],
   "visuals": [
     {
-      "diagram": "constructor",
-      "title": "The constructor states the contract",
-      "explanation": "PayrollService's constructor lists IEmployeeService and IClockEntryRepository -- both required to construct the object, whether or not every method uses both."
+      "diagram": "call",
+      "title": "Constructor injection makes the dependency visible",
+      "explanation": "ClockEntryService requires IClockEntryRepository in its constructor and preserves it in a private readonly field."
     },
     {
-      "diagram": "signature",
-      "title": "DI resolves interfaces to concrete types",
-      "explanation": "services.AddTransient<IClockEntryService, ClockEntryService>() is what lets the container hand back a working ClockEntryService whenever code asks for IClockEntryService."
+      "diagram": "contract",
+      "title": "The service points toward the contract",
+      "explanation": "ClockEntryService names IClockEntryRepository; only Program.cs chooses ClockEntryRepository."
     },
     {
-      "diagram": "pipeline",
-      "title": "Follow one resolution",
-      "explanation": "provider.GetRequiredService<PayrollService>() walks the registration graph: PayrollService needs IEmployeeService and IClockEntryRepository, so the container builds those first."
+      "diagram": "branch",
+      "title": "The service coordinates two use cases",
+      "explanation": "TryClockIn rejects a second open entry. TryClockOut rejects an employee with no open entry."
     },
     {
-      "diagram": "invariant",
-      "title": "Lifetime changes identity, not correctness",
-      "explanation": "IClockEntryRepository is Singleton so every resolution shares the same in-memory list; IClockEntryService is Transient so each resolution is a new instance -- both work here because ClockEntryService itself holds no per-instance state."
+      "diagram": "instances",
+      "title": "Manual composition first",
+      "explanation": "Program creates one repository instance and passes that same instance into the service. No container or lifetime terminology is needed yet."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Why does PayrollService's constructor take IEmployeeService even though CalculateTotalHours never calls it?",
+      "prompt": "Why is the injected repository stored in a class field?",
       "options": [
-        "It is a real, documented dead dependency in the source app -- wired in for a future employee-lookup feature, not a mistake to silently delete",
-        "Every service in the app is required to take at least two dependencies",
-        "IEmployeeService is required by the C# compiler for constructor injection to work"
+        "Service methods need it after the constructor returns",
+        "Fields execute faster",
+        "Interfaces require fields"
       ],
       "correct": 0,
-      "explanation": "decision-0006 in the source project's decision log confirms this was verified against the real constructor, not assumed -- the dependency is real and currently unused."
+      "explanation": "A constructor parameter is local to the constructor; the field preserves the reference for the object's lifetime."
     },
     {
-      "prompt": "What does services.AddSingleton<IClockEntryRepository, ClockEntryRepository>() mean for two different classes that both request IClockEntryRepository?",
+      "prompt": "Which file should choose ClockEntryRepository as the implementation?",
       "options": [
-        "They receive two independent repositories with separate in-memory lists",
-        "They receive the same repository instance, so entries saved through one are visible through the other",
-        "The registration is invalid because two classes cannot share one type"
-      ],
-      "correct": 1,
-      "explanation": "Singleton means one instance for the lifetime of the container -- this is why ClockIn and Clockout, resolved separately, still see the same _clockEntries list."
-    },
-    {
-      "prompt": "If IClockEntryService were registered AddSingleton instead of AddTransient, what would change in this app?",
-      "options": [
-        "Nothing observable, since ClockEntryService holds no per-instance state of its own -- it only forwards to the (already-Singleton) repository",
-        "The app would fail to build",
-        "ClockIn would stop working"
+        "App/Program.cs",
+        "ClockEntryService.cs",
+        "ClockEntry.cs"
       ],
       "correct": 0,
-      "explanation": "Lifetime only matters when a class holds state across calls; ClockEntryService is stateless itself, so Transient vs Singleton is a real but currently inert design choice -- exactly what decision-0005 documents and what Session 30 explores in depth."
+      "explanation": "The outer composition root chooses concrete implementations."
+    },
+    {
+      "prompt": "Is a DI container required for constructor injection?",
+      "options": [
+        "No; Program can pass the dependency with new",
+        "Yes",
+        "Only for interfaces"
+      ],
+      "correct": 0,
+      "explanation": "Constructor injection is the design; a container automates construction later."
     }
   ],
   "concept": [
     {
-      "title": "Depend on the interface, not the class",
+      "title": "Constructor injection makes a requirement explicit",
       "paragraphs": [
-        "ClockEntryService's constructor takes IClockEntryRepository, not ClockEntryRepository. That one-word difference is what lets ClockEntryService be tested with a fake repository (Session 30) without ever touching the real one.",
-        "The same shape appears in PayrollService, which depends on IEmployeeService and IClockEntryRepository -- two interfaces, zero concrete types, even though CalculateTotalHours only actually calls one of them."
+        "ClockEntryService cannot coordinate clock operations without repository access, so its constructor requires IClockEntryRepository.",
+        "The field is declared on the class because TryClockIn and TryClockOut need it after construction."
       ],
-      "code": "// Services/PayrollService.cs -- the real constructor\npublic PayrollService(IEmployeeService employeeService, IClockEntryRepository clockEntryRepository)\n{\n    _employeeService = employeeService;\n    _clockEntryRepository = clockEntryRepository;\n}"
+      "code": "private readonly IClockEntryRepository _clockEntries;\n\npublic ClockEntryService(IClockEntryRepository clockEntries)\n{\n    _clockEntries = clockEntries;\n}"
     },
     {
-      "title": "Registration is where the interface meets its implementation",
+      "title": "The service coordinates; the model protects its own state",
       "paragraphs": [
-        "Nothing in ClockEntryService.cs or PayrollService.cs says which concrete class satisfies IClockEntryRepository. Program.cs's ServiceCollection is the one place that decision is made.",
-        "The real registrations mix lifetimes: IClockEntryRepository is Singleton, while IClockEntryService, PayrollService, and IEmployeeService are all Transient -- verified directly against the source Program.cs, not assumed."
+        "TryClockIn checks for an existing open entry before constructing and saving a new one.",
+        "TryClockOut locates the open entry, then asks that ClockEntry object to complete itself through the method established in your source."
       ],
-      "code": "// Program.cs -- the real, mixed-lifetime registrations\nvar services = new ServiceCollection();\nservices.AddTransient<IClockEntryService, ClockEntryService>();\nservices.AddSingleton<IClockEntryRepository, ClockEntryRepository>();\nservices.AddTransient<PayrollService>();\nservices.AddTransient<IEmployeeService, EmployeeService>();"
+      "code": "ClockEntry? openEntry = _clockEntries.GetOpenClockEntry(employeeId);\nif (openEntry is null)\n{\n    return false;\n}\n\nopenEntry.ClockOutEntry(clockOut);\nreturn true;"
     },
     {
-      "title": "A declared dependency does not have to be used yet",
+      "title": "Manual composition comes before a container",
       "paragraphs": [
-        "PayrollService constructor-injects IEmployeeService but CalculateTotalHours never calls it. That is not dead code to delete reflexively -- it is a real, documented design point (decision-0006): the dependency was likely added in anticipation of an employee-lookup feature that has not been built yet.",
-        "The real xUnit test for PayrollService (Session 29) mocks IEmployeeService with Mock<IEmployeeService>() and never configures it -- proof, in the test itself, that the dependency is currently inert."
+        "Program.cs creates one repository and passes it to ClockEntryService. This makes object identity and shared in-memory state visible.",
+        "A DI container and Transient/Singleton lifetimes are deferred until the testing and DI layer."
       ],
-      "code": "// tests/.../PayrollServiceTests.cs -- the real test\nvar employeeService = new Mock<IEmployeeService>();   // never configured, never verified\nvar payrollService = new PayrollService(employeeService.Object, repository.Object);"
+      "code": "IClockEntryRepository repository = new ClockEntryRepository();\nvar clockEntries = new ClockEntryService(repository);"
     }
   ],
   "lab": {
-    "objective": "Compose the production application with dependency injection and add PayrollService for the verified total-hours use case.",
-    "startingCondition": "Production has models, repositories, repository interfaces, and clock-entry/employee services created in earlier sessions. App still constructs dependencies manually.",
-    "steps": [
-      "Add the dependency-injection package to App if required.",
-      "Create PayrollService to total completed entry durations for one employee and period.",
-      "Register interfaces and concrete repositories/services with deliberate lifetimes.",
-      "Resolve the application services in Program.cs and run one complete clock-in/clock-out/total workflow.",
-      "Remove obsolete manual construction while preserving all prior production behavior."
+    "clickHighlightInstructions": true,
+    "stepCheckboxes": true,
+    "objective": "Create ClockEntryService with one constructor-injected repository and compose it manually from App.",
+    "startingCondition": "Session 18 created IClockEntryRepository and ClockEntryRepository implements it. No production service or DI container exists.",
+    "keyPointTitle": "Constructor injection does not require a container",
+    "keyPoints": [
+      "The service depends on the interface.",
+      "The private readonly field preserves the collaborator.",
+      "Program chooses and shares the concrete repository instance.",
+      "The service coordinates existing repository and model behavior rather than duplicating it."
     ],
-    "expectedBehavior": "App composes existing production abstractions and prints total completed hours through PayrollService.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+    "steps": [
+      "Create ClockEntryService.cs in the Domain project.",
+      "Declare a public sealed ClockEntryService class.",
+      "Declare a private readonly IClockEntryRepository field.",
+      "Create a constructor with one IClockEntryRepository parameter.",
+      "Assign the parameter to the field.",
+      "Stub TryClockIn with employeeId and clockIn parameters.",
+      "In TryClockIn, call GetOpenClockEntry for the employee.",
+      "Return false when an open entry already exists.",
+      "Construct a ClockEntry only after that check succeeds.",
+      "Save the new entry through IClockEntryRepository.",
+      "Return true.",
+      "Stub TryClockOut with employeeId and clockOut parameters.",
+      "Locate the employee's open entry.",
+      "Return false when no open entry exists.",
+      "Call the existing ClockEntry completion method on the found entry.",
+      "Return true.",
+      "Build before modifying App.",
+      "Append a Session 20 section to App/Program.cs.",
+      "Construct one ClockEntryRepository as an IClockEntryRepository variable.",
+      "Pass that same variable to ClockEntryService.",
+      "Call TryClockIn and TryClockOut for one employee and display both results.",
+      {
+        "text": "Run App, then build and test. Open the solution only after your attempt.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "If your earlier ClockEntry completion method has a different name, use the method present in your source.",
+            "code": "public sealed class ClockEntryService\n{\n    private readonly IClockEntryRepository _clockEntries;\n\n    public ClockEntryService(IClockEntryRepository clockEntries)\n    {\n        _clockEntries = clockEntries;\n    }\n\n    public bool TryClockIn(int employeeId, DateTime clockIn)\n    {\n        if (_clockEntries.GetOpenClockEntry(employeeId) is not null)\n        {\n            return false;\n        }\n\n        _clockEntries.SaveClockEntry(new ClockEntry(employeeId, clockIn));\n        return true;\n    }\n\n    public bool TryClockOut(int employeeId, DateTime clockOut)\n    {\n        ClockEntry? openEntry = _clockEntries.GetOpenClockEntry(employeeId);\n        if (openEntry is null)\n        {\n            return false;\n        }\n\n        openEntry.ClockOutEntry(clockOut);\n        return true;\n    }\n}"
+          }
+        ]
+      }
+    ],
+    "expectedBehavior": "The first clock-in and clock-out succeed, invalid repeated operations return false, and the same repository instance retains the entry across service calls.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/PayrollService.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryService.cs",
       "action": "Add",
-      "why": "Implement the verified total-hours use case."
+      "why": "Create the first constructor-injected service required by later sessions."
     },
     {
       "path": "src/PinkMachine19.TimeClock.App/Program.cs",
       "action": "Modify",
-      "why": "Become the production composition root."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj",
-      "action": "Modify",
-      "why": "Reference DI support if needed."
+      "why": "Compose the dependency manually."
     },
     {
       "path": "site/data/sessions/session-20.json",
       "action": "Modify",
-      "why": "Keep the lesson synchronized with the cumulative build step."
+      "why": "Remove nonexistent services and premature container configuration."
     }
   ],
-  "commit": "session-19: teach dependency direction and constructor injection",
+  "commit": "session-20: teach dependency direction and constructor injection",
   "review": [
     "The lab uses production because that is the most natural environment for this concept.",
     "Every referenced application artifact was created in this session or an earlier session.",
@@ -132,49 +163,50 @@
   ],
   "postQuiz": [
     {
-      "prompt": "What would break if ClockEntryService's constructor took ClockEntryRepository instead of IClockEntryRepository?",
+      "prompt": "What is the dependency direction inside ClockEntryService?",
       "options": [
-        "Nothing at runtime, but Session 30's fake-repository tests could no longer substitute a test double",
-        "The app would fail to build immediately",
-        "ClockIn would stop persisting entries"
+        "Toward IClockEntryRepository",
+        "Toward Program.cs",
+        "Toward ClockEntryRepository only"
       ],
       "correct": 0,
-      "explanation": "Depending on the concrete type still compiles and runs -- the cost shows up later, when nothing but the learner solution can be substituted in a test."
+      "explanation": "The service names the stable contract."
     },
     {
-      "prompt": "Where in this codebase is the only place that names ClockEntryRepository as the implementation of IClockEntryRepository?",
+      "prompt": "Why must Program reuse the same in-memory repository instance for clock-in and clock-out?",
       "options": [
-        "Program.cs's ServiceCollection registration",
-        "ClockEntryService.cs",
-        "IClockEntryRepository.cs"
+        "The second operation must see state saved by the first",
+        "C# forbids two repositories",
+        "Interfaces are singletons"
       ],
       "correct": 0,
-      "explanation": "Every other file references the interface; only the composition root wires the interface to its concrete implementation."
+      "explanation": "Two separate in-memory repositories would own two separate Lists."
     },
     {
-      "prompt": "Why is PayrollService's unused IEmployeeService dependency a legitimate design point rather than something to fix in this session?",
+      "prompt": "What is the DI container doing in this session?",
       "options": [
-        "decision-0006 documents it was verified against the real constructor and left in place deliberately for a not-yet-built feature",
-        "IEmployeeService cannot be removed from any constructor in C#",
-        "Unused dependencies always indicate a compiler bug"
+        "Nothing; composition is manual",
+        "Registering Singleton services",
+        "Scanning assemblies"
       ],
       "correct": 0,
-      "explanation": "The source project's own decision log treats this as a resolved, intentional state -- not an open question to silently patch."
+      "explanation": "Container mechanics are intentionally deferred."
     }
   ],
   "reflections": [
-    "Which of PayrollService's two dependencies does CalculateTotalHours actually use, and what would have to change for it to use the other?",
-    "Why does IClockEntryRepository need to be Singleton for this console app's ClockIn/Clockout sequence to work at all?",
-    "What would you need to change if IEmployeeService's RenameService were later called from inside PayrollService?"
+    "Why should ClockEntryService not construct ClockEntryRepository inside its own constructor?",
+    "What does readonly prevent on the dependency field?",
+    "Which rule belongs to ClockEntry and which coordination belongs to ClockEntryService?"
   ],
-  "whatBreaks": "Changing ClockEntryService or PayrollService's constructors to depend on concrete classes removes the seam Session 30's test doubles rely on. Registering IClockEntryRepository as Transient breaks ClockIn/Clockout's shared state, since each resolution would get its own empty list. Removing IEmployeeService from PayrollService's constructor would break the real, existing xUnit test, which constructs PayrollService with two arguments.",
-  "summary": "Constructor injection in this app means every domain class depends on interfaces, and Program.cs is the single place those interfaces are wired to concrete types. PayrollService's real, unused IEmployeeService dependency shows that a declared dependency does not have to be exercised yet to be a legitimate part of the constructor's contract.",
+  "whatBreaks": "Depending directly on ClockEntryRepository removes the substitution seam. Constructing a repository inside each method loses shared in-memory state. Keeping the dependency only as a constructor parameter makes it unavailable to later service methods.",
+  "summary": "Session 20 creates the ClockEntryService required by later error and async sessions. It depends on IClockEntryRepository, stores that collaborator in a private readonly field, and is composed manually in App without premature container or lifetime configuration.",
   "learningEnvironment": "production",
   "buildState": {
-    "creates": [],
+    "creates": [
+      "ClockEntryService"
+    ],
     "extends": [
-      "App dependency-injection composition",
-      "PayrollService"
+      "App composition"
     ]
   }
 }
