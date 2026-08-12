@@ -15,22 +15,22 @@
   ],
   "visuals": [
     {
-      "diagram": "path",
+      "diagram": "mental-side-01b-1",
       "title": "Navigate by intent",
       "explanation": "Open a file by name, find a symbol, visit its definition, and return. These actions are more reusable than memorizing where every file sits in the Explorer."
     },
     {
-      "diagram": "folders",
+      "diagram": "mental-side-01b-2",
       "title": "Manipulate editor state",
       "explanation": "The sidebar, terminal, bottom panel, and editor groups are views you can show, hide, split, focus, and restore without changing project files."
     },
     {
-      "diagram": "pipeline",
+      "diagram": "mental-side-01b-3",
       "title": "Run and Debug have targets",
       "explanation": "In a multi-project solution, the visible file and selected debug target are separate state. F5 follows the selected configuration, not your gaze."
     },
     {
-      "diagram": "feedback",
+      "diagram": "mental-side-01b-4",
       "title": "Recover through the Command Palette",
       "explanation": "When a shortcut is forgotten, intercepted by RDP, or hidden behind confusing UI state, Ctrl+Shift+P lets you search for the action by name."
     }

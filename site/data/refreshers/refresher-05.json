@@ -11,10 +11,10 @@
     "Recognize other modern production syntax without adopting it mechanically."
   ],
   "visuals": [
-    {"diagram":"blueprint","title":"Records make value-oriented data concise","explanation":"Records synthesize value equality and nondestructive copying, which suits messages and snapshots."},
-    {"diagram":"initializer","title":"init and required shape construction","explanation":"init limits assignment to construction; required tells callers which members must be supplied."},
-    {"diagram":"constructor","title":"Primary constructors put parameters beside the type","explanation":"Parameters are available throughout the type body, but they are not automatically properties."},
-    {"diagram":"expression","title":"Collection expressions focus on elements","explanation":"Square-bracket syntax can create supported collection targets and spread existing sequences with two dots."}
+    {"diagram":"mental-ref-05-1","title":"Records make value-oriented data concise","explanation":"Records synthesize value equality and nondestructive copying, which suits messages and snapshots."},
+    {"diagram":"mental-ref-05-2","title":"init and required shape construction","explanation":"init limits assignment to construction; required tells callers which members must be supplied."},
+    {"diagram":"mental-ref-05-3","title":"Primary constructors put parameters beside the type","explanation":"Parameters are available throughout the type body, but they are not automatically properties."},
+    {"diagram":"mental-ref-05-4","title":"Collection expressions focus on elements","explanation":"Square-bracket syntax can create supported collection targets and spread existing sequences with two dots."}
   ],
   "preQuiz": [
     {"prompt":"What behavior do records provide by default that ordinary classes do not?","options":["Database persistence","Value-based equality","Thread safety"],"correct":1,"explanation":"Record equality compares the declared value components."},

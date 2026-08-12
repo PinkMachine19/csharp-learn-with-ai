@@ -11,10 +11,10 @@
     "Recognize sync-over-async and fire-and-forget hazards."
   ],
   "visuals": [
-    {"diagram":"path","title":"An async method has a before-await and after-await path","explanation":"The method runs synchronously until incomplete awaited work causes it to yield; it resumes when that work completes."},
-    {"diagram":"return","title":"Task represents eventual completion","explanation":"Task carries completion, failure, or cancellation; Task<T> also carries a result."},
-    {"diagram":"feedback","title":"Cancellation is cooperative","explanation":"A caller requests cancellation, each layer propagates the token, and operations choose where to observe it."},
-    {"diagram":"comparison","title":"Concurrency is not automatically parallelism","explanation":"Async improves waiting efficiency. Parallelism uses multiple cores for CPU work; the two can overlap but solve different problems."}
+    {"diagram":"mental-ref-03-1","title":"An async method has a before-await and after-await path","explanation":"The method runs synchronously until incomplete awaited work causes it to yield; it resumes when that work completes."},
+    {"diagram":"mental-ref-03-2","title":"Task represents eventual completion","explanation":"Task carries completion, failure, or cancellation; Task<T> also carries a result."},
+    {"diagram":"mental-ref-03-3","title":"Cancellation is cooperative","explanation":"A caller requests cancellation, each layer propagates the token, and operations choose where to observe it."},
+    {"diagram":"mental-ref-03-4","title":"Concurrency is not automatically parallelism","explanation":"Async improves waiting efficiency. Parallelism uses multiple cores for CPU work; the two can overlap but solve different problems."}
   ],
   "preQuiz": [
     {"prompt":"What happens when await sees an incomplete Task?","options":["It blocks the current thread until completion","It arranges continuation and returns control to the caller","It creates a new operating-system thread"],"correct":1,"explanation":"Await is non-blocking coordination; it does not promise a new thread."},

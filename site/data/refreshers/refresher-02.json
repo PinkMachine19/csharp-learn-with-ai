@@ -11,10 +11,10 @@
     "Recognize deferred execution and intentional materialization."
   ],
   "visuals": [
-    {"diagram":"type","title":"A type parameter preserves one shape across many types","explanation":"List<T> is one collection design whose element type remains known to the compiler."},
-    {"diagram":"signature","title":"Constraints state required capabilities","explanation":"A constraint narrows which types are valid and tells generic code which operations are safe."},
-    {"diagram":"expression","title":"A lambda is a small value representing behavior","explanation":"Parameters enter on the left; an expression or statement body produces the behavior on the right."},
-    {"diagram":"pipeline","title":"LINQ composes transformations","explanation":"A source flows through operators such as Where, Select, OrderBy, and Sum."}
+    {"diagram":"mental-ref-02-1","title":"A type parameter preserves one shape across many types","explanation":"List<T> is one collection design whose element type remains known to the compiler."},
+    {"diagram":"mental-ref-02-2","title":"Constraints state required capabilities","explanation":"A constraint narrows which types are valid and tells generic code which operations are safe."},
+    {"diagram":"mental-ref-02-3","title":"A lambda is a small value representing behavior","explanation":"Parameters enter on the left; an expression or statement body produces the behavior on the right."},
+    {"diagram":"mental-ref-02-4","title":"LINQ composes transformations","explanation":"A source flows through operators such as Where, Select, OrderBy, and Sum."}
   ],
   "preQuiz": [
     {"prompt":"What does List<Employee> preserve that ArrayList does not?","options":["The compile-time element type","The database table name","Automatic thread safety"],"correct":0,"explanation":"Generic collections preserve element types and avoid routine casts."},

@@ -13,22 +13,22 @@
   ],
   "visuals": [
     {
-      "diagram": "pipeline",
+      "diagram": "mental-side-24b-1",
       "title": "One event crosses several boundaries",
       "explanation": "A repository miss can become a service outcome, an HTTP response, and finally a user-facing message. Each boundary reports what its own caller needs."
     },
     {
-      "diagram": "branch",
+      "diagram": "mental-side-24b-2",
       "title": "Expected outcome or exceptional failure?",
       "explanation": "Expected absence and ordinary rejection belong in normal control flow; broken invariants and unexpected failures may justify exceptions."
     },
     {
-      "diagram": "contract",
+      "diagram": "mental-side-24b-3",
       "title": "Return the smallest useful contract",
       "explanation": "Use bool when yes or no is enough, nullable when absence is expected, and a structured result when callers need several outcome details."
     },
     {
-      "diagram": "invariant",
+      "diagram": "mental-side-24b-4",
       "title": "Tests preserve settled decisions",
       "explanation": "Temporary comments help enumerate possibilities; focused tests permanently protect the outcomes the team agrees must remain true."
     }

@@ -11,10 +11,10 @@
     "Read an unfamiliar feature as a newer expression of an older programming idea."
   ],
   "visuals": [
-    {"diagram":"path","title":"Versions form a timeline, not separate languages","explanation":"C# evolves cumulatively. New syntax is added while older classes, methods, interfaces, and control flow remain valid."},
-    {"diagram":"layers","title":"Features accumulate on stable foundations","explanation":"Generics, LINQ, async, records, and modern patterns layer onto the language rather than replacing its core model."},
-    {"diagram":"stack","title":"Language, SDK, runtime, and framework are related but different","explanation":"The compiler accepts language syntax; the SDK supplies tooling; the target framework determines the default supported language version and available APIs."},
-    {"diagram":"comparison","title":"Version labels explain syntax availability","explanation":"A feature can be valid C# but unavailable to a project using an older compiler or target framework."}
+    {"diagram":"mental-ref-01-1","title":"Versions form a timeline, not separate languages","explanation":"C# evolves cumulatively. New syntax is added while older classes, methods, interfaces, and control flow remain valid."},
+    {"diagram":"mental-ref-01-2","title":"Features accumulate on stable foundations","explanation":"Generics, LINQ, async, records, and modern patterns layer onto the language rather than replacing its core model."},
+    {"diagram":"mental-ref-01-3","title":"Language, SDK, runtime, and framework are related but different","explanation":"The compiler accepts language syntax; the SDK supplies tooling; the target framework determines the default supported language version and available APIs."},
+    {"diagram":"mental-ref-01-4","title":"Version labels explain syntax availability","explanation":"A feature can be valid C# but unavailable to a project using an older compiler or target framework."}
   ],
   "preQuiz": [
     {"prompt":"A project targets .NET 8 and does not set LangVersion. Which C# version does it normally use?","options":["C# 8","C# 12","Always the newest preview"],"correct":1,"explanation":"The default language version follows the target framework; .NET 8 defaults to C# 12."},

@@ -14,22 +14,22 @@
   ],
   "visuals": [
     {
-      "diagram": "path",
+      "diagram": "mental-side-03b-1",
       "title": "C# formatting accumulated over time",
       "explanation": "Basic strings and positional formatting arrived first, interpolation improved readability, and raw strings later reduced escaping for multiline and quote-heavy text."
     },
     {
-      "diagram": "expression",
+      "diagram": "mental-side-03b-2",
       "title": "Interpolation places values where they appear",
       "explanation": "The expression inside braces is evaluated and inserted at that position, so the source resembles the resulting output."
     },
     {
-      "diagram": "representations",
+      "diagram": "mental-side-03b-3",
       "title": "Formatting changes representation",
       "explanation": "F2, N2, C2, and P1 control the text shown to a person. They do not normally alter the numeric value stored in the variable."
     },
     {
-      "diagram": "comparison",
+      "diagram": "mental-side-03b-4",
       "title": "Different syntax can produce the same text",
       "explanation": "Concatenation, composite formatting, string.Format, and interpolation can produce equivalent output. Their main differences are readability, ceremony, and where each remains useful."
     }

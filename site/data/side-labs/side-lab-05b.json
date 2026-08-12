@@ -13,22 +13,22 @@
   ],
   "visuals": [
     {
-      "diagram": "property",
+      "diagram": "mental-side-05b-1",
       "title": "A property controls access",
       "explanation": "Callers read and assign the property as if it were a field, while get and set define what happens at that boundary."
     },
     {
-      "diagram": "call",
+      "diagram": "mental-side-05b-2",
       "title": "Accessors behave like methods",
       "explanation": "Reading a property invokes its get accessor. Assigning a property invokes its set accessor and supplies the assigned value through the value keyword."
     },
     {
-      "diagram": "comparison",
+      "diagram": "mental-side-05b-3",
       "title": "Explicit and automatic storage",
       "explanation": "An explicit property names its private backing field. An auto-property asks the compiler to create inaccessible storage and simple accessors."
     },
     {
-      "diagram": "blueprint",
+      "diagram": "mental-side-05b-4",
       "title": "The public contract stays simple",
       "explanation": "Both forms expose the same ClockIn property to callers, so storage details can remain inside the class."
     }

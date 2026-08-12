@@ -11,10 +11,10 @@
     "Avoid using the null-forgiving operator as a substitute for proof."
   ],
   "visuals": [
-    {"diagram":"switch","title":"Patterns describe cases by shape","explanation":"A switch can branch on type, properties, relationships, list structure, and null state—not only exact constants."},
-    {"diagram":"branch","title":"Order moves from specific to general","explanation":"Earlier arms should capture narrower cases before a discard pattern catches everything else."},
-    {"diagram":"nullable","title":"A nullable annotation describes possibility","explanation":"string? says null is allowed; string says callers and implementers should preserve non-null intent."},
-    {"diagram":"flowstate","title":"Checks refine compiler knowledge","explanation":"After a successful null or type pattern, the compiler narrows the value's flow state for that branch."}
+    {"diagram":"mental-ref-04-1","title":"Patterns describe cases by shape","explanation":"A switch can branch on type, properties, relationships, list structure, and null state—not only exact constants."},
+    {"diagram":"mental-ref-04-2","title":"Order moves from specific to general","explanation":"Earlier arms should capture narrower cases before a discard pattern catches everything else."},
+    {"diagram":"mental-ref-04-3","title":"A nullable annotation describes possibility","explanation":"string? says null is allowed; string says callers and implementers should preserve non-null intent."},
+    {"diagram":"mental-ref-04-4","title":"Checks refine compiler knowledge","explanation":"After a successful null or type pattern, the compiler narrows the value's flow state for that branch."}
   ],
   "preQuiz": [
     {"prompt":"Does string? create a different runtime CLR type from string?","options":["Yes","No — it adds compile-time nullable intent and analysis","Only on Linux"],"correct":1,"explanation":"Nullable reference annotations primarily guide the compiler and tooling."},

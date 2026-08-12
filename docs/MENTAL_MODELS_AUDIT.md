@@ -43,11 +43,25 @@ This inventory covers every primary session. Each row records the concrete visua
 | 33 | A postal route maps one addressed HTTP envelope to a controller desk and returns a deliberate response envelope. |
 | 34 | An airport checkpoint separates invalid tickets, known conflicts, and system failures while recording structured event tags. |
 | 35 | A sealed package crosses Web, service, domain, repository, and database checkpoints in one end-to-end inspection. |
+| 01B | A VS Code control console moves from navigation instruments to workspace controls, a deliberate launch selector, and a reset lever. |
+| 03B | A label-printing ribbon carries a value through interpolation and formatting until different syntax produces the same readable receipt. |
+| 04C | A mechanical selector contrasts a Boolean fork, a case dial, and a value-returning output chute. |
+| 05B | A guarded mailbox separates hidden storage from getter/setter access while keeping one simple public slot. |
+| 19B | A building divides its lobby, staff workshop, family stairway, and sealed room into distinct access zones. |
+| 24B | A triage desk classifies an outcome, translates it across a boundary, and stamps the resulting contract for verification. |
+| R1 | Geological strata accumulate newer C# features over a stable foundation while a version marker identifies availability. |
+| R2 | A typed assembly line passes known shapes through capability, lambda, and LINQ stations without losing type information. |
+| R3 | A baggage claim ticket represents eventual completion while work continues, cancellation is observed, and multiple belts remain distinct from parallel machinery. |
+| R4 | A shape sorter narrows an unknown input through ordered patterns and reveals whether a nullable capsule contains a value. |
+| R5 | A modular construction kit molds record values, locks initialization, feeds primary-constructor parts, and fills a collection basket. |
 
 ## Inventory findings
 
 - Primary sessions inspected: 39.
-- Existing visual cards inspected: 156.
-- Existing diagram keys: 65.
+- Optional side labs inspected: 6.
+- C# refresher/bonus labs inspected: 5.
+- Total lesson pages inspected: 50.
+- Existing visual cards inspected: 200.
+- Primary-session diagram keys before redesign: 65.
 - Main duplicate families: `pipeline`, `call`, `branch`, `return`, `invariant`, `instances`, `tests`, and `feedback`.
-- Decision: replace all 156 diagram assignments. Several existing ideas were directionally correct, but none were preserved unchanged because their shared rendering made them visually interchangeable.
+- Decision: replace all 200 diagram assignments. Several existing ideas were directionally correct, but none were preserved unchanged because their shared rendering made them visually interchangeable.

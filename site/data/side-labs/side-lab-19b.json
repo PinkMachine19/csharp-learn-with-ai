@@ -14,22 +14,22 @@
   ],
   "visuals": [
     {
-      "diagram": "invariant",
+      "diagram": "mental-side-19b-1",
       "title": "Expose the operation, protect the rule",
       "explanation": "A public Rename operation can enforce name rules through a private helper, while a private setter prevents callers from bypassing that operation."
     },
     {
-      "diagram": "solution",
+      "diagram": "mental-side-19b-2",
       "title": "internal stops at the assembly boundary",
       "explanation": "Infrastructure code can construct its internal implementation, while App can use only the public factory and public interface returned across the project boundary."
     },
     {
-      "diagram": "branch",
+      "diagram": "mental-side-19b-3",
       "title": "protected is an inheritance boundary",
       "explanation": "A derived class may use a protected member; ordinary callers cannot make that member part of their dependency surface."
     },
     {
-      "diagram": "blueprint",
+      "diagram": "mental-side-19b-4",
       "title": "public and sealed answer different questions",
       "explanation": "public says other code may use the class. sealed says another class may not derive from it."
     }

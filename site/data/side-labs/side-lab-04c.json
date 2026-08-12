@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "branch",
+      "diagram": "mental-side-04c-1",
       "title": "if/else asks Boolean questions",
       "explanation": "Each condition is a separate true-or-false question. This form works naturally for ranges, unrelated conditions, and branches that perform several statements."
     },
     {
-      "diagram": "switch",
+      "diagram": "mental-side-04c-2",
       "title": "A traditional switch statement chooses a case",
       "explanation": "The statement form uses case labels, executes statements inside the matching case, and normally uses break to leave that case."
     },
     {
-      "diagram": "path",
+      "diagram": "mental-side-04c-3",
       "title": "A switch expression produces a value",
       "explanation": "The expression form maps one input to one result. It is concise when the purpose of the decision is to calculate or select a value."
     },
     {
-      "diagram": "comparison",
+      "diagram": "mental-side-04c-4",
       "title": "The problem shape guides the syntax",
       "explanation": "All three forms are tools. Prefer the one that communicates the conditions, actions, or returned value most clearly in the codebase you are maintaining."
     }
