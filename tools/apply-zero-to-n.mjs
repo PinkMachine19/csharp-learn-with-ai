@@ -127,7 +127,7 @@ Object.assign(plans, {
   "11": {
     objective: "Create the first in-memory ClockEntryRepository using a private List<ClockEntry> required for saving and retrieving entries.",
     starting: "ClockEntry exists and can be completed. No production component stores more than one entry yet.",
-    steps: ["Create ClockEntryRepository in Domain with a private List<ClockEntry>.", "Add Save to append an entry.", "Add methods to retrieve an employee's entries and locate an open entry.", "Update App to save open and completed entries and display the resulting count.", "Keep the list private; callers interact through repository behavior."],
+    steps: ["Create ClockEntryRepository in Domain with a private List<ClockEntry>. Treat this as curriculum scaffolding; a production implementation would commonly live in Infrastructure/Repositories, and Domain must not reference Infrastructure.", "Add Save to append an entry.", "Add methods to retrieve an employee's entries and locate an open entry.", "Update App to save open and completed entries and display the resulting count.", "Keep the list private; callers interact through repository behavior."],
     expected: [f("src/PinkMachine19.TimeClock.Domain/ClockEntryRepository.cs", "Add", "Store entries in memory."), f("src/PinkMachine19.TimeClock.App/Program.cs", "Modify", "Exercise repository collection behavior.")],
     behavior: "Production stores and retrieves clock entries through behavior rather than exposing its List."
   },
@@ -226,7 +226,8 @@ const contentOverrides = {
     concept: [
       { title: "Extract contracts from behavior that exists", paragraphs: ["The repositories already save and retrieve production models, so their interfaces describe observed behavior instead of speculative architecture.", "A consumer depends on the contract; the composition root chooses the implementation."], code: "public interface IClockEntryRepository\n{\n    void Save(ClockEntry entry);\n    IEnumerable<ClockEntry> ForEmployee(int employeeId);\n}" },
       { title: "Services coordinate use cases", paragraphs: ["ClockEntry owns its state rules. ClockEntryService coordinates finding, creating, completing, and saving entries.", "That division keeps the model focused and persistence replaceable."], code: "public sealed class ClockEntryService(IClockEntryRepository entries)" },
-      { title: "Polymorphism appears at the call site", paragraphs: ["The service can work with the in-memory repository today and an EF-backed repository later because both satisfy the same required behavior.", "No fictional policy hierarchy is needed to prove the point."], code: "IClockEntryRepository repository = new ClockEntryRepository();" }
+      { title: "Polymorphism appears at the call site", paragraphs: ["The service can work with the in-memory repository today and an EF-backed repository later because both satisfy the same required behavior.", "No fictional policy hierarchy is needed to prove the point."], code: "IClockEntryRepository repository = new ClockEntryRepository();" },
+      { title: "Architecture note — contract inside, implementation outside", paragraphs: ["Keeping both files in Domain is a teaching simplification.", "In a larger solution, IClockEntryRepository stays in Domain or Application, ClockEntryRepository commonly lives in Infrastructure/Repositories, and Domain never references Infrastructure."], code: "Application  ──▶ Domain\nInfrastructure ──▶ Domain\nApp ──▶ Application + Infrastructure\nDomain ──X─▶ Infrastructure" }
     ]
   },
   "19": {

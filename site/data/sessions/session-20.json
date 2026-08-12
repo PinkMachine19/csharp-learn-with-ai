@@ -87,6 +87,14 @@
         "A DI container and Transient/Singleton lifetimes are deferred until the testing and DI layer."
       ],
       "code": "IClockEntryRepository repository = new ClockEntryRepository();\nvar clockEntries = new ClockEntryService(repository);"
+    },
+    {
+      "title": "Architecture note — domain service versus application service",
+      "paragraphs": [
+        "A domain service contains business rules that belong to the domain but do not fit naturally inside one entity. An application service coordinates a use case: retrieve data, invoke domain behavior, save changes, and return a result.",
+        "ClockEntryService is primarily an application service because it coordinates IClockEntryRepository and ClockEntry. The course keeps it in Domain to avoid adding another project during this lesson. In a larger production solution, the preferred location would commonly be PinkMachine19.TimeClock.Application/Services/ClockEntryService.cs."
+      ],
+      "code": "Domain/Models\nDomain/IClockEntryRepository.cs\nApplication/Services/ClockEntryService.cs\nInfrastructure/Repositories/ClockEntryRepository.cs\nApp/Program.cs"
     }
   ],
   "lab": {

@@ -87,6 +87,14 @@
         "This session creates the boundary only. Session 20 gives a service a genuine reason to depend on it."
       ],
       "code": "IClockEntryRepository repository = new ClockEntryRepository();"
+    },
+    {
+      "title": "Architecture note — contract inside, implementation outside",
+      "paragraphs": [
+        "The course leaves both files in Domain for now so this lesson can focus on interfaces. That is a teaching simplification, not the recommended final production layout.",
+        "In a larger solution, IClockEntryRepository stays on the inner side, usually in Domain or Application, while ClockEntryRepository commonly moves to Infrastructure/Repositories. Application and Infrastructure may reference Domain; Domain never references Infrastructure. App is the outer composition root that selects the concrete implementation."
+      ],
+      "code": "Application  ──▶ Domain\nInfrastructure ──▶ Domain\nApp ──▶ Application + Infrastructure\nDomain ──X─▶ Infrastructure"
     }
   ],
   "lab": {
