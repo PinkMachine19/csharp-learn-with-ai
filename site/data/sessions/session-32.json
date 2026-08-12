@@ -93,11 +93,23 @@
     "objective": "Add provider-executed EF Core queries and verify them against SQLite.",
     "startingCondition": "Session 31 created TimeClockDbContext, entity mapping, and an EF-backed repository with integration-test infrastructure.",
     "steps": [
-      "Build IQueryable filters for employee, completion state, and period before materialization.",
-      "Use async materialization at the database boundary.",
-      "Avoid invoking non-translatable domain methods inside the provider query.",
-      "Add SQLite integration tests that distinguish query construction from execution.",
-      "Run focused integration tests and the full suite."
+      "Create src/PinkMachine19.TimeClock.Infrastructure/ClockEntryDataQueries.cs.",
+      "In ClockEntryDataQueries.cs, declare a public static class named ClockEntryDataQueries.",
+      "Add a public static CompletedForEmployee method that accepts TimeClockDbContext db and int employeeId and returns IQueryable<ClockEntryEntity>.",
+      "Start CompletedForEmployee from db.ClockEntries without calling ToList or AsEnumerable.",
+      "Add a Where condition matching ClockEntryEntity.EmployeeId to employeeId.",
+      "Extend the same provider query with a condition requiring ClockOut to be non-null.",
+      "Add startDate and endDate parameters to CompletedForEmployee when the report requires a period boundary.",
+      "Extend the provider query with ClockIn comparisons for the requested period.",
+      "Return the IQueryable<ClockEntryEntity> without invoking any Domain-only method in the expression.",
+      "Add a public static async MaterializeAsync method that accepts IQueryable<ClockEntryEntity> query and an optional CancellationToken.",
+      "Inside MaterializeAsync, call ToListAsync(query, cancellationToken) and store the returned List<ClockEntryEntity> in rows.",
+      "Return rows in the order required by the caller, making clear whether that ordering occurs in SQL or in memory.",
+      "Create tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryDataQueriesTests.cs.",
+      "Arrange an open in-memory SQLite database containing multiple employees, periods, and completion states.",
+      "Construct the CompletedForEmployee query and assert that no materialized result variable exists before MaterializeAsync is called.",
+      "Materialize the query and assert that only the matching employee's completed entries in the period were returned.",
+      "Run the focused ClockEntryDataQueriesTests and the full solution test suite."
     ],
     "expectedBehavior": "Filtering executes through SQLite with provider-compatible expressions and tested results.",
     "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"

@@ -93,11 +93,23 @@
     "objective": "Trace production exception propagation and preserve a separate ScratchPad resource-cleanup experiment.",
     "startingCondition": "Session 24 added tested production exceptions. No TimeClock resource currently requires a custom IDisposable implementation.",
     "steps": [
-      "Trace one ClockEntry exception from model through service to App and decide where it should be translated or displayed.",
-      "Add only the production catch that provides a real application boundary response; preserve the original exception context.",
-      "Create ResourceExperiments.cs in ScratchPad with a small IDisposable probe and a deliberate exception inside using.",
-      "Verify cleanup occurs and keep the experiment permanently.",
-      "Run App, ScratchPad, and tests."
+      "Open src/PinkMachine19.TimeClock.Domain/Models/ClockEntry.cs and locate the exception thrown when duration is requested for an open entry.",
+      "Trace every caller from ClockEntry.GetDuration through the total-hours calculation to src/PinkMachine19.TimeClock.App/Program.cs.",
+      "Write a temporary comment in Program.cs naming Program.cs as the console application's outer boundary.",
+      "Wrap only the App call that can surface the known domain exception in a try block.",
+      "Add a catch for InvalidOperationException that displays a concise user-facing message while retaining the exception message.",
+      "Do not add a catch inside ClockEntry or the service merely to suppress the failure.",
+      "Create src/PinkMachine19.TimeClock.ScratchPad/Session25/ResourceExperiments.cs.",
+      "In ResourceExperiments.cs, declare a public sealed class named ResourceExperiments with a public Run method.",
+      "Declare a small private nested class named DisposalProbe that implements IDisposable.",
+      "In DisposalProbe, add a public bool property named WasDisposed with a private setter.",
+      "Implement Dispose by setting WasDisposed to true and displaying a cleanup message.",
+      "In Run, construct one DisposalProbe and store it in a variable outside a using block so its final state can be observed.",
+      "Enter a using block for that probe.",
+      "Inside the using block, deliberately throw InvalidOperationException.",
+      "Catch that deliberate exception outside the using block so ScratchPad can continue.",
+      "After the catch, display the probe's WasDisposed value to verify cleanup occurred.",
+      "Open ScratchPad/Program.cs, preserve earlier calls, construct ResourceExperiments, and call Run."
     ],
     "expectedBehavior": "Production reports a real domain failure appropriately, while ScratchPad proves using cleanup in isolation.",
     "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
