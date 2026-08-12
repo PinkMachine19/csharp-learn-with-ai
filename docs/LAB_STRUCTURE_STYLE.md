@@ -44,6 +44,15 @@ The learner should understand what they are building and why before reading mech
 - Avoid repeating established boilerplate. Refer to the established session pattern, but keep enough context that the lab remains completable without guessing.
 - Include a copyable starter comment when the learner is expected to type code.
 
+### Paste-ready instruction standard for Sessions 01–24
+
+- Render every learner instruction as one or more valid C# `//` comments so the learner can paste it directly into Visual Studio Code as a temporary implementation checklist.
+- Include the exact class, method, field, parameter, and variable names chosen by the lesson.
+- Never place plain instructional prose inside a C# code block. Every instructional line in such a block must begin with `//`.
+- Keep completed implementations behind the existing Solution Reveal. Paste-ready instructions describe the next action; they do not reveal the finished code.
+- Inspect the learner's actual source before naming a namespace or folder. If the project has no explicit namespace declaration, do not instruct the learner to add one.
+- Use the folders that exist in the cumulative learner project rather than assuming a `Services` folder, Domain-root placement, or another convention.
+
 ## 5. Teach rather than generate
 
 - Do not ask the learner to replace an entire file with completed code.
@@ -60,6 +69,9 @@ The learner should understand what they are building and why before reading mech
 - Explain the semantic reason for a design choice, not only its syntax.
 - Distinguish teaching simplifications from typical production architecture.
 - Keep optional or supporting theory out of the primary session when it would distract from that session's objective. Prefer a brief cross-reference or one focused, skippable sidebar.
+- When a LINQ expression is neither stored, returned, nor enumerated, say: "LINQ returns a new sequence. It does not change the source, so the returned sequence must be stored, returned, or enumerated."
+- Distinguish deferred queries from materialized results precisely. `Where` and `OrderByDescending` return new `IEnumerable<T>` queries without modifying the source. `ToList` executes the query at that point and stores the results in a new `List<T>`; it does not prevent later LINQ because `List<T>` also implements `IEnumerable<T>`.
+- Use the memory anchor: "No ToList: keep the query deferred. ToList: run it now and store the results."
 
 ## 7. Use meaningful visuals and interactions
 

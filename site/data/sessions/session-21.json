@@ -2,7 +2,7 @@
   "number": 21,
   "category": "query pipelines",
   "estimatedTime": "40 minutes",
-  "connection": "Session 20 created PayrollService with a clear foreach loop over completed entries. This session refactors that known behavior into LINQ and adds one small ordered-history query; it does not assume additional services or tests already exist.",
+  "connection": "Session 20 created ClockEntryService and demonstrated constructor injection. Session 21 now creates PayrollService and ClockEntryQueries, uses the existing repository contract, and introduces one total-hours calculation plus one ordered-history query.",
   "objectives": [
     "Read a LINQ pipeline from source to result.",
     "Use Where to keep completed entries and OrderByDescending to show newest entries first.",
@@ -68,7 +68,8 @@
       "title": "Where filters by a requirement",
       "paragraphs": [
         "A completed-history query excludes entries whose clock-out is null before any duration calculation.",
-        "Use the Clockout/Clockout spelling present in your current ClockEntry class."
+        "Where returns a new IEnumerable<ClockEntry>; it does not remove anything from entries. LINQ returns a new sequence. It does not change the source, so the returned sequence must be stored, returned, or enumerated.",
+        "The learner's current ClockEntry class spells the property Clockout, so this session uses that exact spelling."
       ],
       "code": "entries.Where(entry => entry.Clockout is not null)"
     },
@@ -95,38 +96,51 @@
       "title": "Ordering should express the caller's need",
       "paragraphs": [
         "CompletedNewestFirst uses OrderByDescending because a history screen normally shows recent entries first.",
-        "The returned IEnumerable remains a query; Session 23 examines when it actually executes."
+        "OrderByDescending returns another IEnumerable<ClockEntry>, so the Where result can flow directly into the next operator without changing the original collection.",
+        "Without ToList, the returned pipeline normally remains deferred and runs when it is enumerated by foreach, Sum, ToList, or another terminal operation. ToList runs the query at that point and stores the results in a new List<ClockEntry>.",
+        "A List<ClockEntry> still implements IEnumerable<ClockEntry>, so more LINQ can follow ToList. The distinction is execution timing, not whether LINQ can continue. No ToList: keep the query deferred. ToList: run it now and store the results. Session 23 explores that timing in depth."
       ],
       "code": "return entries\n    .Where(entry => entry.Clockout is not null)\n    .OrderByDescending(entry => entry.ClockIn);"
     }
   ],
   "lab": {
-    "objective": "Refactor the Session 20 total-hours loop to Sum and create one query that filters completed entries and orders them newest first.",
-    "startingCondition": "IClockEntryRepository and ClockEntryService exist. PayrollService and ClockEntryQueries do not exist yet.",
+    "objective": "Create PayrollService and ClockEntryQueries, then use LINQ to calculate total hours and return completed entries newest first.",
+    "startingCondition": "The learner's Domain project contains Models and Services folders, uses no explicit namespace declarations, and already contains IClockEntryRepository and ClockEntryService. PayrollService and ClockEntryQueries do not exist yet.",
     "steps": [
-      "Create PayrollService.cs in the Domain project's Services folder and declare a public sealed class named PayrollService.",
-      "Inside PayrollService, add a private readonly IClockEntryRepository field named _clockEntryRepository.",
-      "Add a public PayrollService constructor with an IClockEntryRepository parameter named clockEntryRepository, then assign it to _clockEntryRepository.",
-      "Add a public CalculateTotalHours method that returns double and accepts int employeeId, DateTime startDate, and DateTime endDate. Leave its body unfinished for now.",
-      "Inside CalculateTotalHours, call _clockEntryRepository.GetEmployeeClockEntries(employeeId, startDate, endDate) and store the result in IEnumerable<ClockEntry> entries.",
-      "Return entries.Sum(entry => entry.GetDuration().Value.TotalHours). Here .Value unwraps the TimeSpan? so TotalHours can be read; the repository's completed-entry filter is what makes that unwrap valid.",
-      "Create ClockEntryQueries.cs in the Domain project and declare a public static class named ClockEntryQueries.",
-      "Add a public static CompletedNewestFirst method that returns IEnumerable<ClockEntry> and accepts IEnumerable<ClockEntry> entries.",
-      "Inside CompletedNewestFirst, filter entries where Clockout is not null, order them by ClockIn descending, and return the pipeline without calling ToList.",
-      "Open App/Program.cs, preserve earlier sections, and append a Session 21 section that constructs PayrollService, displays total hours, and enumerates CompletedNewestFirst.",
+      "Create src/PinkMachine19.TimeClock.Domain/Services/PayrollService.cs. Do not add a namespace because the learner's existing Domain files do not declare one.",
+      "In PayrollService.cs, declare a public sealed class named PayrollService.",
+      "In PayrollService, declare a private readonly IClockEntryRepository field named _clockEntryRepository.",
+      "Add a public PayrollService constructor with an IClockEntryRepository parameter named clockEntryRepository.",
+      "In the PayrollService constructor, assign clockEntryRepository to _clockEntryRepository.",
+      "Add a public CalculateTotalHours method that returns double and accepts int employeeId, DateTime startDate, and DateTime endDate; keep the method temporarily unfinished with throw new NotImplementedException().",
+      "In CalculateTotalHours, call _clockEntryRepository.GetEmployeeClockEntries(employeeId, startDate, endDate) and store the returned sequence in a variable named entries.",
+      "Replace the temporary throw by returning entries.Sum(entry => entry.GetDuration().Value.TotalHours). Sum asks the selector for one number per entry and adds those numbers.",
+      "Create src/PinkMachine19.TimeClock.Domain/Models/ClockEntryQueries.cs. Do not add a namespace because the learner's existing Domain files do not declare one.",
+      "In ClockEntryQueries.cs, declare a public static class named ClockEntryQueries.",
+      "In ClockEntryQueries, add a public static CompletedNewestFirst method that accepts IEnumerable<ClockEntry> entries, returns IEnumerable<ClockEntry>, and remains temporarily unfinished with throw new NotImplementedException().",
+      "In CompletedNewestFirst, call Where on entries, keep entries whose Clockout property is not null, and store the returned sequence in a variable named completedEntries. Where does not modify entries.",
+      "Call OrderByDescending on completedEntries, order by each entry's ClockIn property, and store the returned sequence in a variable named orderedEntries.",
+      "Replace the temporary throw by returning orderedEntries without calling ToList. No ToList keeps this query deferred; Session 23 examines when it runs.",
+      "Open src/PinkMachine19.TimeClock.App/Program.cs and preserve all earlier session code.",
+      "At the end of Program.cs, construct PayrollService by passing the existing clockEntryRepository variable to its constructor.",
+      "Call CalculateTotalHours with an employee ID, start date, and end date, then store the returned value in a variable named totalHours.",
+      "Display totalHours.",
+      "Call clockEntryRepository.GetEmployeeClockEntries with the same employee ID and date range, then store the returned sequence in a variable named entries.",
+      "Pass entries to ClockEntryQueries.CompletedNewestFirst and store the returned sequence in a variable named orderedEntries.",
+      "Use foreach to enumerate orderedEntries and display each ClockEntry object's ClockIn value.",
       {
         "text": "Run the App project, then build and test PinkMachine19.TimeClock.sln. Compare with the existing solution reveal after attempting both queries.",
         "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
         "reveals": [
           {
             "title": "Solution",
-            "text": "Match GetDuration and Clockout/Clockout to your existing ClockEntry API.",
-            "code": "public sealed class PayrollService\n{\n    private readonly IClockEntryRepository _clockEntries;\n\n    public PayrollService(IClockEntryRepository clockEntries)\n    {\n        _clockEntries = clockEntries;\n    }\n\n    public double CalculateTotalHours(int employeeId, DateTime startDate, DateTime endDate)\n    {\n        IEnumerable<ClockEntry> entries = _clockEntries.GetEmployeeClockEntries(employeeId, startDate, endDate);\n        return entries.Sum(entry => entry.GetDuration().Value.TotalHours);\n    }\n}\n\npublic static class ClockEntryQueries\n{\n    public static IEnumerable<ClockEntry> CompletedNewestFirst(IEnumerable<ClockEntry> entries) => entries\n        .Where(entry => entry.Clockout is not null)\n        .OrderByDescending(entry => entry.ClockIn);\n}"
+            "text": "This solution uses the learner source's existing GetDuration and Clockout member names and does not add namespace declarations.",
+            "code": "public sealed class PayrollService\n{\n    private readonly IClockEntryRepository _clockEntryRepository;\n\n    public PayrollService(IClockEntryRepository clockEntryRepository)\n    {\n        _clockEntryRepository = clockEntryRepository;\n    }\n\n    public double CalculateTotalHours(int employeeId, DateTime startDate, DateTime endDate)\n    {\n        IEnumerable<ClockEntry> entries = _clockEntryRepository.GetEmployeeClockEntries(employeeId, startDate, endDate);\n        return entries.Sum(entry => entry.GetDuration().Value.TotalHours);\n    }\n}\n\npublic static class ClockEntryQueries\n{\n    public static IEnumerable<ClockEntry> CompletedNewestFirst(IEnumerable<ClockEntry> entries)\n    {\n        IEnumerable<ClockEntry> completedEntries = entries.Where(entry => entry.Clockout is not null);\n        IEnumerable<ClockEntry> orderedEntries = completedEntries.OrderByDescending(entry => entry.ClockIn);\n        return orderedEntries;\n    }\n}"
           }
         ]
       }
     ],
-    "expectedBehavior": "Production uses LINQ to express existing filtering and ordering requirements without adding a second fictional feature.",
+    "expectedBehavior": "PayrollService sums completed duration hours, and ClockEntryQueries returns completed entries newest first without modifying or materializing the source collection.",
     "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
     "clickHighlightInstructions": true,
     "stepCheckboxes": true
@@ -138,7 +152,7 @@
       "why": "Create total-hours behavior when LINQ provides its implementation."
     },
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryQueries.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/Models/ClockEntryQueries.cs",
       "action": "Add",
       "why": "Create a completed newest-first query."
     },
@@ -208,7 +222,7 @@
     "Why should open-entry filtering happen before duration calculation?"
   ],
   "whatBreaks": "Removing the completed-entry filter allows an open entry into code that calls GetDuration and can trigger an exception. Reversing OrderByDescending changes newest-first history to oldest-first. Adding ToList here would force materialization before Session 23 explains that choice.",
-  "summary": "Session 21 refactors a known foreach total into Sum and adds one completed, newest-first query. Every operator serves a visible requirement, and the lesson uses the ClockEntry member names present in the learner's source.",
+  "summary": "Session 21 creates PayrollService and ClockEntryQueries, uses Sum for completed hours, and composes Where with OrderByDescending for a deferred newest-first query. Every operator serves a visible requirement, and the lesson uses the folders and ClockEntry member names present in the learner's source.",
   "learningEnvironment": "production",
   "buildState": {
     "creates": [
