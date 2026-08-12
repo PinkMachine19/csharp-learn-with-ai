@@ -9,6 +9,9 @@ Use this checklist when auditing or rewriting future C# Learn with AI sessions. 
 - If a session needs a new prerequisite, introduce it explicitly in the appropriate session.
 - Preserve all earlier session work. Add new session-specific code rather than deleting previous classes or replacing entire files.
 - Keep expected file paths, namespaces, project references, member names, and method signatures consistent with the learner's real solution.
+- Treat spelling and casing as part of the API contract. Verify names such as `Clockout`, `ClockOutEntry`, `Employee.Identity`, and `TimeSheet` from source instead of normalizing them by preference.
+- Verify nullable return types from the actual signature and use one consistent access expression throughout the concept explanation, instructions, solution, and later sessions.
+- Give every production type one truthful introduction point. An earlier language experiment must use a distinct ScratchPad name rather than accidentally pre-creating a production type required by a later session.
 - Keep commit messages and session numbers accurate.
 
 ## 2. Use the correct learning environment
@@ -46,6 +49,8 @@ The learner should understand what they are building and why before reading mech
 - Tell the learner how to invoke a new class from `Program.cs` or `Main` without removing earlier calls.
 - Avoid repeating established boilerplate. Refer to the established session pattern, but keep enough context that the lab remains completable without guessing.
 - Include a copyable starter comment when the learner is expected to type code.
+- Preserve useful retrieval practice. Repeating a class, constructor, property, method, LINQ expression, or injected dependency can reinforce learning; do not remove repetition merely because the syntax appeared earlier.
+- Add short reminders only at the step where they help, using wording such as `Remember from Session 21:`. Do not turn every instruction into a recap of every prior concept.
 
 ### Paste-ready instruction standard for Sessions 01–24
 
@@ -64,6 +69,8 @@ The learner should understand what they are building and why before reading mech
 - Make the learner write the important code incrementally.
 - Put the complete answer only in a collapsed Solution section.
 - The learner should spend substantially more time writing and reasoning than copying.
+- Separate incidental integration setup from the current learning code. Label safe boilerplate explicitly as `Setup code: paste this`, and label the few lines that exercise the current concept as `Learning code: write this yourself`.
+- If integration itself is an objective, teach it through separate granular steps. Otherwise, do not make the learner reverse-engineer several earlier sessions just to reach the new concept.
 
 ## 6. Make explanations explicit where mistakes are likely
 
@@ -73,8 +80,14 @@ The learner should understand what they are building and why before reading mech
 - Distinguish teaching simplifications from typical production architecture.
 - Keep optional or supporting theory out of the primary session when it would distract from that session's objective. Prefer a brief cross-reference or one focused, skippable sidebar.
 - When a LINQ expression is neither stored, returned, nor enumerated, say: "LINQ returns a new sequence. It does not change the source, so the returned sequence must be stored, returned, or enumerated."
+- Explain sequence identity for reference types with the memory anchor: "New sequence. Same objects." `Where`, `OrderBy`, and similar operators do not clone the objects they return.
 - Distinguish deferred queries from materialized results precisely. `Where` and `OrderByDescending` return new `IEnumerable<T>` queries without modifying the source. `ToList` executes the query at that point and stores the results in a new `List<T>`; it does not prevent later LINQ because `List<T>` also implements `IEnumerable<T>`.
 - Use the memory anchor: "No ToList: keep the query deferred. ToList: run it now and store the results."
+- Build dense LINQ incrementally with named intermediate variables. For grouping, explain `GroupBy` as one bucket per key, `group.Key` as the bucket label, enumeration as the bucket's items, `Select` as one result per bucket, and `Sum` as collapsing that bucket to one total.
+- Do not require learners to memorize complex generic method signatures. For `Join`, teach its four arguments separately with the anchor: "Second collection. First key. Second key. Final result."
+- Explain why a `Join` is needed, identify the value supplied by each sequence, and state that the standard LINQ `Join` is an inner join whose unmatched keys produce no result.
+- For dense IntelliSense signatures, teach learners to identify the receiver, open signature help, move among overloads, read one parameter at a time, substitute concrete types for `TOuter`, `TInner`, `TKey`, and `TResult`, and use documentation or Go to Definition when needed.
+- When nullable operators appear, explain both halves: `?.` accesses a member only when a value exists, while `??` supplies the non-null fallback required by the consuming expression. Also explain why the domain's earlier filtering should normally make that fallback unnecessary at runtime.
 
 ## 7. Use meaningful visuals and interactions
 
@@ -99,11 +112,14 @@ When correcting several sessions together, verify the whole range as one progres
 
 - Does every session begin from the previous session's actual end state?
 - Does every new artifact have one clear introduction point?
+- Do earlier ScratchPad examples avoid claiming names reserved for later production artifacts?
 - Do later sessions depend only on artifacts already created?
 - Are ScratchPad and production responsibilities separated consistently?
 - Are complex tasks decomposed into small steps?
 - Are visuals meaningful?
 - Are instructions, solutions, file tables, generated pages, and commit messages synchronized?
+- Do App demonstrations use matching IDs and date ranges so filters and inner joins produce the documented output?
+- Is incidental setup visibly separated from the code that practices the session's new concept?
 - Does the complete course build and validate after the batch?
 
 ## Reference batch
