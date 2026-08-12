@@ -89,7 +89,7 @@
         "SaveClockEntry's _clockEntries.Add(clockEntry) is List<T>'s own instance method -- it mutates the list in place, growing its Count by one.",
         "GetEmployeeClockEntries's _clockEntries.Where(...) is a LINQ extension method available on any IEnumerable<T>, including List<T> -- it does not mutate anything; it returns a new, deferred query over the existing elements (Session 23)."
       ],
-      "code": "// Real Add: mutates the list\npublic void SaveClockEntry(ClockEntry clockEntry) => _clockEntries.Add(clockEntry);\n\n// Real Where: reads the list, returns a query, does not mutate\npublic IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate) =>\n    _clockEntries.Where(entry => entry.EmployeeId == employeeId && entry.ClockOut != null\n        && entry.ClockIn >= startDate && entry.ClockIn <= endDate);"
+      "code": "// Real Add: mutates the list\npublic void SaveClockEntry(ClockEntry clockEntry) => _clockEntries.Add(clockEntry);\n\n// Real Where: reads the list, returns a query, does not mutate\npublic IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate) =>\n    _clockEntries.Where(entry => entry.EmployeeId == employeeId && entry.Clockout != null\n        && entry.ClockIn >= startDate && entry.ClockIn <= endDate);"
     },
     {
       "title": "Return the capability callers need, not the storage type",
@@ -101,12 +101,12 @@
       "code": "public IEnumerable<ClockEntry> GetEmployeeClockEntries(...)\n{\n    return _clockEntries.Where(...);\n}"
     },
     {
-      "title": "ClockOut tells the repository whether an entry is open or complete",
+      "title": "Clockout tells the repository whether an entry is open or complete",
       "paragraphs": [
-        "ClockEntry.ClockOut is nullable because an employee who has clocked in but not yet clocked out has no ending time. ClockOut is null therefore means the entry is open; ClockOut is not null means the entry is complete.",
-        "GetEmployeeClockEntries returns completed history, so its filter must include entry.ClockOut is not null. GetOpenClockEntry is searching for the current unfinished entry, so its filter must include entry.ClockOut is null. The two methods deliberately select opposite states from the same collection."
+        "ClockEntry.Clockout is nullable because an employee who has clocked in but not yet clocked out has no ending time. Clockout is null therefore means the entry is open; Clockout is not null means the entry is complete.",
+        "GetEmployeeClockEntries returns completed history, so its filter must include entry.Clockout is not null. GetOpenClockEntry is searching for the current unfinished entry, so its filter must include entry.Clockout is null. The two methods deliberately select opposite states from the same collection."
       ],
-      "code": "// Completed history\nentry.ClockOut is not null\n\n// Current open entry\nentry.ClockOut is null"
+      "code": "// Completed history\nentry.Clockout is not null\n\n// Current open entry\nentry.Clockout is null"
     },
     {
       "title": "A public field is a real, named smell, not a rewrite target today",
@@ -123,7 +123,7 @@
     "steps": [
       "Create a Repositories folder in the Domain project.",
       "Create ClockEntryRepository.cs inside the Repositories folder.",
-      "Add the PinkMachine19.TimeClock.Domain namespace.",
+      "Do not add an explicit namespace; the learner's current Domain and ScratchPad source uses the global namespace.",
       "Declare the public sealed ClockEntryRepository class.",
       "Side note — sealed means this concrete in-memory repository cannot be used as a base class. Use sealed when a class is intended to be used as-is and you have not designed a safe inheritance contract with protected or virtual extension points. It is not required for every repository. Later, alternative storage implementations will implement a repository interface instead of inheriting from this class.",
       {
@@ -147,8 +147,8 @@
         "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
       },
       "Replace the throw inside SaveClockEntry with one Add call that appends clockEntry to _clockEntries.",
-      "Replace the throw inside GetEmployeeClockEntries with a return statement that includes only entries whose EmployeeId matches employeeId, whose ClockOut is not null, and whose ClockIn is between startDate and endDate inclusive.",
-      "Replace the throw inside GetOpenClockEntry with a return statement that finds the first entry whose EmployeeId matches employeeId and whose ClockOut is null, or returns null when no such entry exists.",
+      "Replace the throw inside GetEmployeeClockEntries with a return statement that includes only entries whose EmployeeId matches employeeId, whose Clockout is not null, and whose ClockIn is between startDate and endDate inclusive.",
+      "Replace the throw inside GetOpenClockEntry with a return statement that finds the first entry whose EmployeeId matches employeeId and whose Clockout is null, or returns null when no such entry exists.",
       "Update App to save open and completed entries and display the resulting count.",
       {
         "text": "Keep the list private so callers interact through repository behavior. Run the App, then build and test the solution. Attempt the lab before opening the solution below.",
@@ -157,7 +157,7 @@
           {
             "title": "Solution",
             "text": "Use this to compare the important decisions with your attempt. Do not replace an entire existing Program.cs; add the Session 11 section after its earlier code.",
-            "code": "// Repositories/ClockEntryRepository.cs\nnamespace PinkMachine19.TimeClock.Domain;\n\npublic sealed class ClockEntryRepository\n{\n    private readonly List<ClockEntry> _clockEntries = new();\n\n    public void SaveClockEntry(ClockEntry clockEntry)\n    {\n        _clockEntries.Add(clockEntry);\n    }\n\n    public IEnumerable<ClockEntry> GetEmployeeClockEntries(\n        int employeeId,\n        DateTime startDate,\n        DateTime endDate)\n    {\n        return _clockEntries.Where(entry =>\n            entry.EmployeeId == employeeId &&\n            entry.ClockOut is not null &&\n            entry.ClockIn >= startDate &&\n            entry.ClockIn <= endDate);\n    }\n\n    public ClockEntry? GetOpenClockEntry(int employeeId)\n    {\n        return _clockEntries.FirstOrDefault(entry =>\n            entry.EmployeeId == employeeId && entry.ClockOut is null);\n    }\n}\n\n// Add as a new Session 11 section at the end of App/Program.cs.\nvar repository = new ClockEntryRepository();\n\nvar completedEntry = new ClockEntry(1, new DateTime(2026, 1, 15, 9, 0, 0));\ncompletedEntry.ClockOutEmployee(new DateTime(2026, 1, 15, 17, 0, 0));\n\nvar openEntry = new ClockEntry(1, new DateTime(2026, 1, 16, 9, 0, 0));\n\nrepository.SaveClockEntry(completedEntry);\nrepository.SaveClockEntry(openEntry);\n\nIEnumerable<ClockEntry> completedEntries = repository.GetEmployeeClockEntries(\n    1,\n    new DateTime(2026, 1, 1),\n    new DateTime(2026, 1, 31));\n\nClockEntry? currentOpenEntry = repository.GetOpenClockEntry(1);\n\nConsole.WriteLine($\"Completed entries: {completedEntries.Count()}\");\nConsole.WriteLine($\"Open entry found: {currentOpenEntry is not null}\");"
+            "code": "// Repositories/ClockEntryRepository.cs\npublic sealed class ClockEntryRepository\n{\n    private readonly List<ClockEntry> _clockEntries = new();\n\n    public void SaveClockEntry(ClockEntry clockEntry)\n    {\n        _clockEntries.Add(clockEntry);\n    }\n\n    public IEnumerable<ClockEntry> GetEmployeeClockEntries(\n        int employeeId,\n        DateTime startDate,\n        DateTime endDate)\n    {\n        return _clockEntries.Where(entry =>\n            entry.EmployeeId == employeeId &&\n            entry.Clockout is not null &&\n            entry.ClockIn >= startDate &&\n            entry.ClockIn <= endDate);\n    }\n\n    public ClockEntry? GetOpenClockEntry(int employeeId)\n    {\n        return _clockEntries.FirstOrDefault(entry =>\n            entry.EmployeeId == employeeId && entry.Clockout is null);\n    }\n}\n\n// Add as a new Session 11 section at the end of App/Program.cs.\nvar repository = new ClockEntryRepository();\n\nvar completedEntry = new ClockEntry(1, new DateTime(2026, 1, 15, 9, 0, 0));\ncompletedEntry.ClockOutEntry(new DateTime(2026, 1, 15, 17, 0, 0));\n\nvar openEntry = new ClockEntry(1, new DateTime(2026, 1, 16, 9, 0, 0));\n\nrepository.SaveClockEntry(completedEntry);\nrepository.SaveClockEntry(openEntry);\n\nIEnumerable<ClockEntry> completedEntries = repository.GetEmployeeClockEntries(\n    1,\n    new DateTime(2026, 1, 1),\n    new DateTime(2026, 1, 31));\n\nClockEntry? currentOpenEntry = repository.GetOpenClockEntry(1);\n\nConsole.WriteLine($\"Completed entries: {completedEntries.Count()}\");\nConsole.WriteLine($\"Open entry found: {currentOpenEntry is not null}\");"
           }
         ]
       }
@@ -216,7 +216,7 @@
       "options": [
         "No -- Where returns a new filtered view without modifying the underlying list at all; _clockEntries still contains every entry afterward",
         "Yes -- Where permanently removes entries that do not match",
-        "Only entries where ClockOut is null are removed"
+        "Only entries where Clockout is null are removed"
       ],
       "correct": 0,
       "explanation": "LINQ's Where is non-destructive by design -- this is part of why Session 23's deferred-execution discussion matters: querying never mutates the source."

@@ -84,7 +84,7 @@
       "title": "Passing an object as a method argument passes its reference",
       "paragraphs": [
         "ClockEntryService.ClockIn constructs a ClockEntry and passes it directly to SaveClockEntry -- the repository receives the same object, not a copy, and adds that exact reference to _clockEntries.",
-        "This is why ClockEntryService.Clockout can retrieve that same ClockEntry later via GetClockEntry and call ClockOutEmployee on it -- it is mutating the one object that has existed since ClockIn, not a disconnected copy."
+        "This is why ClockEntryService.Clockout can retrieve that same ClockEntry later via GetClockEntry and call ClockOutEntry on it -- it is mutating the one object that has existed since ClockIn, not a disconnected copy."
       ],
       "code": "// Services/ClockEntryService.cs -- ClockIn passes the reference straight through\npublic void ClockIn(int employeeId)\n{\n    var entry = new ClockEntry(employeeId, DateTime.Now);\n    _clockEntryRepository.SaveClockEntry(entry);   // repository now shares this exact object\n}"
     }
@@ -174,7 +174,7 @@
       "options": [
         "ClockIn passed the object's reference to SaveClockEntry, so the repository has held the one real object the whole time -- GetClockEntry hands that same reference back out",
         "ClockEntry overrides Equals to look up entries by value",
-        "ClockOutEmployee creates a brand new ClockEntry internally"
+        "ClockOutEntry creates a brand new ClockEntry internally"
       ],
       "correct": 0,
       "explanation": "There is exactly one ClockEntry object per clock-in; every method that touches it afterward is operating on that same shared reference."
@@ -194,7 +194,7 @@
       "options": [
         "No -- entry is passed implicitly as the reference this method call operates on; no copy of the object occurs",
         "Yes -- every method call copies its receiver",
-        "Only if ClockOut is null"
+        "Only if Clockout is null"
       ],
       "correct": 0,
       "explanation": "Method calls on a reference-type instance operate on the shared object directly, not on a copy."
@@ -207,10 +207,10 @@
     },
     {
       "question": "What would you have to change about ClockEntry for two separately-constructed ClockEntry objects with the same EmployeeId and ClockIn to be considered 'equal'?",
-      "answer": "ClockEntry would need value-equality behavior, such as overriding Equals and GetHashCode and usually the == and != operators, or being redesigned as a record. The equality definition would also need to decide whether ClockOut participates. That choice is consequential because collections could then treat two distinct clock-entry events with matching values as one item."
+      "answer": "ClockEntry would need value-equality behavior, such as overriding Equals and GetHashCode and usually the == and != operators, or being redesigned as a record. The equality definition would also need to decide whether Clockout participates. That choice is consequential because collections could then treat two distinct clock-entry events with matching values as one item."
     },
     {
-      "question": "How does knowing SaveClockEntry stores a live reference (not a copy) change how you would reason about a bug where an entry's ClockOut value seems to change unexpectedly?",
+      "question": "How does knowing SaveClockEntry stores a live reference (not a copy) change how you would reason about a bug where an entry's Clockout value seems to change unexpectedly?",
       "answer": "Trace every alias to that ClockEntry instead of assuming the repository owns an isolated copy. A caller that still holds the original reference, or code that retrieves the same reference, can mutate the object seen by the repository. If isolation were required, the design would need copying, immutability, or a narrower mutation boundary."
     }
   ],

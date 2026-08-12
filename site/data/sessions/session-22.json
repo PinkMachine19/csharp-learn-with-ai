@@ -65,73 +65,82 @@
   ],
   "concept": [
     {
-      "title": "GroupBy partitions before aggregation",
+      "title": "GroupBy creates employee buckets",
       "paragraphs": [
-        "After removing open entries, GroupBy(entry => entry.EmployeeId) creates one sequence per employee.",
-        "Each group exposes its EmployeeId through Key and its entries through enumeration."
+        "After removing open entries, GroupBy(entry => entry.EmployeeId) creates one bucket for each EmployeeId. group.Key is the employee ID written on that bucket; enumerating group produces that employee's ClockEntry objects.",
+        "GroupBy does not create nested database rows or clone ClockEntry objects. It organizes the current sequence into groups so each employee's entries can be aggregated together.",
+        "Before grouping: Employee 1 — 8 hours; Employee 2 — 5 hours; Employee 1 — 7 hours. After grouping: Employee 1 bucket — 8 and 7; Employee 2 bucket — 5."
       ],
-      "code": ".Where(entry => entry.Clockout is not null)\n.GroupBy(entry => entry.EmployeeId)"
+      "code": "IEnumerable<ClockEntry> completedEntries =\n    entries.Where(entry => entry.Clockout is not null);\n\nvar employeeGroups =\n    completedEntries.GroupBy(entry => entry.EmployeeId);"
     },
     {
-      "title": "Select turns each group into a report result",
+      "title": "Select turns each bucket into one WorkSummary",
       "paragraphs": [
-        "WorkSummary is introduced explicitly in this session. It stores the employee key and total hours produced by summing that group.",
-        "Ordering by EmployeeId makes the report deterministic before ToList creates the snapshot."
+        "Select receives one entire employee bucket at a time. group.Key supplies WorkSummary.EmployeeId, while Sum collapses every duration inside that bucket into one total.",
+        "After projection, the example becomes Employee 1 — 15 total hours and Employee 2 — 5 total hours. The learner's GetDuration returns TimeSpan?, so ?. safely reads TotalHours and ?? supplies the non-null double WorkSummary requires.",
+        "OrderBy returns another sequence. ToList then executes the pipeline and stores a finished report snapshot. A List still supports later LINQ because it implements IEnumerable."
       ],
-      "code": ".Select(group => new WorkSummary(\n    group.Key,\n    group.Sum(entry => entry.GetDuration().Value.TotalHours)))\n.OrderBy(summary => summary.EmployeeId)\n.ToList();"
+      "code": "var summaries = employeeGroups.Select(group => new WorkSummary(\n    group.Key,\n    group.Sum(entry => entry.GetDuration()?.TotalHours ?? 0)));\n\nvar orderedSummaries = summaries.OrderBy(summary => summary.EmployeeId);\nreturn orderedSummaries.ToList();"
     },
     {
-      "title": "Join correlates independent sequences",
+      "title": "Join combines values from matching objects",
       "paragraphs": [
-        "Employee objects and WorkSummary objects are separate sequences. Join matches Employee.Identity to WorkSummary.EmployeeId and projects a display label.",
-        "Use the employee ID and name property names that exist in your current Employee class."
+        "Employee supplies the name. WorkSummary supplies the hours. The matching employee ID connects them. If the output needed only employee names, Select would be enough; Join exists because the final label needs values from both objects.",
+        "Read Join's four arguments in this order: Second collection. First key. Second key. Final result. Here those become summaries, employee.Identity, summary.EmployeeId, and the label built from employee.Name plus summary.Hours.",
+        "Join is an inner join. If Employee.Identity is 1 while WorkSummary.EmployeeId is 19, there is no matching pair and therefore no label. The App demonstration deliberately uses employeeId for both sides.",
+        "Optional editor practice: Side Lab 01B includes a focused exercise for reading Join's generic IntelliSense signature one parameter at a time instead of memorizing it."
       ],
-      "code": "employees.Join(\n    summaries,\n    employee => employee.Identity,\n    summary => summary.EmployeeId,\n    (employee, summary) => $\"{employee.Name}: {summary.Hours:F1}\")"
+      "code": "IEnumerable<string> labels = employees.Join(\n    summaries,                         // second collection\n    employee => employee.Identity,     // first key\n    summary => summary.EmployeeId,     // second key\n    (employee, summary) =>              // final result\n        $\"{employee.Name}: {summary.Hours:F1} hours\");"
     }
   ],
   "lab": {
     "objective": "Create a WorkSummary result type, group completed entries into per-employee totals, then join those totals to employee names.",
-    "startingCondition": "Employee, ClockEntry, and the Session 21 LINQ queries exist. WorkSummary and ClockEntryAnalytics do not exist yet.",
+    "startingCondition": "Employee, ClockEntry, PayrollService, and the Session 21 LINQ queries exist. The learner's source uses Models and Services folders, no explicit namespaces, Clockout spelling, Employee.Identity/Name, and TimeSpan? GetDuration(). Session 22 intentionally creates the Reports folder, WorkSummary, and ClockEntryAnalytics.",
     "steps": [
       "Create src/PinkMachine19.TimeClock.Domain/Reports because the learner's current Domain project does not contain that folder yet.",
-      "Create src/PinkMachine19.TimeClock.Domain/Reports/WorkSummary.cs; do not add a namespace unless the learner has since introduced namespaces consistently.",
-      "In WorkSummary.cs, declare a public sealed class named WorkSummary.",
+      "Create src/PinkMachine19.TimeClock.Domain/Reports/WorkSummary.cs; do not add a namespace because the learner's existing Domain source does not use explicit namespaces.",
+      "In WorkSummary.cs, declare a public sealed class named WorkSummary. Remember: public allows App to use the class, and sealed prevents another class from inheriting from it.",
       "In WorkSummary, add a public get-only int property named EmployeeId.",
-      "In WorkSummary, add a public get-only double property named Hours.",
+      "In WorkSummary, add a public get-only double property named Hours. Remember: double is appropriate for measured fractional hours; use decimal for money.",
       "Add a public WorkSummary constructor with int employeeId and double hours parameters.",
       "In the WorkSummary constructor, assign employeeId to EmployeeId.",
       "In the WorkSummary constructor, assign hours to Hours.",
       "Build the Domain project before starting the query class.",
-      "Create src/PinkMachine19.TimeClock.Domain/Reports/ClockEntryAnalytics.cs.",
+      "Create src/PinkMachine19.TimeClock.Domain/Reports/ClockEntryAnalytics.cs; do not add a namespace.",
       "In ClockEntryAnalytics.cs, declare a public static class named ClockEntryAnalytics.",
       "Add a public static HoursByEmployee method that accepts IEnumerable<ClockEntry> entries, returns IReadOnlyList<WorkSummary>, and temporarily throws NotImplementedException.",
-      "In HoursByEmployee, call Where on entries, keep entries whose Clockout property is not null, and store the returned sequence in a variable named completedEntries.",
-      "Call GroupBy on completedEntries using entry.EmployeeId as the key, then store the returned groups in a variable named employeeGroups.",
-      "Call Select on employeeGroups and create one WorkSummary per group using group.Key and group.Sum(entry => entry.GetDuration().Value.TotalHours); store the result in summaries.",
+      "In HoursByEmployee, call Where on entries, keep entries whose Clockout property is not null, and store the new sequence in IEnumerable<ClockEntry> completedEntries. Remember from Session 21: new sequence, same ClockEntry objects.",
+      "Call GroupBy on completedEntries using entry.EmployeeId as the key, then store the returned buckets in a variable named employeeGroups.",
+      "Call Select on employeeGroups and create one WorkSummary per group using group.Key and group.Sum(entry => entry.GetDuration()?.TotalHours ?? 0); store the returned sequence in summaries.",
       "Call OrderBy on summaries using summary.EmployeeId and store the returned sequence in orderedSummaries.",
       "Call ToList on orderedSummaries and return the resulting report snapshot instead of throwing NotImplementedException.",
       "Add a public static EmployeeLabels method that accepts IEnumerable<Employee> employees and IEnumerable<WorkSummary> summaries, returns IEnumerable<string>, and temporarily throws NotImplementedException.",
-      "In EmployeeLabels, call Join on employees and pass summaries as the inner sequence.",
-      "Use employee.Identity as the outer key and summary.EmployeeId as the inner key.",
-      "Project each join match to a string containing employee.Name and summary.Hours, then return the resulting sequence instead of throwing NotImplementedException.",
+      "In EmployeeLabels, begin employees.Join and pass summaries as the second sequence. Memory anchor: second collection, first key, second key, final result.",
+      "Add employee => employee.Identity as Join's first-sequence key selector.",
+      "Add summary => summary.EmployeeId as Join's second-sequence key selector.",
+      "Add (employee, summary) => $\"{employee.Name}: {summary.Hours:F1} hours\" as Join's final-result selector; store the returned sequence in IEnumerable<string> labels.",
+      "Return labels instead of throwing NotImplementedException.",
       "Open src/PinkMachine19.TimeClock.App/Program.cs and preserve all earlier session code.",
-      "Append a Session 22 section that obtains the relevant ClockEntry sequence and stores it in entries.",
-      "Call ClockEntryAnalytics.HoursByEmployee(entries) and store the returned snapshot in summaries.",
-      "Call ClockEntryAnalytics.EmployeeLabels with the existing employee sequence and summaries, then store the returned labels in employeeLabels.",
-      "Use foreach to display each value in employeeLabels.",
       {
-        "text": "Run App and verify the solution.",
+        "text": "Paste this Session 22 setup code after the existing Session 20 clock-in and clock-out demonstration. This setup is incidental integration work: it retrieves the completed entry and creates an Employee with the same ID so the inner Join can match.",
+        "code": "// Session 22 setup code: paste this.\nIEnumerable<ClockEntry> reportEntries =\n    clockEntryRepository.GetEmployeeClockEntries(\n        employeeId,\n        clockInTime.Date,\n        clockOutTime.Date.AddDays(1));\n\nvar reportEmployees = new List<Employee>\n{\n    new Employee(\n        employeeId,\n        \"Parm\",\n        new Address(\"Gaithersburg\", \"MD\"))\n};"
+      },
+      "Learning code: call ClockEntryAnalytics.HoursByEmployee(reportEntries) and store the returned IReadOnlyList<WorkSummary> in summaries.",
+      "Learning code: call ClockEntryAnalytics.EmployeeLabels(reportEmployees, summaries) and store the returned IEnumerable<string> in labels.",
+      "Learning code: use foreach to display every label. Expected output for the eight-hour example: Parm: 8.0 hours.",
+      {
+        "text": "Run App, build the solution, and run the full test suite. If no label appears, first verify that reportEmployees contains an Employee whose Identity matches the ClockEntry EmployeeId used to create summaries.",
         "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
         "reveals": [
           {
             "title": "Solution",
-            "text": "Use the Employee ID/name and Clockout property names established in your source.",
-            "code": "public sealed class WorkSummary\n{\n    public WorkSummary(int employeeId, double hours)\n    {\n        EmployeeId = employeeId;\n        Hours = hours;\n    }\n\n    public int EmployeeId { get; }\n    public double Hours { get; }\n}\n\npublic static IReadOnlyList<WorkSummary> HoursByEmployee(IEnumerable<ClockEntry> entries) => entries\n    .Where(entry => entry.Clockout is not null)\n    .GroupBy(entry => entry.EmployeeId)\n    .Select(group => new WorkSummary(group.Key, group.Sum(entry => entry.GetDuration().Value.TotalHours)))\n    .OrderBy(summary => summary.EmployeeId)\n    .ToList();"
+            "text": "The solution uses the learner source's no-namespace style, Clockout spelling, nullable GetDuration return type, and Employee.Identity/Name members. The App setup deliberately uses one matching employee ID.",
+            "code": "// Reports/WorkSummary.cs\npublic sealed class WorkSummary\n{\n    public WorkSummary(int employeeId, double hours)\n    {\n        EmployeeId = employeeId;\n        Hours = hours;\n    }\n\n    public int EmployeeId { get; }\n    public double Hours { get; }\n}\n\n// Reports/ClockEntryAnalytics.cs\npublic static class ClockEntryAnalytics\n{\n    public static IReadOnlyList<WorkSummary> HoursByEmployee(IEnumerable<ClockEntry> entries)\n    {\n        IEnumerable<ClockEntry> completedEntries =\n            entries.Where(entry => entry.Clockout is not null);\n        var employeeGroups = completedEntries.GroupBy(entry => entry.EmployeeId);\n        var summaries = employeeGroups.Select(group => new WorkSummary(\n            group.Key,\n            group.Sum(entry => entry.GetDuration()?.TotalHours ?? 0)));\n        var orderedSummaries = summaries.OrderBy(summary => summary.EmployeeId);\n        return orderedSummaries.ToList();\n    }\n\n    public static IEnumerable<string> EmployeeLabels(\n        IEnumerable<Employee> employees,\n        IEnumerable<WorkSummary> summaries)\n    {\n        IEnumerable<string> labels = employees.Join(\n            summaries,\n            employee => employee.Identity,\n            summary => summary.EmployeeId,\n            (employee, summary) => $\"{employee.Name}: {summary.Hours:F1} hours\");\n        return labels;\n    }\n}\n\n// Append to App/Program.cs after the existing Session 20 variables.\nIEnumerable<ClockEntry> reportEntries = clockEntryRepository.GetEmployeeClockEntries(\n    employeeId,\n    clockInTime.Date,\n    clockOutTime.Date.AddDays(1));\n\nvar reportEmployees = new List<Employee>\n{\n    new Employee(employeeId, \"Parm\", new Address(\"Gaithersburg\", \"MD\"))\n};\n\nIReadOnlyList<WorkSummary> summaries =\n    ClockEntryAnalytics.HoursByEmployee(reportEntries);\nIEnumerable<string> labels =\n    ClockEntryAnalytics.EmployeeLabels(reportEmployees, summaries);\n\nforeach (string label in labels)\n{\n    Console.WriteLine(label);\n}"
           }
         ]
       }
     ],
-    "expectedBehavior": "Production can report completed hours per employee using existing models and repositories.",
+    "expectedBehavior": "The App displays Parm: 8.0 hours when the employee and completed ClockEntry share the same ID. HoursByEmployee returns a materialized per-employee snapshot; EmployeeLabels remains a deferred inner-join query.",
     "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
     "clickHighlightInstructions": true,
     "stepCheckboxes": true
@@ -201,7 +210,7 @@
     "What does GroupBy remove from a manual nested-loop solution?",
     "Would an employee with no entries need an inner join or a left join?"
   ],
-  "whatBreaks": "Without WorkSummary the projection has no declared result type. Grouping before removing open entries lets GetDuration encounter incomplete data. Using the wrong join key drops or mismatches employee labels.",
+  "whatBreaks": "Without WorkSummary the projection has no declared result type. Grouping before removing open entries lets GetDuration encounter incomplete data. Discarding any LINQ result loses that stage's new sequence. If Employee.Identity does not match WorkSummary.EmployeeId, the inner Join correctly returns no label.",
   "summary": "Session 22 now creates WorkSummary before using it, then builds a completed-entry report with GroupBy, Sum, ordering, and Join. Nothing is described as pre-existing unless an earlier session actually created it.",
   "learningEnvironment": "production",
   "buildState": {

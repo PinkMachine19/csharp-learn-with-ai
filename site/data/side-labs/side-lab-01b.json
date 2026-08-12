@@ -1,7 +1,7 @@
 {
   "number": "01B",
   "category": "Optional Session 01 sidebar lab",
-  "estimatedTime": "25–30 minutes",
+  "estimatedTime": "30–35 minutes",
   "nextSessionLabel": "Session 02",
   "sidebarDescription": "Reduce editor friction by learning four repeatable VS Code workflows: navigate, manipulate, run or debug deliberately, and recover through the Command Palette.",
   "connection": "Session 01 created a multi-project solution containing App, Domain, Infrastructure, Web, ScratchPad, and Tests. Before Session 02 begins moving among those projects, this optional sidebar separates C# difficulty from editor-state friction.",
@@ -10,7 +10,8 @@
     "Control common editor UI state without depending on the mouse.",
     "Explain why F5 does not simply run the file currently visible in a multi-project solution.",
     "Deliberately select a Run and Debug project or use an explicit dotnet command.",
-    "Use the Command Palette as the primary recovery and command-discovery tool."
+    "Use the Command Palette as the primary recovery and command-discovery tool.",
+    "Read a dense generic IntelliSense signature one parameter at a time instead of memorizing it."
   ],
   "visuals": [
     {
@@ -37,19 +38,31 @@
   "preQuiz": [
     {
       "prompt": "You forgot the shortcut for splitting an editor. What is the best general fallback?",
-      "options": ["Open the Command Palette and search for split editor", "Restart the solution", "Edit the project file"],
+      "options": [
+        "Open the Command Palette and search for split editor",
+        "Restart the solution",
+        "Edit the project file"
+      ],
       "correct": 0,
       "explanation": "The Command Palette lets you find and run commands by intent without memorizing every binding."
     },
     {
       "prompt": "In a solution containing App and ScratchPad, what does F5 debug?",
-      "options": ["Always the file currently visible", "The currently selected launch or project configuration", "Every project simultaneously"],
+      "options": [
+        "Always the file currently visible",
+        "The currently selected launch or project configuration",
+        "Every project simultaneously"
+      ],
       "correct": 1,
       "explanation": "VS Code remembers debugging state. The active editor does not necessarily determine the debug target."
     },
     {
       "prompt": "Which approach most explicitly identifies the console project you intend to run?",
-      "options": ["dotnet run --project followed by its .csproj path", "Opening its Program.cs", "Selecting text in the editor"],
+      "options": [
+        "dotnet run --project followed by its .csproj path",
+        "Opening its Program.cs",
+        "Selecting text in the editor"
+      ],
       "correct": 0,
       "explanation": "An explicit project path avoids ambiguity about which executable project should run."
     }
@@ -70,16 +83,52 @@
         "Use Ctrl+P and type part of a filename instead of expanding folders repeatedly. In Quick Open, @ searches symbols in the selected file; Ctrl+Shift+O opens that symbol search directly."
       ],
       "table": {
-        "headers": ["Intent", "Shortcut", "Use"],
+        "headers": [
+          "Intent",
+          "Shortcut",
+          "Use"
+        ],
         "rows": [
-          ["Open a file by name", "Ctrl+P", "Type part of Program.cs, Class1.cs, or a project filename"],
-          ["Find a symbol in this file", "Ctrl+Shift+O", "Jump to a class, method, or member"],
-          ["Find a symbol in the workspace", "Ctrl+T", "Search across indexed workspace symbols"],
-          ["Go to definition", "F12", "Visit the declaration behind a type or member"],
-          ["Go back or forward", "Alt+Left / Alt+Right", "Return after visiting another file or definition"],
-          ["Switch recent editors", "Ctrl+Tab", "Move between recently used files"],
-          ["Move by word", "Ctrl+Left / Ctrl+Right", "Move through an identifier or statement without the mouse"],
-          ["Select by word", "Ctrl+Shift+Left / Ctrl+Shift+Right", "Expand a selection by meaningful text boundaries"]
+          [
+            "Open a file by name",
+            "Ctrl+P",
+            "Type part of Program.cs, Class1.cs, or a project filename"
+          ],
+          [
+            "Find a symbol in this file",
+            "Ctrl+Shift+O",
+            "Jump to a class, method, or member"
+          ],
+          [
+            "Find a symbol in the workspace",
+            "Ctrl+T",
+            "Search across indexed workspace symbols"
+          ],
+          [
+            "Go to definition",
+            "F12",
+            "Visit the declaration behind a type or member"
+          ],
+          [
+            "Go back or forward",
+            "Alt+Left / Alt+Right",
+            "Return after visiting another file or definition"
+          ],
+          [
+            "Switch recent editors",
+            "Ctrl+Tab",
+            "Move between recently used files"
+          ],
+          [
+            "Move by word",
+            "Ctrl+Left / Ctrl+Right",
+            "Move through an identifier or statement without the mouse"
+          ],
+          [
+            "Select by word",
+            "Ctrl+Shift+Left / Ctrl+Shift+Right",
+            "Expand a selection by meaningful text boundaries"
+          ]
         ]
       }
     },
@@ -90,15 +139,47 @@
         "Shortcut bindings can vary by keyboard, extension, operating system, or remote environment. If a binding fails, search for the command name in Ctrl+Shift+P."
       ],
       "table": {
-        "headers": ["Intent", "Shortcut", "Command Palette fallback"],
+        "headers": [
+          "Intent",
+          "Shortcut",
+          "Command Palette fallback"
+        ],
         "rows": [
-          ["Show or hide the sidebar", "Ctrl+B", "View: Toggle Primary Side Bar Visibility"],
-          ["Show or hide the terminal", "Ctrl+`", "View: Toggle Terminal"],
-          ["Show or hide the bottom panel", "Ctrl+J", "View: Toggle Panel Visibility"],
-          ["Split the active editor", "Ctrl+\\", "View: Split Editor Right"],
-          ["Focus editor groups", "Ctrl+1 / Ctrl+2", "View: Focus First/Second Editor Group"],
-          ["Restore one editor group", "Alt+Shift+1", "View: Single Column"],
-          ["Format the document", "Shift+Alt+F", "Format Document"]
+          [
+            "Show or hide the sidebar",
+            "Ctrl+B",
+            "View: Toggle Primary Side Bar Visibility"
+          ],
+          [
+            "Show or hide the terminal",
+            "Ctrl+`",
+            "View: Toggle Terminal"
+          ],
+          [
+            "Show or hide the bottom panel",
+            "Ctrl+J",
+            "View: Toggle Panel Visibility"
+          ],
+          [
+            "Split the active editor",
+            "Ctrl+\\",
+            "View: Split Editor Right"
+          ],
+          [
+            "Focus editor groups",
+            "Ctrl+1 / Ctrl+2",
+            "View: Focus First/Second Editor Group"
+          ],
+          [
+            "Restore one editor group",
+            "Alt+Shift+1",
+            "View: Single Column"
+          ],
+          [
+            "Format the document",
+            "Shift+Alt+F",
+            "Format Document"
+          ]
         ]
       }
     },
@@ -110,15 +191,47 @@
         "Open Run and Debug with Ctrl+Shift+D and deliberately inspect the selected target before using F5. If a test or run dropdown behaves inconsistently, do not trust it blindly: reselect the target or use an explicit terminal command."
       ],
       "table": {
-        "headers": ["Action", "Shortcut or command", "Meaning"],
+        "headers": [
+          "Action",
+          "Shortcut or command",
+          "Meaning"
+        ],
         "rows": [
-          ["Open Run and Debug", "Ctrl+Shift+D", "Inspect and select the intended project/configuration"],
-          ["Start debugging", "F5", "Run the selected target with the debugger attached"],
-          ["Run without debugging", "Ctrl+F5", "Run the selected target without breakpoint debugging"],
-          ["Toggle a breakpoint", "F9", "Pause when execution reaches the selected executable line"],
-          ["Step over", "F10", "Execute the current line without entering called methods"],
-          ["Stop debugging", "Shift+F5", "End the active debugging session"],
-          ["Run an explicit project", "dotnet run --project <project.csproj>", "Name the target directly instead of relying on remembered editor state"]
+          [
+            "Open Run and Debug",
+            "Ctrl+Shift+D",
+            "Inspect and select the intended project/configuration"
+          ],
+          [
+            "Start debugging",
+            "F5",
+            "Run the selected target with the debugger attached"
+          ],
+          [
+            "Run without debugging",
+            "Ctrl+F5",
+            "Run the selected target without breakpoint debugging"
+          ],
+          [
+            "Toggle a breakpoint",
+            "F9",
+            "Pause when execution reaches the selected executable line"
+          ],
+          [
+            "Step over",
+            "F10",
+            "Execute the current line without entering called methods"
+          ],
+          [
+            "Stop debugging",
+            "Shift+F5",
+            "End the active debugging session"
+          ],
+          [
+            "Run an explicit project",
+            "dotnet run --project <project.csproj>",
+            "Name the target directly instead of relying on remembered editor state"
+          ]
         ]
       }
     },
@@ -140,7 +253,13 @@
       {
         "title": "Navigate Without Hunting Through Folders",
         "objective": "Move among files, symbols, definitions, and editing positions using intent-based navigation.",
-        "practice": ["Quick Open", "Symbol search", "Definition navigation", "History navigation", "Word-boundary movement"],
+        "practice": [
+          "Quick Open",
+          "Symbol search",
+          "Definition navigation",
+          "History navigation",
+          "Word-boundary movement"
+        ],
         "task": "Open generated files by name, visit a symbol or definition, return to the starting location, and manipulate a selection without using the mouse.",
         "instructions": [
           "Press Ctrl+P.",
@@ -162,7 +281,14 @@
       {
         "title": "Manipulate and Restore the Workspace",
         "objective": "Treat panels and editor groups as reversible UI state rather than something that requires mouse-driven repair.",
-        "practice": ["Sidebar visibility", "Terminal visibility", "Editor splitting", "Editor-group focus", "Document formatting", "Layout restoration"],
+        "practice": [
+          "Sidebar visibility",
+          "Terminal visibility",
+          "Editor splitting",
+          "Editor-group focus",
+          "Document formatting",
+          "Layout restoration"
+        ],
         "task": "Hide and restore common views, compare two Program.cs files side by side, format a document, and return to one editor group.",
         "instructions": [
           "Press Ctrl+B to hide the sidebar.",
@@ -180,11 +306,20 @@
       {
         "title": "Choose the Run or Debug Target Deliberately",
         "objective": "Separate the visible editor from VS Code's remembered execution target and practice one breakpoint-driven debugging cycle.",
-        "practice": ["Explicit project execution", "Run and Debug target selection", "Breakpoints", "Start and stop debugging", "Remembered VS Code state"],
+        "practice": [
+          "Explicit project execution",
+          "Run and Debug target selection",
+          "Breakpoints",
+          "Start and stop debugging",
+          "Remembered VS Code state"
+        ],
         "task": "Run ScratchPad explicitly, select ScratchPad in Run and Debug, pause on its template output, and verify that F5 follows the selected target rather than the visible file.",
         "instructions": [
           "Open the integrated terminal at the solution root.",
-          {"text": "Run ScratchPad by naming its project explicitly.", "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj"},
+          {
+            "text": "Run ScratchPad by naming its project explicitly.",
+            "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj"
+          },
           "Confirm that the ScratchPad template output appears.",
           "Press Ctrl+Shift+D to open Run and Debug.",
           "Inspect the currently selected launch or project configuration.",
@@ -205,7 +340,13 @@
       {
         "title": "Recover Through the Command Palette",
         "objective": "Use command discovery to recover from forgotten shortcuts, RDP interception, hidden panels, and confusing layout state.",
-        "practice": ["Command discovery", "RDP-safe fallback", "Panel recovery", "Layout recovery", "Debug-state recovery"],
+        "practice": [
+          "Command discovery",
+          "RDP-safe fallback",
+          "Panel recovery",
+          "Layout recovery",
+          "Debug-state recovery"
+        ],
         "task": "Recover several common VS Code states by searching for commands instead of memorizing another set of shortcuts.",
         "instructions": [
           "Press Ctrl+Shift+P.",
@@ -224,9 +365,33 @@
           "If RDP blocks a shortcut, repeat the action through the Command Palette.",
           "Restore the sidebar, terminal, and one-column layout before finishing."
         ]
+      },
+      {
+        "title": "Read a Dense Generic Signature",
+        "objective": "Translate Join's generic signature into the concrete Employee, WorkSummary, int, and string types used in Session 22.",
+        "practice": [
+          "VS Code signature help",
+          "Overload navigation",
+          "Generic type substitution",
+          "Documentation lookup"
+        ],
+        "task": "Use editor tooling to reconstruct the four-part Join call from its signature rather than recalling it from memory.",
+        "instructions": [
+          "Open the Session 22 ClockEntryAnalytics.EmployeeLabels method.",
+          "Place the cursor immediately after the opening parenthesis in employees.Join(.",
+          "Press Ctrl+Shift+Space to open signature help.",
+          "If multiple overloads appear, use the signature-help arrows to inspect them without changing code.",
+          "Identify employees as the object on which Join is called; this is the first sequence, or TOuter.",
+          "Read the first displayed parameter as the second sequence and translate TInner to WorkSummary.",
+          "Read the next two parameters as key selectors and translate TKey to int because Identity and EmployeeId are integers.",
+          "Read the final selector as the result builder and translate TResult to string because EmployeeLabels returns labels.",
+          "Use the memory anchor: second collection, first key, second key, final result.",
+          "If signature help is too dense, press F12 on Join or open its official documentation, then return with Alt+Left.",
+          "Reconstruct the call one argument at a time and confirm IntelliSense advances to the next parameter after each comma."
+        ]
       }
     ],
-    "expectedBehavior": "The learner can navigate and control the multi-project workspace, explicitly run ScratchPad, deliberately select a debug target, use a breakpoint, and recover common UI states without changing application behavior.",
+    "expectedBehavior": "The learner can navigate and control the multi-project workspace, explicitly run ScratchPad, deliberately select a debug target, use a breakpoint, and recover common UI states without changing application behavior. The learner can also decode Join's signature by substituting concrete course types for generic placeholders.",
     "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj"
   },
   "expectedFiles": [],
@@ -237,24 +402,37 @@
     "The learner can explain that F5 follows the selected debug configuration, not the visible file.",
     "ScratchPad was run once with an explicit project path.",
     "A breakpoint was added, reached, and removed.",
-    "Ctrl+Shift+P was used as a recovery path rather than treated as one more shortcut to memorize."
+    "Ctrl+Shift+P was used as a recovery path rather than treated as one more shortcut to memorize.",
+    "Join was reconstructed from signature help as second collection, first key, second key, and final result."
   ],
   "postQuiz": [
     {
       "prompt": "Why is Ctrl+Shift+P more important than memorizing every VS Code shortcut?",
-      "options": ["It lets you search for and execute commands by intent", "It compiles every project", "It permanently resets all settings"],
+      "options": [
+        "It lets you search for and execute commands by intent",
+        "It compiles every project",
+        "It permanently resets all settings"
+      ],
       "correct": 0,
       "explanation": "The Command Palette is a discoverable fallback for forgotten, unbound, or intercepted commands."
     },
     {
       "prompt": "You are viewing App/Program.cs, but ScratchPad is still selected in Run and Debug. What can F5 start?",
-      "options": ["ScratchPad", "Only App because its file is visible", "No project under any circumstances"],
+      "options": [
+        "ScratchPad",
+        "Only App because its file is visible",
+        "No project under any circumstances"
+      ],
       "correct": 0,
       "explanation": "The selected debug target is independent of the active editor and may persist from earlier work."
     },
     {
       "prompt": "What is the safest response when an RDP session intercepts a shortcut?",
-      "options": ["Find and run the command through Ctrl+Shift+P", "Delete launch settings", "Assume VS Code removed the feature"],
+      "options": [
+        "Find and run the command through Ctrl+Shift+P",
+        "Delete launch settings",
+        "Assume VS Code removed the feature"
+      ],
       "correct": 0,
       "explanation": "The Command Palette avoids dependence on a particular key combination reaching the remote editor."
     }

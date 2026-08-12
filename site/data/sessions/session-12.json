@@ -13,7 +13,7 @@
     {
       "diagram": "blueprint",
       "title": "Dictionary<int, Employee> keys by EmployeeId",
-      "explanation": "employees.TryAdd(employee.EmployeeId, employee) stores each Employee under its own id -- looking one up later means a direct key lookup, not scanning every entry."
+      "explanation": "employees.TryAdd(employee.Identity, employee) stores each Employee under its own id -- looking one up later means a direct key lookup, not scanning every entry."
     },
     {
       "diagram": "invariant",
@@ -68,9 +68,9 @@
       "title": "Dictionary<int, Employee>: lookup by key, not by scanning",
       "paragraphs": [
         "EmployeeDirectory's private Dictionary<int, Employee> employees maps each EmployeeId directly to its Employee -- TryFind's employees.TryGetValue(employeeId, out employee) is a direct key lookup, with no need to inspect every stored Employee.",
-        "Add uses employees.TryAdd(employee.EmployeeId, employee), returning false (and adding nothing) if that EmployeeId is already present -- this is what makes Add's own return value meaningful as a duplicate-detection signal."
+        "Add uses employees.TryAdd(employee.Identity, employee), returning false (and adding nothing) if that EmployeeId is already present -- this is what makes Add's own return value meaningful as a duplicate-detection signal."
       ],
-      "code": "// src/PinkMachine19.TimeClock.Domain/EmployeeDirectory.cs\nprivate readonly Dictionary<int, Employee> employees = [];\n\npublic bool Add(Employee employee)\n{\n    if (!employees.TryAdd(employee.EmployeeId, employee)) return false;\n    if (!string.IsNullOrWhiteSpace(employee.Address.City)) cities.Add(employee.Address.City);\n    return true;\n}"
+      "code": "// src/PinkMachine19.TimeClock.Domain/EmployeeDirectory.cs\nprivate readonly Dictionary<int, Employee> employees = [];\n\npublic bool Add(Employee employee)\n{\n    if (!employees.TryAdd(employee.Identity, employee)) return false;\n    if (!string.IsNullOrWhiteSpace(employee.Address.City)) cities.Add(employee.Address.City);\n    return true;\n}"
     },
     {
       "title": "HashSet<string>: membership, not order or count",
@@ -97,7 +97,7 @@
     "clickHighlightInstructions": true,
     "steps": [
       "Create EmployeeRepository.cs in the Domain project's Repositories folder.",
-      "Add the PinkMachine19.TimeClock.Domain namespace.",
+      "Do not add an explicit namespace; the learner's current Domain and ScratchPad source uses the global namespace.",
       "Declare the public sealed EmployeeRepository class.",
       "Side note — sealed means this concrete in-memory repository cannot be used as a base class. Use sealed when a class is intended to be used as-is and you have not designed a safe inheritance contract with protected or virtual extension points. It is not required for every repository. Later, alternative storage implementations will implement a repository interface instead of inheriting from this class.",
       {
@@ -121,7 +121,7 @@
         "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
       },
       "Replace the throw in TryAdd with a check that returns false and assigns a duplicate-name message when _employeeNames already contains employee.Name.",
-      "After the name check, call _employees.TryAdd using employee.EmployeeId as the key and employee as the value.",
+      "After the name check, call _employees.TryAdd using employee.Identity as the key and employee as the value.",
       "When TryAdd returns false, assign a duplicate-ID message and return false.",
       "After both duplicate checks succeed, add employee.Name to _employeeNames.",
       "Assign a success message and return true from TryAdd.",
@@ -139,7 +139,7 @@
           {
             "title": "Solution",
             "text": "Use this to compare the important decisions with your attempt. Do not replace an entire existing Program.cs; add only the Session 12 section after its earlier code.",
-            "code": "// Repositories/EmployeeRepository.cs\nnamespace PinkMachine19.TimeClock.Domain;\n\npublic sealed class EmployeeRepository\n{\n    private readonly Dictionary<int, Employee> _employees = new();\n    private readonly HashSet<string> _employeeNames = new(StringComparer.OrdinalIgnoreCase);\n\n    public bool TryAdd(Employee employee, out string message)\n    {\n        if (_employeeNames.Contains(employee.Name))\n        {\n            message = $\"Employee name '{employee.Name}' already exists.\";\n            return false;\n        }\n\n        if (!_employees.TryAdd(employee.EmployeeId, employee))\n        {\n            message = $\"Employee ID {employee.EmployeeId} already exists.\";\n            return false;\n        }\n\n        _employeeNames.Add(employee.Name);\n        message = $\"Added {employee.Name}.\";\n        return true;\n    }\n\n    public bool TryFind(int employeeId, out Employee? employee)\n    {\n        return _employees.TryGetValue(employeeId, out employee);\n    }\n}\n\n// Add as a new Session 12 section at the end of App/Program.cs.\nvar employeeRepository = new EmployeeRepository();\n\nvar firstEmployee = new Employee(1, \"Taylor\", new Address { City = \"Springfield\" });\nvar duplicateId = new Employee(1, \"Jordan\", new Address { City = \"Riverton\" });\nvar duplicateName = new Employee(2, \"taylor\", new Address { City = \"Lakeside\" });\n\nemployeeRepository.TryAdd(firstEmployee, out string firstMessage);\nConsole.WriteLine(firstMessage);\n\nemployeeRepository.TryAdd(duplicateId, out string duplicateIdMessage);\nConsole.WriteLine(duplicateIdMessage);\n\nemployeeRepository.TryAdd(duplicateName, out string duplicateNameMessage);\nConsole.WriteLine(duplicateNameMessage);\n\nif (employeeRepository.TryFind(1, out Employee? foundEmployee))\n{\n    Console.WriteLine($\"Found: {foundEmployee.Name}\");\n}\n\nbool foundMissing = employeeRepository.TryFind(999, out Employee? missingEmployee);\nConsole.WriteLine($\"Missing employee found: {foundMissing}\");\nConsole.WriteLine($\"Missing employee is null: {missingEmployee is null}\");"
+            "code": "// Repositories/EmployeeRepository.cs\npublic sealed class EmployeeRepository\n{\n    private readonly Dictionary<int, Employee> _employees = new();\n    private readonly HashSet<string> _employeeNames = new(StringComparer.OrdinalIgnoreCase);\n\n    public bool TryAdd(Employee employee, out string message)\n    {\n        if (_employeeNames.Contains(employee.Name))\n        {\n            message = $\"Employee name '{employee.Name}' already exists.\";\n            return false;\n        }\n\n        if (!_employees.TryAdd(employee.Identity, employee))\n        {\n            message = $\"Employee ID {employee.Identity} already exists.\";\n            return false;\n        }\n\n        _employeeNames.Add(employee.Name);\n        message = $\"Added {employee.Name}.\";\n        return true;\n    }\n\n    public bool TryFind(int employeeId, out Employee? employee)\n    {\n        return _employees.TryGetValue(employeeId, out employee);\n    }\n}\n\n// Add as a new Session 12 section at the end of App/Program.cs.\nvar employeeRepository = new EmployeeRepository();\n\nvar firstEmployee = new Employee(1, \"Taylor\", new Address { City = \"Springfield\" });\nvar duplicateId = new Employee(1, \"Jordan\", new Address { City = \"Riverton\" });\nvar duplicateName = new Employee(2, \"taylor\", new Address { City = \"Lakeside\" });\n\nemployeeRepository.TryAdd(firstEmployee, out string firstMessage);\nConsole.WriteLine(firstMessage);\n\nemployeeRepository.TryAdd(duplicateId, out string duplicateIdMessage);\nConsole.WriteLine(duplicateIdMessage);\n\nemployeeRepository.TryAdd(duplicateName, out string duplicateNameMessage);\nConsole.WriteLine(duplicateNameMessage);\n\nif (employeeRepository.TryFind(1, out Employee? foundEmployee))\n{\n    Console.WriteLine($\"Found: {foundEmployee.Name}\");\n}\n\nbool foundMissing = employeeRepository.TryFind(999, out Employee? missingEmployee);\nConsole.WriteLine($\"Missing employee found: {foundMissing}\");\nConsole.WriteLine($\"Missing employee is null: {missingEmployee is null}\");"
           }
         ]
       }
@@ -195,7 +195,7 @@
     {
       "prompt": "What would change about EmployeeDirectory.Add's duplicate-EmployeeId behavior if Dictionary's Add method were used instead of TryAdd?",
       "options": [
-        "Add(employee.EmployeeId, employee) would throw an ArgumentException on a duplicate key, instead of TryAdd's graceful false return -- EmployeeDirectory.Add would need a try/catch to match its current behavior",
+        "Add(employee.Identity, employee) would throw an ArgumentException on a duplicate key, instead of TryAdd's graceful false return -- EmployeeDirectory.Add would need a try/catch to match its current behavior",
         "Nothing -- Add and TryAdd behave identically on a duplicate key",
         "The dictionary would silently overwrite the existing entry"
       ],

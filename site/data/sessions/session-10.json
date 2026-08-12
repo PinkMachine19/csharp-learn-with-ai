@@ -2,10 +2,10 @@
   "number": 10,
   "category": "Memory and type behavior",
   "estimatedTime": "40 minutes",
-  "connection": "Production contains Employee, Address, and ClockEntry. The product needs a compact employee-hours result but does not have one yet. Add the production WorkSummary result model, then compare its value equality with ClockEntry identity in ScratchPad.",
+  "connection": "Production contains Employee, Address, and ClockEntry. This session keeps its record-equality experiment in ScratchPad as Session10WorkSummary, so it does not pre-create the production WorkSummary report type introduced in Session 22.",
   "objectives": [
-    "Predict, and then confirm, that two separately-constructed ClockEntry objects with identical EmployeeId/ClockIn/ClockOut are NOT equal by default -- neither ClockEntry nor Employee overrides Equals.",
-    "Confirm that two WorkSummary records with the same EmployeeId and Hours ARE equal, because record types generate value-based equality automatically.",
+    "Predict, and then confirm, that two separately-constructed ClockEntry objects with identical EmployeeId/ClockIn/Clockout are NOT equal by default -- neither ClockEntry nor Employee overrides Equals.",
+    "Confirm that two Session10WorkSummary records with the same EmployeeId and Hours ARE equal, because record types generate value-based equality automatically.",
     "Explain why EmployeeDirectory's city-uniqueness check uses StringComparer.OrdinalIgnoreCase rather than default string equality.",
     "Distinguish struct value-copy semantics (WorkCode, a record struct) from class reference semantics (ClockEntry, Employee)."
   ],
@@ -18,7 +18,7 @@
     {
       "diagram": "instances",
       "title": "record gives you value equality automatically",
-      "explanation": "new WorkSummary(1, 8m) == new WorkSummary(1, 8m) is true -- the compiler generates Equals/GetHashCode from WorkSummary's declared members."
+      "explanation": "new Session10WorkSummary(1, 8m) == new Session10WorkSummary(1, 8m) is true -- the compiler generates Equals/GetHashCode from the record's declared members."
     },
     {
       "diagram": "type",
@@ -35,22 +35,22 @@
     {
       "prompt": "Does ClockEntry override Equals?",
       "options": [
-        "No -- it uses the default reference equality inherited from object, so two ClockEntry objects with identical EmployeeId/ClockIn/ClockOut are still considered unequal",
-        "Yes -- it compares EmployeeId, ClockIn, and ClockOut",
-        "Yes, but only ClockOut is compared"
+        "No -- it uses the default reference equality inherited from object, so two ClockEntry objects with identical EmployeeId/ClockIn/Clockout are still considered unequal",
+        "Yes -- it compares EmployeeId, ClockIn, and Clockout",
+        "Yes, but only Clockout is compared"
       ],
       "correct": 0,
       "explanation": "Nothing in the real ClockEntry.cs overrides Equals or GetHashCode -- confirmed by reading the actual file; it relies entirely on object identity."
     },
     {
-      "prompt": "Why does new WorkSummary(1, 8m).Equals(new WorkSummary(1, 8m)) return true without any code written for it?",
+      "prompt": "Why does new Session10WorkSummary(1, 8m).Equals(new Session10WorkSummary(1, 8m)) return true without any equality code written for it?",
       "options": [
-        "WorkSummary is declared as a record, and the compiler automatically generates member-wise Equals/GetHashCode/== for records",
+        "Session10WorkSummary is declared as a record, and the compiler automatically generates member-wise Equals/GetHashCode/== for records",
         "decimal always compares by value across all types",
-        "WorkSummary happens to be a singleton"
+        "Session10WorkSummary happens to be a singleton"
       ],
       "correct": 0,
-      "explanation": "record is a C# feature specifically for value-equality-by-default types -- WorkSummary gets this for free from its declaration, unlike the plain class ClockEntry."
+      "explanation": "record is a C# feature specifically for value-equality-by-default types -- Session10WorkSummary gets this for free from its declaration, unlike the plain class ClockEntry."
     },
     {
       "prompt": "What would \"Springfield\" == \"springfield\" evaluate to using C#'s default string equality?",
@@ -73,13 +73,13 @@
       "code": "ClockEntry first = new(1, DateTime.Today);\nClockEntry second = new(1, DateTime.Today);\n\nConsole.WriteLine(first.Equals(second)); // false -- two different objects, same field values"
     },
     {
-      "title": "WorkSummary: a record gets value equality automatically",
+      "title": "A ScratchPad record gets value equality automatically",
       "paragraphs": [
-        "public sealed record WorkSummary(int EmployeeId, decimal Hours) is a positional record. Declaring it with record instead of class is what generates member-wise Equals, GetHashCode, and == overloads -- no extra code required.",
-        "The sealed keyword means another type cannot inherit from WorkSummary. It is not an access modifier, and it is not responsible for the generated equality. public controls where the record can be used, sealed prevents inheritance, and record supplies the value-based record behavior. WorkSummary is sealed because it is intended to be a complete result type rather than a base type for other records.",
+        "public sealed record Session10WorkSummary(int EmployeeId, decimal Hours) is a positional record. Declaring it with record instead of class is what generates member-wise Equals, GetHashCode, and == overloads -- no extra code required.",
+        "The sealed keyword means another type cannot inherit from Session10WorkSummary. It is not an access modifier, and it is not responsible for the generated equality. public controls where the record can be used, sealed prevents inheritance, and record supplies the value-based record behavior. Session10WorkSummary is sealed because it is intended to be a complete result type rather than a base type for other records.",
         "This is the real, meaningful contrast this session teaches: the same 'compare these two objects' question gets a different default answer depending on whether the type is declared class or record."
       ],
-      "code": "public sealed record WorkSummary(int EmployeeId, decimal Hours);\n\nWorkSummary a = new(1, 8m);\nWorkSummary b = new(1, 8m);\nConsole.WriteLine(a == b); // true -- record-generated value equality"
+      "code": "public sealed record Session10WorkSummary(int EmployeeId, decimal Hours);\n\nSession10WorkSummary a = new(1, 8m);\nSession10WorkSummary b = new(1, 8m);\nConsole.WriteLine(a == b); // true -- record-generated value equality"
     },
     {
       "title": "String comparison is a choice you make explicitly",
@@ -92,13 +92,13 @@
     }
   ],
   "lab": {
-    "objective": "Add the production WorkSummary result model, then compare its value equality with ClockEntry identity in ScratchPad.",
-    "startingCondition": "Production contains Employee, Address, and ClockEntry. The product needs a compact employee-hours result but does not have one yet.",
+    "objective": "Create a ScratchPad-only record named Session10WorkSummary, then compare its value equality with ClockEntry identity.",
+    "startingCondition": "Production contains Employee, Address, and ClockEntry. No production report result is introduced in this session.",
     "steps": [
-      "Create WorkSummary.cs in the Domain project and declare a public readonly record struct named WorkSummary with int EmployeeId and decimal Hours positional properties.",
-      "Create a Session10 folder in the ScratchPad project and create Session10Lab.cs inside it.",
+      "Create src/PinkMachine19.TimeClock.ScratchPad/Session10/Session10WorkSummary.cs and declare a public sealed record named Session10WorkSummary with int EmployeeId and decimal Hours positional properties.",
+      "Create src/PinkMachine19.TimeClock.ScratchPad/Session10/Session10Lab.cs.",
       "In Session10Lab.cs, declare a public sealed Session10Lab class with a public parameterless Run method.",
-      "Inside Run, create two WorkSummary values named firstSummary and secondSummary with the same EmployeeId and Hours values.",
+      "Inside Run, create two Session10WorkSummary values named firstSummary and secondSummary with the same EmployeeId and Hours values.",
       "Compare firstSummary and secondSummary with == and display the Boolean result.",
       "Inside Run, create two separate ClockEntry objects named firstEntry and secondEntry with identical constructor values.",
       "Compare firstEntry and secondEntry with == and display the Boolean result.",
@@ -111,21 +111,21 @@
           {
             "title": "Solution",
             "text": "Reveal only after attempting the lab or when you are genuinely blocked. Compare the important decisions with your code instead of replacing your entire files.",
-            "code": "// WorkSummary.cs\nnamespace PinkMachine19.TimeClock.Domain;\n\npublic sealed record WorkSummary(int EmployeeId, decimal Hours);\n\n// Add as a new Session 10 section at the end of ScratchPad/Program.cs.\nWorkSummary firstSummary = new(1, 8m);\nWorkSummary secondSummary = new(1, 8m);\n\nConsole.WriteLine($\"Records equal with ==: {firstSummary == secondSummary}\");\nConsole.WriteLine($\"Records equal with Equals: {firstSummary.Equals(secondSummary)}\");\n\nDateTime sharedClockIn = new(2026, 1, 15, 9, 0, 0);\nClockEntry firstEntry = new(1, sharedClockIn);\nClockEntry secondEntry = new(1, sharedClockIn);\n\nConsole.WriteLine($\"Classes equal with ==: {firstEntry == secondEntry}\");\nConsole.WriteLine($\"Classes equal with Equals: {firstEntry.Equals(secondEntry)}\");\n\nbool sameCity = string.Equals(\n    \"Springfield\",\n    \"springfield\",\n    StringComparison.OrdinalIgnoreCase);\n\nConsole.WriteLine($\"Cities match ignoring case: {sameCity}\");"
+            "code": "// Session10ScratchPad/Session10/Session10WorkSummary.cs\npublic sealed record Session10WorkSummary(int EmployeeId, decimal Hours);\n\n// Add as a new Session 10 section at the end of ScratchPad/Program.cs.\nSession10WorkSummary firstSummary = new(1, 8m);\nSession10WorkSummary secondSummary = new(1, 8m);\n\nConsole.WriteLine($\"Records equal with ==: {firstSummary == secondSummary}\");\nConsole.WriteLine($\"Records equal with Equals: {firstSummary.Equals(secondSummary)}\");\n\nDateTime sharedClockIn = new(2026, 1, 15, 9, 0, 0);\nClockEntry firstEntry = new(1, sharedClockIn);\nClockEntry secondEntry = new(1, sharedClockIn);\n\nConsole.WriteLine($\"Classes equal with ==: {firstEntry == secondEntry}\");\nConsole.WriteLine($\"Classes equal with Equals: {firstEntry.Equals(secondEntry)}\");\n\nbool sameCity = string.Equals(\n    \"Springfield\",\n    \"springfield\",\n    StringComparison.OrdinalIgnoreCase);\n\nConsole.WriteLine($\"Cities match ignoring case: {sameCity}\");"
           }
         ]
       }
     ],
-    "expectedBehavior": "WorkSummary becomes a real production result type, while ScratchPad preserves the equality comparison.",
+    "expectedBehavior": "ScratchPad demonstrates record value equality without creating or changing a production report type.",
     "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
     "stepCheckboxes": true,
     "clickHighlightInstructions": true
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/WorkSummary.cs",
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session10/Session10WorkSummary.cs",
       "action": "Add",
-      "why": "Represent a calculated employee-hours result."
+      "why": "Provide a ScratchPad-only record for the equality comparison."
     },
     {
       "path": "src/PinkMachine19.TimeClock.ScratchPad/Session10/Session10Lab.cs",
@@ -143,7 +143,7 @@
       "why": "Keep the lesson synchronized with the cumulative build step."
     }
   ],
-  "commit": "session-09: teach strings records structs and equality",
+  "commit": "session-10: teach strings records structs and equality",
   "review": [
     "The lab uses mixed because that is the most natural environment for this concept.",
     "Every referenced application artifact was created in this session or an earlier session.",
@@ -184,7 +184,7 @@
   "reflections": [
     {
       "question": "Why might a real codebase deliberately choose reference equality for ClockEntry rather than adding value equality?",
-      "answer": "A ClockEntry can represent one specific business event with its own identity and lifecycle. Two entries may coincidentally share EmployeeId and ClockIn while still being distinct records, and ClockOut can change later. Reference equality preserves that distinction unless the domain explicitly defines a stable value-based identity."
+      "answer": "A ClockEntry can represent one specific business event with its own identity and lifecycle. Two entries may coincidentally share EmployeeId and ClockIn while still being distinct records, and Clockout can change later. Reference equality preserves that distinction unless the domain explicitly defines a stable value-based identity."
     },
     {
       "question": "What would you need to add to ClockEntry to make two field-identical instances equal, and what would you risk changing by doing so?",
@@ -195,15 +195,15 @@
       "answer": "It could matter for user-entered employee-name searches, email-like identifiers, external codes, or other text whose business meaning ignores letter case. It should not be applied automatically: passwords, case-sensitive external identifiers, and display text can require different rules. The domain requirement should choose the comparer explicitly."
     }
   ],
-  "whatBreaks": "Assuming ClockEntry has value equality (because it superficially looks like a simple data holder) would lead to bugs anywhere code tries to deduplicate or compare ClockEntry objects by field value instead of by reference. Removing WorkSummary's record declaration in favor of class would silently break any test or code that currently relies on WorkSummary equality by value, including the real HoursByEmployee grouping test from Session 22. Removing EmployeeDirectory's StringComparer.OrdinalIgnoreCase would let differently-cased city names silently multiply instead of being treated as one city.",
-  "summary": "class gives you reference equality unless you explicitly override it -- confirmed true for both the real ClockEntry and Employee. record gives you value equality automatically, which is exactly why WorkSummary (Session 22's grouping result) compares equal across separately-constructed instances with the same values. String comparison is ordinal and case-sensitive by default; EmployeeDirectory's StringComparer.OrdinalIgnoreCase is a deliberate, visible choice to treat city names case-insensitively.",
+  "whatBreaks": "Assuming ClockEntry has value equality would lead to bugs anywhere code tries to deduplicate or compare ClockEntry objects by field value instead of by reference. Changing Session10WorkSummary from record to class would change this ScratchPad comparison from value equality to reference equality. Removing EmployeeDirectory's StringComparer.OrdinalIgnoreCase would let differently-cased city names silently multiply instead of being treated as one city.",
+  "summary": "class gives you reference equality unless you explicitly override it, while record gives you value equality automatically. Session10WorkSummary demonstrates that contrast in ScratchPad without claiming Session 22's production WorkSummary name early. String comparison remains an explicit domain choice.",
   "learningEnvironment": "mixed",
   "buildState": {
     "creates": [
-      "WorkSummary"
+      "Session10WorkSummary ScratchPad record"
     ],
     "extends": [
-      "equality experiment using production values"
+      "ScratchPad equality experiment using production-shaped values"
     ]
   }
 }

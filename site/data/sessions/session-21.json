@@ -67,8 +67,9 @@
     {
       "title": "Where filters by a requirement",
       "paragraphs": [
-        "A completed-history query excludes entries whose clock-out is null before any duration calculation.",
-        "Where returns a new IEnumerable<ClockEntry>; it does not remove anything from entries. LINQ returns a new sequence. It does not change the source, so the returned sequence must be stored, returned, or enumerated.",
+        "A completed-history query excludes entries whose Clockout is null before any duration calculation.",
+        "Where returns a new IEnumerable<ClockEntry>; it does not remove anything from entries and it does not clone the ClockEntry objects. The new sequence normally contains references to the same objects. Memory anchor: New sequence. Same objects.",
+        "LINQ returns a new sequence. It does not change the source, so the returned sequence must be stored, returned, or enumerated.",
         "The learner's current ClockEntry class spells the property Clockout, so this session uses that exact spelling."
       ],
       "code": "entries.Where(entry => entry.Clockout is not null)"
@@ -76,21 +77,20 @@
     {
       "title": "Sum can project and aggregate",
       "paragraphs": [
-        "PayrollService obtains completed entries through IClockEntryRepository, then maps each one to GetDuration().Value.TotalHours inside Sum.",
+        "PayrollService obtains completed entries through IClockEntryRepository, then maps each one to GetDuration()?.TotalHours ?? 0 inside Sum.",
         "There is no need for a separate Select when no caller needs the intermediate sequence of numbers."
       ],
-      "code": "return entries.Sum(entry => entry.GetDuration().Value.TotalHours);"
+      "code": "return entries.Sum(entry => entry.GetDuration()?.TotalHours ?? 0);"
     },
     {
-      "title": "Side note: why .Value appears here",
+      "title": "Side note: why nullable operators appear here",
       "paragraphs": [
         "This nullable-value detail supports the calculation, but it is not a new LINQ requirement. Read it when you want to understand the expression more deeply; then return to the main Sum example.",
-        "In the learner application, GetDuration returns TimeSpan?. The question mark means the result is a nullable value type: it is a small wrapper that either contains a TimeSpan or contains no value. TotalHours belongs to TimeSpan, so code must first access the TimeSpan stored inside that wrapper. The .Value member performs that unwrap.",
-        "Using .Value is safe at this point because GetEmployeeClockEntries returns only completed entries, and GetDuration rejects an open entry. That earlier filtering is the proof that a duration exists; .Value communicates that this code expects the proof to hold.",
-        "GetDuration()?.TotalHours ?? 0 also compiles: ?. stops when the duration is null, and ?? 0 substitutes zero. However, silently counting a missing duration as zero can hide a broken repository or domain invariant. Use that fallback only when zero is truly the required meaning of a missing duration, not merely to satisfy the compiler.",
-        "If GetDuration is later redesigned to return non-nullable TimeSpan because it always returns a duration or throws, no unwrap is needed: call GetDuration().TotalHours directly."
+        "The learner's GetDuration method returns TimeSpan?. The ?. operator reads TotalHours only when a duration exists. The ?? operator supplies 0 when that result is null, producing the non-null double required by Sum and WorkSummary.",
+        "The repository filters out entries whose Clockout is null, and GetDuration throws for an open entry, so completed entries should normally have a duration. The nullable return signature still requires the caller to handle the type's possible null state.",
+        "If GetDuration is later corrected to return non-nullable TimeSpan because it always returns a duration or throws, the caller can use GetDuration().TotalHours directly."
       ],
-      "code": "TimeSpan duration = entry.GetDuration().Value; // TimeSpan? -> TimeSpan\ndouble hours = duration.TotalHours;"
+      "code": "double hours = entry.GetDuration()?.TotalHours ?? 0;"
     },
     {
       "title": "Ordering should express the caller's need",
@@ -114,7 +114,7 @@
       "In the PayrollService constructor, assign clockEntryRepository to _clockEntryRepository.",
       "Add a public CalculateTotalHours method that returns double and accepts int employeeId, DateTime startDate, and DateTime endDate; keep the method temporarily unfinished with throw new NotImplementedException().",
       "In CalculateTotalHours, call _clockEntryRepository.GetEmployeeClockEntries(employeeId, startDate, endDate) and store the returned sequence in a variable named entries.",
-      "Replace the temporary throw by returning entries.Sum(entry => entry.GetDuration().Value.TotalHours). Sum asks the selector for one number per entry and adds those numbers.",
+      "Replace the temporary throw by returning entries.Sum(entry => entry.GetDuration()?.TotalHours ?? 0). Sum asks the selector for one number per entry and adds those numbers.",
       "Create src/PinkMachine19.TimeClock.Domain/Models/ClockEntryQueries.cs. Do not add a namespace because the learner's existing Domain files do not declare one.",
       "In ClockEntryQueries.cs, declare a public static class named ClockEntryQueries.",
       "In ClockEntryQueries, add a public static CompletedNewestFirst method that accepts IEnumerable<ClockEntry> entries, returns IEnumerable<ClockEntry>, and remains temporarily unfinished with throw new NotImplementedException().",
@@ -135,7 +135,7 @@
           {
             "title": "Solution",
             "text": "This solution uses the learner source's existing GetDuration and Clockout member names and does not add namespace declarations.",
-            "code": "public sealed class PayrollService\n{\n    private readonly IClockEntryRepository _clockEntryRepository;\n\n    public PayrollService(IClockEntryRepository clockEntryRepository)\n    {\n        _clockEntryRepository = clockEntryRepository;\n    }\n\n    public double CalculateTotalHours(int employeeId, DateTime startDate, DateTime endDate)\n    {\n        IEnumerable<ClockEntry> entries = _clockEntryRepository.GetEmployeeClockEntries(employeeId, startDate, endDate);\n        return entries.Sum(entry => entry.GetDuration().Value.TotalHours);\n    }\n}\n\npublic static class ClockEntryQueries\n{\n    public static IEnumerable<ClockEntry> CompletedNewestFirst(IEnumerable<ClockEntry> entries)\n    {\n        IEnumerable<ClockEntry> completedEntries = entries.Where(entry => entry.Clockout is not null);\n        IEnumerable<ClockEntry> orderedEntries = completedEntries.OrderByDescending(entry => entry.ClockIn);\n        return orderedEntries;\n    }\n}"
+            "code": "public sealed class PayrollService\n{\n    private readonly IClockEntryRepository _clockEntryRepository;\n\n    public PayrollService(IClockEntryRepository clockEntryRepository)\n    {\n        _clockEntryRepository = clockEntryRepository;\n    }\n\n    public double CalculateTotalHours(int employeeId, DateTime startDate, DateTime endDate)\n    {\n        IEnumerable<ClockEntry> entries = _clockEntryRepository.GetEmployeeClockEntries(employeeId, startDate, endDate);\n        return entries.Sum(entry => entry.GetDuration()?.TotalHours ?? 0);\n    }\n}\n\npublic static class ClockEntryQueries\n{\n    public static IEnumerable<ClockEntry> CompletedNewestFirst(IEnumerable<ClockEntry> entries)\n    {\n        IEnumerable<ClockEntry> completedEntries = entries.Where(entry => entry.Clockout is not null);\n        IEnumerable<ClockEntry> orderedEntries = completedEntries.OrderByDescending(entry => entry.ClockIn);\n        return orderedEntries;\n    }\n}"
           }
         ]
       }
@@ -175,7 +175,7 @@
   ],
   "postQuiz": [
     {
-      "prompt": "Why can Sum contain entry => entry.GetDuration().Value.TotalHours?",
+      "prompt": "Why can Sum contain entry => entry.GetDuration()?.TotalHours ?? 0?",
       "options": [
         "Sum accepts a selector that produces the number to add",
         "GetDuration returns IEnumerable",
@@ -185,14 +185,14 @@
       "explanation": "Projection and aggregation can be combined when the intermediate values are not needed."
     },
     {
-      "prompt": "Why is .Value reasonable after GetEmployeeClockEntries returns the entries?",
+      "prompt": "What does GetDuration()?.TotalHours ?? 0 produce?",
       "options": [
-        "The repository returns only completed entries, so each duration is expected to exist",
-        ".Value converts hours from double to int",
-        ".Value creates a missing clock-out time"
+        "A non-null double for Sum",
+        "A cloned ClockEntry",
+        "A List<TimeSpan>"
       ],
       "correct": 0,
-      "explanation": ".Value unwraps TimeSpan?; it does not create a value. The completed-entry filter supplies the reason the code can expect that value to exist."
+      "explanation": "?. safely accesses TotalHours and ?? supplies zero if the nullable result has no value."
     },
     {
       "prompt": "Why does CompletedNewestFirst not call ToList?",
@@ -218,7 +218,7 @@
   "reflections": [
     "Which requirement does each LINQ operator represent?",
     "When would a separate Select make the intermediate values clearer?",
-    "Why is unwrapping the duration with .Value different from replacing a missing duration with zero?",
+    "Why is handling the nullable duration different from filtering the ClockEntry sequence?",
     "Why should open-entry filtering happen before duration calculation?"
   ],
   "whatBreaks": "Removing the completed-entry filter allows an open entry into code that calls GetDuration and can trigger an exception. Reversing OrderByDescending changes newest-first history to oldest-first. Adding ToList here would force materialization before Session 23 explains that choice.",

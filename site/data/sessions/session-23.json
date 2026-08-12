@@ -2,7 +2,7 @@
   "number": 23,
   "category": "query execution timing",
   "estimatedTime": "40 minutes",
-  "connection": "Sessions 21–22 created IEnumerable-based LINQ pipelines. The test project still contains its template placeholder, so this session replaces that placeholder with focused tests that make deferred execution and ToList snapshots observable.",
+  "connection": "Session 21 returned deferred IEnumerable<ClockEntry> pipelines, and Session 22 deliberately used ToList to materialize a report snapshot. This session isolates execution timing in focused tests.",
   "objectives": [
     "Predict when an IEnumerable query executes.",
     "Prove that a deferred query can observe source changes made before enumeration.",
@@ -70,7 +70,7 @@
         "The real method's return type is IEnumerable<ClockEntry> -- a promise of a sequence, not the sequence itself. The .Where() call inside it builds that promise but does not walk _clockEntries yet.",
         "CalculateTotalHours is what actually triggers execution, because .Sum() has to enumerate every element to add it up."
       ],
-      "code": "// Repositories/ClockEntryRepository.cs -- returns an unevaluated query\npublic IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate)\n{\n    return _clockEntries.Where(entry => /* ...three conditions... */ true);\n}\n\n// Services/PayrollService.cs -- .Sum() is what forces evaluation\nreturn clockEntries.Sum(x => x.GetDuration().TotalHours);"
+      "code": "// Repositories/ClockEntryRepository.cs -- returns an unevaluated query\npublic IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate)\n{\n    return _clockEntries.Where(entry => /* ...three conditions... */ true);\n}\n\n// Services/PayrollService.cs -- .Sum() is what forces evaluation\nreturn clockEntries.Sum(x => x.GetDuration()?.TotalHours ?? 0);"
     },
     {
       "title": "ToList forces evaluation now",
@@ -78,7 +78,7 @@
         "DeferredEntryQuery.Completed returns an IEnumerable<ClockEntry> that has not run yet. Calling .ToList() on it walks _clockEntries immediately and returns a fixed List<ClockEntry> snapshot.",
         "The difference is observable: if the source list changes after the deferred query was built but before it is enumerated, an un-materialized IEnumerable can see the change; a .ToList() snapshot cannot."
       ],
-      "code": "public static IEnumerable<ClockEntry> Completed(IEnumerable<ClockEntry> entries) =>\n    entries.Where(entry => entry.ClockOut is not null);\n\n// Caller decides when (or whether) to materialize:\nList<ClockEntry> snapshot = DeferredEntryQuery.Completed(entries).ToList();"
+      "code": "public static IEnumerable<ClockEntry> Completed(IEnumerable<ClockEntry> entries) =>\n    entries.Where(entry => entry.Clockout is not null);\n\n// Caller decides when (or whether) to materialize:\nList<ClockEntry> snapshot = DeferredEntryQuery.Completed(entries).ToList();"
     },
     {
       "title": "IQueryable defers differently: to a provider, not just to enumeration",

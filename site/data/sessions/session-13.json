@@ -101,7 +101,7 @@
       "Do not change the repository signature; Session 11 already established the contract that this session examines.",
       "Create a Session13 folder in the ScratchPad project.",
       "Create Session13CollectionContractDemo.cs inside the new folder.",
-      "Import the PinkMachine19.TimeClock.Domain namespace.",
+      "Do not add an explicit namespace; the learner's current Domain and ScratchPad source uses the global namespace.",
       "Declare a public sealed Session13CollectionContractDemo class.",
       {
         "text": "Stub Run first so the session-specific class has the same entry pattern established by earlier ScratchPad labs.",
@@ -116,10 +116,10 @@
         "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
       },
       "Replace the throw in Display with a foreach loop over entries.",
-      "Inside the loop, display each entry's EmployeeId, ClockIn, and ClockOut.",
+      "Inside the loop, display each entry's EmployeeId, ClockIn, and Clockout.",
       "Replace the throw in Run by constructing a new ClockEntryRepository for the Session 13 observation.",
       "Create one ClockEntry for employee 13 whose ClockIn is inside January 2026.",
-      "Complete that entry by calling ClockOutEmployee.",
+      "Complete that entry by calling ClockOutEntry.",
       "Save the completed entry through SaveClockEntry.",
       "Create and save one open ClockEntry for the same employee so the repository filter has an entry to exclude.",
       {
@@ -149,7 +149,7 @@
           {
             "title": "Solution",
             "text": "Use this to compare the important contract decisions with your attempt. Do not replace an entire existing Program.cs; append only the Session 13 construction and Run call after its earlier code.",
-            "code": "// ScratchPad/Session13/Session13CollectionContractDemo.cs\nusing PinkMachine19.TimeClock.Domain;\n\npublic sealed class Session13CollectionContractDemo\n{\n    public void Run()\n    {\n        var session13Repository = new ClockEntryRepository();\n\n        var completedEntry = new ClockEntry(\n            13,\n            new DateTime(2026, 1, 15, 9, 0, 0));\n        completedEntry.ClockOutEmployee(\n            new DateTime(2026, 1, 15, 17, 0, 0));\n\n        var openEntry = new ClockEntry(\n            13,\n            new DateTime(2026, 1, 16, 9, 0, 0));\n\n        session13Repository.SaveClockEntry(completedEntry);\n        session13Repository.SaveClockEntry(openEntry);\n\n        IEnumerable<ClockEntry> entries =\n            session13Repository.GetEmployeeClockEntries(\n                13,\n                new DateTime(2026, 1, 1),\n                new DateTime(2026, 1, 31));\n\n        // These do not compile through the IEnumerable<ClockEntry> contract.\n        // entries.Add(openEntry);\n        // ClockEntry firstEntry = entries[0];\n        // int countProperty = entries.Count;\n\n        Console.WriteLine($\"Completed entries: {entries.Count()}\");\n        Display(entries);\n    }\n\n    public void Display(IEnumerable<ClockEntry> entries)\n    {\n        foreach (ClockEntry entry in entries)\n        {\n            Console.WriteLine(\n                $\"Employee {entry.EmployeeId}: {entry.ClockIn} to {entry.ClockOut}\");\n        }\n    }\n}\n\n// Append to ScratchPad/Program.cs without removing earlier calls.\nvar session13 = new Session13CollectionContractDemo();\nsession13.Run();"
+            "code": "// ScratchPad/Session13/Session13CollectionContractDemo.cs\npublic sealed class Session13CollectionContractDemo\n{\n    public void Run()\n    {\n        var session13Repository = new ClockEntryRepository();\n\n        var completedEntry = new ClockEntry(\n            13,\n            new DateTime(2026, 1, 15, 9, 0, 0));\n        completedEntry.ClockOutEntry(\n            new DateTime(2026, 1, 15, 17, 0, 0));\n\n        var openEntry = new ClockEntry(\n            13,\n            new DateTime(2026, 1, 16, 9, 0, 0));\n\n        session13Repository.SaveClockEntry(completedEntry);\n        session13Repository.SaveClockEntry(openEntry);\n\n        IEnumerable<ClockEntry> entries =\n            session13Repository.GetEmployeeClockEntries(\n                13,\n                new DateTime(2026, 1, 1),\n                new DateTime(2026, 1, 31));\n\n        // These do not compile through the IEnumerable<ClockEntry> contract.\n        // entries.Add(openEntry);\n        // ClockEntry firstEntry = entries[0];\n        // int countProperty = entries.Count;\n\n        Console.WriteLine($\"Completed entries: {entries.Count()}\");\n        Display(entries);\n    }\n\n    public void Display(IEnumerable<ClockEntry> entries)\n    {\n        foreach (ClockEntry entry in entries)\n        {\n            Console.WriteLine(\n                $\"Employee {entry.EmployeeId}: {entry.ClockIn} to {entry.Clockout}\");\n        }\n    }\n}\n\n// Append to ScratchPad/Program.cs without removing earlier calls.\nvar session13 = new Session13CollectionContractDemo();\nsession13.Run();"
           }
         ]
       }

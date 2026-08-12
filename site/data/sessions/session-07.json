@@ -13,7 +13,7 @@
     {
       "diagram": "nullable",
       "title": "Nullable means value or no value",
-      "explanation": "DateTime? ClockOut explicitly permits either a real clock-out timestamp or null; every reader of ClockOut must account for both."
+      "explanation": "DateTime? Clockout explicitly permits either a real clock-out timestamp or null; every reader of Clockout must account for both."
     },
     {
       "diagram": "invariant",
@@ -23,12 +23,12 @@
     {
       "diagram": "warning",
       "title": "The constructor already proves required state",
-      "explanation": "Employee's constructor requires and assigns EmployeeId, Name, and Address. Do not add nullable markers or invented defaults when the existing construction path already proves valid initialization."
+      "explanation": "Employee's constructor requires and assigns Identity, Name, and Address. Do not add nullable markers or invented defaults when the existing construction path already proves valid initialization."
     },
     {
       "diagram": "flowstate",
       "title": "A null check proves the completed path",
-      "explanation": "GetDuration rejects an open entry. After that guard, the method can safely use ClockOut.Value to calculate the completed duration."
+      "explanation": "GetDuration rejects an open entry. After that guard, the method can safely use Clockout.Value to calculate the completed duration."
     }
   ],
   "preQuiz": [
@@ -37,7 +37,7 @@
       "options": [
         "EmployeeId",
         "ClockIn",
-        "ClockOut"
+        "Clockout"
       ],
       "correct": 2,
       "explanation": "An open entry has no clock-out time yet."
@@ -67,7 +67,7 @@
     {
       "title": "Required state belongs in construction",
       "paragraphs": [
-        "EmployeeId, Name, and Address are required from the moment an Employee exists. Session 06's constructor receives and assigns all three, so Employee is already fully initialized and does not need a Session 07 code change.",
+        "Identity, Name, and Address are required from the moment an Employee exists. Session 06's constructor receives and assigns all three, so Employee is already fully initialized and does not need a Session 07 code change.",
         "Do not add ? or an empty default merely to silence the compiler. Use nullable only when absence is a valid domain state, and use a default only when that default has real business meaning."
       ],
       "table": {
@@ -93,7 +93,7 @@
             "A valid Employee needs an address"
           ],
           [
-            "ClockOut",
+            "Clockout",
             "Nullable DateTime",
             "An open ClockEntry has no clock-out time yet"
           ]
@@ -103,10 +103,10 @@
     {
       "title": "Flow analysis follows the null check",
       "paragraphs": [
-        "Before clock-out, ClockOut is null. After a guard proves it has a value, the completed path can safely use ClockOut.Value.",
+        "Before clock-out, Clockout is null. After a guard proves it has a value, the completed path can safely use Clockout.Value.",
         "The compiler tracks that proof through the local control flow; it does not guess business intent."
       ],
-      "code": "if (ClockOut is null)\n    throw new InvalidOperationException(\"The entry is still open.\");\n\nreturn ClockOut.Value - ClockIn;"
+      "code": "if (Clockout is null)\n    throw new InvalidOperationException(\"The entry is still open.\");\n\nreturn Clockout.Value - ClockIn;"
     },
     {
       "title": "Invariants reject impossible transitions",
@@ -131,18 +131,18 @@
           "Avoiding meaningless defaults",
           "Preserving a correct model"
         ],
-        "task": "Review Employee and conclude why EmployeeId, Name, and Address are already initialized correctly by its constructor. Do not modify Employee.",
+        "task": "Review Employee and conclude why Identity, Name, and Address are already initialized correctly by its constructor. Do not modify Employee.",
         "comment": "// Lab 1 of 3 - Evaluate Required and Nullable State",
         "instructions": [
           "Open Employee.cs.",
-          "Confirm EmployeeId is required through the constructor and uses a non-nullable int.",
+          "Confirm Identity is required through the constructor and uses a non-nullable int.",
           "Confirm Name is required through the constructor and uses a non-nullable string.",
           "Confirm Address is required through the constructor and uses a non-nullable Address type.",
           "Confirm the constructor assigns all three properties.",
           "Do not add nullable markers or empty-string defaults.",
           "Close Employee.cs without changing it."
         ],
-        "solution": "// Employee remains unchanged from Session 06.\npublic class Employee\n{\n    public int EmployeeId { get; }\n    public string Name { get; set; }\n    public Address Address { get; set; }\n\n    public Employee(int employeeId, string name, Address address)\n    {\n        EmployeeId = employeeId;\n        Name = name;\n        Address = address;\n    }\n}"
+        "solution": "// Employee remains unchanged from Session 06.\npublic class Employee\n{\n    public int Identity { get; set; }\n    public string Name { get; set; }\n    public Address Address { get; set; }\n\n    public Employee(int identity, string name, Address address)\n    {\n        Identity = identity;\n        Name = name;\n        Address = address;\n    }\n}"
       },
       {
         "title": "Protect Clock Entry Completion",
@@ -153,34 +153,34 @@
           "Guard clauses",
           "Protecting business invariants"
         ],
-        "task": "Add ClockOut, ClockOutEmployee, and GetDuration to ClockEntry while preserving its Session 06 clock-in state.",
+        "task": "Add Clockout, ClockOutEntry, and GetDuration to ClockEntry while preserving its Session 06 clock-in state.",
         "comment": "// Lab 2 of 3 - Protect Clock Entry Completion",
         "instructions": [
           "Open ClockEntry.cs without deleting its Session 06 properties or constructor.",
           {
-            "text": "Add the nullable ClockOut property. Its private setter keeps completion inside ClockEntry.",
-            "code": "+ public DateTime? ClockOut { get; private set; }"
+            "text": "Add the nullable Clockout property. Its private setter keeps completion inside ClockEntry.",
+            "code": "+ public DateTime? Clockout { get; private set; }"
           },
-          "Add a public method named ClockOutEmployee.",
-          "Give ClockOutEmployee one DateTime parameter named clockOut.",
+          "Add a public method named ClockOutEntry.",
+          "Give ClockOutEntry one DateTime parameter named clockOut.",
           {
             "text": "Add the guard that rejects a second completion.",
-            "code": "+ if (ClockOut is not null)\n+ {\n+     throw new InvalidOperationException(\"The entry is already complete.\");\n+ }"
+            "code": "+ if (Clockout is not null)\n+ {\n+     throw new InvalidOperationException(\"The entry is already complete.\");\n+ }"
           },
           {
             "text": "Add the guard that rejects a clock-out before ClockIn.",
             "code": "+ if (clockOut < ClockIn)\n+ {\n+     throw new ArgumentOutOfRangeException(nameof(clockOut));\n+ }"
           },
-          "Assign clockOut to ClockOut after both checks pass.",
-          "Add a public method named GetDuration with a TimeSpan return type.",
+          "Assign clockOut to Clockout after both checks pass.",
+          "Add a public method named GetDuration with a TimeSpan? return type; the nullable signature requires callers to handle the possible no-value state even though this implementation throws for an open entry.",
           {
             "text": "Add the guard that rejects a duration request while the entry is open.",
-            "code": "+ if (ClockOut is null)\n+ {\n+     throw new InvalidOperationException(\"The entry is still open.\");\n+ }"
+            "code": "+ if (Clockout is null)\n+ {\n+     throw new InvalidOperationException(\"The entry is still open.\");\n+ }"
           },
-          "Return the elapsed time between ClockOut and ClockIn.",
+          "Return the elapsed time between Clockout and ClockIn.",
           "Save ClockEntry.cs."
         ],
-        "solution": "public class ClockEntry\n{\n    public int EmployeeId { get; }\n    public DateTime ClockIn { get; }\n    public DateTime? ClockOut { get; private set; }\n\n    public ClockEntry(int employeeId, DateTime clockIn)\n    {\n        EmployeeId = employeeId;\n        ClockIn = clockIn;\n    }\n\n    public void ClockOutEmployee(DateTime clockOut)\n    {\n        if (ClockOut is not null)\n        {\n            throw new InvalidOperationException(\"The entry is already complete.\");\n        }\n\n        if (clockOut < ClockIn)\n        {\n            throw new ArgumentOutOfRangeException(nameof(clockOut));\n        }\n\n        ClockOut = clockOut;\n    }\n\n    public TimeSpan GetDuration()\n    {\n        if (ClockOut is null)\n        {\n            throw new InvalidOperationException(\"The entry is still open.\");\n        }\n\n        return ClockOut.Value - ClockIn;\n    }\n}"
+        "solution": "public class ClockEntry\n{\n    public int EmployeeId { get; }\n    public DateTime ClockIn { get; }\n    public DateTime? Clockout { get; private set; }\n\n    public ClockEntry(int employeeId, DateTime clockIn)\n    {\n        EmployeeId = employeeId;\n        ClockIn = clockIn;\n    }\n\n    public void ClockOutEntry(DateTime clockOut)\n    {\n        if (Clockout is not null)\n        {\n            throw new InvalidOperationException(\"The entry is already complete.\");\n        }\n\n        if (clockOut < ClockIn)\n        {\n            throw new ArgumentOutOfRangeException(nameof(clockOut));\n        }\n\n        Clockout = clockOut;\n    }\n\n    public TimeSpan? GetDuration()\n    {\n        if (Clockout is null)\n        {\n            throw new InvalidOperationException(\"The entry is still open.\");\n        }\n\n        return Clockout.Value - ClockIn;\n    }\n}"
       },
       {
         "title": "Run the Session 07 Invariant Demo",
@@ -201,7 +201,7 @@
           "Inside Run, construct one Address object.",
           "On the next line, construct one Employee object using that Address.",
           "On the next line, construct one open ClockEntry for that employee.",
-          "Call ClockOutEmployee with a valid later time.",
+          "Call ClockOutEntry with a valid later time.",
           "Call GetDuration and store the returned duration.",
           "Display the employee example.",
           "Display the completed entry's duration.",
@@ -255,13 +255,13 @@
   "review": [
     "The lab uses production because that is the most natural environment for this concept.",
     "Employee remains unchanged because its constructor already initializes every required property.",
-    "ClockOut is nullable because an open entry legitimately has no clock-out time.",
+    "Clockout is nullable because an open entry legitimately has no clock-out time.",
     "Every referenced application artifact was created in this session or an earlier session.",
     "Earlier production code, tests, and ScratchPad experiments remain intact."
   ],
   "postQuiz": [
     {
-      "prompt": "Why is ClockOut nullable?",
+      "prompt": "Why is Clockout nullable?",
       "options": [
         "Because every DateTime is nullable",
         "Because an open entry has not completed",
@@ -275,13 +275,13 @@
       "options": [
         "Return zero silently",
         "Reject the invalid request",
-        "Set ClockOut automatically"
+        "Set Clockout automatically"
       ],
       "correct": 1,
       "explanation": "An open entry has no completed duration."
     },
     {
-      "prompt": "Why keep ClockOut's setter private?",
+      "prompt": "Why keep Clockout's setter private?",
       "options": [
         "So completion passes through the invariant-protecting method",
         "So tests cannot read it",
@@ -293,11 +293,11 @@
   ],
   "reflections": [
     "Which ClockEntry values are required versus only-sometimes-present, and why?",
-    "Why does Employee need no code change when its constructor already assigns EmployeeId, Name, and Address?",
+    "Why does Employee need no code change when its constructor already assigns Identity, Name, and Address?",
     "Why would an empty-string default hide rather than solve a missing required value?"
   ],
-  "whatBreaks": "Making ClockOut's setter public lets any code close an entry without going through ClockOutEmployee, bypassing the completion guards. Removing the second-completion or time-order guard permits impossible transitions. Removing the open-entry check from GetDuration makes the method use a clock-out value that does not yet exist.",
-  "summary": "Employee's constructor already guarantees its required non-null state, so Session 07 leaves it unchanged. ClockEntry.ClockOut uses DateTime? because absence is valid while an entry is open, and its private setter plus guard methods protect valid completion and duration behavior.",
+  "whatBreaks": "Making Clockout's setter public lets any code close an entry without going through ClockOutEntry, bypassing the completion guards. Removing the second-completion or time-order guard permits impossible transitions. Removing the open-entry check from GetDuration makes the method use a clock-out value that does not yet exist.",
+  "summary": "Employee's constructor already guarantees its required non-null state, so Session 07 leaves it unchanged. ClockEntry.Clockout uses DateTime? because absence is valid while an entry is open, and its private setter plus guard methods protect valid completion and duration behavior.",
   "learningEnvironment": "production",
   "buildState": {
     "creates": [],
