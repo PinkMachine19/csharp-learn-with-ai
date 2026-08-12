@@ -111,8 +111,7 @@
     "steps": [
       "Open Repositories/ClockEntryRepository.cs and list its three public methods.",
       "Confirm _clockEntries remains private so the interface does not expose storage.",
-      "Create IClockEntryRepository.cs in the Domain project.",
-      "Use the same namespace as ClockEntryRepository.",
+      "Create IClockEntryRepository.cs directly in the Domain project. This location preserves the course's established cumulative file history.",
       "Declare public interface IClockEntryRepository.",
       "Add the SaveClockEntry signature without copying its body.",
       "Add the GetEmployeeClockEntries signature with its existing parameter and return types.",
@@ -132,7 +131,7 @@
           {
             "title": "Solution",
             "text": "Compare the contract and implementation declaration with your work. Keep your existing repository method bodies and earlier Program.cs sections.",
-            "code": "// IClockEntryRepository.cs\nnamespace PinkMachine19.TimeClock.Domain;\n\npublic interface IClockEntryRepository\n{\n    void SaveClockEntry(ClockEntry clockEntry);\n    IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate);\n    ClockEntry? GetOpenClockEntry(int employeeId);\n}\n\n// Change only the declaration in ClockEntryRepository.cs.\npublic sealed class ClockEntryRepository : IClockEntryRepository\n\n// Append in App/Program.cs.\nIClockEntryRepository repository = new ClockEntryRepository();\nClockEntry? openEntry = repository.GetOpenClockEntry(18);\nConsole.WriteLine(openEntry is null ? \"No open entry\" : \"Open entry found\");"
+            "code": "// IClockEntryRepository.cs\npublic interface IClockEntryRepository\n{\n    void SaveClockEntry(ClockEntry clockEntry);\n    IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate);\n    ClockEntry? GetOpenClockEntry(int employeeId);\n}\n\n// Change only the declaration in ClockEntryRepository.cs.\npublic sealed class ClockEntryRepository : IClockEntryRepository\n\n// Append in App/Program.cs.\nIClockEntryRepository repository = new ClockEntryRepository();\nClockEntry? openEntry = repository.GetOpenClockEntry(18);\nConsole.WriteLine(openEntry is null ? \"No open entry\" : \"Open entry found\");"
           }
         ]
       }

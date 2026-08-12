@@ -68,17 +68,17 @@
       "title": "Where filters by a requirement",
       "paragraphs": [
         "A completed-history query excludes entries whose clock-out is null before any duration calculation.",
-        "Use the Clockout/ClockOut spelling present in your current ClockEntry class."
+        "Use the Clockout/Clockout spelling present in your current ClockEntry class."
       ],
       "code": "entries.Where(entry => entry.Clockout is not null)"
     },
     {
       "title": "Sum can project and aggregate",
       "paragraphs": [
-        "PayrollService obtains completed entries through IClockEntryRepository, then maps each one to GetDuration().TotalHours inside Sum.",
+        "PayrollService obtains completed entries through IClockEntryRepository, then maps each one to GetDuration().Value.TotalHours inside Sum.",
         "There is no need for a separate Select when no caller needs the intermediate sequence of numbers."
       ],
-      "code": "return entries.Sum(entry => entry.GetDuration().TotalHours);"
+      "code": "return entries.Sum(entry => entry.GetDuration().Value.TotalHours);"
     },
     {
       "title": "Ordering should express the caller's need",
@@ -93,28 +93,24 @@
     "objective": "Refactor the Session 20 total-hours loop to Sum and create one query that filters completed entries and orders them newest first.",
     "startingCondition": "IClockEntryRepository and ClockEntryService exist. PayrollService and ClockEntryQueries do not exist yet.",
     "steps": [
-      "Create PayrollService.cs in the Domain project.",
-      "Declare a public sealed PayrollService class.",
-      "Inject IClockEntryRepository through its constructor using the Session 20 pattern.",
-      "Stub CalculateTotalHours with employeeId, startDate, and endDate parameters.",
-      "Retrieve completed entries through GetEmployeeClockEntries.",
-      "Return Sum with a lambda that projects each entry to GetDuration().TotalHours.",
-      "Build before adding the second query.",
-      "Create ClockEntryQueries.cs in the Domain project.",
-      "Declare a public static ClockEntryQueries class.",
-      "Stub CompletedNewestFirst with an IEnumerable<ClockEntry> parameter.",
-      "Filter to completed entries using the clock-out property in your source.",
-      "Order the result by ClockIn descending.",
-      "Return the pipeline without calling ToList.",
-      "Append a Session 21 section to App and display the total and ordered ClockIn values.",
+      "Create PayrollService.cs in the Domain project's Services folder and declare a public sealed class named PayrollService.",
+      "Inside PayrollService, add a private readonly IClockEntryRepository field named _clockEntryRepository.",
+      "Add a public PayrollService constructor with an IClockEntryRepository parameter named clockEntryRepository, then assign it to _clockEntryRepository.",
+      "Add a public CalculateTotalHours method that returns double and accepts int employeeId, DateTime startDate, and DateTime endDate. Leave its body unfinished for now.",
+      "Inside CalculateTotalHours, call _clockEntryRepository.GetEmployeeClockEntries(employeeId, startDate, endDate) and store the result in IEnumerable<ClockEntry> entries.",
+      "Return entries.Sum(entry => entry.GetDuration().Value.TotalHours). The repository already excludes entries whose Clockout is null.",
+      "Create ClockEntryQueries.cs in the Domain project and declare a public static class named ClockEntryQueries.",
+      "Add a public static CompletedNewestFirst method that returns IEnumerable<ClockEntry> and accepts IEnumerable<ClockEntry> entries.",
+      "Inside CompletedNewestFirst, filter entries where Clockout is not null, order them by ClockIn descending, and return the pipeline without calling ToList.",
+      "Open App/Program.cs, preserve earlier sections, and append a Session 21 section that constructs PayrollService, displays total hours, and enumerates CompletedNewestFirst.",
       {
-        "text": "Run App, then build and test. Compare with the solution after attempting both queries.",
+        "text": "Run the App project, then build and test PinkMachine19.TimeClock.sln. Compare with the existing solution reveal after attempting both queries.",
         "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
         "reveals": [
           {
             "title": "Solution",
-            "text": "Match GetDuration and Clockout/ClockOut to your existing ClockEntry API.",
-            "code": "public sealed class PayrollService\n{\n    private readonly IClockEntryRepository _clockEntries;\n\n    public PayrollService(IClockEntryRepository clockEntries)\n    {\n        _clockEntries = clockEntries;\n    }\n\n    public double CalculateTotalHours(int employeeId, DateTime startDate, DateTime endDate)\n    {\n        IEnumerable<ClockEntry> entries = _clockEntries.GetEmployeeClockEntries(employeeId, startDate, endDate);\n        return entries.Sum(entry => entry.GetDuration().TotalHours);\n    }\n}\n\npublic static class ClockEntryQueries\n{\n    public static IEnumerable<ClockEntry> CompletedNewestFirst(IEnumerable<ClockEntry> entries) => entries\n        .Where(entry => entry.Clockout is not null)\n        .OrderByDescending(entry => entry.ClockIn);\n}"
+            "text": "Match GetDuration and Clockout/Clockout to your existing ClockEntry API.",
+            "code": "public sealed class PayrollService\n{\n    private readonly IClockEntryRepository _clockEntries;\n\n    public PayrollService(IClockEntryRepository clockEntries)\n    {\n        _clockEntries = clockEntries;\n    }\n\n    public double CalculateTotalHours(int employeeId, DateTime startDate, DateTime endDate)\n    {\n        IEnumerable<ClockEntry> entries = _clockEntries.GetEmployeeClockEntries(employeeId, startDate, endDate);\n        return entries.Sum(entry => entry.GetDuration().Value.TotalHours);\n    }\n}\n\npublic static class ClockEntryQueries\n{\n    public static IEnumerable<ClockEntry> CompletedNewestFirst(IEnumerable<ClockEntry> entries) => entries\n        .Where(entry => entry.Clockout is not null)\n        .OrderByDescending(entry => entry.ClockIn);\n}"
           }
         ]
       }
@@ -126,7 +122,7 @@
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/PayrollService.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/Services/PayrollService.cs",
       "action": "Add",
       "why": "Create total-hours behavior when LINQ provides its implementation."
     },
@@ -154,7 +150,7 @@
   ],
   "postQuiz": [
     {
-      "prompt": "Why can Sum contain entry => entry.GetDuration().TotalHours?",
+      "prompt": "Why can Sum contain entry => entry.GetDuration().Value.TotalHours?",
       "options": [
         "Sum accepts a selector that produces the number to add",
         "GetDuration returns IEnumerable",

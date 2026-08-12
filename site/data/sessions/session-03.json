@@ -161,7 +161,9 @@
       }
     ],
     "expectedBehavior": "ScratchPad retains a labeled Session 03 experiment and prints 7.50 scheduled, 8.00 recorded, and +0.50 variance. Production code remains empty.",
-    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release",
+    "stepCheckboxes": true,
+    "clickHighlightInstructions": true
   },
   "expectedFiles": [
     {

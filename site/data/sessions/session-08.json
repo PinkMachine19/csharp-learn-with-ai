@@ -97,7 +97,12 @@
       {
         "title": "Compare Value Copying and Reference Sharing",
         "objective": "Create a new Session 08 class that keeps the assignment experiment separate from all earlier ScratchPad exercises.",
-        "practice": ["Copying a value type", "Sharing a reference-type object", "Predicting before mutation", "Observing state through two variables"],
+        "practice": [
+          "Copying a value type",
+          "Sharing a reference-type object",
+          "Predicting before mutation",
+          "Observing state through two variables"
+        ],
         "task": "Create Session08AssignmentDemo with a Run method that compares an int copy with two variables referring to one Employee, then append its construction and Run call to ScratchPad/Program.cs.",
         "comment": "// Lab 1 of 1 - Compare Value Copying and Reference Sharing",
         "instructions": [
@@ -126,8 +131,14 @@
           "Construct one Session08AssignmentDemo object.",
           "Call Run on the Session08AssignmentDemo object.",
           "Save both files.",
-          {"text": "Run ScratchPad and compare the output with both predictions.", "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"},
-          {"text": "Build the complete solution.", "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"}
+          {
+            "text": "Run ScratchPad and compare the output with both predictions.",
+            "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"
+          },
+          {
+            "text": "Build the complete solution.",
+            "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+          }
         ]
       }
     ],

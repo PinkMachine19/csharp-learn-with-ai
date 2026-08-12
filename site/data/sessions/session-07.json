@@ -71,12 +71,32 @@
         "Do not add ? or an empty default merely to silence the compiler. Use nullable only when absence is a valid domain state, and use a default only when that default has real business meaning."
       ],
       "table": {
-        "headers": ["Property", "Decision", "Reason"],
+        "headers": [
+          "Property",
+          "Decision",
+          "Reason"
+        ],
         "rows": [
-          ["EmployeeId", "Required through constructor", "Every Employee needs an identity"],
-          ["Name", "Required, non-null string through constructor", "A valid Employee needs a name"],
-          ["Address", "Required, non-null Address through constructor", "A valid Employee needs an address"],
-          ["ClockOut", "Nullable DateTime", "An open ClockEntry has no clock-out time yet"]
+          [
+            "EmployeeId",
+            "Required through constructor",
+            "Every Employee needs an identity"
+          ],
+          [
+            "Name",
+            "Required, non-null string through constructor",
+            "A valid Employee needs a name"
+          ],
+          [
+            "Address",
+            "Required, non-null Address through constructor",
+            "A valid Employee needs an address"
+          ],
+          [
+            "ClockOut",
+            "Nullable DateTime",
+            "An open ClockEntry has no clock-out time yet"
+          ]
         ]
       }
     },
@@ -105,7 +125,12 @@
       {
         "title": "Evaluate Required and Nullable State",
         "objective": "Evaluate the properties created in Session 06 before changing code. Required values, nullable values, and defaults should each express a real rule.",
-        "practice": ["Classifying required state", "Recognizing legitimate absence", "Avoiding meaningless defaults", "Preserving a correct model"],
+        "practice": [
+          "Classifying required state",
+          "Recognizing legitimate absence",
+          "Avoiding meaningless defaults",
+          "Preserving a correct model"
+        ],
         "task": "Review Employee and conclude why EmployeeId, Name, and Address are already initialized correctly by its constructor. Do not modify Employee.",
         "comment": "// Lab 1 of 3 - Evaluate Required and Nullable State",
         "instructions": [
@@ -122,19 +147,36 @@
       {
         "title": "Protect Clock Entry Completion",
         "objective": "Extend the existing ClockEntry model with one legitimately nullable property and rules that protect valid completion and duration.",
-        "practice": ["Nullable value types", "Private setters", "Guard clauses", "Protecting business invariants"],
+        "practice": [
+          "Nullable value types",
+          "Private setters",
+          "Guard clauses",
+          "Protecting business invariants"
+        ],
         "task": "Add ClockOut, ClockOutEmployee, and GetDuration to ClockEntry while preserving its Session 06 clock-in state.",
         "comment": "// Lab 2 of 3 - Protect Clock Entry Completion",
         "instructions": [
           "Open ClockEntry.cs without deleting its Session 06 properties or constructor.",
-          {"text": "Add the nullable ClockOut property. Its private setter keeps completion inside ClockEntry.", "code": "+ public DateTime? ClockOut { get; private set; }"},
+          {
+            "text": "Add the nullable ClockOut property. Its private setter keeps completion inside ClockEntry.",
+            "code": "+ public DateTime? ClockOut { get; private set; }"
+          },
           "Add a public method named ClockOutEmployee.",
           "Give ClockOutEmployee one DateTime parameter named clockOut.",
-          {"text": "Add the guard that rejects a second completion.", "code": "+ if (ClockOut is not null)\n+ {\n+     throw new InvalidOperationException(\"The entry is already complete.\");\n+ }"},
-          {"text": "Add the guard that rejects a clock-out before ClockIn.", "code": "+ if (clockOut < ClockIn)\n+ {\n+     throw new ArgumentOutOfRangeException(nameof(clockOut));\n+ }"},
+          {
+            "text": "Add the guard that rejects a second completion.",
+            "code": "+ if (ClockOut is not null)\n+ {\n+     throw new InvalidOperationException(\"The entry is already complete.\");\n+ }"
+          },
+          {
+            "text": "Add the guard that rejects a clock-out before ClockIn.",
+            "code": "+ if (clockOut < ClockIn)\n+ {\n+     throw new ArgumentOutOfRangeException(nameof(clockOut));\n+ }"
+          },
           "Assign clockOut to ClockOut after both checks pass.",
           "Add a public method named GetDuration with a TimeSpan return type.",
-          {"text": "Add the guard that rejects a duration request while the entry is open.", "code": "+ if (ClockOut is null)\n+ {\n+     throw new InvalidOperationException(\"The entry is still open.\");\n+ }"},
+          {
+            "text": "Add the guard that rejects a duration request while the entry is open.",
+            "code": "+ if (ClockOut is null)\n+ {\n+     throw new InvalidOperationException(\"The entry is still open.\");\n+ }"
+          },
           "Return the elapsed time between ClockOut and ClockIn.",
           "Save ClockEntry.cs."
         ],
@@ -143,7 +185,12 @@
       {
         "title": "Run the Session 07 Invariant Demo",
         "objective": "Exercise the new completion behavior from a new class while preserving the Session 06 demo and its Main call.",
-        "practice": ["Constructing a valid object", "Moving an object between valid states", "Calling behavior from Main", "Preserving cumulative examples"],
+        "practice": [
+          "Constructing a valid object",
+          "Moving an object between valid states",
+          "Calling behavior from Main",
+          "Preserving cumulative examples"
+        ],
         "task": "Create Session07InvariantDemo with a Run method that completes one clock entry and displays its duration, then append its construction and Run call to App/Program.cs.",
         "comment": "// Lab 3 of 3 - Run the Session 07 Invariant Demo",
         "instructions": [
@@ -164,9 +211,18 @@
           "Construct one Session07InvariantDemo object.",
           "Call Run on the Session07InvariantDemo object.",
           "Save both files.",
-          {"text": "Run the App and observe both preserved session demonstrations.", "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release"},
-          {"text": "Build the complete solution.", "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"},
-          {"text": "Run the complete test suite without rebuilding.", "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"}
+          {
+            "text": "Run the App and observe both preserved session demonstrations.",
+            "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release"
+          },
+          {
+            "text": "Build the complete solution.",
+            "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+          },
+          {
+            "text": "Run the complete test suite without rebuilding.",
+            "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+          }
         ]
       }
     ],

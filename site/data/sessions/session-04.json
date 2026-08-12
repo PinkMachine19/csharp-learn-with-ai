@@ -135,7 +135,9 @@
       }
     ],
     "expectedBehavior": "ScratchPad retains every earlier experiment. Running Session 04 separately with 0.5m, 0m, and -0.5m produces over schedule, on schedule, and under schedule respectively. The final saved value is restored to 0.5m, and production code remains unchanged.",
-    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release",
+    "stepCheckboxes": true,
+    "clickHighlightInstructions": true
   },
   "expectedFiles": [
     {

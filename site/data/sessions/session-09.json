@@ -72,10 +72,22 @@
         "Reassigning an ordinary parameter never replaces the caller's variable. A method receiving an Employee normally can mutate the shared Employee object, but assigning a different Employee to its local parameter does not replace the caller's reference."
       ],
       "table": {
-        "headers": ["Argument type", "What ordinary passing copies", "Important result"],
+        "headers": [
+          "Argument type",
+          "What ordinary passing copies",
+          "Important result"
+        ],
         "rows": [
-          ["Value type", "The value itself", "Caller and parameter have independent values"],
-          ["Reference type", "The reference", "Both references can reach the same mutable object"]
+          [
+            "Value type",
+            "The value itself",
+            "Caller and parameter have independent values"
+          ],
+          [
+            "Reference type",
+            "The reference",
+            "Both references can reach the same mutable object"
+          ]
         ]
       },
       "code": "static void Inspect(int value) { value = 99; }"
@@ -117,17 +129,52 @@
         "Session 16 later uses in T and out T on generic interfaces. Those keywords describe generic variance and are not the in, out, or ref parameter-passing mechanisms practiced here."
       ],
       "table": {
-        "headers": ["Concept", "Fluency target", "Practical reason"],
-        "rows": [
-          ["Ordinary parameters", "Write comfortably", "Used by nearly every method"],
-          ["Calling TryParse and TryGetValue with out", "Write comfortably", "Common .NET parsing and dictionary APIs"],
-          ["Reading a custom Try... method", "Recognize and understand", "A familiar success-without-exception convention"],
-          ["Designing a custom out API", "Use practical judgment", "Nullable values, tuples, or result types may communicate the contract more clearly"],
-          ["ref parameter", "Recognize and understand", "Intentional caller-variable replacement; uncommon in business-domain methods"],
-          ["in parameter", "Specialized / look it up", "Primarily a measured large-struct performance tool"],
-          ["ref returns, ref locals, ref readonly, scoped", "Specialized / look it up", "Low-level or performance-oriented APIs beyond this session's required fluency"]
+        "headers": [
+          "Concept",
+          "Fluency target",
+          "Practical reason"
         ],
-        "highlightRows": [0, 1]
+        "rows": [
+          [
+            "Ordinary parameters",
+            "Write comfortably",
+            "Used by nearly every method"
+          ],
+          [
+            "Calling TryParse and TryGetValue with out",
+            "Write comfortably",
+            "Common .NET parsing and dictionary APIs"
+          ],
+          [
+            "Reading a custom Try... method",
+            "Recognize and understand",
+            "A familiar success-without-exception convention"
+          ],
+          [
+            "Designing a custom out API",
+            "Use practical judgment",
+            "Nullable values, tuples, or result types may communicate the contract more clearly"
+          ],
+          [
+            "ref parameter",
+            "Recognize and understand",
+            "Intentional caller-variable replacement; uncommon in business-domain methods"
+          ],
+          [
+            "in parameter",
+            "Specialized / look it up",
+            "Primarily a measured large-struct performance tool"
+          ],
+          [
+            "ref returns, ref locals, ref readonly, scoped",
+            "Specialized / look it up",
+            "Low-level or performance-oriented APIs beyond this session's required fluency"
+          ]
+        ],
+        "highlightRows": [
+          0,
+          1
+        ]
       }
     }
   ],
@@ -139,7 +186,11 @@
       {
         "title": "Observe an Ordinary Value Parameter",
         "objective": "See that reassigning an ordinary value parameter changes only the method's local copy.",
-        "practice": ["Passing an argument by value", "Reassigning a parameter", "Comparing caller and method state"],
+        "practice": [
+          "Passing an argument by value",
+          "Reassigning a parameter",
+          "Comparing caller and method state"
+        ],
         "task": "Create Session09ParameterDemo and show that ChangeCopy cannot replace the caller's int variable.",
         "comment": "// Lab 1 of 4 - Observe an Ordinary Value Parameter",
         "instructions": [
@@ -165,7 +216,12 @@
       {
         "title": "Return an Additional Value with out",
         "objective": "Use the Try-pattern to return success as bool and a parsed decimal through an out parameter.",
-        "practice": ["Declaring an out parameter", "Definite assignment", "Calling with out var", "Handling success and failure"],
+        "practice": [
+          "Declaring an out parameter",
+          "Definite assignment",
+          "Calling with out var",
+          "Handling success and failure"
+        ],
         "task": "Add TryParseHours and use its Boolean result before displaying the parsed hours.",
         "comment": "// Lab 2 of 4 - Return an Additional Value with out",
         "instructions": [
@@ -188,7 +244,11 @@
       {
         "title": "Change Caller-Visible Storage with ref",
         "objective": "Use ref when changing the caller's variable is an explicit part of the method contract.",
-        "practice": ["Declaring a ref parameter", "Calling with ref", "Observing caller-visible reassignment"],
+        "practice": [
+          "Declaring a ref parameter",
+          "Calling with ref",
+          "Observing caller-visible reassignment"
+        ],
         "task": "Add Increment and observe that changing its ref parameter changes the caller's counter variable.",
         "comment": "// Lab 3 of 4 - Change Caller-Visible Storage with ref",
         "instructions": [
@@ -209,7 +269,12 @@
       {
         "title": "Read Through an in Parameter",
         "objective": "Demonstrate in as a readonly-reference parameter, then decide whether the production domain has a reason to use it.",
-        "practice": ["Declaring an in parameter", "Calling with in", "Readonly parameter behavior", "Separating demonstration from production need"],
+        "practice": [
+          "Declaring an in parameter",
+          "Calling with in",
+          "Readonly parameter behavior",
+          "Separating demonstration from production need"
+        ],
         "task": "Add DisplayMeasurement, pass one decimal with in, and record why the example teaches syntax rather than a required TimeClock optimization.",
         "comment": "// Lab 4 of 4 - Read Through an in Parameter",
         "instructions": [
@@ -228,8 +293,14 @@
           "Write a final note ranking ordinary parameters and existing Try API calls as write-comfortably skills, ref as recognize-and-understand, and in as specialized/look-up-when-needed.",
           "Save Session09ParameterDemo.cs.",
           "Save Program.cs.",
-          {"text": "Run ScratchPad and compare all four parameter behaviors.", "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"},
-          {"text": "Build the complete solution without changing production contracts.", "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"}
+          {
+            "text": "Run ScratchPad and compare all four parameter behaviors.",
+            "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"
+          },
+          {
+            "text": "Build the complete solution without changing production contracts.",
+            "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+          }
         ],
         "solution": "// Add inside Run.\ndecimal measurement = 12.5m;\nDisplayMeasurement(in measurement);\n\n// Add below Increment.\npublic void DisplayMeasurement(in decimal measurement)\n{\n    Console.WriteLine($\"Measurement through in: {measurement:F2}\");\n    // measurement = 99m; // Does not compile: the in parameter is readonly.\n}"
       }

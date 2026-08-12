@@ -95,12 +95,17 @@
     "objective": "Add the production WorkSummary result model, then compare its value equality with ClockEntry identity in ScratchPad.",
     "startingCondition": "Production contains Employee, Address, and ClockEntry. The product needs a compact employee-hours result but does not have one yet.",
     "steps": [
-      "Create WorkSummary as an immutable record containing EmployeeId and Hours.",
-      "Add a Session 10 ScratchPad section that creates two equal WorkSummary values and two separate ClockEntry objects.",
-      "Predict == and Equals results before running.",
-      "Add one string comparison with an explicit StringComparison choice.",
+      "Create WorkSummary.cs in the Domain project and declare a public readonly record struct named WorkSummary with int EmployeeId and decimal Hours positional properties.",
+      "Create a Session10 folder in the ScratchPad project and create Session10Lab.cs inside it.",
+      "In Session10Lab.cs, declare a public sealed Session10Lab class with a public parameterless Run method.",
+      "Inside Run, create two WorkSummary values named firstSummary and secondSummary with the same EmployeeId and Hours values.",
+      "Compare firstSummary and secondSummary with == and display the Boolean result.",
+      "Inside Run, create two separate ClockEntry objects named firstEntry and secondEntry with identical constructor values.",
+      "Compare firstEntry and secondEntry with == and display the Boolean result.",
+      "Add one string comparison that calls string.Equals with StringComparison.OrdinalIgnoreCase and display its result.",
+      "Open ScratchPad/Program.cs, preserve all earlier calls, construct a Session10Lab object named session10, and call session10.Run().",
       {
-        "text": "Run ScratchPad, build, and test.",
+        "text": "Run the ScratchPad project, then build and test PinkMachine19.TimeClock.sln. Open the existing solution reveal only after making your own attempt.",
         "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
         "reveals": [
           {
@@ -112,7 +117,9 @@
       }
     ],
     "expectedBehavior": "WorkSummary becomes a real production result type, while ScratchPad preserves the equality comparison.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
+    "stepCheckboxes": true,
+    "clickHighlightInstructions": true
   },
   "expectedFiles": [
     {
@@ -121,9 +128,14 @@
       "why": "Represent a calculated employee-hours result."
     },
     {
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session10/Session10Lab.cs",
+      "action": "Add",
+      "why": "Keep the Session 10 equality experiment in its existing session-specific folder."
+    },
+    {
       "path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs",
       "action": "Modify",
-      "why": "Compare equality semantics without adding production-only diagnostics."
+      "why": "Invoke Session10Lab without removing earlier ScratchPad calls."
     },
     {
       "path": "site/data/sessions/session-10.json",

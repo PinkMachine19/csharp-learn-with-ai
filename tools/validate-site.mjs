@@ -144,6 +144,20 @@ const cumulativeFiles = new Set();
 for (const session of manifest.sessions) {
   if (!allowedEnvironments.has(session.learningEnvironment)) errors.push(`${session.id} uses an unknown learning environment`);
   const source = JSON.parse(await readFile(path.join(root, "site", "data", "sessions", `${session.id}.json`), "utf8"));
+  if (Number(session.number) >= 1 && Number(session.number) <= 24) {
+    const lesson = await readFile(path.join(dist, session.lessonPath), "utf8");
+    const standaloneLab = await readFile(path.join(dist, session.labPath), "utf8");
+    const stepTotals = source.lab.labs
+      ? source.lab.labs.map((lab) => lab.instructions.length)
+      : [source.lab.steps.length];
+    for (const total of stepTotals) {
+      for (let index = 1; index <= total; index++) {
+        const label = `Step ${index}/${total}`;
+        if (!lesson.includes(label)) errors.push(`${session.id} lesson is missing ${label}`);
+        if (!standaloneLab.includes(label)) errors.push(`${session.id} standalone lab is missing ${label}`);
+      }
+    }
+  }
   const serializedLab = JSON.stringify(source.lab);
   if (/completed reference implementation|temporary scratch|scratch folder outside|pre-?built application/i.test(serializedLab)) errors.push(`${session.id} reintroduces a prebuilt or disposable-workspace assumption`);
   const changedPaths = source.expectedFiles.map((item) => item.path);

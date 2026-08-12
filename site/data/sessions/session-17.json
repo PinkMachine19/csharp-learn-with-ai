@@ -71,14 +71,34 @@
         "The List itself remains mutable inside Timesheet. readonly prevents assigning _entries to a different List after initialization; it does not freeze the current List or prevent Timesheet.TryAdd from calling _entries.Add."
       ],
       "table": {
-        "headers": ["Declaration", "What it protects"],
-        "rows": [
-          ["private", "Outside callers cannot directly access or mutate _entries."],
-          ["readonly List<ClockEntry>", "Timesheet cannot reassign the field after initialization; the existing List can still be mutated internally."],
-          ["IReadOnlyList<ClockEntry>", "Callers can count, index, and enumerate through Entries, but the public contract has no Add, Remove, or Clear."],
-          ["List<ClockEntry> property (do not use)", "Would expose mutation methods and let callers bypass TryAdd's ownership check."]
+        "headers": [
+          "Declaration",
+          "What it protects"
         ],
-        "highlightRows": [0, 1, 2, 3]
+        "rows": [
+          [
+            "private",
+            "Outside callers cannot directly access or mutate _entries."
+          ],
+          [
+            "readonly List<ClockEntry>",
+            "Timesheet cannot reassign the field after initialization; the existing List can still be mutated internally."
+          ],
+          [
+            "IReadOnlyList<ClockEntry>",
+            "Callers can count, index, and enumerate through Entries, but the public contract has no Add, Remove, or Clear."
+          ],
+          [
+            "List<ClockEntry> property (do not use)",
+            "Would expose mutation methods and let callers bypass TryAdd's ownership check."
+          ]
+        ],
+        "highlightRows": [
+          0,
+          1,
+          2,
+          3
+        ]
       },
       "code": "private readonly List<ClockEntry> _entries = new();\npublic IReadOnlyList<ClockEntry> Entries => _entries;"
     },
@@ -133,16 +153,30 @@
       "Locate the private readonly List<ClockEntry> field named _clockEntries.",
       "Confirm that no repository change is needed because Session 11 already protected the list.",
       "Confirm that SaveClockEntry, GetClockEntry, and GetEmployeeClockEntries can still access the private field because they belong to the same class.",
-      {"text": "Build before adding Timesheet. A successful build confirms the established repository boundary remains intact.", "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"},
+      {
+        "text": "Build before adding Timesheet. A successful build confirms the established repository boundary remains intact.",
+        "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+      },
       "Create Timesheet.cs in the Domain project beside the existing domain model classes.",
-      "Add the PinkMachine19.TimeClock.Domain namespace.",
       "Declare a public sealed Timesheet class.",
-      {"text": "Inside Timesheet, declare a private readonly List<ClockEntry>. The class owns this mutable storage and will not return it through a mutable public type.", "code": "private readonly List<ClockEntry> _entries = new();"},
-      {"text": "Stub a constructor that requires one Employee. The Timesheet-to-Employee relationship is established once during construction.", "code": "public Timesheet(Employee employee)\n{\n    throw new NotImplementedException();\n}"},
+      {
+        "text": "Inside Timesheet, declare a private readonly List<ClockEntry>. The class owns this mutable storage and will not return it through a mutable public type.",
+        "code": "private readonly List<ClockEntry> _entries = new();"
+      },
+      {
+        "text": "Stub a constructor that requires one Employee. The Timesheet-to-Employee relationship is established once during construction.",
+        "code": "public Timesheet(Employee employee)\n{\n    throw new NotImplementedException();\n}"
+      },
       "Declare a public get-only Employee property.",
-      {"text": "Expose the entries through IReadOnlyList<ClockEntry>. This public contract permits reading and indexing but does not expose Add, Remove, or Clear.", "code": "public IReadOnlyList<ClockEntry> Entries => _entries;"},
+      {
+        "text": "Expose the entries through IReadOnlyList<ClockEntry>. This public contract permits reading and indexing but does not expose Add, Remove, or Clear.",
+        "code": "public IReadOnlyList<ClockEntry> Entries => _entries;"
+      },
       "Build now, before creating TryAdd, to confirm the private field and public read-only collection contract compile together.",
-      {"text": "Stub TryAdd. Its Boolean result will report whether the entry belongs to this Timesheet's Employee.", "code": "public bool TryAdd(ClockEntry entry)\n{\n    throw new NotImplementedException();\n}"},
+      {
+        "text": "Stub TryAdd. Its Boolean result will report whether the entry belongs to this Timesheet's Employee.",
+        "code": "public bool TryAdd(ClockEntry entry)\n{\n    throw new NotImplementedException();\n}"
+      },
       "Build again to confirm the Timesheet structure and method contracts compile.",
       "Replace the constructor throw by assigning the employee parameter to the Employee property.",
       "Replace the throw in TryAdd with a comparison between entry.EmployeeId and Employee.EmployeeId.",
@@ -161,7 +195,17 @@
       "Call TryAdd with the mismatched entry and display its Boolean result.",
       "Display Timesheet.Entries.Count and confirm the rejected entry did not change the collection.",
       "Confirm that Timesheet.Entries.Add(...) does not compile through the IReadOnlyList<ClockEntry> contract, then comment out only that invalid line.",
-      {"text": "Run the application, then build and test the complete solution. Attempt the lab before opening the solution below.", "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build", "reveals": [{"title": "Solution", "text": "Compare the ownership check with your attempt. Do not change the repository or replace Program.cs; add Timesheet.cs and append only the Session 17 application section.", "code": "// Timesheet.cs\nnamespace PinkMachine19.TimeClock.Domain;\n\npublic sealed class Timesheet\n{\n    private readonly List<ClockEntry> _entries = new();\n\n    public Timesheet(Employee employee)\n    {\n        Employee = employee;\n    }\n\n    public Employee Employee { get; }\n    public IReadOnlyList<ClockEntry> Entries => _entries;\n\n    public bool TryAdd(ClockEntry entry)\n    {\n        if (entry.EmployeeId != Employee.EmployeeId)\n        {\n            return false;\n        }\n\n        _entries.Add(entry);\n        return true;\n    }\n}\n\n// Append as a Session 17 section in App/Program.cs.\nvar timesheetEmployee = new Employee(17, \"Avery\", new Address { City = \"Springfield\" });\nvar timesheet = new Timesheet(timesheetEmployee);\n\nvar matchingEntry = new ClockEntry(17, new DateTime(2026, 1, 17, 8, 0, 0));\nbool matchingAdded = timesheet.TryAdd(matchingEntry);\nConsole.WriteLine($\"Matching entry added: {matchingAdded}\");\n\nvar mismatchedEntry = new ClockEntry(99, new DateTime(2026, 1, 17, 9, 0, 0));\nbool mismatchedAdded = timesheet.TryAdd(mismatchedEntry);\nConsole.WriteLine($\"Mismatched entry added: {mismatchedAdded}\");\nConsole.WriteLine($\"Timesheet entry count: {timesheet.Entries.Count}\");\n\n// Does not compile through IReadOnlyList<ClockEntry>.\n// timesheet.Entries.Add(mismatchedEntry);"}]}
+      {
+        "text": "Run the application, then build and test the complete solution. Attempt the lab before opening the solution below.",
+        "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "Compare the ownership check with your attempt. Do not change the repository or replace Program.cs; add Timesheet.cs and append only the Session 17 application section.",
+            "code": "// Timesheet.cs\npublic sealed class Timesheet\n{\n    private readonly List<ClockEntry> _entries = new();\n\n    public Timesheet(Employee employee)\n    {\n        Employee = employee;\n    }\n\n    public Employee Employee { get; }\n    public IReadOnlyList<ClockEntry> Entries => _entries;\n\n    public bool TryAdd(ClockEntry entry)\n    {\n        if (entry.EmployeeId != Employee.EmployeeId)\n        {\n            return false;\n        }\n\n        _entries.Add(entry);\n        return true;\n    }\n}\n\n// Append as a Session 17 section in App/Program.cs.\nvar timesheetEmployee = new Employee(17, \"Avery\", new Address { City = \"Springfield\" });\nvar timesheet = new Timesheet(timesheetEmployee);\n\nvar matchingEntry = new ClockEntry(17, new DateTime(2026, 1, 17, 8, 0, 0));\nbool matchingAdded = timesheet.TryAdd(matchingEntry);\nConsole.WriteLine($\"Matching entry added: {matchingAdded}\");\n\nvar mismatchedEntry = new ClockEntry(99, new DateTime(2026, 1, 17, 9, 0, 0));\nbool mismatchedAdded = timesheet.TryAdd(mismatchedEntry);\nConsole.WriteLine($\"Mismatched entry added: {mismatchedAdded}\");\nConsole.WriteLine($\"Timesheet entry count: {timesheet.Entries.Count}\");\n\n// Does not compile through IReadOnlyList<ClockEntry>.\n// timesheet.Entries.Add(mismatchedEntry);"
+          }
+        ]
+      }
     ],
     "expectedBehavior": "The matching entry returns true, the mismatched entry returns false, and the final Timesheet entry count is 1. The repository remains unchanged, and callers cannot call Add through Timesheet.Entries.",
     "validation": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"

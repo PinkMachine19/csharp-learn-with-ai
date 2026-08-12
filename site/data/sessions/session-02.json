@@ -101,21 +101,20 @@
     "startingCondition": "Session 01 left six scaffolded projects in one learner solution. They contain only template code and do not reference each other.",
     "steps": [
       {
-        "text": "Add App, Infrastructure, Web, ScratchPad, and Domain.Tests references to Domain. Each is an independent consumer; Domain references none of them.",
+        "text": "Edit the App, Infrastructure, Web, ScratchPad, and Domain.Tests project files by adding one ProjectReference from each project to PinkMachine19.TimeClock.Domain.csproj. Do not add a reference from Domain to another project.",
         "code": "dotnet add src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj reference src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\ndotnet add src/PinkMachine19.TimeClock.Infrastructure/PinkMachine19.TimeClock.Infrastructure.csproj reference src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\ndotnet add src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj reference src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\ndotnet add src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj reference src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\ndotnet add tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj reference src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj"
       },
-      "Open each edited .csproj and identify the ProjectReference path created by the command.",
+      "Open each of the five edited .csproj files and locate the ProjectReference Include path that points to PinkMachine19.TimeClock.Domain.csproj.",
+      "Temporarily add an App ProjectReference to PinkMachine19.TimeClock.Domain.csproj, build once to observe that the tooling permits the wrong direction, and immediately remove only that temporary reference.",
       {
-        "text": "Temporarily add Domain-to-App, observe that tooling permits the bad direction, then remove it immediately.",
-        "code": "dotnet add src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj reference src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj\ndotnet remove src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj reference src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj"
-      },
-      {
-        "text": "Build the learner solution and verify Domain has no ProjectReference.",
+        "text": "Build PinkMachine19.TimeClock.sln, then open PinkMachine19.TimeClock.Domain.csproj and confirm it contains no ProjectReference element.",
         "code": "dotnet build PinkMachine19.TimeClock.sln"
       }
     ],
     "expectedBehavior": "All consumers point toward Domain, Domain points nowhere, and the scaffold still builds.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
+    "stepCheckboxes": true,
+    "clickHighlightInstructions": true
   },
   "expectedFiles": [
     {

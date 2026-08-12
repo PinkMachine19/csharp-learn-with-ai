@@ -131,7 +131,6 @@
       "Open the ScratchPad project.",
       "Create a Session14 folder in the ScratchPad project.",
       "Create Session14GenericMethodDemo.cs inside the new folder.",
-      "Import the PinkMachine19.TimeClock.Domain namespace so the experiment can use ClockEntry.",
       "Declare a public sealed Session14GenericMethodDemo class.",
       "Before writing SelectGreater, describe the repeated problem in plain English: choose the later or higher of two values without writing separate logic for int and DateTime.",
       {
@@ -180,7 +179,7 @@
           {
             "title": "Solution",
             "text": "Use this to compare the generic type inference and comparison decisions with your attempt. Do not replace an entire existing Program.cs; append only the Session 14 construction and Run call after its earlier code.",
-            "code": "// ScratchPad/Session14/Session14GenericMethodDemo.cs\nusing PinkMachine19.TimeClock.Domain;\n\npublic sealed class Session14GenericMethodDemo\n{\n    public void Run()\n    {\n        var firstEntry = new ClockEntry(\n            14,\n            new DateTime(2026, 1, 14, 8, 0, 0));\n\n        var secondEntry = new ClockEntry(\n            27,\n            new DateTime(2026, 1, 14, 9, 30, 0));\n\n        int higherEmployeeId = SelectGreater(\n            firstEntry.EmployeeId,\n            secondEntry.EmployeeId);\n\n        DateTime laterClockIn = SelectGreater(\n            firstEntry.ClockIn,\n            secondEntry.ClockIn);\n\n        Console.WriteLine($\"Higher employee ID: {higherEmployeeId}\");\n        Console.WriteLine($\"SelectGreater clock-in: {laterClockIn}\");\n    }\n\n    private static T SelectGreater<T>(T left, T right)\n        where T : IComparable<T>\n    {\n        int comparison = left.CompareTo(right);\n        return comparison >= 0 ? left : right;\n    }\n}\n\n// Append to ScratchPad/Program.cs without removing earlier calls.\nvar session14 = new Session14GenericMethodDemo();\nsession14.Run();"
+            "code": "// ScratchPad/Session14/Session14GenericMethodDemo.cs\npublic sealed class Session14GenericMethodDemo\n{\n    public void Run()\n    {\n        var firstEntry = new ClockEntry(\n            14,\n            new DateTime(2026, 1, 14, 8, 0, 0));\n\n        var secondEntry = new ClockEntry(\n            27,\n            new DateTime(2026, 1, 14, 9, 30, 0));\n\n        int higherEmployeeId = SelectGreater(\n            firstEntry.EmployeeId,\n            secondEntry.EmployeeId);\n\n        DateTime laterClockIn = SelectGreater(\n            firstEntry.ClockIn,\n            secondEntry.ClockIn);\n\n        Console.WriteLine($\"Higher employee ID: {higherEmployeeId}\");\n        Console.WriteLine($\"SelectGreater clock-in: {laterClockIn}\");\n    }\n\n    private static T SelectGreater<T>(T left, T right)\n        where T : IComparable<T>\n    {\n        int comparison = left.CompareTo(right);\n        return comparison >= 0 ? left : right;\n    }\n}\n\n// Append to ScratchPad/Program.cs without removing earlier calls.\nvar session14 = new Session14GenericMethodDemo();\nsession14.Run();"
           }
         ]
       }

@@ -78,7 +78,7 @@
         "WorkSummary is introduced explicitly in this session. It stores the employee key and total hours produced by summing that group.",
         "Ordering by EmployeeId makes the report deterministic before ToList creates the snapshot."
       ],
-      "code": ".Select(group => new WorkSummary(\n    group.Key,\n    group.Sum(entry => entry.GetDuration().TotalHours)))\n.OrderBy(summary => summary.EmployeeId)\n.ToList();"
+      "code": ".Select(group => new WorkSummary(\n    group.Key,\n    group.Sum(entry => entry.GetDuration().Value.TotalHours)))\n.OrderBy(summary => summary.EmployeeId)\n.ToList();"
     },
     {
       "title": "Join correlates independent sequences",
@@ -93,20 +93,20 @@
     "objective": "Create a WorkSummary result type, group completed entries into per-employee totals, then join those totals to employee names.",
     "startingCondition": "Employee, ClockEntry, and the Session 21 LINQ queries exist. WorkSummary and ClockEntryAnalytics do not exist yet.",
     "steps": [
-      "Create Reports/WorkSummary.cs in Domain.",
-      "Declare a public sealed WorkSummary class.",
-      "Add get-only EmployeeId and Hours properties.",
-      "Create a constructor that initializes both properties.",
+      "Create WorkSummary.cs in the Domain project's Reports folder.",
+      "In WorkSummary.cs, declare a public sealed class named WorkSummary.",
+      "Add public get-only int EmployeeId and double Hours properties to WorkSummary.",
+      "Add a public WorkSummary constructor with int employeeId and double hours parameters, then assign both parameters to their matching properties.",
       "Build before writing the query.",
-      "Create Reports/ClockEntryAnalytics.cs.",
+      "Create ClockEntryAnalytics.cs in the Domain project's Reports folder.",
       "Declare a public static ClockEntryAnalytics class.",
-      "Stub HoursByEmployee with an IEnumerable<ClockEntry> parameter.",
-      "Filter out entries whose Clockout is null before calling GetDuration.",
+      "Add a public static HoursByEmployee method that returns IReadOnlyList<WorkSummary> and accepts IEnumerable<ClockEntry> entries.",
+      "Inside HoursByEmployee, start the pipeline by filtering entries where Clockout is not null so GetDuration is called only for completed entries.",
       "Group the remaining entries by EmployeeId.",
-      "Project each group to a WorkSummary whose Hours is the sum of GetDuration().TotalHours.",
+      "Project each employee group to a WorkSummary whose EmployeeId is group.Key and whose Hours is group.Sum(entry => entry.GetDuration().Value.TotalHours).",
       "Order the summaries by EmployeeId.",
       "Materialize the report with ToList because this method returns a finished report snapshot.",
-      "Stub EmployeeLabels with employee and summary sequences.",
+      "Add a public static EmployeeLabels method that returns IEnumerable<string> and accepts IEnumerable<Employee> employees plus IEnumerable<WorkSummary> summaries.",
       "Join employees to summaries by their matching IDs.",
       "Project each match to a readable name-and-hours string.",
       "Append a Session 22 App section that prints the report.",
@@ -117,7 +117,7 @@
           {
             "title": "Solution",
             "text": "Use the Employee ID/name and Clockout property names established in your source.",
-            "code": "public sealed class WorkSummary\n{\n    public WorkSummary(int employeeId, double hours)\n    {\n        EmployeeId = employeeId;\n        Hours = hours;\n    }\n\n    public int EmployeeId { get; }\n    public double Hours { get; }\n}\n\npublic static IReadOnlyList<WorkSummary> HoursByEmployee(IEnumerable<ClockEntry> entries) => entries\n    .Where(entry => entry.Clockout is not null)\n    .GroupBy(entry => entry.EmployeeId)\n    .Select(group => new WorkSummary(group.Key, group.Sum(entry => entry.GetDuration().TotalHours)))\n    .OrderBy(summary => summary.EmployeeId)\n    .ToList();"
+            "code": "public sealed class WorkSummary\n{\n    public WorkSummary(int employeeId, double hours)\n    {\n        EmployeeId = employeeId;\n        Hours = hours;\n    }\n\n    public int EmployeeId { get; }\n    public double Hours { get; }\n}\n\npublic static IReadOnlyList<WorkSummary> HoursByEmployee(IEnumerable<ClockEntry> entries) => entries\n    .Where(entry => entry.Clockout is not null)\n    .GroupBy(entry => entry.EmployeeId)\n    .Select(group => new WorkSummary(group.Key, group.Sum(entry => entry.GetDuration().Value.TotalHours)))\n    .OrderBy(summary => summary.EmployeeId)\n    .ToList();"
           }
         ]
       }

@@ -116,7 +116,6 @@
       "Open the ScratchPad project.",
       "Create a Session16 folder in the ScratchPad project.",
       "Create Session16VarianceDemo.cs inside the new folder.",
-      "Import the PinkMachine19.TimeClock.Domain namespace.",
       {
         "text": "Declare ISource<out T> with one Get method. Read out as a restriction on the interface declaration: T may be produced as a return value but may not be accepted as a normal input parameter.",
         "code": "public interface ISource<out T>\n{\n    T Get();\n}"
@@ -163,11 +162,13 @@
       {
         "text": "Run ScratchPad, then build and test the complete solution with both invalid reverse assignments commented out. Attempt the lab before opening the solution.",
         "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
-        "reveals": [{
-          "title": "Solution",
-          "text": "Compare the two safe assignment directions with your predictions. The invalid reverse assignments remain commented so the final course state builds.",
-          "code": "// ScratchPad/Session16/Session16VarianceDemo.cs\nusing PinkMachine19.TimeClock.Domain;\n\npublic interface ISource<out T>\n{\n    T Get();\n}\n\npublic sealed class SingleSource<T> : ISource<T>\n{\n    private readonly T _value;\n\n    public SingleSource(T value)\n    {\n        _value = value;\n    }\n\n    public T Get()\n    {\n        return _value;\n    }\n}\n\npublic interface ISink<in T>\n{\n    void Add(T item);\n}\n\npublic sealed class CountingSink<T> : ISink<T>\n{\n    public int Count { get; private set; }\n\n    public void Add(T item)\n    {\n        Count++;\n    }\n}\n\npublic sealed class Session16VarianceDemo\n{\n    public void Run()\n    {\n        var employee = new Employee(16, \"Avery\", new Address { City = \"Springfield\" });\n\n        ISource<Employee> employeeSource = new SingleSource<Employee>(employee);\n        ISource<object> objectSource = employeeSource;\n        object produced = objectSource.Get();\n        Console.WriteLine($\"Produced runtime type: {produced.GetType().Name}\");\n\n        // Unsafe direction: an object source might produce something other than Employee.\n        // ISource<Employee> invalidSource = objectSource;\n\n        var countingObjectSink = new CountingSink<object>();\n        ISink<Employee> employeeSink = countingObjectSink;\n        employeeSink.Add(employee);\n        Console.WriteLine($\"Consumed employees: {countingObjectSink.Count}\");\n\n        // Unsafe direction: an Employee sink cannot accept every possible object.\n        // ISink<object> invalidSink = employeeSink;\n    }\n}\n\n// Append to ScratchPad/Program.cs without removing earlier calls.\nvar session16 = new Session16VarianceDemo();\nsession16.Run();"
-        }]
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "Compare the two safe assignment directions with your predictions. The invalid reverse assignments remain commented so the final course state builds.",
+            "code": "// ScratchPad/Session16/Session16VarianceDemo.cs\npublic interface ISource<out T>\n{\n    T Get();\n}\n\npublic sealed class SingleSource<T> : ISource<T>\n{\n    private readonly T _value;\n\n    public SingleSource(T value)\n    {\n        _value = value;\n    }\n\n    public T Get()\n    {\n        return _value;\n    }\n}\n\npublic interface ISink<in T>\n{\n    void Add(T item);\n}\n\npublic sealed class CountingSink<T> : ISink<T>\n{\n    public int Count { get; private set; }\n\n    public void Add(T item)\n    {\n        Count++;\n    }\n}\n\npublic sealed class Session16VarianceDemo\n{\n    public void Run()\n    {\n        var employee = new Employee(16, \"Avery\", new Address { City = \"Springfield\" });\n\n        ISource<Employee> employeeSource = new SingleSource<Employee>(employee);\n        ISource<object> objectSource = employeeSource;\n        object produced = objectSource.Get();\n        Console.WriteLine($\"Produced runtime type: {produced.GetType().Name}\");\n\n        // Unsafe direction: an object source might produce something other than Employee.\n        // ISource<Employee> invalidSource = objectSource;\n\n        var countingObjectSink = new CountingSink<object>();\n        ISink<Employee> employeeSink = countingObjectSink;\n        employeeSink.Add(employee);\n        Console.WriteLine($\"Consumed employees: {countingObjectSink.Count}\");\n\n        // Unsafe direction: an Employee sink cannot accept every possible object.\n        // ISink<object> invalidSink = employeeSink;\n    }\n}\n\n// Append to ScratchPad/Program.cs without removing earlier calls.\nvar session16 = new Session16VarianceDemo();\nsession16.Run();"
+          }
+        ]
       }
     ],
     "expectedBehavior": "The covariant source produces an Employee viewed as object; the contravariant sink accepts one Employee and reports Count 1. Both unsafe reverse assignments fail during the experiment and remain commented in the final state.",

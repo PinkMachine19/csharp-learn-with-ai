@@ -145,7 +145,8 @@
       }
     ],
     "expectedBehavior": "The main application code has requirement-driven List, Dictionary, and HashSet use with no collection chosen merely for demonstration.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
+    "stepCheckboxes": true
   },
   "expectedFiles": [
     {

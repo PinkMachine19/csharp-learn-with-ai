@@ -88,13 +88,37 @@
         "This course intentionally uses the original application's minimal Address shape: Street and City. A production postal address might also require state or region, postal code, and country, but those values are outside the current verified requirements and are not added speculatively."
       ],
       "table": {
-        "headers": ["Property", "Declaration", "Why"],
+        "headers": [
+          "Property",
+          "Declaration",
+          "Why"
+        ],
         "rows": [
-          ["Employee.EmployeeId", "int with get", "Required by the constructor and unchanged afterward"],
-          ["Employee.Name", "string with get and set", "Required by the constructor and currently allowed to change"],
-          ["Employee.Address", "Address with get and set", "Required by the constructor and currently allowed to change"],
-          ["ClockEntry.EmployeeId", "int with get", "Required clock-in identity"],
-          ["ClockEntry.ClockIn", "DateTime with get", "Required clock-in time"]
+          [
+            "Employee.EmployeeId",
+            "int with get",
+            "Required by the constructor and unchanged afterward"
+          ],
+          [
+            "Employee.Name",
+            "string with get and set",
+            "Required by the constructor and currently allowed to change"
+          ],
+          [
+            "Employee.Address",
+            "Address with get and set",
+            "Required by the constructor and currently allowed to change"
+          ],
+          [
+            "ClockEntry.EmployeeId",
+            "int with get",
+            "Required clock-in identity"
+          ],
+          [
+            "ClockEntry.ClockIn",
+            "DateTime with get",
+            "Required clock-in time"
+          ]
         ]
       }
     },
@@ -115,7 +139,11 @@
       {
         "title": "Create the Address Model",
         "objective": "Create the first small production model without removing or rewriting an earlier class.",
-        "practice": ["Declaring a class", "Representing related values with properties", "Using a constructor to establish initial state"],
+        "practice": [
+          "Declaring a class",
+          "Representing related values with properties",
+          "Using a constructor to establish initial state"
+        ],
         "task": "Add Address.cs to the PinkMachine19.TimeClock.Domain project with required Street and City properties established by its constructor.",
         "comment": "// Lab 1 of 4 - Create the Address Model",
         "instructions": [
@@ -135,7 +163,11 @@
       {
         "title": "Create the Employee Model",
         "objective": "Create a second production class and connect it to Address through an object property.",
-        "practice": ["Creating a second class", "Using one model as another model's property", "Establishing identity and required state"],
+        "practice": [
+          "Creating a second class",
+          "Using one model as another model's property",
+          "Establishing identity and required state"
+        ],
         "task": "Add Employee.cs to the PinkMachine19.TimeClock.Domain project with identity, name, and address state established by its constructor.",
         "comment": "// Lab 2 of 4 - Create the Employee Model",
         "instructions": [
@@ -155,7 +187,11 @@
       {
         "title": "Create the Open Clock Entry Model",
         "objective": "Create a third production class that represents the state known when an employee clocks in.",
-        "practice": ["Modeling a business event", "Choosing constructor-required state", "Stopping at the current session boundary"],
+        "practice": [
+          "Modeling a business event",
+          "Choosing constructor-required state",
+          "Stopping at the current session boundary"
+        ],
         "task": "Add ClockEntry.cs to the PinkMachine19.TimeClock.Domain project with EmployeeId and ClockIn established by its constructor; do not add clock-out behavior yet.",
         "comment": "// Lab 3 of 4 - Create the Open Clock Entry Model",
         "instructions": [
@@ -176,7 +212,12 @@
       {
         "title": "Run the Session 06 Model Demo",
         "objective": "Use a new session-specific demo class to construct the models, while Program.cs remains the entry point that starts the exercise.",
-        "practice": ["Constructing objects", "Reading initial property state", "Calling a session class from Main", "Preserving earlier classes"],
+        "practice": [
+          "Constructing objects",
+          "Reading initial property state",
+          "Calling a session class from Main",
+          "Preserving earlier classes"
+        ],
         "task": "Add a project reference from App to Domain, create Session06ModelDemo in the App project, and use its Run method to construct and display one Employee and one open ClockEntry. Then append its construction and Run call to App/Program.cs.",
         "comment": "// Lab 4 of 4 - Run the Session 06 Model Demo",
         "instructions": [
@@ -204,9 +245,18 @@
           "Construct one Session06ModelDemo object.",
           "Call Run on the Session06ModelDemo object.",
           "Save both files.",
-          {"text": "Run the App and observe the model state.", "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release"},
-          {"text": "Build the complete solution.", "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"},
-          {"text": "Run the complete test suite without rebuilding.", "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"}
+          {
+            "text": "Run the App and observe the model state.",
+            "code": "dotnet run --project src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj --configuration Release"
+          },
+          {
+            "text": "Build the complete solution.",
+            "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release"
+          },
+          {
+            "text": "Run the complete test suite without rebuilding.",
+            "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+          }
         ]
       }
     ],

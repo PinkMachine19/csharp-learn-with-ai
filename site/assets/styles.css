@@ -216,7 +216,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 .step-checkbox input:checked + span::after { content: "✓"; color: #0d1117; font-size: 13px; font-weight: 900; }
 .step.step-completed .step-num { border-color: var(--green); color: var(--green); }
 .step.step-completed .lab-instruction > p { text-decoration: line-through; text-decoration-thickness: 1px; opacity: 0.72; }
-.step-num { flex: 0 0 auto; width: 24px; height: 24px; border-radius: 50%; background: var(--surface-2); border: 1px solid var(--border); color: var(--accent); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.step-num { flex: 0 0 auto; min-width: 76px; height: 24px; padding: 0 8px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--border); color: var(--accent); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.lab-step-label { display: block; color: var(--accent); margin-bottom: 4px; }
 .step-body { min-width: 0; width: 100%; font-size: 15px; padding-top: 2px; }
 .lab-instruction { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
 .lab-instruction > p { margin: 0; }
@@ -256,6 +257,7 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 .lab-unit h3 { margin-top: 0; }
 .lab-objective { padding-bottom: 14px; border-bottom: 1px solid var(--border); }
 .lab-instructions { padding-left: 24px; }
+.lab-instructions { list-style: none; }
 .lab-instructions > li { margin-bottom: 14px; padding-left: 4px; }
 .lab-instructions > li > p { margin-bottom: 8px; }
 

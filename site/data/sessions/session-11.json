@@ -163,7 +163,9 @@
       }
     ],
     "expectedBehavior": "Production stores and retrieves clock entries through behavior rather than exposing its List.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
+    "stepCheckboxes": true,
+    "clickHighlightInstructions": true
   },
   "expectedFiles": [
     {

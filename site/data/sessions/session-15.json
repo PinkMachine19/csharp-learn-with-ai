@@ -98,7 +98,6 @@
       "Open the ScratchPad project.",
       "Create a Session15 folder in the ScratchPad project.",
       "Create Session15ConstraintDemo.cs inside the new folder.",
-      "Import the PinkMachine19.TimeClock.Domain namespace.",
       "Declare a public sealed Session15ConstraintDemo class.",
       {
         "text": "Stub Run using the established session-specific ScratchPad pattern.",
@@ -134,11 +133,13 @@
       {
         "text": "Run ScratchPad, then build and test the complete solution with the constraint restored and the intentionally invalid Employee call commented out. Attempt the lab before opening the solution.",
         "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
-        "reveals": [{
-          "title": "Solution",
-          "text": "Compare this with your completed experiment. The commented Employee call represents the failure you observed; keep the valid constraint restored before moving on.",
-          "code": "// ScratchPad/Session15/Session15ConstraintDemo.cs\nusing PinkMachine19.TimeClock.Domain;\n\npublic sealed class Session15ConstraintDemo\n{\n    public void Run()\n    {\n        int higherNumber = SelectGreater(15, 27);\n        Console.WriteLine($\"Higher number: {higherNumber}\");\n\n        var firstEmployee = new Employee(15, \"Avery\", new Address { City = \"Springfield\" });\n        var secondEmployee = new Employee(27, \"Morgan\", new Address { City = \"Riverton\" });\n\n        // Does not compile: Employee does not implement IComparable<Employee>.\n        // Employee laterEmployee = SelectGreater(firstEmployee, secondEmployee);\n    }\n\n    private static T SelectGreater<T>(T left, T right)\n        where T : IComparable<T>\n    {\n        int comparison = left.CompareTo(right);\n        return comparison >= 0 ? left : right;\n    }\n}\n\n// Append to ScratchPad/Program.cs without removing earlier calls.\nvar session15 = new Session15ConstraintDemo();\nsession15.Run();"
-        }]
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "Compare this with your completed experiment. The commented Employee call represents the failure you observed; keep the valid constraint restored before moving on.",
+            "code": "// ScratchPad/Session15/Session15ConstraintDemo.cs\npublic sealed class Session15ConstraintDemo\n{\n    public void Run()\n    {\n        int higherNumber = SelectGreater(15, 27);\n        Console.WriteLine($\"Higher number: {higherNumber}\");\n\n        var firstEmployee = new Employee(15, \"Avery\", new Address { City = \"Springfield\" });\n        var secondEmployee = new Employee(27, \"Morgan\", new Address { City = \"Riverton\" });\n\n        // Does not compile: Employee does not implement IComparable<Employee>.\n        // Employee laterEmployee = SelectGreater(firstEmployee, secondEmployee);\n    }\n\n    private static T SelectGreater<T>(T left, T right)\n        where T : IComparable<T>\n    {\n        int comparison = left.CompareTo(right);\n        return comparison >= 0 ? left : right;\n    }\n}\n\n// Append to ScratchPad/Program.cs without removing earlier calls.\nvar session15 = new Session15ConstraintDemo();\nsession15.Run();"
+          }
+        ]
       }
     ],
     "expectedBehavior": "Removing the constraint breaks CompareTo inside SelectGreater; restoring it permits int callers; passing Employee still fails at the call site because Employee does not implement IComparable<Employee>. The final valid run displays 27.",
