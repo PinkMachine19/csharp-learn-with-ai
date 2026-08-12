@@ -35,7 +35,10 @@ The learner should understand what they are building and why before reading mech
 ## 4. Write beginner-usable instructions
 
 - Use numbered progress notation and checkboxes.
+- Display every instruction using progress notation in the form `Step n/n`, where the denominator is the actual number of lab steps.
 - Make each step perform one small action.
+- Keep steps granular and manageable like Session 21. Do not compress several implementation actions into one broad step merely to reduce the displayed step count.
+- Split a pipeline or method implementation into the order in which the learner writes it: create or open the file, declare the type, stub the method, introduce each named variable or operator, replace the temporary throw, call the method, and verify the result.
 - Break complex operations into separate steps: create, stub, build, implement, call, run, and verify.
 - Stub method signatures before implementing method bodies when that sequence helps the learner reason about the contract.
 - Build at useful checkpoints so errors remain local.
