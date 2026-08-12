@@ -2,33 +2,34 @@
   "number": 23,
   "category": "query execution timing",
   "estimatedTime": "40 minutes",
-  "connection": "Session 21 returned deferred IEnumerable<ClockEntry> pipelines, and Session 22 deliberately used ToList to materialize a report snapshot. This session isolates execution timing in focused tests.",
+  "connection": "Session 21 returned deferred Where/OrderBy pipelines, and Sum enumerated its input to calculate one number. Session 22 deliberately called ToList to run a report query and save a snapshot. Session 23 isolates that timing distinction in permanent xUnit tests.",
   "objectives": [
-    "Predict when an IEnumerable query executes.",
-    "Prove that a deferred query can observe source changes made before enumeration.",
-    "Use ToList when a fixed snapshot is actually required.",
-    "Recognize IQueryable as a later database-provider variation without memorizing it now."
+    "Distinguish creating a deferred Where query from enumerating it.",
+    "Prove that a deferred query observes source changes made before enumeration.",
+    "Use ToList when a fixed snapshot is required immediately.",
+    "Explain how xUnit compares sequences with different concrete container types.",
+    "Recognize IQueryable as a later provider-based variation without memorizing it now."
   ],
   "visuals": [
     {
       "diagram": "pipeline",
-      "title": "GetEmployeeClockEntries returns an unevaluated query",
-      "explanation": "IEnumerable<ClockEntry> is a promise, not a result -- the real Where clause has not run yet when GetEmployeeClockEntries returns."
+      "title": "Where defines work that can run later",
+      "explanation": "IEnumerable<ClockEntry> is something that can be enumerated to produce values. Calling Where may build a deferred pipeline; it is not a JavaScript Promise or a C# Task."
     },
     {
       "diagram": "call",
-      "title": ".Sum() is what actually triggers execution",
-      "explanation": "CalculateTotalHours's .Sum() call is the real point where GetEmployeeClockEntries's deferred query is finally enumerated."
+      "title": "Enumeration runs the deferred pipeline",
+      "explanation": "foreach, Assert.Equal's sequence comparison, Sum, and ToList must request elements. That enumeration is where the deferred Where work runs."
     },
     {
       "diagram": "return",
-      "title": ".ToList() forces a fixed snapshot",
-      "explanation": "DeferredEntryQuery.Completed(entries).ToList() materializes immediately -- later changes to entries will not affect the snapshot."
+      "title": "ToList runs now and saves a snapshot",
+      "explanation": "ToList enumerates immediately and stores the current matching elements in a new List. Later changes to the source do not alter that snapshot."
     },
     {
       "diagram": "invariant",
       "title": "IQueryable defers to a provider, not just to enumeration",
-      "explanation": "Session 31-32's EF Core queries return IQueryable<ClockEntryEntity> -- the same deferred principle, translated to SQL instead of run in-process."
+      "explanation": "Later EF Core IQueryable queries may defer provider-translated work such as SQL. The shared idea is deferred execution; the execution mechanism and location differ."
     }
   ],
   "preQuiz": [
@@ -65,130 +66,158 @@
   ],
   "concept": [
     {
-      "title": "GetEmployeeClockEntries returns a query, not a list",
+      "title": "Where defines a deferred query",
       "paragraphs": [
-        "The real method's return type is IEnumerable<ClockEntry> -- a promise of a sequence, not the sequence itself. The .Where() call inside it builds that promise but does not walk _clockEntries yet.",
-        "CalculateTotalHours is what actually triggers execution, because .Sum() has to enumerate every element to add it up."
+        "IEnumerable<T> is something that can be enumerated to produce values. Calling it a promise can be a useful analogy, but it is not a JavaScript Promise and it is not a C# Task.",
+        "Calling Where returns a new sequence and does not modify source. For reference types it normally yields references to the same objects rather than cloning them. Memory anchor from Session 21: New sequence. Same objects.",
+        "Creating evens does not copy 1 and 2. The Where pipeline retains source as its input and reads that source when enumeration begins. A LINQ result must be stored, returned, or enumerated; discarding it accomplishes nothing useful."
       ],
-      "code": "// Repositories/ClockEntryRepository.cs -- returns an unevaluated query\npublic IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate)\n{\n    return _clockEntries.Where(entry => /* ...three conditions... */ true);\n}\n\n// Services/PayrollService.cs -- .Sum() is what forces evaluation\nreturn clockEntries.Sum(x => x.GetDuration()?.TotalHours ?? 0);"
+      "code": "List<int> source = new() { 1, 2 };\nIEnumerable<int> evens = source.Where(value => value % 2 == 0);\n// No enumeration has occurred yet."
     },
     {
-      "title": "ToList forces evaluation now",
+      "title": "Assert.Equal enumerates the deferred sequence",
       "paragraphs": [
-        "DeferredEntryQuery.Completed returns an IEnumerable<ClockEntry> that has not run yet. Calling .ToList() on it walks _clockEntries immediately and returns a fixed List<ClockEntry> snapshot.",
-        "The difference is observable: if the source list changes after the deferred query was built but before it is enumerated, an un-materialized IEnumerable can see the change; a .ToList() snapshot cannot."
+        "new[] { 2, 4 } is an int array, while evens is an IEnumerable<int>. They are different concrete types, but both represent sequences of integers.",
+        "xUnit's sequence-aware Assert.Equal compares their elements in order. To compare the contents, it enumerates evens; that enumeration triggers the deferred Where query after source.Add(4). Memory anchor: Different containers. Same element sequence.",
+        "This is sequence equality, not reference equality. Reference equality asks whether two variables refer to the same object; sequence equality asks whether enumeration produces equal elements in the same order."
       ],
-      "code": "public static IEnumerable<ClockEntry> Completed(IEnumerable<ClockEntry> entries) =>\n    entries.Where(entry => entry.Clockout is not null);\n\n// Caller decides when (or whether) to materialize:\nList<ClockEntry> snapshot = DeferredEntryQuery.Completed(entries).ToList();"
+      "code": "source.Add(4);\nAssert.Equal(new[] { 2, 4 }, evens); // Enumerates evens here."
     },
     {
-      "title": "IQueryable defers differently: to a provider, not just to enumeration",
+      "title": "ToList runs immediately and stores current results",
       "paragraphs": [
-        "GetEmployeeClockEntries's IEnumerable<ClockEntry> runs entirely in this process, in plain C#. Session 31-32's EF Core queries return IQueryable<ClockEntryEntity> instead: LINQ builds an expression tree that a database provider translates into SQL only when enumerated.",
-        "Same deferred-until-enumerated principle, different execution target -- in-process C# versus a translated database query."
+        "ToList enumerates the Where query immediately and stores its current elements in a new List<int>. Changing source afterward does not update snapshot.",
+        "Use source.Add(4) to test snapshot isolation. Calling snapshot.Add(4) would mutate the snapshot itself and would not prove anything about whether source changes affect it.",
+        "List<T> implements IEnumerable<T>, so more LINQ can still follow ToList. The distinction is timing: No ToList: run later. ToList: run now and save the results."
       ],
-      "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+      "code": "List<int> snapshot = source\n    .Where(value => value % 2 == 0)\n    .ToList();\n\nsource.Add(4);\nAssert.Equal(new[] { 2 }, snapshot);"
+    },
+    {
+      "title": "Why permanent tests instead of ScratchPad",
+      "paragraphs": [
+        "ScratchPad is for exploring syntax and observing behavior. Unit tests preserve behavioral claims that must remain true as the code changes. Memory anchor: Explore in ScratchPad. Protect behavior with tests.",
+        "Earlier ScratchPad experiments remain valuable and are not replaced. A later optional reinforcement lab could convert selected production rules—such as rejecting a second clock-in—into permanent tests after the testing foundation is established; this audit proposes that idea but does not add the lab."
+      ],
+      "code": "// This assertion permanently protects the timing claim.\nAssert.Equal(new[] { 2, 4 }, evens);"
+    },
+    {
+      "title": "Repeated enumeration reruns deferred work",
+      "paragraphs": [
+        "Enumerating the same deferred query twice over an in-memory List runs the filtering work twice, and source changes may affect the later result.",
+        "Session 21's Sum enumerates because it must inspect the input to produce one final number. Session 22's ToList deliberately enumerates once and saves its completed report snapshot.",
+        "Later, repeatedly enumerating an IQueryable database query may issue repeated database queries. Sessions 31–32 cover provider translation and SQL; for now, retain only that preview."
+      ],
+      "code": "int count = evens.Count(); // first enumeration\nint total = evens.Sum();  // second enumeration"
     }
   ],
   "lab": {
-    "objective": "Use permanent tests to prove deferred query behavior and materialized snapshot behavior.",
-    "startingCondition": "Session 21 introduced production IEnumerable-based LINQ queries. The test project exists but contains only its template placeholder.",
+    "objective": "Correct and complete two permanent xUnit tests that prove when Where runs and when ToList saves a snapshot.",
+    "startingCondition": "The actual Domain.Tests project already contains xUnit 2.9.3, Microsoft.NET.Test.Sdk 17.14.1, xunit.runner.visualstudio 3.1.4, implicit usings, and a global Xunit using. UnitTest1.cs is already absent. DeferredExecutionTests.cs exists with meaningful in-progress tests, so preserve it and correct it rather than deleting or replacing it.",
     "steps": [
-      "Open tests/PinkMachine19.TimeClock.Domain.Tests/UnitTest1.cs and confirm it contains only the unused xUnit template test.",
-      "Delete tests/PinkMachine19.TimeClock.Domain.Tests/UnitTest1.cs.",
-      "Create tests/PinkMachine19.TimeClock.Domain.Tests/DeferredExecutionTests.cs.",
-      "In DeferredExecutionTests.cs, declare a public sealed class named DeferredExecutionTests.",
-      "Add a Fact method named DeferredQuery_SeesValuesAddedBeforeEnumeration.",
-      "In DeferredQuery_SeesValuesAddedBeforeEnumeration, create a List<int> variable named source containing 1 and 2.",
-      "Call Where on source to keep even values, store the returned query in IEnumerable<int> evens, and do not enumerate it yet.",
-      "Add 4 to source after the evens query has been created.",
-      "Assert that enumerating evens produces 2 and 4.",
-      "Add a second Fact method named MaterializedQuery_DoesNotChangeWithSource.",
-      "In MaterializedQuery_DoesNotChangeWithSource, create a new List<int> variable named source containing 1 and 2.",
-      "Call Where on the second source to keep even values.",
-      "Call ToList immediately and store the resulting List<int> in a variable named snapshot.",
-      "Add 4 to the second source after snapshot has been created.",
-      "Assert that snapshot still contains only 2.",
-      "Add a short comment above evens stating that Where creates a deferred query.",
-      "Add a short comment above snapshot stating that ToList runs the query and stores its current results.",
+      "Open tests/PinkMachine19.TimeClock.Domain.Tests/DeferredExecutionTests.cs; preserve the existing DeferredExecutionTests class and both in-progress Fact methods.",
+      "Remove using System.Diagnostics.Tracing from DeferredExecutionTests.cs because this test file does not use that namespace. Do not add using Xunit because the test project already supplies a global Xunit using.",
+      "In DeferredExecutionTests.DeferredQuery_SeesValuesAddedBeforeEnumeration, change List<int> source so it initially contains 1 and 2.",
+      "In DeferredQuery_SeesValuesAddedBeforeEnumeration, keep IEnumerable<int> evens assigned from source.Where(value => value % 2 == 0). Remember: Where returns a new deferred sequence and does not modify source.",
+      "Do not enumerate evens immediately after creating it.",
+      "In DeferredQuery_SeesValuesAddedBeforeEnumeration, call source.Add(4) after evens has been defined.",
+      "In DeferredQuery_SeesValuesAddedBeforeEnumeration, change Assert.Equal so its actual argument is evens rather than source.",
+      "Immediately above the first Assert.Equal, add a comment stating that Assert.Equal enumerates evens and therefore runs Where at that line.",
+      "Remember for the first assertion: new[] { 2, 4 } is an int array and evens is IEnumerable<int>, but xUnit compares the integer elements in order. Different containers. Same element sequence.",
+      "Rename the second Fact method from DefferedExecutionsTests to MaterializedQuery_DoesNotChangeWithSource.",
+      "In MaterializedQuery_DoesNotChangeWithSource, create a separate List<int> source containing 1 and 2.",
+      "Remove the unused evens variable from MaterializedQuery_DoesNotChangeWithSource.",
+      "In MaterializedQuery_DoesNotChangeWithSource, call Where on source to keep even numbers, immediately call ToList, and store the resulting List<int> in snapshot.",
+      "In MaterializedQuery_DoesNotChangeWithSource, call source.Add(4) after snapshot has been created; do not call snapshot.Add(4), because the test is proving isolation from changes to source.",
+      "In MaterializedQuery_DoesNotChangeWithSource, assert that snapshot contains only 2.",
+      "Immediately above the second Assert.Equal, add a comment stating that ToList already ran the query and saved its results before source changed.",
       {
-        "text": "Run the Domain.Tests project, then test PinkMachine19.TimeClock.sln. Open the existing solution reveal only after writing both tests.",
-        "code": "dotnet test tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release",
+        "text": "Run the focused DeferredExecutionTests, then build and test the complete solution. Open the Solution Reveal only after both tests pass.",
+        "code": "dotnet test tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj --configuration Release --filter FullyQualifiedName~DeferredExecutionTests\ndotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
         "reveals": [
           {
             "title": "Solution",
-            "text": "Simple integers isolate query timing from ClockEntry business rules.",
-            "code": "public sealed class DeferredExecutionTests\n{\n    [Fact]\n    public void DeferredQuery_SeesValuesAddedBeforeEnumeration()\n    {\n        var source = new List<int> { 1, 2 };\n        IEnumerable<int> evens = source.Where(value => value % 2 == 0);\n\n        source.Add(4);\n\n        Assert.Equal(new[] { 2, 4 }, evens);\n    }\n\n    [Fact]\n    public void MaterializedQuery_DoesNotChangeWithSource()\n    {\n        var source = new List<int> { 1, 2 };\n        List<int> snapshot = source.Where(value => value % 2 == 0).ToList();\n\n        source.Add(4);\n\n        Assert.Equal(new[] { 2 }, snapshot);\n    }\n}"
+            "text": "The first assertion enumerates evens after source changes. The second assertion reads a List snapshot created before its separate source changes.",
+            "code": "public sealed class DeferredExecutionTests\n{\n    [Fact]\n    public void DeferredQuery_SeesValuesAddedBeforeEnumeration()\n    {\n        List<int> source = new() { 1, 2 };\n        IEnumerable<int> evens = source.Where(value => value % 2 == 0);\n\n        source.Add(4);\n\n        // Assert.Equal enumerates evens, so the deferred Where runs here.\n        Assert.Equal(new[] { 2, 4 }, evens);\n    }\n\n    [Fact]\n    public void MaterializedQuery_DoesNotChangeWithSource()\n    {\n        List<int> source = new() { 1, 2 };\n        List<int> snapshot = source\n            .Where(value => value % 2 == 0)\n            .ToList();\n\n        source.Add(4);\n\n        // ToList saved the results before source changed.\n        Assert.Equal(new[] { 2 }, snapshot);\n    }\n}"
           }
         ]
       }
     ],
-    "expectedBehavior": "The deferred query sees a matching value added before enumeration; the ToList snapshot remains unchanged after its source changes.",
+    "expectedBehavior": "The first test passes because Assert.Equal enumerates the deferred evens query after 4 is added to source. The second passes because ToList saved a List<int> snapshot before its separate source received 4.",
     "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
     "clickHighlightInstructions": true,
     "stepCheckboxes": true
   },
   "expectedFiles": [
     {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/UnitTest1.cs",
-      "action": "Delete",
-      "why": "Replace the template with meaningful verification."
-    },
-    {
       "path": "tests/PinkMachine19.TimeClock.Domain.Tests/DeferredExecutionTests.cs",
       "action": "Add",
-      "why": "Verify query timing through assertions."
+      "why": "Create this test file on a clean course path, or correct and complete it when continuing the learner's existing in-progress Session 23 work."
     },
     {
       "path": "site/data/sessions/session-23.json",
       "action": "Modify",
-      "why": "Keep the lesson synchronized with the cumulative build step."
+      "why": "Align the lesson with the learner's actual test project and explain execution timing precisely."
     }
   ],
   "commit": "session-23: teach deferred execution and materialization",
   "review": [
-    "The lab uses tests because that is the most natural environment for this concept.",
-    "Every referenced application artifact was created in this session or an earlier session.",
-    "Earlier production code, tests, and ScratchPad experiments remain intact."
+    "All instructions use Step n/n and render as paste-ready C# comments.",
+    "The first test asserts against evens so the assertion actually proves deferred execution.",
+    "The second test contains no unused deferred query and changes source rather than snapshot.",
+    "The Solution remains behind Reveal and matches the instructions.",
+    "ScratchPad experiments remain unchanged; these tests preserve behavioral claims."
   ],
   "postQuiz": [
     {
-      "prompt": "Why does CalculateTotalHours never need to call .ToList() on the result of GetEmployeeClockEntries?",
+      "prompt": "In DeferredQuery_SeesValuesAddedBeforeEnumeration, which line first enumerates evens?",
       "options": [
-        "It only enumerates the sequence once (inside .Sum()), so there is no benefit to materializing a separate snapshot first",
-        "IEnumerable<ClockEntry> cannot support .ToList()",
-        "GetEmployeeClockEntries already returns a List"
+        "Assert.Equal(new[] { 2, 4 }, evens)",
+        "The Where assignment",
+        "source.Add(4)"
       ],
       "correct": 0,
-      "explanation": "Materializing is worth the extra allocation when a sequence will be enumerated more than once, or when you need a stable snapshot -- CalculateTotalHours does neither."
+      "explanation": "Assert.Equal must compare the sequence elements, so it enumerates evens and runs the deferred Where pipeline."
     },
     {
-      "prompt": "What is the risk of enumerating the same un-materialized deferred query twice in a row (e.g. once to count, once to sum)?",
+      "prompt": "Why does source.Add(4) belong in the snapshot test instead of snapshot.Add(4)?",
       "options": [
-        "The underlying Where/filter logic re-runs both times, which is wasted work and, for a database-backed IQueryable, a second round trip",
-        "The second enumeration always throws an exception",
-        "There is no risk; deferred queries are cached automatically after the first enumeration"
+        "Changing source tests whether the already-materialized snapshot is isolated from later source changes",
+        "snapshot cannot store 4",
+        "source.Add automatically calls ToList again"
       ],
       "correct": 0,
-      "explanation": "Deferred execution means every enumeration re-runs the query from scratch -- exactly why Session 31-32's EF Core queries call .ToListAsync() once and reuse the materialized result."
+      "explanation": "Mutating snapshot would directly change the result being asserted and would not test materialization timing."
     },
     {
-      "prompt": "Once Session 31 introduces IQueryable<ClockEntryEntity>, what changes about where the Where clause actually executes?",
+      "prompt": "How can Assert.Equal compare an int[] with an IEnumerable<int>?",
       "options": [
-        "The database provider translates the Where clause into SQL and executes it in the database, not in this process",
-        "Nothing changes -- IQueryable behaves identically to IEnumerable",
-        "The Where clause runs at compile time instead of runtime"
+        "xUnit enumerates both and compares their integer elements in order",
+        "It converts both variables to the same object reference",
+        "Arrays and IEnumerable are the same concrete type"
       ],
       "correct": 0,
-      "explanation": "This is the concrete difference Session 32 explores: IEnumerable filters in-process C# objects; IQueryable's expression tree is translated and executed by the database provider."
+      "explanation": "Different containers can represent the same element sequence; sequence-aware equality compares the produced elements in order."
+    },
+    {
+      "prompt": "What happens if the same deferred in-memory query is enumerated twice?",
+      "options": [
+        "Its filtering work normally runs twice, and later source changes may affect the second result",
+        "The first result is automatically cached",
+        "The second enumeration cannot compile"
+      ],
+      "correct": 0,
+      "explanation": "Deferred IEnumerable queries normally run again for each enumeration. A later IQueryable may also cause another database query."
     }
   ],
   "reflections": [
-    "Why does GetEmployeeClockEntries's deferred IEnumerable<ClockEntry> behave differently from a materialized List<ClockEntry> if _clockEntries changes between the call and the enumeration?",
-    "When would you deliberately call .ToList() on GetEmployeeClockEntries's result, even though CalculateTotalHours does not?",
-    "What concrete difference will Session 32 show between this session's in-process IEnumerable queries and EF Core's IQueryable queries?"
+    "Predict both assertions before running the tests.",
+    "Identify the exact line where evens is first enumerated.",
+    "If source.Add(6) occurs before the first assertion, what sequence should xUnit observe?",
+    "What changes if ToList moves from the snapshot assignment to immediately before its assertion?",
+    "Why would snapshot.Add(4) test a different claim from source.Add(4)?"
   ],
-  "whatBreaks": "Calling .ToList() unnecessarily inside GetEmployeeClockEntries would force evaluation before the caller decides what to do with the result, silently changing its behavior from a live view to a fixed snapshot. Enumerating a deferred query multiple times when the underlying provider is a database (Session 32) means multiple round trips, not one. Confusing IEnumerable's in-process execution with IQueryable's provider-translated execution leads to assuming SQL-level operations (like case-insensitive collation) that only IQueryable's translation actually provides.",
-  "summary": "Session 23 proves execution timing with two small permanent tests: Where remains deferred until enumeration, while ToList executes immediately and returns a snapshot. IQueryable remains only a brief preview for the later EF Core sessions.",
+  "whatBreaks": "Asserting against source instead of evens makes the first test pass without proving deferred Where execution. Keeping an unused evens variable in the snapshot test distracts from the one query whose timing matters. Calling snapshot.Add(4) mutates the saved result itself and does not test isolation from later source changes. Repeatedly enumerating deferred work reruns it and can observe new source state; later IQueryable repetition may also repeat database calls.",
+  "summary": "Session 23 proves one distinction: Where defines a query that runs when enumerated, while ToList runs that query immediately and saves the current results. Assert.Equal performs the first test's enumeration and compares sequence elements even though the expected array and actual IEnumerable have different concrete types. Explore in ScratchPad; protect behavioral claims with tests.",
   "learningEnvironment": "tests",
   "buildState": {
     "creates": [
