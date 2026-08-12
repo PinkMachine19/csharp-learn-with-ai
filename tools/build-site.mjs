@@ -366,6 +366,60 @@ function mentalModelDiagram(kind) {
   if (!match) return "";
   const token = match[1];
   const moment = Number(match[2]);
+  const distinctMentalKinds = {
+    "00": ["toolbelt", "skew", "ecosystem", "stack"],
+    "00-5": ["product", "actors", "boundary", "vocabulary"],
+    "00-6": ["nouns", "verbs", "relationships", "architecture"],
+    "01": ["solution", "folders", "tests", "boundary"],
+    "02": ["depgraph", "solution", "layers", "pipeline"],
+    "03": ["variable", "expression", "type", "decimal"],
+    "03-5": ["numericfamily", "representations", "tenths", "numerictradeoffs"],
+    "04": ["branch", "comparison", "switch", "path"],
+    "05": ["call", "frame", "return", "signature"],
+    "06": ["blueprint", "constructor", "property", "instances"],
+    "07": ["nullable", "constructor", "feedback", "flowstate"],
+    "08": ["variable", "instances", "comparison", "invariant"],
+    "09": ["return", "branch", "variable", "invariant"],
+    "10": ["instances", "comparison", "type", "variable"],
+    "11": ["blueprint", "entryfilter", "repositoryboundary", "instances"],
+    "12": ["blueprint", "invariant", "instances", "call"],
+    "13": ["narrowcontract", "capabilityladder", "compilerboundary", "entryfilter"],
+    "14": ["generictypes", "genericinference", "narrowcontract", "closedgenerics"],
+    "15": ["constraintcontract", "constraintremoval", "constrainteligibility", "constraintcategory"],
+    "16": ["covariance", "contravariance", "varianceflow", "invariantrepo"],
+    "17": ["repositoryboundary", "repositorymethods", "privateproperty", "timesheetcomposition"],
+    "18": ["contract", "call", "type", "branch"],
+    "19": ["blueprint", "branch", "call", "contract"],
+    "20": ["constructor", "depgraph", "branch", "instances"],
+    "21": ["pipeline", "entryfilter", "call", "comparison"],
+    "22": ["branch", "pipeline", "call", "return"],
+    "23": ["pipeline", "instances", "return", "invariant"],
+    "24": ["branch", "invariant", "contract", "tests"],
+    "25": ["call", "branch", "invariant", "return"],
+    "26": ["pipeline", "call", "return", "feedback"],
+    "27": ["pipeline", "call", "tests", "branch"],
+    "28": ["call", "pipeline", "invariant", "feedback"],
+    "29": ["tests", "pipeline", "comparison", "feedback"],
+    "30": ["tests", "contract", "comparison", "instances"],
+    "31": ["invariant", "blueprint", "instances", "call"],
+    "32": ["pipeline", "call", "return", "boundary"],
+    "33": ["invariant", "call", "boundary", "path"],
+    "34": ["invariant", "nullable", "tests", "branch"],
+    "35": ["pipeline", "invariant", "flowstate", "tests"],
+    "side-01b": ["path", "folders", "pipeline", "feedback"],
+    "side-03b": ["path", "expression", "representations", "comparison"],
+    "side-04c": ["branch", "switch", "return", "comparison"],
+    "side-05b": ["property", "call", "representations", "blueprint"],
+    "side-19b": ["invariant", "solution", "branch", "blueprint"],
+    "side-24b": ["pipeline", "branch", "contract", "tests"],
+    "ref-01": ["path", "layers", "stack", "comparison"],
+    "ref-02": ["generictypes", "constraintcontract", "expression", "pipeline"],
+    "ref-03": ["path", "return", "feedback", "comparison"],
+    "ref-04": ["switch", "branch", "nullable", "flowstate"],
+    "ref-05": ["comparison", "initializer", "constructor", "expression"]
+  };
+  const distinctKind = distinctMentalKinds[token]?.[moment - 1];
+  if (distinctKind) return diagram(distinctKind);
   const hot = (value) => value === moment ? ` class="active"` : ` opacity=".38"`;
   const arrow = `<defs><marker id="mm-${token}-${moment}" markerWidth="7" markerHeight="7" refX="6" refY="3" orient="auto"><path d="M0 0L0 6L7 3z"/></marker></defs>`;
   const line = (d) => `<path d="${d}" marker-end="url(#mm-${token}-${moment})"/>`;
