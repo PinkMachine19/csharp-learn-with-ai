@@ -81,6 +81,16 @@
       "code": "return entries.Sum(entry => entry.GetDuration().Value.TotalHours);"
     },
     {
+      "title": "Value unwraps the nullable duration",
+      "paragraphs": [
+        "In the learner application, GetDuration returns TimeSpan?. The question mark means the result is a nullable value type: it is a small wrapper that either contains a TimeSpan or contains no value. TotalHours belongs to TimeSpan, so code must first access the TimeSpan stored inside that wrapper. The .Value member performs that unwrap.",
+        "Using .Value is safe at this point because GetEmployeeClockEntries returns only completed entries, and GetDuration rejects an open entry. That earlier filtering is the proof that a duration exists; .Value communicates that this code expects the proof to hold.",
+        "GetDuration()?.TotalHours ?? 0 also compiles: ?. stops when the duration is null, and ?? 0 substitutes zero. However, silently counting a missing duration as zero can hide a broken repository or domain invariant. Use that fallback only when zero is truly the required meaning of a missing duration, not merely to satisfy the compiler.",
+        "If GetDuration is later redesigned to return non-nullable TimeSpan because it always returns a duration or throws, no unwrap is needed: call GetDuration().TotalHours directly."
+      ],
+      "code": "TimeSpan duration = entry.GetDuration().Value; // TimeSpan? -> TimeSpan\ndouble hours = duration.TotalHours;"
+    },
+    {
       "title": "Ordering should express the caller's need",
       "paragraphs": [
         "CompletedNewestFirst uses OrderByDescending because a history screen normally shows recent entries first.",
@@ -98,7 +108,7 @@
       "Add a public PayrollService constructor with an IClockEntryRepository parameter named clockEntryRepository, then assign it to _clockEntryRepository.",
       "Add a public CalculateTotalHours method that returns double and accepts int employeeId, DateTime startDate, and DateTime endDate. Leave its body unfinished for now.",
       "Inside CalculateTotalHours, call _clockEntryRepository.GetEmployeeClockEntries(employeeId, startDate, endDate) and store the result in IEnumerable<ClockEntry> entries.",
-      "Return entries.Sum(entry => entry.GetDuration().Value.TotalHours). The repository already excludes entries whose Clockout is null.",
+      "Return entries.Sum(entry => entry.GetDuration().Value.TotalHours). Here .Value unwraps the TimeSpan? so TotalHours can be read; the repository's completed-entry filter is what makes that unwrap valid.",
       "Create ClockEntryQueries.cs in the Domain project and declare a public static class named ClockEntryQueries.",
       "Add a public static CompletedNewestFirst method that returns IEnumerable<ClockEntry> and accepts IEnumerable<ClockEntry> entries.",
       "Inside CompletedNewestFirst, filter entries where Clockout is not null, order them by ClockIn descending, and return the pipeline without calling ToList.",
@@ -160,6 +170,16 @@
       "explanation": "Projection and aggregation can be combined when the intermediate values are not needed."
     },
     {
+      "prompt": "Why is .Value reasonable after GetEmployeeClockEntries returns the entries?",
+      "options": [
+        "The repository returns only completed entries, so each duration is expected to exist",
+        ".Value converts hours from double to int",
+        ".Value creates a missing clock-out time"
+      ],
+      "correct": 0,
+      "explanation": ".Value unwraps TimeSpan?; it does not create a value. The completed-entry filter supplies the reason the code can expect that value to exist."
+    },
+    {
       "prompt": "Why does CompletedNewestFirst not call ToList?",
       "options": [
         "The caller has not requested a snapshot",
@@ -183,6 +203,7 @@
   "reflections": [
     "Which requirement does each LINQ operator represent?",
     "When would a separate Select make the intermediate values clearer?",
+    "Why is unwrapping the duration with .Value different from replacing a missing duration with zero?",
     "Why should open-entry filtering happen before duration calculation?"
   ],
   "whatBreaks": "Removing the completed-entry filter allows an open entry into code that calls GetDuration and can trigger an exception. Reversing OrderByDescending changes newest-first history to oldest-first. Adding ToList here would force materialization before Session 23 explains that choice.",
