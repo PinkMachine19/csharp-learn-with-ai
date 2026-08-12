@@ -90,6 +90,13 @@
   ],
   "lab": {
     "objective": "Organize the permanent test suite around Arrange–Act–Assert and add missing PayrollService behavior coverage.",
+    "title": "Write Focused Arrange–Act–Assert Tests",
+    "practice": ["Deterministic test data", "Arrange–Act–Assert structure", "Observable outcomes", "Focused test execution", "Reading useful failures"],
+    "task": "Add focused ClockEntry and PayrollService tests whose setup, single action, and expected outcome are easy to identify.",
+    "collapseInstructions": true,
+    "stepCheckboxes": true,
+    "clickHighlightInstructions": true,
+    "pasteReadyInstructions": true,
     "startingCondition": "Earlier sessions added focused tests when assertions were the natural verification tool. This session names and standardizes the testing practice already in use.",
     "steps": [
       "Create tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryTests.cs if that focused test file does not already exist.",

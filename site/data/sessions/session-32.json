@@ -91,6 +91,13 @@
   ],
   "lab": {
     "objective": "Add provider-executed EF Core queries and verify them against SQLite.",
+    "title": "Build and Materialize a Provider Query",
+    "practice": ["IQueryable expression building", "Provider-compatible filtering", "Deferred database execution", "ToListAsync materialization", "SQLite query verification"],
+    "task": "Build a composable EF Core query for completed employee entries, materialize it asynchronously, and verify its filtering against SQLite.",
+    "collapseInstructions": true,
+    "stepCheckboxes": true,
+    "clickHighlightInstructions": true,
+    "pasteReadyInstructions": true,
     "startingCondition": "Session 31 created TimeClockDbContext, entity mapping, and an EF-backed repository with integration-test infrastructure.",
     "steps": [
       "Create src/PinkMachine19.TimeClock.Infrastructure/ClockEntryDataQueries.cs.",

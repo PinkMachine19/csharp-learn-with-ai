@@ -91,6 +91,13 @@
   ],
   "lab": {
     "objective": "Make repository and clock-out operations asynchronous from implementation through App.",
+    "title": "Carry Async Work Across the Repository Boundary",
+    "practice": ["Task-returning contracts", "Async naming", "Awaiting at call sites", "CancellationToken propagation", "Avoiding fake asynchrony"],
+    "task": "Update the existing repository-to-application workflow so persistence-shaped operations return Tasks and every caller deliberately awaits them.",
+    "collapseInstructions": true,
+    "stepCheckboxes": true,
+    "clickHighlightInstructions": true,
+    "pasteReadyInstructions": true,
     "startingCondition": "Repositories and services are synchronous and working. Persistence boundaries are now clear enough to introduce Task and await without pretending CPU work is asynchronous.",
     "steps": [
       "Open src/PinkMachine19.TimeClock.Domain/IClockEntryRepository.cs and identify operations that represent persistence access.",

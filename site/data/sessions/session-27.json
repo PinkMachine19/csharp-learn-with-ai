@@ -90,6 +90,13 @@
   ],
   "lab": {
     "objective": "Compare sequential and concurrent asynchronous flow in ScratchPad without adding an unrequired batch loader to production.",
+    "title": "Observe Sequential and Concurrent Async Flow",
+    "practice": ["Await sequencing", "Starting work before awaiting", "Task.WhenAll", "Prediction before execution"],
+    "task": "Build a ScratchPad experiment that runs the same two delayed operations sequentially and concurrently, then compare their visible ordering.",
+    "collapseInstructions": true,
+    "stepCheckboxes": true,
+    "clickHighlightInstructions": true,
+    "pasteReadyInstructions": true,
     "startingCondition": "Production uses async for repository boundaries. The product has no verified requirement to batch-load entries concurrently.",
     "steps": [
       "Create src/PinkMachine19.TimeClock.ScratchPad/Session27/AsyncFlowExperiments.cs.",

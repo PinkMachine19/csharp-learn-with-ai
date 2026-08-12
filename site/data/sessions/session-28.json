@@ -90,6 +90,13 @@
   ],
   "lab": {
     "objective": "Propagate cancellation through the real asynchronous repository and service workflow.",
+    "title": "Propagate and Prove Cancellation",
+    "practice": ["CancellationToken flow", "Cooperative cancellation", "ThrowIfCancellationRequested", "Cancellation-focused tests"],
+    "task": "Pass one cancellation token from the application through services and repositories, then test both cancelled and active paths.",
+    "collapseInstructions": true,
+    "stepCheckboxes": true,
+    "clickHighlightInstructions": true,
+    "pasteReadyInstructions": true,
     "startingCondition": "Session 26 established awaited repository/service flow. Those methods do not yet accept or observe cancellation.",
     "steps": [
       "Open IClockEntryRepository and locate every asynchronous member introduced in Session 26.",

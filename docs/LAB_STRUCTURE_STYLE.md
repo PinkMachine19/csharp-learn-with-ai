@@ -94,6 +94,16 @@ The learner should understand what they are building and why before reading mech
 - Use diagrams only when they clarify a relationship, boundary, sequence, contract, or state change.
 - Do not use decorative SVGs that merely repeat the title.
 - Ensure every diagram is specific to the lab's concept and has accessible explanatory text.
+- Read the lesson before designing its Mental Models and identify the exact behavior the learner must remember.
+- Choose the number of visuals the lesson genuinely needs. Do not force a fixed count or add filler merely to reach three or four cards; normally stay below six.
+- Give every visual a concrete, recognizable metaphor that shows the mechanism: objects moving, a boundary restricting access, a state changing, a resource being transferred, or a before/after consequence.
+- Approximately three short anchor labels are enough. The picture must still communicate useful meaning when its labels are mentally covered.
+- Within one session, do not reuse the same central object, silhouette, composition, pipeline, boxes, arrows, or background scene and claim that changed labels or colors make it a new Mental Model.
+- Reusing a scene is valid only for a meaningful multi-frame progression whose visible state change teaches causality. Treat that progression as one Mental Model rather than several unrelated cards.
+- Make nearby sessions visually distinguishable so recalling an image also helps identify its lesson.
+- Audit each visual with five tests: teaching, recall, text removal, within-session duplication, and necessity.
+- For a batch, compare the SVG structure with text removed. Two cards with effectively identical geometry require redesign unless they form an intentional progression.
+- Keep one consistent course design system—palette, typography, line weight, accessibility, and card layout—while varying the actual scene and metaphor.
 - Preserve sentence-click highlighting where the session standard requires it.
 - Include progress checkboxes for lab steps.
 - When requested for focus support, add numbered paragraph progress without interfering with bookmarks or other interactions.

@@ -91,6 +91,13 @@
   ],
   "lab": {
     "objective": "Add EF Core persistence to Infrastructure without moving storage concerns into Domain.",
+    "title": "Persist Clock Entries through EF Core",
+    "practice": ["Infrastructure boundaries", "DbContext configuration", "Persistence entities", "Domain-to-entity mapping", "SQLite integration tests"],
+    "task": "Create an EF Core-backed repository in Infrastructure and prove with SQLite that a clock-entry row survives beyond one DbContext instance.",
+    "collapseInstructions": true,
+    "stepCheckboxes": true,
+    "clickHighlightInstructions": true,
+    "pasteReadyInstructions": true,
     "startingCondition": "Domain repository contracts and in-memory implementations are complete. Infrastructure references Domain but still contains only its template placeholder.",
     "steps": [
       "Open src/PinkMachine19.TimeClock.Infrastructure and confirm Class1.cs is still only the template placeholder.",

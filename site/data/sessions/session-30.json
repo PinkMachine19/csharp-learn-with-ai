@@ -88,6 +88,13 @@
   ],
   "lab": {
     "objective": "Test production collaborations with hand-written and library test doubles, then verify DI lifetimes.",
+    "title": "Test Collaborations and Dependency Lifetimes",
+    "practice": ["Hand-written test doubles", "Interface-based substitution", "Service registration", "Transient, scoped, and singleton identity", "Focused collaboration tests"],
+    "task": "Test ClockEntryService with a small recording fake, centralize application registrations, and prove the chosen service lifetimes.",
+    "collapseInstructions": true,
+    "stepCheckboxes": true,
+    "clickHighlightInstructions": true,
+    "pasteReadyInstructions": true,
     "startingCondition": "Repository interfaces, services, DI registrations, and a permanent test suite all exist from prior sessions.",
     "steps": [
       "Open tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj.",
