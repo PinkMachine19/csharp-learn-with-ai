@@ -2,198 +2,214 @@
   "number": 24,
   "category": "failure contracts",
   "estimatedTime": "40 minutes",
-  "connection": "Session 20 established bool outcomes for expected service rejections, while ClockEntry protects invalid state with exceptions. This session makes that distinction explicit and verifies the existing contracts with focused tests.",
+  "connection": "ClockEntry and ClockEntryService already communicate failure in two ways. This session asks why, fixes one clock-out range-validation bug, and preserves the four contracts with focused tests.",
   "objectives": [
-    "Distinguish an expected service rejection from a broken ClockEntry invariant.",
-    "Verify that TryClockOut returns false when no open entry exists.",
-    "Verify that ClockOutEntry and GetDuration throw InvalidOperationException for invalid state.",
-    "Write focused tests that preserve each outcome contract."
+    "Distinguish an expected service rejection from an object operation its current state cannot support.",
+    "Verify false, InvalidOperationException, and ArgumentOutOfRangeException contracts with deterministic tests.",
+    "Pass callable code to Assert.Throws through a lambda and inspect the captured exception.",
+    "Recognize that richer service outcomes belong in optional Side Lab 24B."
   ],
   "visuals": [
     {
       "diagram": "mental-24-1",
       "title": "Expected rejection stays in normal flow",
-      "explanation": "TryClockOut returns false when no open entry exists; the caller can branch on that ordinary outcome."
+      "explanation": "No open entry is an ordinary service-level outcome, so TryClockOut returns false and lets its caller branch."
     },
     {
       "diagram": "mental-24-2",
-      "title": "Invalid object state throws",
-      "explanation": "ClockOutEntry rejects a second completion, and GetDuration rejects an open entry because neither operation has a valid result."
+      "title": "Unsupported object operations throw",
+      "explanation": "A completed ClockEntry cannot be completed again, and an open ClockEntry cannot report a completed duration."
     },
     {
       "diagram": "mental-24-3",
-      "title": "The method contract communicates the choice",
-      "explanation": "bool communicates an expected yes-or-no outcome; InvalidOperationException communicates that the requested operation is invalid for the current state."
+      "title": "Bad argument and bad state are different",
+      "explanation": "A clock-out before clock-in makes the incoming argument invalid, so ClockOutEntry reports ArgumentOutOfRangeException rather than InvalidOperationException."
     },
     {
       "diagram": "mental-24-4",
-      "title": "Tests preserve both contracts",
-      "explanation": "Separate tests prove the false result and each exception without catching failures merely to hide them."
+      "title": "Tests preserve each public contract",
+      "explanation": "Separate tests prove the expected false result, both invalid-state exceptions, and the invalid clock-out range."
     }
   ],
   "preQuiz": [
     {
       "prompt": "What should TryClockOut return when no open entry exists?",
-      "options": [
-        "false",
-        "A fabricated ClockEntry",
-        "Always throw"
-      ],
+      "options": ["false", "A fabricated ClockEntry", "Always throw"],
       "correct": 0,
-      "explanation": "Session 20 established this as an expected service rejection."
+      "explanation": "The service treats this as an expected rejection during normal use."
     },
     {
       "prompt": "Why does GetDuration throw while Clockout is null?",
-      "options": [
-        "An open entry has no completed duration",
-        "TimeSpan cannot be returned",
-        "Nullable analysis requires every method to throw"
-      ],
+      "options": ["An open entry has no completed duration", "TimeSpan cannot be returned", "Nullable analysis requires every method to throw"],
       "correct": 0,
-      "explanation": "The requested value does not exist until clock-out completes the interval."
+      "explanation": "The object cannot know a finished interval until clock-out occurs."
     },
     {
-      "prompt": "What should a validation test assert?",
-      "options": [
-        "The observable return or exception contract",
-        "Private implementation details",
-        "Only that the method was called"
-      ],
+      "prompt": "What does Assert.Throws need as its second half?",
+      "options": ["Callable code xUnit can execute", "The result of running the method first", "An exception message only"],
       "correct": 0,
-      "explanation": "Tests protect behavior callers can rely on."
+      "explanation": "A lambda gives xUnit the operation so the assertion can invoke and observe it."
     }
   ],
   "concept": [
     {
-      "title": "Use normal control flow for expected rejection",
+      "title": "Expected rejection versus unsupported operation",
       "paragraphs": [
-        "TryClockOut returns bool because an employee having no open entry is an ordinary outcome the caller can handle.",
-        "The false result does not mean the repository failed. It means the requested use case could not proceed."
+        "All four Session 24 cases can be called invalid in everyday speech. The useful design question is whether the outcome is expected in the normal business workflow or whether the caller is asking an object to perform an operation its current state cannot support.",
+        "This is a design convention, not an absolute law. A richer service could replace bool with an enum or Result object; optional Side Lab 24B compares those alternatives."
       ],
-      "code": "if (openEntry is null)\n{\n    return false;\n}"
+      "table": {
+        "headers": ["Scenario", "Layer deciding", "Expected during normal use?", "Contract"],
+        "rows": [
+          ["Employee has no open entry", "Service", "Yes", "Return false"],
+          ["ClockEntry completed twice", "Domain object", "No", "Throw InvalidOperationException"],
+          ["Duration requested before clock-out", "Domain object", "No", "Throw InvalidOperationException"],
+          ["Clock-out earlier than clock-in", "Domain object", "No", "Throw ArgumentOutOfRangeException"],
+          ["Repository or database unexpectedly fails", "Infrastructure", "No", "Allow technical exception to reach centralized handling"]
+        ],
+        "highlightRows": [0, 1, 2, 3]
+      }
     },
     {
-      "title": "Use an exception when the object cannot honor the operation",
+      "title": "Inspect what already works before changing it",
       "paragraphs": [
-        "ClockOutEntry cannot complete an entry twice. GetDuration cannot calculate a finished interval while Clockout is null.",
-        "Both methods throw InvalidOperationException because the requested operation is invalid for the object's current state."
+        "ClockEntry already rejects duplicate completion with InvalidOperationException and rejects GetDuration while the entry is open. ClockEntryService.TryClockOut already returns false when its repository finds no open entry. The lab inspects these contracts once and then tests them; it does not ask you to reimplement working behavior.",
+        "The range guard compares the proposed clockOut parameter with ClockIn. Its exception should name clockOut and explain that clock-out cannot be earlier than clock-in."
       ],
-      "code": "if (Clockout is not null)\n{\n    throw new InvalidOperationException(\"The entry is already complete.\");\n}"
+      "code": "if (clockOut < ClockIn)\n{\n    throw new ArgumentOutOfRangeException(\n        nameof(clockOut),\n        \"Clock-out cannot be earlier than clock-in.\");\n}"
     },
     {
-      "title": "Test each contract directly",
+      "title": "Assert.Throws needs code it can execute",
       "paragraphs": [
-        "A false-result test uses an ordinary assertion. An exception test captures InvalidOperationException and checks the message that explains the violated rule.",
-        "Do not catch an exception in production code merely to convert every failure into the same vague result."
+        "Calling clockEntry.ClockOutEntry(clockOut) inside the argument list runs it immediately. Because ClockOutEntry returns void, there is no operation left for Assert.Throws to invoke.",
+        "The lambda () => clockEntry.ClockOutEntry(clockOut) means: here is code xUnit can run. Assert.Throws commonly accepts an Action—callable code that takes no arguments and returns nothing.",
+        "Memory anchor: Method call: run now. Lambda: give xUnit code to run. For a deeper signature-reading exercise using both Enumerable.Join and Assert.Throws<T>, revisit optional Side Lab 01B."
       ],
-      "code": "InvalidOperationException error = Assert.Throws<InvalidOperationException>(\n    () => entry.GetDuration());\nAssert.Contains(\"clock out\", error.Message, StringComparison.OrdinalIgnoreCase);"
+      "code": "InvalidOperationException error = Assert.Throws<InvalidOperationException>(\n    () => clockEntry.ClockOutEntry(clockOut));"
+    },
+    {
+      "title": "Capture the exception to verify the exact rule",
+      "paragraphs": [
+        "Assert.Throws returns the exception object. Store it when the test must inspect Message or ArgumentOutOfRangeException.ParamName.",
+        "A message assertion proves the intended rule caused the failure, protects the explanation callers or logs receive, and avoids a test passing because an unrelated exception of the same type occurred. Case-insensitive Contains assertions keep the test focused on meaning rather than capitalization."
+      ]
     }
   ],
   "lab": {
-    "objective": "Add precise production validation and domain exceptions, then verify invalid behavior with tests.",
-    "startingCondition": "ClockEntry and services implement valid workflows. Invalid IDs, duplicate completion, and open-entry duration need consistent documented behavior.",
-    "steps": [
-      "Open src/PinkMachine19.TimeClock.Domain/Models/ClockEntry.cs.",
-      "Open the ClockEntryService file at its existing location without moving it.",
-      "Write a temporary comment identifying duplicate clock-out as an invalid ClockEntry operation.",
-      "Write a temporary comment identifying an open-entry duration request as an invalid ClockEntry operation.",
-      "Write a temporary comment identifying a missing open entry as an expected TryClockOut rejection.",
-      "In ClockEntry.ClockOutEntry, confirm a second completion checks Clockout before assignment.",
-      "Make the duplicate-completion branch throw InvalidOperationException with a message stating that the entry is already complete.",
-      "In ClockEntry.GetDuration, confirm an open entry checks Clockout before calculating the duration.",
-      "Make the open-duration branch throw InvalidOperationException with a message stating that clock-out is required before calculating duration.",
-      "In ClockEntryService.TryClockOut, preserve false as the result when GetOpenClockEntry returns null; do not convert this expected rejection into an exception.",
-      "Create tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryValidationTests.cs.",
-      "In ClockEntryValidationTests.cs, declare a public sealed class named ClockEntryValidationTests.",
-      "Add a Fact method named ClockOutEntry_WhenAlreadyComplete_ThrowsInvalidOperationException.",
-      "In that test, arrange one ClockEntry and complete it once.",
-      "Act by calling ClockOutEntry a second time through Assert.Throws<InvalidOperationException>.",
-      "Assert that the captured exception message states that the entry is already complete.",
-      "Add a Fact method named GetDuration_WhenEntryIsOpen_ThrowsInvalidOperationException.",
-      "In that test, arrange one open ClockEntry and capture the exception thrown by GetDuration.",
-      "Assert that the captured message explains that clock-out is required.",
-      "Add a Fact method named TryClockOut_WhenNoOpenEntryExists_ReturnsFalse.",
-      "In that test, construct ClockEntryRepository and ClockEntryService, call TryClockOut for an employee with no open entry, and store the Boolean result.",
-      "Assert that the TryClockOut result is false."
+    "objective": "Choose how each failure is communicated and preserve that decision with four focused tests.",
+    "startingCondition": "ClockEntry already rejects duplicate completion and open-entry duration requests. ClockEntryService already returns false when no open entry exists. Inspect those behaviors once; only the range exception and tests require implementation work.",
+    "keyPointTitle": "Setup code versus learning code",
+    "keyPoints": [
+      "Setup code: you may paste the fixed ClockEntry and DateTime arrangements so test data does not consume the exercise.",
+      "Learning code: write each Assert.Throws lambda, choose the expected exception type, capture the exception, and preserve the intended rule with assertions.",
+      "Remember: a fixed DateTime keeps a test predictable; false is still a meaningful result; Assert.Throws needs code it can execute."
     ],
-    "expectedBehavior": "Valid workflows remain unchanged, invalid states fail precisely, and tests document the contract.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
+    "keyPointCode": "// Setup code: paste this when a test needs one open entry.\nvar clockEntry = new ClockEntry(\n    1,\n    new DateTime(2026, 8, 12, 9, 0, 0));\n\n// Learning code: write the operation and assertions yourself.",
+    "steps": [
+      {
+        "text": "In src/PinkMachine19.TimeClock.Domain/Models/ClockEntry.cs, inspect ClockEntry.ClockOutEntry and ClockEntry.GetDuration; identify the two existing InvalidOperationException guards without rewriting them."
+      },
+      {
+        "text": "In src/PinkMachine19.TimeClock.Domain/ClockEntryService.cs, inspect ClockEntryService.TryClockOut and confirm that openClockItem being null returns false."
+      },
+      {
+        "text": "In ClockEntry.ClockOutEntry, replace the existing clock-out range exception with ArgumentOutOfRangeException that names clockOut and says clock-out cannot be earlier than clock-in."
+      },
+      {
+        "text": "In tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryValidationTests.cs, add [Fact] to ClockOutEntry_WhenAlreadyComplete_ThrowsInvalidOperationException."
+      },
+      {
+        "text": "In ClockOutEntry_WhenAlreadyComplete_ThrowsInvalidOperationException, use fixed DateTime setup values to create and complete one ClockEntry once."
+      },
+      {
+        "text": "In the same test, write an Assert.Throws<InvalidOperationException> lambda that calls ClockOutEntry again, store the exception in error, and assert that error.Message contains already complete without case sensitivity."
+      },
+      {
+        "text": "In GetDuration_WhenEntryIsOpen_ThrowsInvalidOperationException, create an open ClockEntry with a fixed DateTime and do not call ClockOutEntry."
+      },
+      {
+        "text": "In that test, pass a lambda calling clockEntry.GetDuration to Assert.Throws<InvalidOperationException>, store the exception in error, and assert that its message contains clock out without case sensitivity."
+      },
+      {
+        "text": "In TryClockOut_WhenNoOpenEntryExists_ReturnsFalse, construct ClockEntryRepository and ClockEntryService, call TryClockOut with a fixed DateTime for an employee with no open entry, and assert that result is false."
+      },
+      {
+        "text": "Add ClockOutEntry_WhenClockOutPrecedesClockIn_ThrowsArgumentOutOfRangeException and create a ClockEntry whose fixed clockOut value is one minute earlier than ClockIn."
+      },
+      {
+        "text": "In that range test, capture ArgumentOutOfRangeException through an Assert.Throws lambda, assert that ParamName is clockOut, and assert that Message contains earlier than clock-in without case sensitivity."
+      },
+      {
+        "text": "Run dotnet test tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj, then compare your work with the hidden solution.",
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "Reveal only after completing the lab or when you are genuinely blocked.",
+            "code": "// ClockEntry.ClockOutEntry range guard\nif (clockOut < ClockIn)\n{\n    throw new ArgumentOutOfRangeException(\n        nameof(clockOut),\n        \"Clock-out cannot be earlier than clock-in.\");\n}\n\n// ClockEntryValidationTests.cs\npublic sealed class ClockEntryValidationTests\n{\n    [Fact]\n    public void ClockOutEntry_WhenAlreadyComplete_ThrowsInvalidOperationException()\n    {\n        var clockEntry = new ClockEntry(1, new DateTime(2026, 8, 12, 9, 0, 0));\n        clockEntry.ClockOutEntry(new DateTime(2026, 8, 12, 17, 0, 0));\n\n        InvalidOperationException error = Assert.Throws<InvalidOperationException>(\n            () => clockEntry.ClockOutEntry(new DateTime(2026, 8, 12, 18, 0, 0)));\n\n        Assert.Contains(\"already complete\", error.Message, StringComparison.OrdinalIgnoreCase);\n    }\n\n    [Fact]\n    public void GetDuration_WhenEntryIsOpen_ThrowsInvalidOperationException()\n    {\n        var clockEntry = new ClockEntry(1, new DateTime(2026, 8, 12, 9, 0, 0));\n\n        InvalidOperationException error = Assert.Throws<InvalidOperationException>(\n            () => clockEntry.GetDuration());\n\n        Assert.Contains(\"clock out\", error.Message, StringComparison.OrdinalIgnoreCase);\n    }\n\n    [Fact]\n    public void TryClockOut_WhenNoOpenEntryExists_ReturnsFalse()\n    {\n        var repository = new ClockEntryRepository();\n        var service = new ClockEntryService(repository);\n\n        bool result = service.TryClockOut(1, new DateTime(2026, 8, 12, 17, 0, 0));\n\n        Assert.False(result);\n    }\n\n    [Fact]\n    public void ClockOutEntry_WhenClockOutPrecedesClockIn_ThrowsArgumentOutOfRangeException()\n    {\n        var clockEntry = new ClockEntry(1, new DateTime(2026, 8, 12, 9, 0, 0));\n        var clockOut = new DateTime(2026, 8, 12, 8, 59, 0);\n\n        ArgumentOutOfRangeException error = Assert.Throws<ArgumentOutOfRangeException>(\n            () => clockEntry.ClockOutEntry(clockOut));\n\n        Assert.Equal(\"clockOut\", error.ParamName);\n        Assert.Contains(\"earlier than clock-in\", error.Message, StringComparison.OrdinalIgnoreCase);\n    }\n}"
+          }
+        ]
+      }
+    ],
+    "expectedBehavior": "Existing workflows remain unchanged. Four deterministic tests distinguish an expected false result, invalid object state, and an out-of-range argument.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj --configuration Release --no-build && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
     "stepCheckboxes": true,
     "clickHighlightInstructions": true
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntry.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/Models/ClockEntry.cs",
       "action": "Modify",
-      "why": "Enforce domain invariants."
+      "why": "Correct the incoming clockOut range exception and message."
     },
     {
       "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryService.cs",
-      "action": "Modify",
-      "why": "Handle expected collaboration outcomes."
+      "action": "Inspect only",
+      "why": "Verify the existing false result without rewriting it."
     },
     {
       "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryValidationTests.cs",
       "action": "Add",
-      "why": "Verify invalid behavior."
-    },
-    {
-      "path": "site/data/sessions/session-24.json",
-      "action": "Modify",
-      "why": "Keep the lesson synchronized with the cumulative build step."
+      "why": "Preserve four failure contracts with focused tests."
     }
   ],
-  "commit": "session-23: teach validation results and exceptions",
+  "commit": "session-24: teach validation results and exceptions",
   "review": [
-    "The lab uses mixed because that is the most natural environment for this concept.",
-    "Every referenced application artifact was created in this session or an earlier session.",
-    "Earlier production code, tests, and ScratchPad experiments remain intact."
+    "Existing duplicate-completion, open-duration, and no-open-entry behavior was inspected rather than reimplemented.",
+    "Assert.Throws receives a lambda instead of an already-executed void method call.",
+    "Fixed DateTime values keep every test deterministic.",
+    "Exception messages identify the intended rule.",
+    "Earlier learner code remains intact."
   ],
   "postQuiz": [
     {
       "prompt": "Why not make TryClockOut throw when no open entry exists?",
-      "options": [
-        "Its Try name and bool return already define an expected rejection contract",
-        "Exceptions cannot be used in services",
-        "Repositories cannot return null"
-      ],
+      "options": ["Its Try name and bool return define an expected rejection contract", "Exceptions cannot be used in services", "Repositories cannot return null"],
       "correct": 0,
-      "explanation": "The current contract lets callers branch without exception handling."
+      "explanation": "The current service contract lets callers branch on a normal outcome."
     },
     {
-      "prompt": "What breaks if ClockOutEntry silently overwrites Clockout?",
-      "options": [
-        "The original completion time and duration can be corrupted",
-        "Only console formatting",
-        "Nothing"
-      ],
+      "prompt": "Why pass () => clockEntry.GetDuration() to Assert.Throws?",
+      "options": ["It gives xUnit callable code to execute", "It makes GetDuration asynchronous", "It suppresses the exception"],
       "correct": 0,
-      "explanation": "The invariant protects recorded time from a second completion."
+      "explanation": "Method call means run now; lambda means give xUnit code to run."
     },
     {
-      "prompt": "Why assert an exception message?",
-      "options": [
-        "It verifies the failure explains which rule was violated",
-        "It changes the exception type",
-        "xUnit requires it"
-      ],
+      "prompt": "Why store the exception returned by Assert.Throws?",
+      "options": ["To verify its message or parameter name", "To throw it again", "Because xUnit requires a variable"],
       "correct": 0,
-      "explanation": "Useful messages make failures diagnosable while the type communicates the broad category."
+      "explanation": "The captured object lets the test confirm the intended rule caused the failure."
     }
   ],
   "reflections": [
-    "Which TimeClock outcomes are ordinary enough for bool or nullable returns?",
-    "Which ClockEntry operations have no meaningful result in an invalid state?",
-    "What behavior belongs in a permanent test rather than a temporary planning comment?"
+    "Why is no open entry expected at the service boundary but duplicate completion unsupported inside ClockEntry?",
+    "What does the lambda delay so Assert.Throws can observe it?",
+    "When would a richer enum or Result object communicate more than bool?"
   ],
-  "whatBreaks": "Removing the false guard from TryClockOut would dereference a missing entry or misreport success. Allowing ClockOutEntry to complete the same entry twice would overwrite recorded state. Allowing GetDuration on an open entry would invent a duration that the object cannot know yet.",
-  "summary": "TryClockOut returns false for the expected case where an employee has no open entry. ClockEntry throws InvalidOperationException when callers request an invalid state transition or duration. Focused tests make those distinct contracts permanent.",
+  "whatBreaks": "Removing the false guard from TryClockOut misreports an expected rejection. Removing either InvalidOperationException guard permits impossible object operations. Comparing or reporting the wrong clock-out value permits invalid time ranges or produces misleading diagnostics.",
+  "summary": "Expected business rejection returns a normal result; an operation the object cannot support throws. Session 24 verifies false, InvalidOperationException, and ArgumentOutOfRangeException contracts without reimplementing behavior that already works.",
   "learningEnvironment": "mixed",
   "buildState": {
     "creates": [],
-    "extends": [
-      "domain validation",
-      "exception tests"
-    ]
+    "extends": ["clock-out range validation", "domain validation tests"]
   }
 }

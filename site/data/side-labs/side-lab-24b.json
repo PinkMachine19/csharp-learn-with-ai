@@ -2,7 +2,7 @@
   "number": "24B",
   "category": "Optional Session 24 sidebar lab",
   "estimatedTime": "15–20 minutes",
-  "sidebarDescription": "Choose practical method outcomes and translate them appropriately across repository, service, API, and UI boundaries.",
+  "sidebarDescription": "Follow one TimeClock outcome across repository, service, API, and UI boundaries and choose the vocabulary each caller needs.",
   "connection": "Sessions 09, 12, 17, 20, and 24 introduced Try/out, nullable lookup results, bool outcomes, and exceptions separately. This optional synthesis helps you choose among those contracts without adding outcome-design theory to Session 20.",
   "nextSessionLabel": "Session 25",
   "objectives": [
@@ -57,7 +57,7 @@
     {
       "title": "Choose by semantics, not syntax preference",
       "paragraphs": [
-        "The question is not which C# feature looks most professional. Ask what happened, what the caller must know, and whether the outcome is expected during ordinary operation.",
+        "The question is not which C# feature looks most professional. Ask what happened, what the caller must know, and whether the outcome is expected during ordinary operation. Each layer reports outcomes using the vocabulary of that layer.",
         "Guard clauses and early returns are already practiced throughout the course. They keep invalid paths short, but they do not decide which public contract a method should expose."
       ],
       "table": {
@@ -68,7 +68,9 @@
           ["enum", "One of several fixed named outcomes is enough", "ClockInOutcome.AlreadyClockedIn"],
           ["Result object", "The caller needs status plus structured details", "Outcome, message, and employee ID"],
           ["Try/out", "A conventional Try API must return success plus a value", "Dictionary.TryGetValue or int.TryParse"],
-          ["exception", "An invariant is broken, input violates the contract, or an unexpected failure occurred", "Attempting to complete an already completed entry"]
+          ["exception", "An invariant is broken, input violates the contract, or an unexpected failure occurred", "Attempting to complete an already completed entry"],
+          ["HTTP status", "An API must report the outcome through HTTP", "409 Conflict for an already-open entry"],
+          ["UI message", "A person needs actionable language", "You are already clocked in"]
         ],
         "highlightRows": [0, 1, 2, 3, 5]
       }
@@ -77,7 +79,7 @@
       "title": "Layers translate outcomes",
       "paragraphs": [
         "Do not force one return type through every layer. A repository reports storage-shaped facts; a service reports use-case meaning; an API translates known outcomes into HTTP; a UI presents actionable language to a person.",
-        "For example, a nullable repository miss may become an AlreadyClockedOut service outcome, an HTTP conflict response, and a UI message explaining what the user should do next. None of those layers needs to leak its exact representation into the others."
+        "Use one evolving TimeClock event: a duplicate clock-in. A repository may return an existing open ClockEntry, the service may return false or AlreadyClockedIn, the API may return HTTP 409 Conflict, and the UI may say You are already clocked in. None of those layers needs to leak its exact representation into the others."
       ],
       "table": {
         "headers": ["Boundary", "Primary caller", "Typical outcome shape"],
@@ -123,7 +125,7 @@
         "title": "Choose and Translate an Outcome",
         "objective": "Practice judgment rather than memorizing every possible return syntax.",
         "practice": ["Outcome semantics", "Boundary translation", "Temporary planning notes", "Contract selection"],
-        "task": "Classify several outcomes, then replace an ambiguous yes-or-no description with fixed named outcomes on paper or in ScratchPad.",
+        "task": "Classify several outcomes, then trace one duplicate clock-in from repository fact to service result, HTTP status, and UI message.",
         "comment": "// Side Lab 24B - Choose and Translate an Outcome",
         "instructions": [
           "Create a temporary three-column note labeled event, expected or exceptional, and caller needs.",

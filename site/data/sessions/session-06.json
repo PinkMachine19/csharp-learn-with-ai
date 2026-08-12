@@ -275,7 +275,7 @@
       "why": "Place the employee business model in the Domain project."
     },
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntry.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/Models/ClockEntry.cs",
       "action": "Add",
       "why": "Place the employee clock-in business model in the Domain project."
     },

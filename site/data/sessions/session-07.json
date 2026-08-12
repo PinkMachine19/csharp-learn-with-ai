@@ -231,7 +231,7 @@
   },
   "expectedFiles": [
     {
-      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntry.cs",
+      "path": "src/PinkMachine19.TimeClock.Domain/Models/ClockEntry.cs",
       "action": "Modify",
       "why": "Protect completion and duration invariants."
     },

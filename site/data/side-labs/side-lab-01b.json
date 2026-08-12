@@ -367,15 +367,15 @@
         ]
       },
       {
-        "title": "Read a Dense Generic Signature",
-        "objective": "Translate Join's generic signature into the concrete Employee, WorkSummary, int, and string types used in Session 22.",
+        "title": "Read Dense Signatures: Join and Assert.Throws",
+        "objective": "Translate Join's generic signature and recognize when Assert.Throws<T> expects callable code instead of a normal value.",
         "practice": [
           "VS Code signature help",
           "Overload navigation",
           "Generic type substitution",
           "Documentation lookup"
         ],
-        "task": "Use editor tooling to reconstruct the four-part Join call from its signature rather than recalling it from memory.",
+        "task": "Use editor tooling to read one signature parameter at a time, substitute concrete types, and decide whether each parameter expects a value, sequence, selector, or callable operation.",
         "instructions": [
           "Open the Session 22 ClockEntryAnalytics.EmployeeLabels method.",
           "Place the cursor immediately after the opening parenthesis in employees.Join(.",
@@ -387,11 +387,18 @@
           "Read the final selector as the result builder and translate TResult to string because EmployeeLabels returns labels.",
           "Use the memory anchor: second collection, first key, second key, final result.",
           "If signature help is too dense, press F12 on Join or open its official documentation, then return with Alt+Left.",
-          "Reconstruct the call one argument at a time and confirm IntelliSense advances to the next parameter after each comma."
+          "Reconstruct the Join call one argument at a time and confirm IntelliSense advances to the next parameter after each comma.",
+          "Open Session 24 ClockEntryValidationTests and place the cursor inside Assert.Throws<InvalidOperationException>(...).",
+          "Open signature help and identify the parameter commonly represented by Action.",
+          "Translate Action as callable code that takes no arguments and returns nothing.",
+          "Compare clockEntry.ClockOutEntry(clockOut) with () => clockEntry.ClockOutEntry(clockOut); identify the first as a method call that runs now and the second as callable code xUnit can run.",
+          "Use the memory anchor: method call, run now; lambda, give xUnit code to run.",
+          "For future signatures, identify the called method, read one parameter at a time, substitute actual types for generic placeholders, and decide whether each parameter expects a normal value, sequence, Action, Func<T>, or another delegate.",
+          "When IntelliSense remains dense, use documentation or Go to Definition and then return to the call site."
         ]
       }
     ],
-    "expectedBehavior": "The learner can navigate and control the multi-project workspace, explicitly run ScratchPad, deliberately select a debug target, use a breakpoint, and recover common UI states without changing application behavior. The learner can also decode Join's signature by substituting concrete course types for generic placeholders.",
+    "expectedBehavior": "The learner can navigate and control the multi-project workspace, explicitly run ScratchPad, deliberately select a debug target, use a breakpoint, and recover common UI states without changing application behavior. The learner can decode Join by substituting concrete generic types and recognize that Assert.Throws expects callable code such as Action.",
     "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj"
   },
   "expectedFiles": [],
@@ -403,7 +410,8 @@
     "ScratchPad was run once with an explicit project path.",
     "A breakpoint was added, reached, and removed.",
     "Ctrl+Shift+P was used as a recovery path rather than treated as one more shortcut to memorize.",
-    "Join was reconstructed from signature help as second collection, first key, second key, and final result."
+    "Join was reconstructed from signature help as second collection, first key, second key, and final result.",
+    "Assert.Throws was read as accepting callable code, and the lambda was distinguished from a method call that runs immediately."
   ],
   "postQuiz": [
     {
