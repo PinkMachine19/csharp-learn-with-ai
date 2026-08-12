@@ -1,0 +1,180 @@
+{
+  "number": "24B",
+  "category": "Optional Session 24 sidebar lab",
+  "estimatedTime": "15–20 minutes",
+  "sidebarDescription": "Choose practical method outcomes and translate them appropriately across repository, service, API, and UI boundaries.",
+  "connection": "Sessions 09, 12, 17, 20, and 24 introduced Try/out, nullable lookup results, bool outcomes, and exceptions separately. This optional synthesis helps you choose among those contracts without adding outcome-design theory to Session 20.",
+  "nextSessionLabel": "Session 25",
+  "objectives": [
+    "Choose a small outcome contract based on what the caller genuinely needs.",
+    "Distinguish expected absence, ordinary rejection, structured business outcomes, and exceptional failure.",
+    "Explain why repository, service, API, and UI boundaries may translate the same event differently.",
+    "Separate temporary planning notes from permanent executable tests."
+  ],
+  "visuals": [
+    {
+      "diagram": "pipeline",
+      "title": "One event crosses several boundaries",
+      "explanation": "A repository miss can become a service outcome, an HTTP response, and finally a user-facing message. Each boundary reports what its own caller needs."
+    },
+    {
+      "diagram": "branch",
+      "title": "Expected outcome or exceptional failure?",
+      "explanation": "Expected absence and ordinary rejection belong in normal control flow; broken invariants and unexpected failures may justify exceptions."
+    },
+    {
+      "diagram": "contract",
+      "title": "Return the smallest useful contract",
+      "explanation": "Use bool when yes or no is enough, nullable when absence is expected, and a structured result when callers need several outcome details."
+    },
+    {
+      "diagram": "invariant",
+      "title": "Tests preserve settled decisions",
+      "explanation": "Temporary comments help enumerate possibilities; focused tests permanently protect the outcomes the team agrees must remain true."
+    }
+  ],
+  "preQuiz": [
+    {
+      "prompt": "A repository lookup may normally find no open entry. Which contract communicates that expected absence directly?",
+      "options": ["ClockEntry?", "Always throw an exception", "ref ClockEntry"],
+      "correct": 0,
+      "explanation": "A nullable return makes expected absence part of normal control flow."
+    },
+    {
+      "prompt": "Must an API expose the service's bool return value unchanged?",
+      "options": ["No; the API translates outcomes into its own HTTP contract", "Yes; every layer must return the same type", "Only when using controllers"],
+      "correct": 0,
+      "explanation": "Each boundary communicates with a different caller and may need a different representation."
+    },
+    {
+      "prompt": "When should temporary requirement comments become tests?",
+      "options": ["When the behavior becomes a lasting contract worth verifying", "Every comment must become a test", "Never"],
+      "correct": 0,
+      "explanation": "Planning notes help while deciding; permanent tests preserve agreed behavior."
+    }
+  ],
+  "concept": [
+    {
+      "title": "Choose by semantics, not syntax preference",
+      "paragraphs": [
+        "The question is not which C# feature looks most professional. Ask what happened, what the caller must know, and whether the outcome is expected during ordinary operation.",
+        "Guard clauses and early returns are already practiced throughout the course. They keep invalid paths short, but they do not decide which public contract a method should expose."
+      ],
+      "table": {
+        "headers": ["Contract", "Use when", "TimeClock-shaped example"],
+        "rows": [
+          ["bool", "The caller needs only accepted or rejected", "Timesheet.TryAdd"],
+          ["T?", "Not found is expected and no explanation is required", "GetOpenClockEntry"],
+          ["enum", "One of several fixed named outcomes is enough", "ClockInOutcome.AlreadyClockedIn"],
+          ["Result object", "The caller needs status plus structured details", "Outcome, message, and employee ID"],
+          ["Try/out", "A conventional Try API must return success plus a value", "Dictionary.TryGetValue or int.TryParse"],
+          ["exception", "An invariant is broken, input violates the contract, or an unexpected failure occurred", "Attempting to complete an already completed entry"]
+        ],
+        "highlightRows": [0, 1, 2, 3, 5]
+      }
+    },
+    {
+      "title": "Layers translate outcomes",
+      "paragraphs": [
+        "Do not force one return type through every layer. A repository reports storage-shaped facts; a service reports use-case meaning; an API translates known outcomes into HTTP; a UI presents actionable language to a person.",
+        "For example, a nullable repository miss may become an AlreadyClockedOut service outcome, an HTTP conflict response, and a UI message explaining what the user should do next. None of those layers needs to leak its exact representation into the others."
+      ],
+      "table": {
+        "headers": ["Boundary", "Primary caller", "Typical outcome shape"],
+        "rows": [
+          ["Repository", "Application/service code", "Entity, nullable entity, sequence, or persistence failure"],
+          ["Service/use case", "Host such as App or Web", "Value, bool, enum, Result object, or meaningful exception"],
+          ["Controller/API", "Remote client", "HTTP status plus response body"],
+          ["UI", "Person", "Validation state, disabled action, or user-facing message"]
+        ],
+        "highlightRows": [0, 1, 2, 3]
+      }
+    },
+    {
+      "title": "Comments help plan; tests preserve contracts",
+      "paragraphs": [
+        "Before implementation, a short outcome table or temporary comments can turn prose requirements into explicit cases. Remove planning comments once names, control flow, and tests communicate the decision clearly.",
+        "When an outcome must remain true, express it as a permanent test. Session 29 formalizes Arrange, Act, and Assert; this sidebar only connects that testing practice to outcome design."
+      ]
+    },
+    {
+      "title": "What should I actually remember?",
+      "paragraphs": [
+        "Prioritize the outcome forms you will write often. Recognize specialized parameter contracts without forcing yourself to design new APIs around them from memory."
+      ],
+      "table": {
+        "headers": ["Fluency level", "Patterns"],
+        "rows": [
+          ["Write comfortably", "bool, nullable returns, guard clauses, exceptions for clear contract violations"],
+          ["Recognize and choose deliberately", "Enums and small Result objects for multiple business outcomes"],
+          ["Recognize and understand", "Try/out when an existing .NET API uses it"],
+          ["Specialized — look it up", "Custom ref/in/out APIs and elaborate generic Result frameworks"]
+        ],
+        "highlightRows": [0, 1]
+      }
+    }
+  ],
+  "lab": {
+    "objective": "Classify realistic TimeClock outcomes, trace one outcome across boundaries, and make one small contract improvement.",
+    "startingCondition": "Complete Session 24 first. This optional exercise uses notes or ScratchPad only and changes no required TimeClock production behavior.",
+    "collapseInstructions": true,
+    "labs": [
+      {
+        "title": "Choose and Translate an Outcome",
+        "objective": "Practice judgment rather than memorizing every possible return syntax.",
+        "practice": ["Outcome semantics", "Boundary translation", "Temporary planning notes", "Contract selection"],
+        "task": "Classify several outcomes, then replace an ambiguous yes-or-no description with fixed named outcomes on paper or in ScratchPad.",
+        "comment": "// Side Lab 24B - Choose and Translate an Outcome",
+        "instructions": [
+          "Create a temporary three-column note labeled event, expected or exceptional, and caller needs.",
+          "Classify these events: no open entry found, duplicate clock-in rejected, completed entry requested twice, and database unavailable.",
+          "For each event, select the smallest suitable contract from bool, nullable return, enum, Result object, Try/out, or exception.",
+          "Choose duplicate clock-in and trace it through repository, service, API, and UI boundaries.",
+          "Write one sentence explaining why the representations do not have to be identical across those boundaries.",
+          "Sketch a small ClockInOutcome enum containing Success and AlreadyClockedIn; do not modify ClockEntryService in this optional lab.",
+          "Describe the test names you would add if the team adopted that enum permanently.",
+          "Delete or archive the temporary planning note after preserving any agreed behavior as test cases."
+        ],
+        "solution": "A reasonable classification is: repository cannot find an open entry — nullable ClockEntry because absence is expected; duplicate clock-in — bool when the caller needs only yes/no, or ClockInOutcome when it needs a named reason; completing an already completed entry — exception because the object invariant is violated; database unavailable — exception that the application boundary logs and translates appropriately. Across layers, AlreadyClockedIn might be an enum value in the service, an HTTP 409 response in the API, and a clear user-facing message in the UI. Suggested permanent tests: TryClockIn_WhenEntryIsAlreadyOpen_ReturnsAlreadyClockedIn and TryClockIn_WhenNoEntryIsOpen_ReturnsSuccess."
+      }
+    ],
+    "expectedBehavior": "You can justify a contract from semantics and explain how later boundaries translate the same outcome for different callers.",
+    "validation": "No build is required; this optional sidebar changes no production files."
+  },
+  "expectedFiles": [],
+  "commit": "Not applicable — optional judgment exercise with no required source changes.",
+  "review": [
+    "Ordinary absence is not modeled as an exception without a specific reason.",
+    "A bool is used only when the caller genuinely needs no explanation.",
+    "Try/out is recognized as a common .NET pattern rather than the default for new application APIs.",
+    "Repository details do not leak directly into API or UI contracts.",
+    "Temporary planning notes are not mistaken for permanent documentation or tests."
+  ],
+  "postQuiz": [
+    {
+      "prompt": "When is a Result object more useful than bool?",
+      "options": ["When callers need structured status or details beyond yes/no", "Whenever a method has parameters", "Only in repositories"],
+      "correct": 0,
+      "explanation": "Do not add a Result object unless its additional information serves callers."
+    },
+    {
+      "prompt": "Should a missing database connection become a normal nullable entity result?",
+      "options": ["No; infrastructure failure is different from an expected not-found result", "Yes; null means every kind of failure", "Only for async methods"],
+      "correct": 0,
+      "explanation": "Conflating failure with absence hides an operational problem."
+    },
+    {
+      "prompt": "Why might a service enum become an HTTP 409 at the API boundary?",
+      "options": ["The API translates business meaning into its caller's protocol", "Enums cannot cross methods", "Controllers must throw"],
+      "correct": 0,
+      "explanation": "HTTP is the API caller's contract, not necessarily the service's internal representation."
+    }
+  ],
+  "reflections": [
+    "Which current TimeClock bool would become clearer if callers needed to distinguish two rejection reasons?",
+    "Where would returning null accidentally hide a real system failure?",
+    "Which outcome decisions deserve permanent tests rather than explanatory comments?"
+  ],
+  "whatBreaks": "Skipping this sidebar does not break Session 25. You would lose only the practical synthesis for choosing and translating method outcomes across application boundaries.",
+  "summary": "Choose outcomes by semantics and caller needs: bool for simple yes/no, nullable for expected absence, enums or Result objects for named or structured business outcomes, Try/out mainly for established Try patterns, and exceptions for violated contracts or unexpected failures. Translate outcomes at repository, service, API, and UI boundaries instead of leaking one representation everywhere."
+}

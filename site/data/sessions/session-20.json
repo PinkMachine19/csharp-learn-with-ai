@@ -84,7 +84,7 @@
       "title": "Manual composition comes before a container",
       "paragraphs": [
         "Program.cs creates one repository and passes it to ClockEntryService. This makes object identity and shared in-memory state visible.",
-        "A DI container and Transient/Singleton lifetimes are deferred until the testing and DI layer."
+        "A DI container and Transient/Singleton lifetimes are deferred until the testing and DI layer. TryClockIn and TryClockOut use bool so this session can stay focused on dependency direction; Session 24 and optional Side Lab 24B compare outcome-contract choices in context."
       ],
       "code": "IClockEntryRepository repository = new ClockEntryRepository();\nvar clockEntries = new ClockEntryService(repository);"
     },

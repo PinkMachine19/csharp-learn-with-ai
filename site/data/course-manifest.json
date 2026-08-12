@@ -73,6 +73,7 @@
     ["03B","formatting-console-output-in-csharp","Formatting Console Output in C#",3,"optional console-formatting reference attached to Session 03"],
     ["04C","choosing-if-switch-statement-or-switch-expression","Choosing if/else, a switch Statement, or a switch Expression",4,"optional decision-syntax comparison attached to Session 04"],
     ["05B","properties-backing-fields-and-auto-properties","Properties, Backing Fields, and Auto-Properties",5,"optional property-syntax comparison attached to Session 05"],
-    ["19B","access-modifiers-and-api-boundaries","Access Modifiers and API Boundaries",19,"optional enterprise accessibility synthesis attached to Session 19"]
+    ["19B","access-modifiers-and-api-boundaries","Access Modifiers and API Boundaries",19,"optional enterprise accessibility synthesis attached to Session 19"],
+    ["24B","choosing-outcome-contracts-across-boundaries","Choosing Outcome Contracts Across Boundaries",24,"optional outcome-design synthesis attached to Session 24"]
   ]
 }
