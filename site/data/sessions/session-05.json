@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "call",
+      "diagram": "mental-05-1",
       "title": "Arguments enter a method",
       "explanation": "A call supplies argument values to parameters; control enters the method and later returns to the caller."
     },
     {
-      "diagram": "frame",
+      "diagram": "mental-05-2",
       "title": "Parameters and locals stay scoped",
       "explanation": "Parameters and local variables are available inside their method boundary, preventing unrelated code from depending on temporary details."
     },
     {
-      "diagram": "return",
+      "diagram": "mental-05-3",
       "title": "Return sends one result back",
       "explanation": "A return value crosses the method boundary and lets the caller decide what to do with the result."
     },
     {
-      "diagram": "signature",
+      "diagram": "mental-05-4",
       "title": "The signature is a contract",
       "explanation": "Return type, method name, and parameter list describe how callers may use the method."
     }

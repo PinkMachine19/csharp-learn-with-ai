@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "tests",
+      "diagram": "mental-29-1",
       "title": "Arrange builds the scenario",
       "explanation": "Two ClockEntry objects are constructed and clocked out, then a mocked repository is configured to return them for employee 1."
     },
     {
-      "diagram": "pipeline",
+      "diagram": "mental-29-2",
       "title": "Act calls exactly one method",
       "explanation": "CalculateTotalHours(1, DateTime.MinValue, DateTime.MaxValue) is the single call under test."
     },
     {
-      "diagram": "comparison",
+      "diagram": "mental-29-3",
       "title": "Assert checks one observable value",
       "explanation": "Assert.Equal(5.0, totalHours, precision: 5) checks the sum, not any internal implementation detail."
     },
     {
-      "diagram": "feedback",
+      "diagram": "mental-29-4",
       "title": "An unconfigured mock is itself evidence",
       "explanation": "Mock<IEmployeeService>() with no .Setup() calls proves, in the test's own structure, that PayrollService's IEmployeeService dependency is not exercised by this code path."
     }

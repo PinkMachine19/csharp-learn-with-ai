@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "blueprint",
+      "diagram": "mental-12-1",
       "title": "Dictionary<int, Employee> keys by EmployeeId",
       "explanation": "employees.TryAdd(employee.Identity, employee) stores each Employee under its own id -- looking one up later means a direct key lookup, not scanning every entry."
     },
     {
-      "diagram": "invariant",
+      "diagram": "mental-12-2",
       "title": "TryAdd refuses to overwrite an existing key",
       "explanation": "employees.TryAdd(1, second) returns false if EmployeeId 1 is already present -- the original Employee stays in the dictionary, untouched."
     },
     {
-      "diagram": "instances",
+      "diagram": "mental-12-3",
       "title": "HashSet<string> stores each city name once",
       "explanation": "cities.Add(\"Springfield\") followed by cities.Add(\"Springfield\") again leaves Cities.Count unchanged -- a set silently ignores a duplicate add."
     },
     {
-      "diagram": "call",
+      "diagram": "mental-12-4",
       "title": "TryFind mirrors the Try-pattern from Session 9",
       "explanation": "bool TryFind(int employeeId, out Employee? employee) returns whether the id was found, with employee assigned either way."
     }

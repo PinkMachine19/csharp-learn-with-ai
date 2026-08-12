@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "pipeline",
+      "diagram": "mental-21-1",
       "title": "A query is a sequence of transformations",
       "explanation": "Source entries flow through filtering and ordering; each operator returns another sequence."
     },
     {
-      "diagram": "branch",
+      "diagram": "mental-21-2",
       "title": "Where removes open entries",
       "explanation": "Only entries with a clock-out can safely provide a completed duration."
     },
     {
-      "diagram": "call",
+      "diagram": "mental-21-3",
       "title": "Sum projects and aggregates",
       "explanation": "The lambda converts each ClockEntry to hours; Sum combines those numbers into one total."
     },
     {
-      "diagram": "order",
+      "diagram": "mental-21-4",
       "title": "Ordering states a visible requirement",
       "explanation": "OrderByDescending on ClockIn produces newest-first history rather than relying on source insertion order."
     }

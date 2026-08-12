@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "pipeline",
+      "diagram": "mental-35-1",
       "title": "One request, explicit stages",
       "explanation": "Input flows through construction, validation, persistence, and a typed summary result."
     },
     {
-      "diagram": "invariant",
+      "diagram": "mental-35-2",
       "title": "Validation guards persistence",
       "explanation": "Invalid completion stops before the DbContext receives a new entity."
     },
     {
-      "diagram": "flowstate",
+      "diagram": "mental-35-3",
       "title": "Result state controls the path",
       "explanation": "A failed completion returns immediately; success continues with a known duration."
     },
     {
-      "diagram": "tests",
+      "diagram": "mental-35-4",
       "title": "Integration checks the boundary",
       "explanation": "A real SQLite in-memory database verifies mapping, saving, querying, and the no-write failure case."
     }

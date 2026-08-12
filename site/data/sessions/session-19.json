@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "blueprint",
+      "diagram": "mental-19-1",
       "title": "Formatter is an incomplete base",
       "explanation": "Formatter requires Format but supplies Normalize. It cannot be constructed directly."
     },
     {
-      "diagram": "branch",
+      "diagram": "mental-19-2",
       "title": "Two related types inherit one helper",
       "explanation": "UpperFormatter and LowerFormatter both are Formatters and reuse Normalize rather than duplicating trimming behavior."
     },
     {
-      "diagram": "call",
+      "diagram": "mental-19-3",
       "title": "override fulfills the abstract member",
       "explanation": "The compiler checks each Format override against Formatter.Format."
     },
     {
-      "diagram": "contract",
+      "diagram": "mental-19-4",
       "title": "Interface or abstract class?",
       "explanation": "Use an interface for a capability and substitution boundary; use an abstract class only for a genuine related family that benefits from shared implementation."
     }

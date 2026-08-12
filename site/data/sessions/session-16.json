@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "covariance",
+      "diagram": "mental-16-1",
       "title": "out permits widening the output type",
       "explanation": "ISource<Employee> source = ...; ISource<object> widened = source; -- legal because ISource<out T> only ever produces (returns) a T, never accepts one."
     },
     {
-      "diagram": "contravariance",
+      "diagram": "mental-16-2",
       "title": "in permits narrowing the input type",
       "explanation": "ISink<object> sink = ...; ISink<Employee> narrowed = sink; -- legal because ISink<in T> only ever accepts (consumes) a T as a parameter, never returns one."
     },
     {
-      "diagram": "varianceflow",
+      "diagram": "mental-16-3",
       "title": "The direction of data flow decides which variance is safe",
       "explanation": "A type that only produces T can safely be treated as producing something less specific (object); a type that only consumes T can safely be treated as consuming something more specific."
     },
     {
-      "diagram": "invariantrepo",
+      "diagram": "mental-16-4",
       "title": "learner solution interfaces have no supertype/subtype relationship to vary over",
       "explanation": "IClockEntryRepository is not generic over Employee/object the way ISource<T> is -- there is no ClockEntry-vs-object substitution question for variance to answer there."
     }

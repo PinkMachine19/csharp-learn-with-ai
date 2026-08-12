@@ -12,22 +12,22 @@
   ],
   "visuals": [
     {
-      "diagram": "call",
+      "diagram": "mental-09-1",
       "title": "out reports a second value on the way out",
       "explanation": "bool TryParseHours(string text, out decimal hours) returns whether parsing succeeded and assigns hours -- two pieces of information from one call."
     },
     {
-      "diagram": "branch",
+      "diagram": "mental-09-2",
       "title": "The caller must handle both outcomes",
       "explanation": "if (TryParseHours(text, out var hours)) uses hours in the success branch. The method must assign its out parameter before every return."
     },
     {
-      "diagram": "variable",
+      "diagram": "mental-09-3",
       "title": "ref lets a method change caller-visible storage",
       "explanation": "A ref int parameter can replace the value stored in the caller's variable, so the change remains visible after the method returns."
     },
     {
-      "diagram": "invariant",
+      "diagram": "mental-09-4",
       "title": "in passes a readonly reference",
       "explanation": "The method can read the caller's value but cannot reassign through the in parameter. Avoiding copies can matter for larger structs; this lab demonstrates the mechanism without claiming the TimeClock domain needs it."
     }

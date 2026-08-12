@@ -14,22 +14,22 @@
   ],
   "visuals": [
     {
-      "diagram": "toolbelt",
+      "diagram": "mental-00-1",
       "title": "Languages are tools. Systems are ecosystems.",
       "explanation": "A belt holds several distinct tools — none of them replaces the others, and none of them is \"the\" tool. C#, JavaScript, Python, and SQL are the same: different tools, each reached for because it fits a specific job."
     },
     {
-      "diagram": "skew",
+      "diagram": "mental-00-2",
       "title": "Visible tutorial content is not the same as the whole industry",
       "explanation": "Scripting and web tutorials are tall and easy to find; enterprise backend content is shorter and harder to stumble into online. The size difference in visible content does not reflect the size difference in the real job market."
     },
     {
-      "diagram": "ecosystem",
+      "diagram": "mental-00-3",
       "title": "A production system is a small ecosystem of collaborating technologies",
       "explanation": "A real system is rarely one language talking to itself. It's a hub of separate technologies — C#, JavaScript, SQL, Python, CI/CD — each solving one part of the same problem."
     },
     {
-      "diagram": "stack",
+      "diagram": "mental-00-4",
       "title": "A real system layers languages instead of choosing one",
       "explanation": "A browser talks to a TypeScript/JavaScript frontend, which talks to a C# Web API, which talks to SQL Server, alongside Python analytics and a CI/CD pipeline that ships all of it. Every layer is collaboration, not competition."
     }

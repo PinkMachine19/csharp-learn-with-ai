@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "invariant",
+      "diagram": "mental-34-1",
       "title": "The real, latent bug",
       "explanation": "PayrollService's constructor requires IEmployeeService; PinkMachine19.TimeClock.Web/Program.cs registers IClockEntryRepository, IEmployeeRepository, IClockEntryService, and PayrollService itself -- but never IEmployeeService."
     },
     {
-      "diagram": "call",
+      "diagram": "mental-34-2",
       "title": "Undiscovered because nothing calls it yet",
       "explanation": "Before Session 33 added a controller, and before any controller resolves PayrollService, this bug had no way to surface -- it was real but silent."
     },
     {
-      "diagram": "branch",
+      "diagram": "mental-34-3",
       "title": "The real test proves both the failure and the fix",
       "explanation": "WebApiRegistrationTests.cs's two tests: one confirms resolving PayrollService throws without IEmployeeService registered; the other confirms adding one line fixes it."
     },
     {
-      "diagram": "return",
+      "diagram": "mental-34-4",
       "title": "A missing DI registration is a different failure than a business rule violation",
       "explanation": "This bug happens before any request-specific logic runs -- Session 24's throw-vs-return rule was about expected domain outcomes, not startup configuration errors like this one."
     }

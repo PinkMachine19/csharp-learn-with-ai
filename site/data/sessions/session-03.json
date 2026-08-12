@@ -12,22 +12,22 @@
   ],
   "visuals": [
     {
-      "diagram": "variable",
+      "diagram": "mental-03-1",
       "title": "A name carries a type contract",
       "explanation": "The variable name hours makes intent visible, while its declared type limits which values and operations are valid."
     },
     {
-      "diagram": "expression",
+      "diagram": "mental-03-2",
       "title": "Expressions produce values",
       "explanation": "Operands and operators are evaluated to produce a result. The result can be assigned, passed, returned, or observed."
     },
     {
-      "diagram": "type",
+      "diagram": "mental-03-3",
       "title": "Types control valid operations",
       "explanation": "A value must fit the target type. When types differ, C# either applies a permitted implicit conversion or requires an explicit cast."
     },
     {
-      "diagram": "decimal",
+      "diagram": "mental-03-4",
       "title": "Decimal models base-10 quantities",
       "explanation": "decimal is useful when base-10 precision is part of the domain. The m suffix makes a numeric literal a decimal value."
     }

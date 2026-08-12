@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "constraintcontract",
+      "diagram": "mental-15-1",
       "title": "A constraint is a promise the caller must keep",
       "explanation": "where T : IComparable<T> tells the compiler: whatever T ends up being, it will have a CompareTo method -- SelectGreater<T>'s body is only allowed to compile because of that promise."
     },
     {
-      "diagram": "constraintremoval",
+      "diagram": "mental-15-2",
       "title": "Without the constraint, CompareTo is not guaranteed to exist",
       "explanation": "Remove where T : IComparable<T> and left.CompareTo(right) stops compiling -- the compiler no longer knows T has a CompareTo method at all."
     },
     {
-      "diagram": "constrainteligibility",
+      "diagram": "mental-15-3",
       "title": "DateTime and int qualify; Employee does not",
       "explanation": "System.DateTime and System.Int32 both implement IComparable<T> in the .NET base class library. Employee implements no such interface."
     },
     {
-      "diagram": "constraintcategory",
+      "diagram": "mental-15-4",
       "title": "Constraints select a category of types, not one type",
       "explanation": "where T : IComparable<T> does not name DateTime or int specifically -- it opens SelectGreater<T> to any type, present or future, that satisfies the same promise."
     }

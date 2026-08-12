@@ -239,7 +239,8 @@ hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
 .visual-art svg { width: 100%; max-height: 100px; overflow: visible; }
 .visual-art svg :is(rect, circle, ellipse, path, line, polyline, polygon) { fill: none; stroke: var(--accent); stroke-width: 2; }
 .visual-art svg text { fill: var(--text); text-anchor: middle; font-size: 10px; font-weight: 600; }
-.visual-art svg path.active { stroke: var(--green); stroke-width: 3; }
+.visual-art svg .active { stroke: var(--green); stroke-width: 3; opacity: 1; }
+.visual-art svg text.active { fill: var(--green); stroke: none; }
 .visual-art svg marker path { fill: var(--accent); }
 .visual-card h3 { font-size: 13px; margin: 0 0 8px; }
 .visual-card > button { width: 100%; display: flex; justify-content: space-between; padding: 8px 0 0; margin-top: 4px; border: 0; border-top: 1px solid var(--border); background: transparent; color: var(--accent); cursor: pointer; font-size: 12px; font-weight: 600; }

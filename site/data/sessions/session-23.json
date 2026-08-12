@@ -12,22 +12,22 @@
   ],
   "visuals": [
     {
-      "diagram": "pipeline",
+      "diagram": "mental-23-1",
       "title": "Where defines work that can run later",
       "explanation": "IEnumerable<ClockEntry> is something that can be enumerated to produce values. Calling Where may build a deferred pipeline; it is not a JavaScript Promise or a C# Task."
     },
     {
-      "diagram": "call",
+      "diagram": "mental-23-2",
       "title": "Enumeration runs the deferred pipeline",
       "explanation": "foreach, Assert.Equal's sequence comparison, Sum, and ToList must request elements. That enumeration is where the deferred Where work runs."
     },
     {
-      "diagram": "return",
+      "diagram": "mental-23-3",
       "title": "ToList runs now and saves a snapshot",
       "explanation": "ToList enumerates immediately and stores the current matching elements in a new List. Later changes to the source do not alter that snapshot."
     },
     {
-      "diagram": "invariant",
+      "diagram": "mental-23-4",
       "title": "IQueryable defers to a provider, not just to enumeration",
       "explanation": "Later EF Core IQueryable queries may defer provider-translated work such as SQL. The shared idea is deferred execution; the execution mechanism and location differ."
     }

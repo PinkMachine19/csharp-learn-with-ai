@@ -12,22 +12,22 @@
   ],
   "visuals": [
     {
-      "diagram": "generictypes",
+      "diagram": "mental-14-1",
       "title": "Generic types are filled in at each use site",
       "explanation": "List<ClockEntry>, Dictionary<int, Employee>, and IEnumerable<ClockEntry> are generic type definitions whose placeholders have been filled with the concrete types this application needs."
     },
     {
-      "diagram": "genericinference",
+      "diagram": "mental-14-2",
       "title": "A generic method infers T from its arguments",
       "explanation": "SelectGreater(entryA.ClockIn, entryB.ClockIn) infers T as DateTime from the arguments' actual type -- no explicit SelectGreater<DateTime> is required."
     },
     {
-      "diagram": "narrowcontract",
+      "diagram": "mental-14-3",
       "title": "IEnumerable<ClockEntry> identifies its element type",
       "explanation": "Session 13 established that IEnumerable<T> promises enumeration. Supplying ClockEntry for T tells the compiler and caller that each value produced during enumeration is a ClockEntry."
     },
     {
-      "diagram": "closedgenerics",
+      "diagram": "mental-14-4",
       "title": "One method definition, many closed types",
       "explanation": "SelectGreater<DateTime> and SelectGreater<int> are two different closed generic methods generated from the one open SelectGreater<T> definition, at compile time."
     }

@@ -14,22 +14,22 @@
   ],
   "visuals": [
     {
-      "diagram": "solution",
+      "diagram": "mental-01-1",
       "title": "A solution is a list of projects, not a project itself",
       "explanation": "PinkMachine19.TimeClock.sln does not contain code. It is a manifest that names which .csproj files belong together so one command can build or test all of them."
     },
     {
-      "diagram": "pipeline",
+      "diagram": "mental-01-2",
       "title": "dotnet new turns a template name into a folder",
       "explanation": "dotnet new classlib -o src/PinkMachine19.TimeClock.Domain creates a folder containing PinkMachine19.TimeClock.Domain.csproj and a starter .cs file. The -o path is also where the project will live."
     },
     {
-      "diagram": "tests",
+      "diagram": "mental-01-3",
       "title": "A test project is a project, with one extra job",
       "explanation": "PinkMachine19.TimeClock.Domain.Tests is an ordinary class library plus the xUnit package. Nothing about its .csproj is structurally special — only its purpose is."
     },
     {
-      "diagram": "folders",
+      "diagram": "mental-01-4",
       "title": "A folder with nothing tracked inside it does not survive a clone",
       "explanation": "Git records files, not directories. An empty Validators/ folder exists on your disk but vanishes the moment someone clones the repository, unless a file — even an empty .gitkeep — lives inside it."
     }

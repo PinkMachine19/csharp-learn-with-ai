@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "nullable",
+      "diagram": "mental-07-1",
       "title": "Nullable means value or no value",
       "explanation": "DateTime? Clockout explicitly permits either a real clock-out timestamp or null; every reader of Clockout must account for both."
     },
     {
-      "diagram": "invariant",
+      "diagram": "mental-07-2",
       "title": "Construction guards required state",
       "explanation": "ClockEntry assigns EmployeeId and ClockIn in the constructor, so every successfully created object satisfies those requirements immediately."
     },
     {
-      "diagram": "warning",
+      "diagram": "mental-07-3",
       "title": "The constructor already proves required state",
       "explanation": "Employee's constructor requires and assigns Identity, Name, and Address. Do not add nullable markers or invented defaults when the existing construction path already proves valid initialization."
     },
     {
-      "diagram": "flowstate",
+      "diagram": "mental-07-4",
       "title": "A null check proves the completed path",
       "explanation": "GetDuration rejects an open entry. After that guard, the method can safely use Clockout.Value to calculate the completed duration."
     }

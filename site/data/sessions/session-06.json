@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "blueprint",
+      "diagram": "mental-06-1",
       "title": "A class defines a shape",
       "explanation": "Employee and ClockEntry describe available construction, state, and behavior; each new expression creates a distinct instance."
     },
     {
-      "diagram": "constructor",
+      "diagram": "mental-06-2",
       "title": "Construction establishes required state",
       "explanation": "ClockEntry's constructor takes only employeeId and clockIn -- there is no Clockout parameter, because a freshly created entry is always open."
     },
     {
-      "diagram": "property",
+      "diagram": "mental-06-3",
       "title": "Properties expose named state",
       "explanation": "EmployeeId, ClockIn, and Clockout let callers read meaningful state; Clockout has a private setter so only ClockOutEntry can change it."
     },
     {
-      "diagram": "instances",
+      "diagram": "mental-06-4",
       "title": "Instances keep independent values",
       "explanation": "Two ClockEntry objects follow the same class definition but hold different employee ids and timestamps."
     }

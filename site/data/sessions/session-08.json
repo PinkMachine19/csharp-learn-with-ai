@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "variable",
+      "diagram": "mental-08-1",
       "title": "Two names, one Employee",
       "explanation": "Employee employee = new(1, \"Avery\", address); Employee alias = employee; -- both variables hold the same reference, not two separate objects."
     },
     {
-      "diagram": "instances",
+      "diagram": "mental-08-2",
       "title": "A mutation through one name is visible through the other",
       "explanation": "Assigning alias.Name changes the object both variables point to -- employee.Name reads the new value too."
     },
     {
-      "diagram": "call",
+      "diagram": "mental-08-3",
       "title": "int and DateTime are copied, always",
       "explanation": "ClockEntry.EmployeeId and ClockIn are value types -- assigning them to a new variable, or passing them as arguments, copies the number/date itself."
     },
     {
-      "diagram": "invariant",
+      "diagram": "mental-08-4",
       "title": "The object vs. its fields are separate questions",
       "explanation": "ClockEntry itself is a reference type (its identity can be shared); its EmployeeId and ClockIn fields are value types (their contents are always copied)."
     }

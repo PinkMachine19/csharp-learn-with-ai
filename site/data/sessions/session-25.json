@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "call",
+      "diagram": "mental-25-1",
       "title": "An exception propagates up, unchanged, until something catches it",
       "explanation": "GetDuartion throws inside ClockEntry; CalculateTotalHours does not catch it; Program.cs does not catch it either -- the exception reaches the very top of the call stack unmodified."
     },
     {
-      "diagram": "branch",
+      "diagram": "mental-25-2",
       "title": "No catch means the process terminates",
       "explanation": "dotnet run for a console app with an unhandled exception prints the exception's stack trace to stderr and exits with a non-zero code -- there is no generic 'error page' the way a web app might have."
     },
     {
-      "diagram": "invariant",
+      "diagram": "mental-25-3",
       "title": "using guarantees Dispose runs, exception or not",
       "explanation": "await using SqliteConnection connection = new(...) ensures the connection is closed even if an exception is thrown between opening it and the end of the block."
     },
     {
-      "diagram": "return",
+      "diagram": "mental-25-4",
       "title": "IDisposable is a contract for releasing unmanaged resources",
       "explanation": "SqliteConnection and DbContext both implement IDisposable/IAsyncDisposable because they hold real, external resources (a database connection) that the garbage collector alone cannot reliably clean up promptly."
     }

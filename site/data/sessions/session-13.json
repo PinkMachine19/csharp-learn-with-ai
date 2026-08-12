@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "narrowcontract",
+      "diagram": "mental-13-1",
       "title": "A method boundary narrows visible capability",
       "explanation": "The repository keeps a mutable List<ClockEntry> behind its boundary, but GetEmployeeClockEntries hands callers an IEnumerable<ClockEntry> view that promises iteration rather than storage control."
     },
     {
-      "diagram": "capabilityladder",
+      "diagram": "mental-13-2",
       "title": "Each collection contract adds capabilities",
       "explanation": "IEnumerable<T> provides iteration; ICollection<T> adds Count and mutation; IList<T> adds indexing; List<T> is the concrete storage implementing the full ladder."
     },
     {
-      "diagram": "compilerboundary",
+      "diagram": "mental-13-3",
       "title": "The compiler enforces the declared contract",
       "explanation": "foreach is allowed through IEnumerable<T>. Add, [0], and the Count property are rejected because the declared type never promised those members."
     },
     {
-      "diagram": "entryfilter",
+      "diagram": "mental-13-4",
       "title": "The ScratchPad observation uses real entry states",
       "explanation": "One completed and one open ClockEntry enter the repository query. Only the completed entry crosses the query boundary into the enumerable result used by the lab."
     }

@@ -13,22 +13,22 @@
   ],
   "visuals": [
     {
-      "diagram": "nouns",
+      "diagram": "mental-00-6-1",
       "title": "Business nouns are model candidates",
       "explanation": "Employee and clock entry appear repeatedly in requirements. That repetition is evidence that the domain needs explicit concepts for them—not proof that every noun must become a class."
     },
     {
-      "diagram": "verbs",
+      "diagram": "mental-00-6-2",
       "title": "Business verbs reveal behavior",
       "explanation": "Clock in, clock out, retrieve, save, and total describe work the system must perform. Some behavior belongs on a model; coordination across objects usually belongs in a service or use case."
     },
     {
-      "diagram": "relationships",
+      "diagram": "mental-00-6-3",
       "title": "Relationships add meaning to isolated models",
       "explanation": "An employee can have many clock entries. Completed entries contribute durations to a work summary. EmployeeId is the link used by the current implementation."
     },
     {
-      "diagram": "architecture",
+      "diagram": "mental-00-6-4",
       "title": "Project boundaries follow responsibilities",
       "explanation": "Business rules form the Domain. A runnable workflow needs App. Storage details need Infrastructure. HTTP delivery needs Web. Tests verify behavior across those boundaries."
     }

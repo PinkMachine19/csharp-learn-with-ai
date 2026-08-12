@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "contract",
+      "diagram": "mental-18-1",
       "title": "Extract the contract from working behavior",
       "explanation": "IClockEntryRepository repeats the signatures already used to save an entry, query completed entries, and locate an open entry. No speculative service API is invented."
     },
     {
-      "diagram": "call",
+      "diagram": "mental-18-2",
       "title": "The implementation still does the work",
       "explanation": "The interface contains no List and no method bodies. ClockEntryRepository retains the private collection and implements each operation."
     },
     {
-      "diagram": "type",
+      "diagram": "mental-18-3",
       "title": "Declared type versus runtime object",
       "explanation": "IClockEntryRepository repository = new ClockEntryRepository(); exposes only the contract while the runtime object remains ClockEntryRepository."
     },
     {
-      "diagram": "branch",
+      "diagram": "mental-18-4",
       "title": "One implementation is enough to learn the boundary",
       "explanation": "There is only one implementation today. The interface creates a substitution seam for later tests or persistence; it does not prove that a second implementation already exists."
     }

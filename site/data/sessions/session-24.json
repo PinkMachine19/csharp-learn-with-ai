@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "branch",
+      "diagram": "mental-24-1",
       "title": "Expected rejection stays in normal flow",
       "explanation": "TryClockOut returns false when no open entry exists; the caller can branch on that ordinary outcome."
     },
     {
-      "diagram": "invariant",
+      "diagram": "mental-24-2",
       "title": "Invalid object state throws",
       "explanation": "ClockOutEntry rejects a second completion, and GetDuration rejects an open entry because neither operation has a valid result."
     },
     {
-      "diagram": "return",
+      "diagram": "mental-24-3",
       "title": "The method contract communicates the choice",
       "explanation": "bool communicates an expected yes-or-no outcome; InvalidOperationException communicates that the requested operation is invalid for the current state."
     },
     {
-      "diagram": "call",
+      "diagram": "mental-24-4",
       "title": "Tests preserve both contracts",
       "explanation": "Separate tests prove the false result and each exception without catching failures merely to hide them."
     }

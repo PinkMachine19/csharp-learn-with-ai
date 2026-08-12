@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "branch",
+      "diagram": "mental-22-1",
       "title": "GroupBy creates one bucket per employee",
       "explanation": "Every completed ClockEntry is routed to the group whose key equals its EmployeeId."
     },
     {
-      "diagram": "pipeline",
+      "diagram": "mental-22-2",
       "title": "Each group becomes one WorkSummary",
       "explanation": "Select converts a group key and its summed durations into a report result."
     },
     {
-      "diagram": "call",
+      "diagram": "mental-22-3",
       "title": "Join matches two independent sequences",
       "explanation": "Employee IDs connect employee names to WorkSummary totals without embedding an Employee object in the report."
     },
     {
-      "diagram": "snapshot",
+      "diagram": "mental-22-4",
       "title": "The report is materialized deliberately",
       "explanation": "ToList creates the finished report snapshot after filtering, grouping, projection, and ordering."
     }

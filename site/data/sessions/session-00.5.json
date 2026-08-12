@@ -13,22 +13,22 @@
   ],
   "visuals": [
     {
-      "diagram": "product",
+      "diagram": "mental-00-5-1",
       "title": "The product turns a work interval into completed hours",
       "explanation": "The essential journey is intentionally small: an employee clocks in, later clocks out, and the completed interval can contribute hours to a total."
     },
     {
-      "diagram": "actors",
+      "diagram": "mental-00-5-2",
       "title": "One person records time; another process consumes the result",
       "explanation": "The product identifies the employee whose work creates clock entries. A payroll-oriented reporting process consumes completed entries to calculate total hours for a date range."
     },
     {
-      "diagram": "boundary",
+      "diagram": "mental-00-5-3",
       "title": "A clear boundary prevents invented requirements",
       "explanation": "Clocking and hour totals are current scope. Scheduling, pay rates, wages, approvals, leave, authentication, and similar workforce features are not implemented and are not silently treated as requirements."
     },
     {
-      "diagram": "vocabulary",
+      "diagram": "mental-00-5-4",
       "title": "Shared words become shared meaning",
       "explanation": "Employee, clock entry, clock in, clock out, duration, and reporting period recur throughout the course. Learning the vocabulary first makes later class and method names easier to understand."
     }

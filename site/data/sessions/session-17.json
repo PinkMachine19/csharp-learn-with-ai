@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "repositoryboundary",
+      "diagram": "mental-17-1",
       "title": "The bypass Session 11 deliberately prevented",
       "explanation": "A public List would let external code call Clear or Add directly. Session 11's private field already closes that route; Session 17 carries the same principle into TimeSheet."
     },
     {
-      "diagram": "repositorymethods",
+      "diagram": "mental-17-2",
       "title": "Current state: only repository methods can touch storage",
       "explanation": "Making _clockEntries private forces every interaction through SaveClockEntry, GetClockEntry, and GetEmployeeClockEntries -- exactly the surface IClockEntryRepository already promises."
     },
     {
-      "diagram": "privateproperty",
+      "diagram": "mental-17-3",
       "title": "ClockEntry.Clockout was already encapsulated correctly",
       "explanation": "public DateTime? Clockout { get; private set; } has been this way since Session 6 -- outside callers may read it, but only ClockEntry behavior can assign it."
     },
     {
-      "diagram": "timesheetcomposition",
+      "diagram": "mental-17-4",
       "title": "TimeSheet composes an Employee and a List<ClockEntry>",
       "explanation": "TimeSheet does not inherit from either type -- it owns one Employee and a private list of that employee's ClockEntry objects, exposed only as IReadOnlyList<ClockEntry>."
     }

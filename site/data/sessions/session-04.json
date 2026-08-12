@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "branch",
+      "diagram": "mental-04-1",
       "title": "A condition selects a branch",
       "explanation": "A condition is evaluated once at the decision point. Only the matching path runs, and execution continues after that branch."
     },
     {
-      "diagram": "comparison",
+      "diagram": "mental-04-2",
       "title": "Comparisons produce Boolean values",
       "explanation": "Relational operators compare compatible operands and produce true or false. They do not change either operand."
     },
     {
-      "diagram": "switch",
+      "diagram": "mental-04-3",
       "title": "Patterns map input to an outcome",
       "explanation": "A switch expression evaluates arms from top to bottom and returns the expression from the first matching pattern."
     },
     {
-      "diagram": "path",
+      "diagram": "mental-04-4",
       "title": "One input follows one path",
       "explanation": "For a single switch evaluation, one arm supplies the result. The discard pattern provides a deliberate fallback for remaining values."
     }

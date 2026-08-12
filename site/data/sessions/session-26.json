@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "pipeline",
+      "diagram": "mental-26-1",
       "title": "await suspends, it does not block",
       "explanation": "Clockout awaits GetClockEntry and only continues once the Task completes -- the calling thread is not blocked while waiting."
     },
     {
-      "diagram": "call",
+      "diagram": "mental-26-2",
       "title": "async does not promise a thread",
       "explanation": "GetClockEntry is declared async but its body -- a debug loop, an empty foreach, then Task.FromResult(...) -- never actually leaves the calling thread."
     },
     {
-      "diagram": "return",
+      "diagram": "mental-26-3",
       "title": "A Task can represent already-completed work",
       "explanation": "Task.FromResult wraps a value that is already known, producing a completed Task -- there is no real asynchronous operation underneath it."
     },
     {
-      "diagram": "feedback",
+      "diagram": "mental-26-4",
       "title": "An un-awaited Task keeps running unobserved",
       "explanation": "Program.cs calls Clockout(1) without await -- the method starts, but Program.cs moves on to CalculateTotalHours before Clockout necessarily finishes."
     }

@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "call",
+      "diagram": "mental-20-1",
       "title": "Constructor injection makes the dependency visible",
       "explanation": "ClockEntryService requires IClockEntryRepository in its constructor and preserves it in a private readonly field."
     },
     {
-      "diagram": "contract",
+      "diagram": "mental-20-2",
       "title": "The service points toward the contract",
       "explanation": "ClockEntryService names IClockEntryRepository; only Program.cs chooses ClockEntryRepository."
     },
     {
-      "diagram": "branch",
+      "diagram": "mental-20-3",
       "title": "The service coordinates two use cases",
       "explanation": "TryClockIn rejects a second open entry. TryClockOut rejects an employee with no open entry."
     },
     {
-      "diagram": "instances",
+      "diagram": "mental-20-4",
       "title": "Manual composition first",
       "explanation": "Program creates one repository instance and passes that same instance into the service. No container or lifetime terminology is needed yet."
     }

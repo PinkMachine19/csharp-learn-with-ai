@@ -12,22 +12,22 @@
   ],
   "visuals": [
     {
-      "diagram": "numericfamily",
+      "diagram": "mental-03-5-1",
       "title": "Start with purpose, not a type table",
       "explanation": "The family becomes manageable when grouped into whole numbers, approximate measurements, and base-10 business values. Most programs repeatedly use only a few defaults."
     },
     {
-      "diagram": "representations",
+      "diagram": "mental-03-5-2",
       "title": "Appearance is not representation",
       "explanation": "Both double and decimal can display 100.99. Their difference is how they model the value internally and which arithmetic they are designed to perform."
     },
     {
-      "diagram": "tenths",
+      "diagram": "mental-03-5-3",
       "title": "Some fractions fit one system better",
       "explanation": "Decimal tenths fit decimal arithmetic directly. Binary floating-point often stores the nearest available value, which is excellent for measurements but can expose a tiny difference."
     },
     {
-      "diagram": "numerictradeoffs",
+      "diagram": "mental-03-5-4",
       "title": "Every choice balances tradeoffs",
       "explanation": "A type offers a combination of precision, range, memory use, and calculation speed. Choose the combination that matches the meaning of the value."
     }

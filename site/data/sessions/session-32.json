@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "pipeline",
+      "diagram": "mental-32-1",
       "title": "IQueryable<T> builds an expression tree, not a filter loop",
       "explanation": "db.ClockEntries.Where(entry => entry.EmployeeId == employeeId && entry.ClockOut != null) records what to filter, without running the filter in C# at all."
     },
     {
-      "diagram": "call",
+      "diagram": "mental-32-2",
       "title": "The provider translates the expression into SQL",
       "explanation": "EF Core's SQLite provider turns that same expression tree into a real SQL WHERE clause, sent to the database rather than evaluated by the .NET runtime."
     },
     {
-      "diagram": "return",
+      "diagram": "mental-32-3",
       "title": "ToListAsync is where execution actually happens",
       "explanation": "MaterializeAsync's await query.ToListAsync(cancellationToken) is the moment the translated SQL runs against the database and results come back as ClockEntryEntity objects."
     },
     {
-      "diagram": "invariant",
+      "diagram": "mental-32-4",
       "title": "IEnumerable<T> (Session 23) never leaves the process; IQueryable<T> does",
       "explanation": "GetEmployeeClockEntries's Where runs entirely in .NET's memory; CompletedForEmployee's Where is executed by SQLite, outside the .NET process boundary entirely."
     }

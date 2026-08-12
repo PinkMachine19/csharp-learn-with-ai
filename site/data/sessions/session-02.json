@@ -12,22 +12,22 @@
   ],
   "visuals": [
     {
-      "diagram": "depgraph",
+      "diagram": "mental-02-1",
       "title": "Every real project in TimeClock points at Domain — nothing points back",
       "explanation": "PinkMachine19.TimeClock.App, PinkMachine19.TimeClock.Infrastructure, and PinkMachine19.TimeClock.Web each carry their own ProjectReference to PinkMachine19.TimeClock.Domain. Domain's own .csproj has no ProjectReference to any of them."
     },
     {
-      "diagram": "solution",
+      "diagram": "mental-02-2",
       "title": "A ProjectReference is one XML element, not a build-system mystery",
       "explanation": "dotnet add reference edits the referencing project's .csproj, inserting a <ProjectReference> that points at the other project's .csproj by relative path. That element is the entire mechanism."
     },
     {
-      "diagram": "layers",
+      "diagram": "mental-02-3",
       "title": "Layering: general-purpose code below, specific consumers above",
       "explanation": "Domain knows nothing about App, Infrastructure, or Web. Each of those three layers is free to depend on Domain, be replaced, or gain siblings (a second console app, a background worker) without Domain ever changing."
     },
     {
-      "diagram": "pipeline",
+      "diagram": "mental-02-4",
       "title": "Reference, then build — the compiler needs the arrow before it needs the code",
       "explanation": "dotnet add reference must run before PinkMachine19.TimeClock.App can call anything in PinkMachine19.TimeClock.Domain. Without it, ClockEntry and PayrollService are just unresolved names as far as App's compiler is concerned."
     }

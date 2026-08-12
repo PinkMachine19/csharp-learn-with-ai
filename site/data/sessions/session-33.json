@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "invariant",
+      "diagram": "mental-33-1",
       "title": "The real, verified gap",
       "explanation": "builder.Services.AddControllers(); ... app.MapControllers(); -- both real lines exist in the TimeClock Web project/Program.cs today, with zero [ApiController] classes anywhere in the project for them to map."
     },
     {
-      "diagram": "call",
+      "diagram": "mental-33-2",
       "title": "A controller action is the missing piece",
       "explanation": "[HttpPost] public IActionResult ClockIn(int employeeId) gives MapControllers() something real to route requests to -- the first controller this real project has ever had."
     },
     {
-      "diagram": "return",
+      "diagram": "mental-33-3",
       "title": "The action's parameters are the HTTP boundary, not the domain boundary",
       "explanation": "A controller action receives request data (route values, query strings, request bodies) -- it is not the same thing as calling IClockEntryService.ClockIn(int employeeId) directly from C# code."
     },
     {
-      "diagram": "pipeline",
+      "diagram": "mental-33-4",
       "title": "One request, routed to one action, calling the real service",
       "explanation": "POST /employees/1/clock-in -> ClockEntriesController.ClockIn(1) -> the real, unmodified IClockEntryService.ClockIn(1)."
     }

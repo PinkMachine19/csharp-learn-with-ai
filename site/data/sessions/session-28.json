@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "call",
+      "diagram": "mental-28-1",
       "title": "Before the fix: a race with an accidental near-correct answer",
       "explanation": "clockEntryService.Clockout(1) without await lets Program.cs call CalculateTotalHours before Clockout's body has necessarily finished -- the near-zero total was luck, not correctness."
     },
     {
-      "diagram": "pipeline",
+      "diagram": "mental-28-2",
       "title": "After the fix: ClockIn, then Clockout, then the total, guaranteed in order",
       "explanation": "await clockEntryService.Clockout(1); ensures Clockout's entire body -- including SaveClockEntry -- completes before CalculateTotalHours runs."
     },
     {
-      "diagram": "invariant",
+      "diagram": "mental-28-3",
       "title": "A CancellationToken parameter is not automatically functional",
       "explanation": "IClockEntryRepository.GetClockEntry accepts a CancellationToken but its real implementation never reads it -- passing one has no effect on the real GetClockEntry today."
     },
     {
-      "diagram": "feedback",
+      "diagram": "mental-28-4",
       "title": "CancellableEntrySource shows what a real, functioning token looks like",
       "explanation": "await Task.Delay(latency, cancellationToken) genuinely observes cancellation -- a real contrast to GetClockEntry's decorative parameter."
     }

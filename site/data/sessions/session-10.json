@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "comparison",
+      "diagram": "mental-10-1",
       "title": "class gives you reference equality unless you opt out",
       "explanation": "new ClockEntry(1, t) != new ClockEntry(1, t) is true (they are unequal) -- ClockEntry never overrode Equals, so two separately-constructed objects are never equal, even with identical field values."
     },
     {
-      "diagram": "instances",
+      "diagram": "mental-10-2",
       "title": "record gives you value equality automatically",
       "explanation": "new Session10WorkSummary(1, 8m) == new Session10WorkSummary(1, 8m) is true -- the compiler generates Equals/GetHashCode from the record's declared members."
     },
     {
-      "diagram": "type",
+      "diagram": "mental-10-3",
       "title": "Case sensitivity is a choice, not a default",
       "explanation": "\"Springfield\" == \"springfield\" is false under ordinal string comparison; EmployeeDirectory explicitly opts into StringComparer.OrdinalIgnoreCase to treat them as the same city."
     },
     {
-      "diagram": "decimal",
+      "diagram": "mental-10-4",
       "title": "record struct copies by value, like int or DateTime",
       "explanation": "WorkCode is declared readonly record struct -- assigning one WorkCode variable to another copies its Year and Sequence, the same as any other value type."
     }

@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "invariant",
+      "diagram": "mental-31-1",
       "title": "The real gap: no persistence beyond one process's lifetime",
       "explanation": "ClockEntryRepository's real _clockEntries list exists only in memory -- restarting the cumulative TimeClock application loses every clocked-in employee. PayrollDbContext fills this real, unaddressed gap."
     },
     {
-      "diagram": "blueprint",
+      "diagram": "mental-31-2",
       "title": "PayrollDbContext : DbContext -- required inheritance, not chosen",
       "explanation": "EF Core requires your context type to literally be a DbContext; there is no interface-based alternative for this specific framework capability."
     },
     {
-      "diagram": "instances",
+      "diagram": "mental-31-3",
       "title": "ClockEntryEntity mirrors ClockEntry's shape, but is a distinct type",
       "explanation": "EmployeeId, ClockIn, ClockOut are copied field-for-field from the real ClockEntry -- but ClockEntryEntity is EF Core's storage-shaped type, not the domain's behavior-shaped ClockEntry."
     },
     {
-      "diagram": "call",
+      "diagram": "mental-31-4",
       "title": "Add marks an entity tracked before anything is saved",
       "explanation": "db.ClockEntries.Add(entity) changes the entity's EntityState to Added immediately -- SaveChangesAsync later translates every tracked change into the actual database write."
     }

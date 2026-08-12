@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "pipeline",
+      "diagram": "mental-27-1",
       "title": "Sequential: one await, then the next",
       "explanation": "foreach (int id in ids) results.Add(await load(id)); -- the loop does not call load again until the current await completes."
     },
     {
-      "diagram": "call",
+      "diagram": "mental-27-2",
       "title": "Concurrent: every operation starts immediately",
       "explanation": "await Task.WhenAll(ids.Select(load)) calls load for every id up front (Select is enumerated eagerly here), then awaits all of them together."
     },
     {
-      "diagram": "branch",
+      "diagram": "mental-27-3",
       "title": "The real test proves it with a counter, not just a description",
       "explanation": "EntryBatchLoaderTests tracks active/maximum concurrent operations: LoadSequentialAsync's maximum never exceeds 1; LoadConcurrentAsync's started count reaches the full batch size before any complete."
     },
     {
-      "diagram": "feedback",
+      "diagram": "mental-27-4",
       "title": "Clockout never had this choice to make",
       "explanation": "ClockEntryService.Clockout(int employeeId) processes one employee per call -- there is no batch of employees to run sequentially or concurrently, which is exactly why this session needed a new example."
     }

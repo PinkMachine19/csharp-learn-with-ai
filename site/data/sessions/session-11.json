@@ -11,22 +11,22 @@
   ],
   "visuals": [
     {
-      "diagram": "blueprint",
+      "diagram": "mental-11-1",
       "title": "List<ClockEntry> grows as ClockIn is called",
       "explanation": "Every ClockIn call adds one more ClockEntry to _clockEntries -- the list's size is never fixed in advance."
     },
     {
-      "diagram": "pipeline",
+      "diagram": "mental-11-2",
       "title": "Add appends; Where filters without removing",
       "explanation": "SaveClockEntry calls _clockEntries.Add(entry); GetEmployeeClockEntries calls _clockEntries.Where(...), which reads the list without changing it."
     },
     {
-      "diagram": "invariant",
+      "diagram": "mental-11-3",
       "title": "public means any caller can bypass the repository's methods",
       "explanation": "Because _clockEntries is a public field, code outside ClockEntryRepository could call _clockEntries.Clear() or .Add(...) directly, skipping SaveClockEntry entirely -- a real, unfixed encapsulation gap."
     },
     {
-      "diagram": "instances",
+      "diagram": "mental-11-4",
       "title": "foreach is syntax over an enumerator",
       "explanation": "The real leftover foreach(var clockentry in _clockEntries) { } in GetClockEntry compiles to repeated calls to an enumerator's MoveNext/Current, even though this particular loop body does nothing with each element."
     }
