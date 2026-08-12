@@ -2,6 +2,7 @@ import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { pre25MentalModelDiagram } from "./pre25-mental-models.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const site = path.join(root, "site");
@@ -362,6 +363,8 @@ function renderLabReveal(reveal) { if (reveal.blurred && reveal.code) return `<d
 function renderQuiz(id, questions) { return `<div class="quiz-set" data-quiz-set data-threshold="${raw.course.advancementThreshold}">${questions.map((question,index)=>`<details class="card quiz-card" data-quiz><summary><span class="quiz-label">Question ${index+1}</span><span class="quiz-prompt">${escapeHtml(question.prompt)}</span><span class="quiz-expand-hint">Open question</span></summary><div class="quiz-card-body"><div class="answers">${question.options.map((option,optionIndex)=>`<label><input type="radio" name="${id}-${index}" value="${optionIndex}"> ${escapeHtml(option)}</label>`).join("")}</div><button class="btn" type="button" data-check-answer data-correct="${question.correct}">Check answer</button><p class="quiz-feedback" data-explanation="${escapeHtml(question.explanation)}" role="status" aria-live="polite"></p></div></details>`).join("")}</div>`; }
 function visualCard(visual) { return `<div class="visual-card"><div class="visual-art">${diagram(visual.diagram)}</div><h3>${escapeHtml(visual.title)}</h3><button type="button" aria-expanded="false"><span>Explanation</span><small>Reveal</small></button><div hidden><p>${escapeHtml(visual.explanation)}</p></div></div>`; }
 function mentalModelDiagram(kind) {
+  const concretePre25 = pre25MentalModelDiagram(kind);
+  if (concretePre25) return concretePre25;
   const match = /^mental-(.+)-(\d)$/.exec(kind);
   if (!match) return "";
   const token = match[1];
