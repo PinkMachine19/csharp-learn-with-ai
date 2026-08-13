@@ -2,186 +2,148 @@
   "number": 25,
   "category": "Errors and resource management",
   "estimatedTime": "40 minutes",
-  "connection": "Session 24 added tested production exceptions. No TimeClock resource currently requires a custom IDisposable implementation. Trace production exception propagation and preserve a separate ScratchPad resource-cleanup experiment.",
+  "connection": "Session 24 added tested production exceptions. Session 25 now uses a deliberately constructed ScratchPad experiment because the production total-hours path filters out open entries before calling GetDuartion.",
   "objectives": [
-    "Trace GetDuartion's real InvalidOperationException from where it is thrown up through PayrollService.CalculateTotalHours to Program.cs, and identify that nothing in that path catches it.",
-    "Explain what 'unhandled exception' means concretely for this console app: the process terminates and prints a stack trace, since Program.cs never wraps its calls in try/catch.",
-    "Explain what using (or await using) guarantees for a SqliteConnection or PayrollDbContext, even if an exception is thrown partway through the code block.",
-    "Identify a real await using PayrollDbContext db = new(options); statement in the test suite and explain what would leak without it."
+    "Trace how an exception travels upward until matching code catches it, and explain why an unhandled console exception terminates the process.",
+    "Explain that IDisposable defines a cleanup contract and requires a public Dispose method.",
+    "Use a using block to guarantee Dispose runs when control leaves its protected scope, including when an exception leaves the block.",
+    "Use the memory anchor: Leave the using scope; run Dispose."
   ],
   "visuals": [
     {
       "diagram": "mental-25-1",
-      "title": "An exception propagates up, unchanged, until something catches it",
-      "explanation": "GetDuartion throws inside ClockEntry; CalculateTotalHours does not catch it; Program.cs does not catch it either -- the exception reaches the very top of the call stack unmodified."
+      "title": "An exception travels upward until matching code catches it",
+      "explanation": "In this deliberately constructed ScratchPad experiment, InvalidOperationException leaves the using block and continues to the matching catch outside it. This is not presented as an existing production App path."
     },
     {
       "diagram": "mental-25-2",
-      "title": "No catch means the process terminates",
-      "explanation": "dotnet run for a console app with an unhandled exception prints the exception's stack trace to stderr and exits with a non-zero code -- there is no generic 'error page' the way a web app might have."
+      "title": "No matching catch means the console process terminates",
+      "explanation": "If an exception reaches the top of a console program without being handled, the runtime reports it and terminates the process. The experiment catches its deliberate failure so ScratchPad can continue."
     },
     {
       "diagram": "mental-25-3",
-      "title": "using guarantees Dispose runs, exception or not",
-      "explanation": "await using SqliteConnection connection = new(...) ensures the connection is closed even if an exception is thrown between opening it and the end of the block."
+      "title": "Leave the using scope; run Dispose",
+      "explanation": "Normal completion and an exception are two ways to leave the protected using scope. Either way, Dispose runs before control continues beyond that scope."
     },
     {
       "diagram": "mental-25-4",
-      "title": "IDisposable is a contract for releasing unmanaged resources",
-      "explanation": "SqliteConnection and DbContext both implement IDisposable/IAsyncDisposable because they hold real, external resources (a database connection) that the garbage collector alone cannot reliably clean up promptly."
+      "title": "IDisposable defines a cleanup contract",
+      "explanation": "The private DisposalProbe simulates cleanup. Real disposable resources can include streams, database connections, contexts, and other external handles; ordinary classes should not implement IDisposable without cleanup to perform."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "If GetDuartion throws InvalidOperationException on an open entry, and PayrollService.CalculateTotalHours never catches it, what happens when Program.cs calls CalculateTotalHours?",
-      "options": [
-        "The exception propagates unchanged all the way out of CalculateTotalHours, out of Program.cs's top-level statements, and terminates the process with an unhandled-exception stack trace",
-        "The exception is silently swallowed and CalculateTotalHours returns 0",
-        "The compiler prevents this code from ever throwing"
-      ],
+      "prompt": "If a called method throws and the current method has no matching catch, what happens next?",
+      "options": ["The exception travels upward to the caller", "The method silently returns a default value", "Dispose converts it into a warning"],
       "correct": 0,
-      "explanation": "Nothing in the real call chain -- ClockEntry, PayrollService, or Program.cs -- catches this exception, so it propagates all the way to the runtime's default unhandled-exception behavior."
+      "explanation": "An exception continues upward until matching code catches it or it reaches the top of the process."
     },
     {
-      "prompt": "What does await using SqliteConnection connection = new(...) guarantee that a plain SqliteConnection connection = new(...) (without using) does not?",
-      "options": [
-        "connection.DisposeAsync() runs automatically at the end of the block, even if an exception is thrown partway through -- releasing the underlying database connection either way",
-        "The connection opens faster",
-        "The connection cannot throw exceptions"
-      ],
+      "prompt": "When does a using block dispose its resource?",
+      "options": ["When execution leaves the using block, including by exception", "Only after normal completion", "Only when garbage collection runs"],
       "correct": 0,
-      "explanation": "using (and await using) compiles to a try/finally under the hood -- Dispose/DisposeAsync is guaranteed to run in the finally, regardless of whether the try block completed normally or threw."
+      "explanation": "Leave the using scope; run Dispose."
     },
     {
-      "prompt": "Why do SqliteConnection and DbContext implement IDisposable/IAsyncDisposable at all?",
-      "options": [
-        "They hold real external resources (an open database connection) that need explicit, timely release -- the garbage collector would eventually clean them up, but not promptly or deterministically enough for a resource this expensive",
-        "IDisposable is required by every C# class",
-        "It is purely a style convention with no functional purpose"
-      ],
+      "prompt": "Why must DisposalProbe.Dispose be public even though DisposalProbe is private?",
+      "options": ["Dispose fulfills the public IDisposable interface contract", "Every method in a private class must be public", "using cannot call methods on private classes"],
       "correct": 0,
-      "explanation": "IDisposable exists specifically for exactly this category of resource -- something external to the .NET managed heap that benefits from prompt, deterministic release."
+      "explanation": "An interface implementation must provide the interface's publicly callable member."
     }
   ],
   "concept": [
     {
-      "title": "Tracing GetDuartion's real, unhandled exception",
+      "title": "Production audit: do not invent a reachable failure",
       "paragraphs": [
-        "The path is real and short: ClockEntry.GetDuartion throws InvalidOperationException(\"Employee has not clcoked out yet\") if ClockOut is null; PayrollService.CalculateTotalHours calls .Sum(x => x.GetDuartion().TotalHours) with no try/catch around it; Program.cs calls CalculateTotalHours with no try/catch either.",
-        "This is not a bug this course is inventing -- it is the real, current shape of the codebase, verified by reading all three files. GetEmployeeClockEntries's real ClockOut != null filter is what normally prevents this from happening in practice, by excluding open entries before Sum ever sees them."
+        "The cumulative repository spells the method GetDuartion, and its real signature returns non-nullable TimeSpan. ClockEntry.ClockOut is DateTime?, ClockEntryService uses Clockout, and the open-entry message is Employee has not clcoked out yet.",
+        "Program.cs in the cumulative repository calls PayrollService.CalculateTotalHours, but ClockEntryRepository.GetEmployeeClockEntries filters for ClockOut != null before CalculateTotalHours sums GetDuartion(). That means an open entry does not travel through this production path. Session 25 therefore does not add a meaningless App try/catch or change production behavior to manufacture a failure."
       ],
-      "code": "// Models/ClockEntry.cs\npublic TimeSpan GetDuartion()\n{\n    if (ClockOut == null)\n    {\n        throw new InvalidOperationException(\"Employee has not clcoked out yet\");\n    }\n    return ClockOut.Value - ClockIn;\n}"
+      "code": "// Real production guard and signature\npublic TimeSpan GetDuartion()\n{\n    if (ClockOut == null)\n    {\n        throw new InvalidOperationException(\"Employee has not clcoked out yet\");\n    }\n\n    return ClockOut.Value - ClockIn;\n}\n\n// Real repository protection for the total-hours path\nentry.ClockOut != null"
     },
     {
-      "title": "An unhandled exception in a console app terminates the process",
+      "title": "A focused experiment makes propagation observable",
       "paragraphs": [
-        "There is no global exception handler anywhere in PinkMachine19.TimeClock.App's real Program.cs. If an exception ever did reach it unhandled, .NET's default behavior for a console app is to print the exception type, message, and stack trace to stderr, then exit with a non-zero exit code.",
-        "This is different from what Session 34 will cover for the WebApi project: ASP.NET Core has its own exception-handling middleware pipeline that a console app's top-level statements simply do not have."
+        "ResourceExperiments deliberately throws InvalidOperationException inside using. The using body does not catch it, so control leaves the using scope, Dispose runs, and the same exception continues to the matching catch outside using.",
+        "The experiment catches the failure so ScratchPad can print the probe's final state. Without that matching catch, the exception would continue to the top-level console statements and terminate the process."
       ],
-      "code": "// No try/catch anywhere in the real Program.cs -- an exception here would terminate the process\nvar result = payrollService.CalculateTotalHours(1, DateTime.Today.AddHours(-4), DateTime.Now.AddHours(4));"
+      "code": "try\n{\n    using (probe)\n    {\n        throw new InvalidOperationException(\"Intentional Session 25 failure.\");\n    }\n}\ncatch (InvalidOperationException exception)\n{\n    Console.WriteLine(exception.Message);\n}"
     },
     {
-      "title": "using/await using: Dispose runs no matter what",
+      "title": "IDisposable and the nested helper",
       "paragraphs": [
-        "The real integration tests already do this: await using SqliteConnection connection = new(\"Data Source=:memory:\"); and await using PayrollDbContext db = new(options); both guarantee the connection and context are disposed at the end of their block, exception or not.",
-        "Without using, an exception thrown between opening the connection and the end of the method would skip whatever cleanup code came after it -- leaving the connection open until the garbage collector eventually, non-deterministically, finalizes it."
+        "IDisposable defines one cleanup member: public void Dispose(). Dispose is public because it fulfills the public interface contract, even though DisposalProbe itself is private. The probe simulates cleanup; IDisposable is for types that genuinely need deterministic cleanup, not every ordinary class.",
+        "A nested class is declared inside another class. DisposalProbe belongs inside ResourceExperiments but outside Run. private means only the containing ResourceExperiments class can use it, and ResourceExperiments can construct it normally. Nesting is useful here because the helper belongs only to this experiment; IDisposable does not require nesting, and a separate class could implement it.",
+        "Memory anchor: Outer class runs the experiment. Nested class supports it."
       ],
-      "code": "// tests/.../ClockEntryWorkflowTests.cs -- real, existing usage\nawait using SqliteConnection connection = new(\"Data Source=:memory:\");\nawait connection.OpenAsync();\n...\nawait using PayrollDbContext db = new(options);\nawait db.Database.EnsureCreatedAsync();\n// Both connection and db are disposed automatically at the end of this method, even on failure."
+      "code": "private sealed class DisposalProbe : IDisposable\n{\n    public void Dispose()\n    {\n    }\n}"
+    },
+    {
+      "title": "The property records proof of cleanup",
+      "paragraphs": [
+        "public bool WasDisposed { get; private set; } is an auto-implemented property, so C# supplies its backing field. Other code can read it, only DisposalProbe can change it, and bool begins as false by default.",
+        "Dispose changes the property after construction, so the property needs private set. A get-only auto-property could not be assigned later inside Dispose. Memory anchor: Others may read it; only the object may change it."
+      ],
+      "code": "public bool WasDisposed { get; private set; }"
+    },
+    {
+      "title": "Using block, using declaration, and variable scope",
+      "paragraphs": [
+        "A using block disposes when execution leaves that block: using (probe) { /* protected scope */ }. A using declaration such as using DisposalProbe probe = new(); disposes when execution leaves the containing scope.",
+        "A variable declared inside try cannot be referenced after catch. This experiment declares probe before try so it remains in scope for the final check, uses it inside a using block to guarantee cleanup, and catches the deliberate exception so execution can continue.",
+        "Memory anchor: Declare outside to observe afterward. Use inside to guarantee cleanup."
+      ],
+      "code": "DisposalProbe probe = new();\n\ntry\n{\n    using (probe)\n    {\n        // protected scope\n    }\n}\ncatch (InvalidOperationException)\n{\n}\n\nConsole.WriteLine(probe.WasDisposed);"
     }
   ],
   "lab": {
-    "objective": "Trace production exception propagation and preserve a separate ScratchPad resource-cleanup experiment.",
-    "startingCondition": "Session 24 added tested production exceptions. No TimeClock resource currently requires a custom IDisposable implementation.",
+    "title": "Prove Cleanup During Exception Propagation",
+    "objective": "Build a focused ScratchPad experiment proving that Dispose runs before an exception reaches a matching catch outside a using block.",
+    "practice": ["Exception propagation", "IDisposable and Dispose", "using-block cleanup", "Nested classes", "Variable scope"],
+    "task": "Create ResourceExperiments and a private nested DisposalProbe, deliberately throw inside using, catch outside it, then print proof that cleanup already ran.",
+    "startingCondition": "The ScratchPad project exists at src/PinkMachine19.TimeClock.ScratchPad and Program.cs preserves all earlier experiment calls. Production App code remains unchanged.",
+    "pasteReadyInstructions": true,
+    "stepCheckboxes": true,
     "steps": [
-      "Open src/PinkMachine19.TimeClock.Domain/Models/ClockEntry.cs and locate the exception thrown when duration is requested for an open entry.",
-      "Trace every caller from ClockEntry.GetDuration through the total-hours calculation to src/PinkMachine19.TimeClock.App/Program.cs.",
-      "Write a temporary comment in Program.cs naming Program.cs as the console application's outer boundary.",
-      "Wrap only the App call that can surface the known domain exception in a try block.",
-      "Add a catch for InvalidOperationException that displays a concise user-facing message while retaining the exception message.",
-      "Do not add a catch inside ClockEntry or the service merely to suppress the failure.",
-      "Create src/PinkMachine19.TimeClock.ScratchPad/Session25/ResourceExperiments.cs.",
-      "In ResourceExperiments.cs, declare a public sealed class named ResourceExperiments with a public Run method.",
-      "Declare a small private nested class named DisposalProbe that implements IDisposable.",
-      "In DisposalProbe, add a public bool property named WasDisposed with a private setter.",
-      "Implement Dispose by setting WasDisposed to true and displaying a cleanup message.",
-      "In Run, construct one DisposalProbe and store it in a variable outside a using block so its final state can be observed.",
-      "Enter a using block for that probe.",
-      "Inside the using block, deliberately throw InvalidOperationException.",
-      "Catch that deliberate exception outside the using block so ScratchPad can continue.",
-      "After the catch, display the probe's WasDisposed value to verify cleanup occurred.",
-      "Open ScratchPad/Program.cs, preserve earlier calls, construct ResourceExperiments, and call Run."
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, create folder Session25 and file src/PinkMachine19.TimeClock.ScratchPad/Session25/ResourceExperiments.cs. Setup code: paste a starter comment identifying this as the deliberately constructed Session 25 cleanup experiment."},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session25, file ResourceExperiments.cs, declare public sealed class ResourceExperiments. Inside the ResourceExperiments class body, declare public void Run() with an empty body. Learning code: write the class and method yourself."},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session25, file ResourceExperiments.cs, inside ResourceExperiments but outside ResourceExperiments.Run, declare private sealed class DisposalProbe : IDisposable. A nested class is a class inside another class: ResourceExperiments runs the experiment and its private nested class supports it. IDisposable does not require nesting. Learning code: write the declaration yourself."},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session25, file ResourceExperiments.cs, inside ResourceExperiments.DisposalProbe, stub public void Dispose() with an empty body. Dispose must be public because it implements the public IDisposable contract, even though DisposalProbe is private. Build the ScratchPad project to keep errors local.", "code": "dotnet build src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session25, file ResourceExperiments.cs, inside the ResourceExperiments.DisposalProbe class body, add public bool WasDisposed { get; private set; }. This auto-implemented property starts false; other code may read it, but only DisposalProbe may change it. private set lets Dispose assign it later; a get-only auto-property would not. Learning code: write the property yourself."},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session25, file ResourceExperiments.cs, inside ResourceExperiments.DisposalProbe.Dispose, set WasDisposed to true, then print exactly DisposalProbe cleanup ran. Learning code: write both statements yourself."},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session25, file ResourceExperiments.cs, as the first statement inside ResourceExperiments.Run, before any try block, construct DisposalProbe and store it in a local variable named probe. It must be declared before try so ResourceExperiments.Run can read probe after catch."},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session25, file ResourceExperiments.cs, inside ResourceExperiments.Run immediately after creating probe, add try and catch (InvalidOperationException exception) blocks. Keep using inside try and catch outside using so the experiment can observe propagation and continue."},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session25, file ResourceExperiments.cs, inside the try block in ResourceExperiments.Run, add a using (probe) block. This is a using block: it disposes when control leaves that block. A using declaration disposes at the end of its containing scope; declaring that variable inside try would also make it unavailable after catch."},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session25, file ResourceExperiments.cs, inside the using (probe) block in ResourceExperiments.Run, deliberately throw new InvalidOperationException with the exact message Intentional Session 25 failure. Learning code: write the throw yourself."},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session25, file ResourceExperiments.cs, inside the catch block in ResourceExperiments.Run, print exception.Message. Then, after catch but still inside ResourceExperiments.Run, print probe.WasDisposed using the exact label Was disposed:. This proves Dispose ran before catch handled the exception."},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, file src/PinkMachine19.TimeClock.ScratchPad/Program.cs, inside the top-level program after all earlier experiment calls, construct ResourceExperiments in a variable named session25 and call session25.Run(). Do not remove earlier calls."},
+      {"text": "From the csharp-learn-with-ai solution folder, run project src/PinkMachine19.TimeClock.ScratchPad and verify ResourceExperiments.Run prints this exact order: cleanup message, intentional failure message, then Was disposed: True. Next build PinkMachine19.TimeClock.sln and run its full test suite. Open Solution Reveal only after your output and checks agree.", "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release\ndotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build", "reveals": [{"title": "Solution", "text": "The using body throws; leaving using runs Dispose; the exception continues to catch; catch handles it; execution continues and prints the recorded state.", "code": "// src/PinkMachine19.TimeClock.ScratchPad/Session25/ResourceExperiments.cs\npublic sealed class ResourceExperiments\n{\n    public void Run()\n    {\n        DisposalProbe probe = new();\n\n        try\n        {\n            using (probe)\n            {\n                throw new InvalidOperationException(\"Intentional Session 25 failure.\");\n            }\n        }\n        catch (InvalidOperationException exception)\n        {\n            Console.WriteLine(exception.Message);\n        }\n\n        Console.WriteLine($\"Was disposed: {probe.WasDisposed}\");\n    }\n\n    private sealed class DisposalProbe : IDisposable\n    {\n        public bool WasDisposed { get; private set; }\n\n        public void Dispose()\n        {\n            WasDisposed = true;\n            Console.WriteLine(\"DisposalProbe cleanup ran.\");\n        }\n    }\n}\n\n// Append to src/PinkMachine19.TimeClock.ScratchPad/Program.cs without removing earlier calls.\nResourceExperiments session25 = new();\nsession25.Run();"}]}
     ],
-    "expectedBehavior": "Production reports a real domain failure appropriately, while ScratchPad proves using cleanup in isolation.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+    "expectedBehavior": "DisposalProbe cleanup ran.\nIntentional Session 25 failure.\nWas disposed: True\n\nExecution order: (1) using body throws, (2) execution leaves using, (3) Dispose runs, (4) the exception continues to catch, (5) catch handles it, and (6) execution continues after catch.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
-    {
-      "path": "src/PinkMachine19.TimeClock.App/Program.cs",
-      "action": "Modify",
-      "why": "Handle a domain failure at the application boundary."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.ScratchPad/ResourceExperiments.cs",
-      "action": "Add",
-      "why": "Demonstrate guaranteed cleanup without fake production resources."
-    },
-    {
-      "path": "site/data/sessions/session-25.json",
-      "action": "Modify",
-      "why": "Keep the lesson synchronized with the cumulative build step."
-    }
+    {"path": "src/PinkMachine19.TimeClock.ScratchPad/Session25/ResourceExperiments.cs", "action": "Add", "why": "Keep the deliberately constructed propagation and cleanup experiment isolated from production."},
+    {"path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs", "action": "Modify", "why": "Run Session 25 without removing earlier ScratchPad calls."},
+    {"path": "site/data/sessions/session-25.json", "action": "Modify", "why": "Keep the authoritative lesson, standalone lab, learner notes, solution reveal, and generated pages synchronized."}
   ],
-  "commit": "session-24: teach exception propagation idisposable and using",
+  "commit": "session-25: teach exception propagation idisposable and using",
   "review": [
-    "The lab uses mixed because that is the most natural environment for this concept.",
-    "Every referenced application artifact was created in this session or an earlier session.",
-    "Earlier production code, tests, and ScratchPad experiments remain intact."
+    "Every learner instruction is rendered as a paste-ready C# comment and names its project, folder, file, class, and containing method or class body.",
+    "Production App behavior is unchanged; the exception is explicitly labeled as a ScratchPad experiment.",
+    "The Solution Reveal stays collapsed, and the main and standalone labs come from the same authoritative lab data."
   ],
   "postQuiz": [
-    {
-      "prompt": "Why doesn't GetEmployeeClockEntries's real filter (ClockOut != null) fully eliminate the possibility of GetDuartion throwing inside CalculateTotalHours?",
-      "options": [
-        "It eliminates it for THAT specific call path -- but any other code that calls GetDuartion directly on an open ClockEntry (bypassing GetEmployeeClockEntries's filter) would still trigger the same real exception",
-        "It does fully eliminate the possibility everywhere in the codebase",
-        "GetDuartion cannot be called on an open entry -- the compiler prevents it"
-      ],
-      "correct": 0,
-      "explanation": "The filter protects one specific call path, not GetDuartion itself -- GetDuartion's own guard clause is what actually protects it universally, which is exactly why Session 7 studied that guard clause directly."
-    },
-    {
-      "prompt": "What would you need to add to Program.cs for an unhandled exception from CalculateTotalHours to be caught and handled gracefully instead of terminating the process?",
-      "options": [
-        "A try/catch block around the call, or a broader pattern like a global unhandled-exception handler -- neither currently exists in the real Program.cs",
-        "Nothing -- Program.cs already handles this",
-        "async/await, since only asynchronous exceptions can be caught"
-      ],
-      "correct": 0,
-      "explanation": "This is a genuine, currently-true gap in the real console app -- there is no exception handling anywhere in Program.cs today."
-    },
-    {
-      "prompt": "If a using block's Dispose call itself throws an exception, what happens to an exception that was already being thrown from inside the block?",
-      "options": [
-        "This is a genuinely subtle edge case (Dispose exceptions during unwinding) -- in the common case relevant to this codebase's SqliteConnection/DbContext usage, Dispose completing without its own exception is what actually happens, so the original exception propagates normally",
-        "The original exception is always silently discarded",
-        "The program always crashes immediately with no information"
-      ],
-      "correct": 0,
-      "explanation": "This session focuses on the common, real case (Dispose succeeding) rather than the rarer double-fault scenario -- worth naming as a known edge case without needing to solve it here."
-    }
+    {"prompt": "What happens first after the deliberate throw leaves the using block?", "options": ["DisposalProbe.Dispose runs", "The final WasDisposed line runs", "The process terminates before cleanup"], "correct": 0, "explanation": "Leave the using scope; run Dispose. The exception reaches catch only after cleanup."},
+    {"prompt": "Why is probe declared before try?", "options": ["So it remains in scope after catch for inspection", "Because IDisposable variables must be fields", "So Dispose runs twice"], "correct": 0, "explanation": "A variable declared inside try cannot be referenced after catch."},
+    {"prompt": "Does the Session 25 experiment prove Program.cs currently receives an exception from CalculateTotalHours?", "options": ["No; it is a deliberately constructed ScratchPad experiment, and the production repository normally filters open entries first", "Yes; it reproduces the production call stack exactly", "Yes; every CalculateTotalHours call throws"], "correct": 0, "explanation": "The lesson avoids claiming a production execution path that repository filtering prevents."}
   ],
   "reflections": [
-    "Why does this session trace a real exception path instead of inventing a hypothetical one?",
-    "What would change about Program.cs's behavior if it wrapped its ClockIn/Clockout/CalculateTotalHours sequence in a single try/catch?",
-    "Where else in this codebase (beyond the SQLite tests) might a resource benefit from using/await using that doesn't currently have it?"
+    "Why must Dispose run before the matching catch handles the exception?",
+    "Why does the experiment declare probe before try but place using inside try?",
+    "When would a separate disposable class be clearer than a private nested helper?"
   ],
-  "whatBreaks": "Calling GetDuartion on an open ClockEntry anywhere outside GetEmployeeClockEntries's filtered path reproduces the real, unhandled InvalidOperationException -- and because Program.cs has no try/catch, that would terminate the console app. Forgetting using/await using around a SqliteConnection or PayrollDbContext would leave the connection open if an exception occurred mid-method, relying on non-deterministic garbage collection to eventually release it instead of a guaranteed, immediate Dispose call.",
-  "summary": "GetDuartion's real InvalidOperationException propagates unchanged through PayrollService.CalculateTotalHours and Program.cs, because none of the three catches it -- a real, currently-true fact about this console app, not a hypothetical. using and await using (already at work in the real SQLite integration tests) guarantee Dispose/DisposeAsync runs at the end of a block regardless of whether an exception was thrown inside it, which is exactly why SqliteConnection and DbContext -- both real, external-resource-holding types -- are always opened inside one.",
-  "learningEnvironment": "mixed",
-  "buildState": {
-    "creates": [],
-    "extends": [
-      "exception propagation",
-      "ScratchPad resource-cleanup experiment"
-    ]
-  }
+  "whatBreaks": "Removing using means the experiment no longer guarantees cleanup when the throw skips later statements. Moving probe inside try makes it unavailable after catch, so the final proof cannot compile. Removing catch lets the deliberate exception reach ScratchPad's top-level statements and terminate the console process.",
+  "summary": "Session 25 uses a deliberately constructed ScratchPad experiment rather than claiming a reachable production failure. The using body throws, leaving using runs Dispose, the exception continues to the matching catch, and execution then prints WasDisposed as proof. Leave the using scope; run Dispose.",
+  "learningEnvironment": "scratchpad",
+  "buildState": {"creates": ["src/PinkMachine19.TimeClock.ScratchPad/Session25/ResourceExperiments.cs"], "extends": ["exception propagation", "IDisposable", "using blocks", "nested-class and variable scope reminders"]}
 }
