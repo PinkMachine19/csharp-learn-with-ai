@@ -50,7 +50,12 @@ The learner should understand what they are building and why before reading mech
 - Avoid repeating established boilerplate. Refer to the established session pattern, but keep enough context that the lab remains completable without guessing.
 - Include a copyable starter comment when the learner is expected to type code.
 - Preserve useful retrieval practice. Repeating a class, constructor, property, method, LINQ expression, or injected dependency can reinforce learning; do not remove repetition merely because the syntax appeared earlier.
+- Repetition is welcome when it reinforces useful syntax and meaning. Repeat short reminders such as why a class is sealed, what a Task represents, and where a method belongs; do not repeat work merely to pad the lab.
 - Add short reminders only at the step where they help, using wording such as `Remember from Session 21:`. Do not turn every instruction into a recap of every prior concept.
+- Distinguish setup code from the concept being practiced.
+- Include signature-reading help when LINQ, delegates, Tasks, or testing APIs expose long IntelliSense signatures. Prefer a focused optional sidebar when the supporting concept would interrupt the primary lab.
+- Do not assume a learner can independently compose a large `Program.cs` demonstration unless the course previously practiced that exact composition.
+- Use `Step n/n` numbering consistently and keep instructions concise and text-to-speech friendly.
 
 ### Paste-ready instruction standard for Sessions 01–24
 

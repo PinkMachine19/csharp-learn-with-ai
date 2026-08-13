@@ -50,7 +50,7 @@
     [23,"deferred-execution-materialization-and-query-sources","Deferred Execution, Materialization, and Query Sources","linq",22,"045, 060"],
     [24,"validation-return-values-and-exceptions","Validation, Return Values, and Exceptions","errors",23,"010, 012, 046"],
     [25,"exception-propagation-idisposable-and-using","Exception Propagation, IDisposable, and using","errors",24,"046, 078"],
-    [26,"tasks-threads-and-awaitable-work","Tasks, Threads, and Awaitable Work","async",25,"047"],
+    [26,"tasks-await-and-already-completed-work","Tasks, Await, and Already-Completed Work","async",25,"047"],
     [27,"sequential-and-concurrent-asynchronous-flow","Sequential and Concurrent Asynchronous Flow","async",26,"047–048"],
     [28,"cancellation-and-asynchronous-exceptions","Cancellation and Asynchronous Exceptions","async",27,"048, 078"],
     [29,"unit-tests-and-arrange-act-assert","Unit Tests and Arrange–Act–Assert","testing",28,"063"],

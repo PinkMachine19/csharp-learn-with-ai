@@ -4,3 +4,6 @@ Console.WriteLine("TimeClock ScratchPad");
 
 ResourceExperiments session25 = new();
 session25.Run();
+
+AsyncFlowExperiments session26 = new();
+await session26.RunAsync();

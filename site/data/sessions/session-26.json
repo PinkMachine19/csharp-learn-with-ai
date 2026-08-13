@@ -1,205 +1,118 @@
 {
   "number": 26,
-  "category": "task-based work",
+  "category": "Asynchronous programming",
   "estimatedTime": "40 minutes",
-  "connection": "Repositories and services are synchronous and working. Persistence boundaries are now clear enough to introduce Task and await without pretending CPU work is asynchronous. Make repository and clock-out operations asynchronous from implementation through App.",
+  "connection": "The production repository and services are still synchronous because their List-based work performs no external I/O. Session 26 introduces Task, Task<T>, async, and await honestly in the permanent ScratchPad notebook.",
   "objectives": [
-    "Explain why Task<ClockEntry?> represents an operation that may complete later, and why 'async' alone does not guarantee a new thread is used.",
-    "Read ClockEntryService.Clockout as a correct await example: it awaits GetClockEntry before branching on the result.",
-    "Read ClockEntryRepository.GetClockEntry as a 'fake async' anti-pattern: an async method whose body is entirely synchronous, wrapped in Task.FromResult.",
-    "Identify, without yet fixing, the real CS4014 warning in Program.cs: clockEntryService.Clockout(1) called with no await."
+    "Explain that Task represents eventual completion and Task<T> represents eventual completion plus a value of type T.",
+    "Explain that Task and the async keyword do not automatically create a background thread.",
+    "Use await to obtain the string carried by Task<string> while preserving readable control flow.",
+    "Use Task.FromResult and Task.CompletedTask as already-completed Task examples without calling them genuine asynchronous work."
   ],
   "visuals": [
-    {
-      "diagram": "mental-26-1",
-      "title": "await suspends, it does not block",
-      "explanation": "Clockout awaits GetClockEntry and only continues once the Task completes -- the calling thread is not blocked while waiting."
-    },
-    {
-      "diagram": "mental-26-2",
-      "title": "async does not promise a thread",
-      "explanation": "GetClockEntry is declared async but its body -- a debug loop, an empty foreach, then Task.FromResult(...) -- never actually leaves the calling thread."
-    },
-    {
-      "diagram": "mental-26-3",
-      "title": "A Task can represent already-completed work",
-      "explanation": "Task.FromResult wraps a value that is already known, producing a completed Task -- there is no real asynchronous operation underneath it."
-    },
-    {
-      "diagram": "mental-26-4",
-      "title": "An un-awaited Task keeps running unobserved",
-      "explanation": "Program.cs calls Clockout(1) without await -- the method starts, but Program.cs moves on to CalculateTotalHours before Clockout necessarily finishes."
-    }
+    {"diagram": "mental-26-1", "title": "Task is a handle to eventual completion", "explanation": "A Task records whether an operation is incomplete, completed, faulted, or cancelled. It does not by itself say which thread performed the work."},
+    {"diagram": "mental-26-2", "title": "Task<T> carries a result", "explanation": "Task<string> represents completion plus a string. await nameTask waits for completion when necessary and gives the method the string result."},
+    {"diagram": "mental-26-3", "title": "Already-completed work still fits the Task shape", "explanation": "Task.FromResult(\"Parm\") returns a Task<string> that is already complete because Parm is already known. It creates no I/O and no background thread."},
+    {"diagram": "mental-26-4", "title": "Async flows to the caller", "explanation": "RunAsync awaits a Task, so it returns Task. ScratchPad's top-level Program.cs directly awaits RunAsync before continuing."}
   ],
   "preQuiz": [
-    {
-      "prompt": "Does ClockEntryRepository.GetClockEntry's async keyword mean it runs on a background thread?",
-      "options": [
-        "No -- its body executes synchronously (a debug loop, an empty foreach, then a lookup) and Task.FromResult wraps an already-computed result; no real asynchronous work happens",
-        "Yes -- async always schedules work on the thread pool",
-        "It depends on the CancellationToken passed in"
-      ],
-      "correct": 0,
-      "explanation": "This is the real 'fake async' pattern in ClockEntryRepository.cs -- async and Task.FromResult do not by themselves create concurrency."
-    },
-    {
-      "prompt": "What does ClockEntryService.Clockout do with the Task returned by GetClockEntry?",
-      "options": [
-        "It awaits it before checking whether the result is null",
-        "It ignores it and checks a different variable",
-        "It calls .Result on it synchronously"
-      ],
-      "correct": 0,
-      "explanation": "await ClockEntryRepository.GetClockEntry(employeeId) is the real, correct usage this session studies before Session 28 studies the broken one."
-    },
-    {
-      "prompt": "What is different about clockEntryService.Clockout(1) in Program.cs, compared to the await inside Clockout itself?",
-      "options": [
-        "Program.cs calls Clockout(1) with no await at all -- a real, uncorrected CS4014 warning",
-        "Program.cs awaits it exactly like Clockout does internally",
-        "Clockout cannot be called from Program.cs"
-      ],
-      "correct": 0,
-      "explanation": "This is the real bug: the method itself awaits correctly internally, but its caller in Program.cs does not await the call."
-    }
+    {"prompt": "What extra information does Task<string> represent compared with Task?", "options": ["Completion plus a string result", "A guaranteed background thread", "A string that is already printed"], "correct": 0, "explanation": "Task represents completion; Task<string> represents completion plus a string value."},
+    {"prompt": "Does marking a method async automatically create a new thread?", "options": ["No", "Yes", "Only when the method returns Task<string>"], "correct": 0, "explanation": "async enables await and shapes Task-returning control flow; it does not promise another thread."},
+    {"prompt": "What does Task.FromResult(\"Parm\") create?", "options": ["An already-completed Task<string>", "An unstarted background thread", "A cancelled Task"], "correct": 0, "explanation": "The string is already known, so Task.FromResult wraps it in an already-completed Task<string>."}
   ],
   "concept": [
     {
-      "title": "Task represents work that may finish later",
+      "title": "Task and Task<T> describe completion",
       "paragraphs": [
-        "A Task is a handle to an operation's eventual completion, result, or failure. Returning Task does not automatically move work to another thread.",
-        "Repository boundaries are a natural place for asynchronous APIs because later persistence may wait on external I/O."
+        "Task is a handle to an operation's eventual completion. Task<T> adds a result of type T. For Task<string>, the eventual result is a string.",
+        "Neither Task nor async automatically creates a background thread. An operation may complete synchronously, wait for genuine I/O, or be completed by another mechanism. The Task shape alone does not decide that."
       ],
-      "code": "Task<ClockEntry?> FindOpenAsync(int employeeId, CancellationToken token);"
+      "table": {
+        "headers": ["Expression or type", "Meaning"],
+        "rows": [
+          ["Task<string>", "Eventual completion plus a string"],
+          ["Task", "Eventual completion without a returned value"],
+          ["Task.FromResult(\"Parm\")", "An already-completed Task<string>"],
+          ["Task.CompletedTask", "An already-completed Task without a result"],
+          ["await nameTask", "Waits when necessary and gives back the string"]
+        ]
+      }
     },
     {
-      "title": "await preserves readable control flow",
+      "title": "await unwraps the result",
       "paragraphs": [
-        "await pauses this method's continuation until the operation completes without blocking a thread just to wait.",
-        "Exceptions and results flow through the await point, so each asynchronous call should be deliberately awaited or returned."
+        "GetEmployeeNameAsync returns Task<string>. RunAsync first stores that Task without awaiting it, making the Task itself observable. await nameTask then produces the string carried by the Task.",
+        "RunAsync is declared async Task because it uses await but returns no value to its caller. An async Task method normally reaches the end of its body; it does not explicitly return Task.CompletedTask."
       ],
-      "code": "ClockEntry? entry = await entries.FindOpenAsync(employeeId, token);"
+      "code": "Task<string> nameTask = GetEmployeeNameAsync();\nstring employeeName = await nameTask;"
     },
     {
-      "title": "Async must flow to the caller",
+      "title": "Already-completed work is an experiment, not production I/O",
       "paragraphs": [
-        "Once a service awaits repository work, its caller also receives Task. The flow continues to App's top-level statements.",
-        "The lab builds the chain correctly in one session; it does not intentionally introduce a fire-and-forget bug for a later lesson."
+        "The value Parm is already available. Task.FromResult wraps it in a completed Task<string> so the learner can practice Task and await. It does not make the lookup asynchronous.",
+        "The production repository remains synchronous because List.Add, Where, and FirstOrDefault execute in memory. Real asynchronous repository work belongs later, when EF Core or another external I/O boundary provides operations worth awaiting."
       ],
-      "code": "await clockEntryService.ClockOutAsync(employeeId, token);"
+      "code": "private Task<string> GetEmployeeNameAsync()\n{\n    return Task.FromResult(\"Parm\");\n}"
+    },
+    {
+      "title": "Optional sidebar — Reading IntelliSense signatures",
+      "paragraphs": [
+        "IntelliSense may show Task<TResult>(Func<TResult> function). For Task<string>, TResult becomes string. Func<string> means callable code that returns a string, and () => \"Parm\" is one such callable value.",
+        "new Task<string>(() => \"Parm\") creates an unstarted Task that would require Start. That legal API does not express this experiment's intent. Task.FromResult(\"Parm\") directly creates the already-completed Task<string> needed here.",
+        "IntelliSense shows legal API choices; it does not decide which choice best communicates the program's intent."
+      ],
+      "code": "// Legal, but wrong for this experiment:\nTask<string> unstarted = new(() => \"Parm\");\n// unstarted.Start() would be required.\n\n// Expresses the real intent:\nTask<string> completed = Task.FromResult(\"Parm\");"
     }
   ],
   "lab": {
-    "objective": "Make repository and clock-out operations asynchronous from implementation through App.",
-    "title": "Carry Async Work Across the Repository Boundary",
-    "practice": ["Task-returning contracts", "Async naming", "Awaiting at call sites", "CancellationToken propagation", "Avoiding fake asynchrony"],
-    "task": "Update the existing repository-to-application workflow so persistence-shaped operations return Tasks and every caller deliberately awaits them.",
-    "collapseInstructions": true,
-    "stepCheckboxes": true,
-    "clickHighlightInstructions": true,
+    "title": "Observe a Task Before and After await",
+    "objective": "Build a permanent ScratchPad experiment that observes Task<string>, awaits its already-completed value, and prints the value without pretending the operation performs real I/O.",
+    "practice": ["Task and Task<T>", "async and await", "Task.FromResult", "Async naming", "Top-level await"],
+    "task": "Create AsyncFlowExperiments, observe the Task returned by a helper, await its string result, and invoke RunAsync from ScratchPad Program.cs.",
+    "startingCondition": "Session 25's ResourceExperiments remains in src/PinkMachine19.TimeClock.ScratchPad. Production repositories and services remain synchronous and unchanged.",
     "pasteReadyInstructions": true,
-    "startingCondition": "Repositories and services are synchronous and working. Persistence boundaries are now clear enough to introduce Task and await without pretending CPU work is asynchronous.",
+    "stepCheckboxes": true,
     "steps": [
-      "Open src/PinkMachine19.TimeClock.Domain/IClockEntryRepository.cs and identify operations that represent persistence access.",
-      "Change the open-entry lookup contract to return Task<ClockEntry?> and add the Async suffix to its method name.",
-      "Add an optional CancellationToken parameter named cancellationToken to the asynchronous lookup contract for later propagation.",
-      "Change the save contract to return Task and add the Async suffix to its method name.",
-      "Add an optional CancellationToken parameter named cancellationToken to the asynchronous save contract.",
-      "Open the existing ClockEntryRepository implementation at its real folder location.",
-      "Update the repository method signatures to implement the asynchronous interface members.",
-      "Keep the current in-memory lookup synchronous internally and return its result through Task.FromResult; do not use Task.Run.",
-      "Keep the current in-memory Add synchronous internally and return Task.CompletedTask; do not use Task.Run.",
-      "Open ClockEntryService and change only methods that call the new asynchronous repository members to return Task or Task<T>.",
-      "Add the Async suffix to each service method made asynchronous.",
-      "Await the asynchronous open-entry lookup before testing its result.",
-      "Await the asynchronous save operation after a valid state change.",
-      "Open PayrollService and inspect whether its repository call became asynchronous.",
-      "If CalculateTotalHours now awaits repository work, rename it CalculateTotalHoursAsync and return Task<double>.",
-      "Inside CalculateTotalHoursAsync, await the repository result before applying Sum; keep the in-memory arithmetic itself synchronous.",
-      "Open src/PinkMachine19.TimeClock.App/Program.cs and preserve earlier session sections.",
-      "Await each asynchronous service call from Program.cs before using its result.",
-      "Build the solution and remove any unawaited-call warnings without adding Task.Run."
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, create folder Session26 and file src/PinkMachine19.TimeClock.ScratchPad/Session26/AsyncFlowExperiments.cs. Setup code: add a comment identifying this as the Session 26 Task and await experiment."},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session26, file AsyncFlowExperiments.cs, declare public sealed class AsyncFlowExperiments. Remember: sealed says this focused experiment class is not intended as a base class."},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session26, file AsyncFlowExperiments.cs, inside AsyncFlowExperiments, add public Task RunAsync() with a temporary body that throws NotImplementedException. Setup code: paste the temporary throw; the Async suffix signals a Task-returning method."},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session26, file AsyncFlowExperiments.cs, inside AsyncFlowExperiments but outside RunAsync, add private Task<string> GetEmployeeNameAsync() with a temporary throw. Remember: Task<string> means eventual completion plus a string."},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session26, file AsyncFlowExperiments.cs, inside GetEmployeeNameAsync, replace the temporary throw with return Task.FromResult(\"Parm\");. Learning code: write this line yourself. Parm is already known, so this creates an already-completed Task<string>, not real asynchronous work."},
+      {"text": "From the csharp-practice-working solution folder, build project src/PinkMachine19.TimeClock.ScratchPad as a safe checkpoint before implementing RunAsync.", "code": "dotnet build src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session26, file AsyncFlowExperiments.cs, inside RunAsync, replace the temporary throw by calling GetEmployeeNameAsync without await and storing the result in Task<string> nameTask. Then print Before await: followed by nameTask.GetType().Name. Learning code: write these statements yourself."},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session26, file AsyncFlowExperiments.cs, change RunAsync from public Task to public async Task. Still inside RunAsync, await nameTask and store the unwrapped result in string employeeName. Remember: async does not create a thread; await obtains the Task<string> result."},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session26, file AsyncFlowExperiments.cs, at the end of RunAsync, print After await: followed by employeeName. An async Task method normally ends here without explicitly returning a Task."},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, file src/PinkMachine19.TimeClock.ScratchPad/Program.cs, in the top-level statements after the earlier session calls, instantiate AsyncFlowExperiments in asyncFlowExperiments and await asyncFlowExperiments.RunAsync(). Top-level Program.cs can use await directly."},
+      {"text": "From the csharp-practice-working solution folder, run project src/PinkMachine19.TimeClock.ScratchPad. Observe the Task type before await and Parm after await. Explain aloud why Task.FromResult did not create real asynchronous work.", "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"},
+      {"text": "From the csharp-practice-working solution folder, build PinkMachine19.TimeClock.sln in Release and run the complete test suite without rebuilding. Open Solution Reveal only after both commands pass.", "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build", "reveals": [{"title": "Solution", "text": "The helper returns an already-completed Task<string>. RunAsync observes the Task, awaits its string result, and Program awaits RunAsync.", "code": "// src/PinkMachine19.TimeClock.ScratchPad/Session26/AsyncFlowExperiments.cs\npublic sealed class AsyncFlowExperiments\n{\n    public async Task RunAsync()\n    {\n        Task<string> nameTask = GetEmployeeNameAsync();\n\n        Console.WriteLine(\n            $\"Before await: {nameTask.GetType().Name}\");\n\n        string employeeName = await nameTask;\n\n        Console.WriteLine(\n            $\"After await: {employeeName}\");\n    }\n\n    private Task<string> GetEmployeeNameAsync()\n    {\n        // \"Parm\" is already known, so no real asynchronous work occurs.\n        // Task.FromResult wraps it in an already-completed Task<string>\n        // so this experiment can practice Task and await.\n        return Task.FromResult(\"Parm\");\n    }\n}\n\n// In ScratchPad Program.cs, after earlier session calls:\nvar asyncFlowExperiments = new AsyncFlowExperiments();\nawait asyncFlowExperiments.RunAsync();"}]}
     ],
-    "expectedBehavior": "Async flows end to end at genuine persistence boundaries, and App contains no fire-and-forget service call.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+    "expectedBehavior": "Before await: Task`1\nAfter await: Parm\n\nThe exact runtime Task type name may include implementation detail, but the first line observes a Task<string> and the second line observes the string obtained by await.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
-    {
-      "path": "src/PinkMachine19.TimeClock.Domain/IClockEntryRepository.cs",
-      "action": "Modify",
-      "why": "Expose asynchronous persistence boundaries."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Domain/Repositories/ClockEntryRepository.cs",
-      "action": "Modify",
-      "why": "Implement the async contract."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryService.cs",
-      "action": "Modify",
-      "why": "Await repository work."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.App/Program.cs",
-      "action": "Modify",
-      "why": "Await the production workflow."
-    },
-    {
-      "path": "site/data/sessions/session-26.json",
-      "action": "Modify",
-      "why": "Keep the lesson synchronized with the cumulative build step."
-    }
+    {"path": "src/PinkMachine19.TimeClock.ScratchPad/Session26/AsyncFlowExperiments.cs", "action": "Add", "why": "Preserve the isolated Task and await experiment."},
+    {"path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs", "action": "Modify", "why": "Await RunAsync from top-level statements without removing earlier session calls."},
+    {"path": "site/data/sessions/session-26.json", "action": "Modify", "why": "Synchronize the lesson, standalone lab, quizzes, summary, and solution reveal."}
   ],
-  "commit": "session-25: teach tasks threads and awaitable work",
+  "commit": "session-26: teach tasks and awaitable work",
   "review": [
-    "The lab uses production because that is the most natural environment for this concept.",
-    "Every referenced application artifact was created in this session or an earlier session.",
-    "Earlier production code, tests, and ScratchPad experiments remain intact."
+    "Production interfaces, repositories, services, App behavior, and tests remain unchanged.",
+    "Every created Task is deliberately awaited or returned; no async void, Task.Run, CancellationToken, or fire-and-forget call was added.",
+    "Setup code is distinguished from learning code, reminders reinforce meaning without padding, and all steps use Step n/n.",
+    "The complete implementation remains hidden behind the existing Solution Reveal."
   ],
   "postQuiz": [
-    {
-      "prompt": "If GetClockEntry's Task.FromResult call were replaced with a real database call (Session 31's EF Core work), what would change about Clockout's own code?",
-      "options": [
-        "Nothing in Clockout itself -- it already awaits GetClockEntry correctly, so a genuinely asynchronous implementation underneath is a drop-in replacement",
-        "Clockout would need to add its own await keyword for the first time",
-        "Clockout would need to become synchronous"
-      ],
-      "correct": 0,
-      "explanation": "This is exactly why Clockout's correct await matters: the caller-side contract does not change when the callee becomes genuinely asynchronous instead of fake-asynchronous."
-    },
-    {
-      "prompt": "Why does this session stop short of fixing Program.cs's missing await on Clockout(1)?",
-      "options": [
-        "Session 28 (Cancellation and Asynchronous Exceptions) is where the fix and its effect on CalculateTotalHours's output are worked through in depth",
-        "The bug cannot be fixed in C#",
-        "Program.cs does not actually contain this bug"
-      ],
-      "correct": 0,
-      "explanation": "This session is about recognizing await's real behavior first; Session 28 and Session 35 are where the bug is actually corrected."
-    },
-    {
-      "prompt": "What is the real, observable evidence that GetClockEntry does no genuine asynchronous work?",
-      "options": [
-        "Its entire body -- the debug loop, the empty foreach, and the FirstOrDefault lookup -- runs synchronously before Task.FromResult wraps an already-known value",
-        "It returns void instead of Task",
-        "It has no CancellationToken parameter"
-      ],
-      "correct": 0,
-      "explanation": "Task.FromResult wraps a value that is already computed -- there is no I/O or yield point anywhere in the method for real concurrency to occur."
-    }
+    {"prompt": "After string employeeName = await nameTask;, what is employeeName?", "options": ["The string Parm", "A Task<string>", "A new thread"], "correct": 0, "explanation": "await unwraps the completed Task<string> result."},
+    {"prompt": "Why does GetEmployeeNameAsync use Task.FromResult in this lesson?", "options": ["To practice the Task<T> contract with an already-known value", "To force work onto a background thread", "To perform database I/O"], "correct": 0, "explanation": "Task.FromResult is an honest already-completed adapter for the experiment, not genuine asynchronous work."},
+    {"prompt": "Why does RunAsync end without return Task.CompletedTask;?", "options": ["The compiler completes the returned Task when an async Task method reaches the end", "RunAsync secretly returns void", "Task.CompletedTask is invalid C#"], "correct": 0, "explanation": "An async Task method normally reaches the end of its body; the compiler manages its returned Task."}
   ],
   "reflections": [
-    "Why does await in Clockout still work correctly even though GetClockEntry never truly runs asynchronously underneath it?",
-    "What does the real CS4014 warning tell you that a successful, warning-free build would not?",
-    "Which of GetClockEntry's real code smells (the debug loop, the empty foreach, the fake async) would you flag first in a code review, and why?"
+    "What is observable before await, and what value becomes available after await?",
+    "Why would new Task<string>(() => \"Parm\") communicate the wrong intent for this experiment?",
+    "What future repository change would introduce genuine I/O worth awaiting?"
   ],
-  "whatBreaks": "Removing the await inside Clockout would make it return a Task immediately, before GetClockEntry's result is known -- clockEntry would never be checked for null correctly. Leaving GetClockEntry's fake-async pattern in place is harmless today only because nothing is genuinely asynchronous yet; it becomes a real bug the moment Session 31 swaps in a genuinely async EF Core call and callers still assume synchronous-speed completion. Ignoring the real CS4014 warning in Program.cs is exactly what lets ClockIn and Clockout race against CalculateTotalHours, producing the near-zero total-hours output Session 35 investigates.",
-  "summary": "ClockEntryService.Clockout is the app's one correct async/await example: it awaits GetClockEntry before branching. GetClockEntry itself is real 'fake async' -- an async signature over entirely synchronous work. Program.cs's real, unawaited Clockout(1) call previews the bug Session 28 and Session 35 fix.",
-  "learningEnvironment": "production",
-  "buildState": {
-    "creates": [],
-    "extends": [
-      "asynchronous repository and service flow"
-    ]
-  }
+  "whatBreaks": "Removing await from nameTask leaves a Task<string> rather than the employee name. Removing await from the top-level RunAsync call allows Program.cs to continue without deliberately observing completion. Replacing Task.FromResult with new Task<string>(...) creates an unstarted Task and causes await to wait forever unless separate code starts it.",
+  "summary": "Task represents eventual completion; Task<T> also carries a result. async does not create a thread, await obtains a Task<T> result, and Task.FromResult creates an already-completed Task<T> for this isolated experiment. Production stays synchronous until a genuine I/O boundary exists.",
+  "learningEnvironment": "scratchpad",
+  "buildState": {"creates": ["src/PinkMachine19.TimeClock.ScratchPad/Session26/AsyncFlowExperiments.cs"], "extends": ["Task", "Task<T>", "async", "await", "already-completed Tasks"]}
 }
