@@ -1,69 +1,226 @@
 {
   "number": "R5",
-  "category": "Optional Modern C# refresher",
-  "estimatedTime": "45 minutes",
-  "connection": "The final optional refresher covers the compact syntax common in current production C#: records, init and required members, primary constructors, collection expressions, and several nearby features that reduce ceremony without removing design responsibility.",
+  "category": "Independent Modern C# refresher",
+  "estimatedTime": "35–40 minutes",
+  "connection": "This module is independent of Sessions 1–35 and every other optional module. Create immutable subscription-plan summaries.",
   "objectives": [
-    "Choose records or classes based on value semantics versus identity and behavior.",
-    "Distinguish init-only assignment from deep immutability.",
-    "Use required members and primary constructors to communicate construction needs.",
-    "Read collection expressions and spread elements.",
-    "Recognize other modern production syntax without adopting it mechanically."
+    "Compare explicit immutable classes with records, required/init members, primary constructors, and collection expressions without treating shorter syntax as automatically better.",
+    "Create and validate all required setup inside one isolated exercise folder.",
+    "Compare caller-visible behavior and syntax without modifying TimeClock."
   ],
   "visuals": [
-    {"diagram":"mental-ref-05-1","title":"Records make value-oriented data concise","explanation":"Records synthesize value equality and nondestructive copying, which suits messages and snapshots."},
-    {"diagram":"mental-ref-05-2","title":"init and required shape construction","explanation":"init limits assignment to construction; required tells callers which members must be supplied."},
-    {"diagram":"mental-ref-05-3","title":"Primary constructors put parameters beside the type","explanation":"Parameters are available throughout the type body, but they are not automatically properties."},
-    {"diagram":"mental-ref-05-4","title":"Collection expressions focus on elements","explanation":"Square-bracket syntax can create supported collection targets and spread existing sequences with two dots."}
+    {
+      "diagram": "solution",
+      "title": "Isolated workspace",
+      "explanation": "The exercise folder stands outside the cumulative solution and owns every file it needs."
+    },
+    {
+      "diagram": "pipeline",
+      "title": "Caller and contract",
+      "explanation": "The caller sends inputs through the feature and observes its return value or output contract."
+    },
+    {
+      "diagram": "feedback",
+      "title": "Edit, build, and observe",
+      "explanation": "Compiler and runtime feedback guide one small correction at a time inside this module."
+    },
+    {
+      "diagram": "tests",
+      "title": "Validation checkpoint",
+      "explanation": "Only this isolated project is built and run; the TimeClock solution is not changed."
+    }
   ],
   "preQuiz": [
-    {"prompt":"What behavior do records provide by default that ordinary classes do not?","options":["Database persistence","Value-based equality","Thread safety"],"correct":1,"explanation":"Record equality compares the declared value components."},
-    {"prompt":"Does init make a List<T> property deeply immutable?","options":["Yes","No — it limits property assignment, but the referenced list may still mutate","Only in records"],"correct":1,"explanation":"Immutability must be reasoned about through the whole object graph."},
-    {"prompt":"Does a primary-constructor parameter automatically become a public property on a class?","options":["Yes","No","Only when marked required"],"correct":1,"explanation":"Unlike positional record parameters, class primary-constructor parameters are parameters available in the body."}
+    {
+      "prompt": "What is the primary goal of this optional module?",
+      "options": [
+        "Compare explicit immutable classes with records, required/init members, primary constructors, and collection expressions without treating shorter syntax as automatically better.",
+        "Change the TimeClock production application",
+        "Create a prerequisite for another optional module"
+      ],
+      "correct": 0,
+      "explanation": "Compare explicit immutable classes with records, required/init members, primary constructors, and collection expressions without treating shorter syntax as automatically better."
+    },
+    {
+      "prompt": "Which setup may this module assume?",
+      "options": [
+        "Only the setup it explicitly creates",
+        "Artifacts from the previous optional module",
+        "A completed numbered session"
+      ],
+      "correct": 0,
+      "explanation": "Every optional module is self-contained."
+    },
+    {
+      "prompt": "Where is the complete answer kept?",
+      "options": [
+        "Behind the Solution reveal",
+        "Repeated in every instruction",
+        "Inside a production service"
+      ],
+      "correct": 0,
+      "explanation": "Steps remain incremental; the finished example stays behind Reveal."
+    }
   ],
   "concept": [
-    {"title":"1. Records express value semantics","paragraphs":["Use a record when two instances with the same components should normally compare equal: messages, commands, DTO-like snapshots, and results are common examples.","Use a class when identity, encapsulated mutation, lifecycle, or framework behavior is central. The keyword does not replace design judgment."]},
-    {"title":"2. with creates a modified copy","paragraphs":["A with expression performs nondestructive mutation: it copies a record and changes selected members in the new value.","The copy is shallow. Referenced mutable objects can still be shared between the original and copy."]},
-    {"title":"3. init controls the assignment window","paragraphs":["An init accessor allows assignment during object construction and prevents later property reassignment through normal code.","It does not freeze a mutable object stored in the property. Prefer immutable component types when deep immutability matters."]},
-    {"title":"4. required shifts feedback to construction","paragraphs":["A required member tells callers they must initialize it. This improves compile-time feedback for object initializers and framework-created models.","required does not validate content. A required string can still be empty, so constructors, guards, and validation remain useful."]},
-    {"title":"5. Primary constructors reduce ceremony","paragraphs":["C# 12 allows primary constructors on classes and structs. Parameters are in scope throughout the type body and can initialize members or participate in methods.","Promote a parameter to an explicit property when it belongs to the public state. Avoid hiding important invariants in overly compressed declarations."]},
-    {"title":"6. Collection expressions describe contents","paragraphs":["Collection expressions use [ ] with a target type, for example int[] values = [1, 2, 3]. The compiler builds an appropriate supported collection.","A spread element such as [..first, 9, ..second] inserts elements from existing sequences. The syntax is concise, but allocation and target-type behavior still matter."]},
-    {"title":"7. Other modern syntax seen in production","paragraphs":["File-scoped namespaces and global usings reduce repeated structure. Target-typed new and target-typed conditional expressions use context to omit redundant type names.","Raw string literals simplify JSON, SQL, regex, and templates. Using declarations shorten disposal scopes. Index/range syntax, switch expressions, list patterns, and interpolated-string handlers appear frequently in modern libraries.","C# 13–14 add more specialized features such as params collections, updated lock support, extension members, null-conditional assignment, field-backed properties, and stronger Span integration. Adopt them when they clarify real code and your supported toolchain allows them."]},
-    {"title":"8. Concision has a budget","paragraphs":["Modern syntax should remove noise, not remove meaning. A compact declaration is successful when its invariants, ownership, and mutability remain obvious.","During review, ask what the syntax guarantees, what it merely suggests, and what still requires runtime validation."]}
+    {
+      "title": "Why this feature exists",
+      "paragraphs": [
+        "Create immutable subscription-plan summaries.",
+        "Compare explicit immutable classes with records, required/init members, primary constructors, and collection expressions without treating shorter syntax as automatically better."
+      ]
+    },
+    {
+      "title": "Read the caller-visible contract",
+      "paragraphs": [
+        "Start with the receiver, input types, return type, and accessibility. A return type promises what a successful caller receives; it does not hide failure meaning.",
+        "Use IntelliSense one parameter or member at a time rather than memorizing a dense signature."
+      ]
+    },
+    {
+      "title": "Modern does not automatically mean clearer",
+      "paragraphs": [
+        "Prefer the form that makes this business rule easiest to read and maintain. Older or more explicit syntax can remain the better teaching or production choice.",
+        "Compiler diagnostics identify unsupported language versions, inaccessible members, missing required values, and unsafe nullable paths."
+      ]
+    }
   ],
   "lab": {
-    "objective": "Model a small immutable work summary using records, required/init members, a primary constructor, and collection expressions.",
-    "startingCondition": "Use an isolated scratch console project targeting a toolchain that supports C# 12 or newer.",
-    "steps": [
-      {"text":"Create the scratch project.","code":"mkdir -p exercises/refreshers/r5\ndotnet new console -o exercises/refreshers/r5"},
-      {"text":"Add these modern data shapes to Program.cs.","code":"record WorkSummary(int EmployeeId, decimal Hours);\n\nsealed class Report(string title)\n{\n    public required DateOnly Date { get; init; }\n    public string Title { get; } = title;\n}\n\nWorkSummary first = new(1, 8m);\nWorkSummary revised = first with { Hours = 7.5m };\nWorkSummary[] summaries = [first, revised];\nReport report = new(\"Daily hours\") { Date = DateOnly.FromDateTime(DateTime.Today) };\n\nConsole.WriteLine($\"{report.Title}: {summaries.Length}\");"},
-      "Identify which type uses value equality and which property is required during construction.",
-      "Explain why the Report primary-constructor parameter is copied into a property instead of automatically becoming one.",
-      {"text":"Run and confirm that two summaries are reported.","code":"dotnet run --project exercises/refreshers/r5"},
-      "Add a third collection using spread syntax, then explain whether any contained objects are deep-copied."
+    "title": "Records and Modern Object Construction",
+    "objective": "Compare explicit immutable classes with records, required/init members, primary constructors, and collection expressions without treating shorter syntax as automatically better.",
+    "practice": [
+      "Records and value equality",
+      "required and init",
+      "Primary constructors",
+      "Collection expressions"
     ],
-    "expectedBehavior": "The program prints Daily hours: 2, and the notes accurately distinguish equality, construction requirements, property exposure, and shallow copying.",
-    "validation": "dotnet run --project exercises/refreshers/r5 | grep -q 'Daily hours: 2'"
+    "task": "Create immutable subscription-plan summaries.",
+    "startingCondition": "Prerequisites: the .NET SDK, VS Code or another C# editor, and basic ability to run dotnet commands. No numbered session or optional module is required. Create exercises/refreshers/r5 from scratch.",
+    "pasteReadyInstructions": true,
+    "stepCheckboxes": true,
+    "steps": [
+      {
+        "text": "Step 1/12: Create an isolated console project with dotnet new console -o exercises/refreshers/r5. Do not add it to PinkMachine19.TimeClock.sln and do not edit TimeClock production code.",
+        "code": "dotnet new console -o exercises/refreshers/r5"
+      },
+      {
+        "text": "Step 2/12: Open exercises/refreshers/r5/Program.cs and remove only the template Hello World statement."
+      },
+      {
+        "text": "Step 3/12: At the top of Program.cs, add a comment naming the scenario: Create immutable subscription-plan summaries."
+      },
+      {
+        "text": "Step 4/12: Confirm the isolated project uses C# 12 or newer."
+      },
+      {
+        "text": "Step 5/12: Write an explicit immutable-class version in comments with a constructor and get-only properties."
+      },
+      {
+        "text": "Step 6/12: Create public sealed record SubscriptionPlan with primary-constructor parameter Name."
+      },
+      {
+        "text": "Step 7/12: Add required decimal MonthlyPrice with init; required makes construction responsibility visible but does not validate price rules."
+      },
+      {
+        "text": "Step 8/12: Add Features initialized with an empty collection expression."
+      },
+      {
+        "text": "Step 9/12: Construct one plan with an object initializer and create an annual copy with with."
+      },
+      {
+        "text": "Step 10/12: Run the project, compare value-oriented record syntax with the explicit class, and state when the class may be clearer."
+      },
+      {
+        "text": "Step 11/12: Build with dotnet build exercises/refreshers/r5 --configuration Release. Read any diagnostic before changing code."
+      },
+      {
+        "text": "Step 12/12: Run with dotnet run --project exercises/refreshers/r5 --configuration Release, then open Solution Reveal and compare every line.",
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "Complete isolated solution. Keep it in this module folder only.",
+            "code": "var plan = new SubscriptionPlan(\"Professional\")\n{\n    MonthlyPrice = 29m,\n    Features = [\"Reports\", \"Exports\"]\n};\n\nSubscriptionPlan annual = plan with { MonthlyPrice = 290m };\nConsole.WriteLine($\"{annual.Name}: {annual.MonthlyPrice:C}\");\nConsole.WriteLine(string.Join(\", \", annual.Features));\n\npublic sealed record SubscriptionPlan(string Name)\n{\n    public required decimal MonthlyPrice { get; init; }\n    public IReadOnlyList<string> Features { get; init; } = [];\n}"
+          }
+        ]
+      }
+    ],
+    "expectedBehavior": "The isolated Records and Modern Object Construction example builds and runs without referencing TimeClock or another optional module.",
+    "validation": "dotnet build exercises/refreshers/r5 --configuration Release\ndotnet run --project exercises/refreshers/r5 --configuration Release"
   },
-  "expectedFiles": [{"path":"exercises/refreshers/r5/Program.cs","action":"Add","why":"Create an isolated modern-construction syntax refresher."}],
-  "commit": "refresher-r5: practice records modern construction and collections",
+  "expectedFiles": [
+    {
+      "path": "exercises/refreshers/r5/r5.csproj",
+      "action": "Add",
+      "why": "Configure the isolated console project."
+    },
+    {
+      "path": "exercises/refreshers/r5/Program.cs",
+      "action": "Add",
+      "why": "Contain the complete isolated optional example."
+    },
+    {
+      "path": "site/data/refreshers/refresher-05.json",
+      "action": "Modify",
+      "why": "Keep the optional lesson, lab, and quiz representations synchronized."
+    }
+  ],
+  "commit": "refresher-r5: compare modern immutable construction",
   "review": [
-    "The record is used for value-oriented data rather than automatic fashion.",
-    "required and init are not described as runtime validation or deep immutability.",
-    "The primary-constructor parameter becomes public state only through an explicit property.",
-    "Collection-expression target types and spread behavior are understood.",
-    "Modern syntax makes the example clearer rather than merely shorter."
+    "The module creates its own complete setup.",
+    "No TimeClock production or numbered-session file changes are required.",
+    "No type or file from another optional module is referenced.",
+    "The complete solution matches the numbered steps and remains behind Reveal."
   ],
   "postQuiz": [
-    {"prompt":"What kind of copy does a record with-expression normally perform for referenced members?","options":["Deep copy","Shallow copy","No copy"],"correct":1,"explanation":"The new record can still share referenced mutable objects with the original."},
-    {"prompt":"What does required guarantee?","options":["The caller supplies the member during construction","The value passes business validation","The object is immutable"],"correct":0,"explanation":"required improves construction-time compiler feedback but does not validate meaning."},
-    {"prompt":"What does .. mean inside a collection expression?","options":["Range slicing only","Spread the elements of another sequence","Create a nullable collection"],"correct":1,"explanation":"Spread inserts elements from an existing sequence into the new collection expression."}
+    {
+      "prompt": "What is the primary goal of this optional module?",
+      "options": [
+        "Compare explicit immutable classes with records, required/init members, primary constructors, and collection expressions without treating shorter syntax as automatically better.",
+        "Change the TimeClock production application",
+        "Create a prerequisite for another optional module"
+      ],
+      "correct": 0,
+      "explanation": "Compare explicit immutable classes with records, required/init members, primary constructors, and collection expressions without treating shorter syntax as automatically better."
+    },
+    {
+      "prompt": "Which setup may this module assume?",
+      "options": [
+        "Only the setup it explicitly creates",
+        "Artifacts from the previous optional module",
+        "A completed numbered session"
+      ],
+      "correct": 0,
+      "explanation": "Every optional module is self-contained."
+    },
+    {
+      "prompt": "Where is the complete answer kept?",
+      "options": [
+        "Behind the Solution reveal",
+        "Repeated in every instruction",
+        "Inside a production service"
+      ],
+      "correct": 0,
+      "explanation": "Steps remain incremental; the finished example stays behind Reveal."
+    }
   ],
   "reflections": [
-    "Which data types in your current system would benefit from value equality?",
-    "Where could required improve caller feedback without replacing validation?",
-    "Which modern syntax feature improves readability for your team, and which risks becoming too compressed?"
+    "Why does this business scenario need the feature?",
+    "What does the caller see and what remains hidden?",
+    "When might the older or more explicit form be clearer?"
   ],
-  "whatBreaks": "Skipping R5 does not affect the TimeClock tutorial. You lose a compact production reference for the construction and data-shape syntax introduced across C# 9–14.",
-  "summary": "Records provide value semantics and with-based shallow copying. init limits property reassignment to construction, while required makes caller obligations visible without replacing validation. Primary constructors reduce ceremony but do not automatically create class properties. Collection expressions and spread syntax describe collection contents concisely. Modern C# also includes file-scoped namespaces, global usings, raw strings, target typing, list patterns, params collections, extension members, field-backed properties, and Span-oriented improvements—tools to adopt when they clarify supported production code."
+  "whatBreaks": "Removing this isolated optional exercise removes only its practice and reference value. Sessions 1–35, TimeClock production code, and every other optional module continue to build unchanged.",
+  "summary": "Compare explicit immutable classes with records, required/init members, primary constructors, and collection expressions without treating shorter syntax as automatically better. The module owns all setup under exercises/refreshers/r5 and remains safe to skip.",
+  "learningEnvironment": "isolated-console",
+  "buildState": {
+    "creates": [
+      "exercises/refreshers/r5/r5.csproj",
+      "exercises/refreshers/r5/Program.cs"
+    ],
+    "extends": [
+      "Records and value equality",
+      "required and init",
+      "Primary constructors",
+      "Collection expressions"
+    ]
+  }
 }

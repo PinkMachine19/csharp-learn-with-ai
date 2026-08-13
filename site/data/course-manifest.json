@@ -9,71 +9,460 @@
     "sessionCount": 39
   },
   "layers": [
-    { "id": "orientation", "number": 1, "title": "Orientation and Context", "range": "00–00.6" },
-    { "id": "foundations", "number": 2, "title": "C# and .NET Foundations", "range": "01–07" },
-    { "id": "memory", "number": 3, "title": "Memory and Type Behavior", "range": "08–10" },
-    { "id": "collections", "number": 4, "title": "Collections and Generics", "range": "11–16" },
-    { "id": "design", "number": 5, "title": "Object-Oriented Design", "range": "17–20" },
-    { "id": "linq", "number": 6, "title": "LINQ and Data Transformation", "range": "21–23" },
-    { "id": "errors", "number": 7, "title": "Errors and Resource Management", "range": "24–25" },
-    { "id": "async", "number": 8, "title": "Asynchronous Programming", "range": "26–28" },
-    { "id": "testing", "number": 9, "title": "Testing and Dependency Injection", "range": "29–30" },
-    { "id": "integration", "number": 10, "title": "Data Access and Application Integration", "range": "31–35" }
+    {
+      "id": "orientation",
+      "number": 1,
+      "title": "Orientation and Context",
+      "range": "00–00.6"
+    },
+    {
+      "id": "foundations",
+      "number": 2,
+      "title": "C# and .NET Foundations",
+      "range": "01–07"
+    },
+    {
+      "id": "memory",
+      "number": 3,
+      "title": "Memory and Type Behavior",
+      "range": "08–10"
+    },
+    {
+      "id": "collections",
+      "number": 4,
+      "title": "Collections and Generics",
+      "range": "11–16"
+    },
+    {
+      "id": "design",
+      "number": 5,
+      "title": "Object-Oriented Design",
+      "range": "17–20"
+    },
+    {
+      "id": "linq",
+      "number": 6,
+      "title": "LINQ and Data Transformation",
+      "range": "21–23"
+    },
+    {
+      "id": "errors",
+      "number": 7,
+      "title": "Errors and Resource Management",
+      "range": "24–25"
+    },
+    {
+      "id": "async",
+      "number": 8,
+      "title": "Asynchronous Programming",
+      "range": "26–28"
+    },
+    {
+      "id": "testing",
+      "number": 9,
+      "title": "Testing and Dependency Injection",
+      "range": "29–30"
+    },
+    {
+      "id": "integration",
+      "number": 10,
+      "title": "Data Access and Application Integration",
+      "range": "31–35"
+    }
   ],
   "sessions": [
-    [0,"why-learn-csharp-in-2026","Why Learn C# in 2026?","orientation",null,"original orientation material, not derived from practice-07092026 or csharp-refresher; see SOURCE_MAPPING.md"],
-    ["00.5","product-overview-and-requirements","Product Overview & Requirements","orientation",0,"verified TimeClock behavior and SOURCE_MAPPING.md"],
-    ["00.6","from-requirements-to-domain-model","From Requirements to Domain Model","orientation","00.5","verified TimeClock domain types, services, repositories, and project boundaries"],
-    [1,"scaffolding-the-solution-src-tests-and-sln","Scaffolding the Solution: src, tests, and the .sln","foundations","00.6","001–006"],
-    [2,"project-references-and-dependency-direction","Project References and Dependency Direction","foundations",1,"internal: split out of original session 1 (scaffolding), expanded with new dependency-graph and layering material"],
-    [3,"variables-expressions-and-numeric-types","Variables, Expressions, and Numeric Types","foundations",2,"007, 013"],
-    ["03.5","choosing-dotnet-numeric-types","Choosing .NET Numeric Types","foundations",3,"new conceptual bridge between numeric expressions and control flow"],
-    [4,"control-flow-and-pattern-based-decisions","Control Flow and Pattern-Based Decisions","foundations","03.5","007–013"],
-    [5,"methods-parameters-scope-and-return-values","Methods, Parameters, Scope, and Return Values","foundations",4,"008–010"],
-    [6,"classes-objects-properties-and-constructors","Classes, Objects, Properties, and Constructors","foundations",5,"023–027, 040"],
-    [7,"initialization-nullability-and-invariants","Initialization, Nullability, and Invariants","foundations",6,"011, 028–029, 079"],
-    [8,"value-and-reference-assignment","Value and Reference Assignment","memory",7,"076"],
-    [9,"parameter-passing-with-ref-out-and-in","Parameter Passing with ref, out, and in","memory",8,"076"],
-    [10,"strings-records-structs-and-equality","Strings, Records, Structs, and Equality","memory",9,"013, 076"],
-    [11,"arrays-lists-and-enumeration","Arrays, Lists, and Enumeration","collections",10,"014–019"],
-    [12,"dictionaries-sets-and-lookup-semantics","Dictionaries, Sets, and Lookup Semantics","collections",11,"020–021"],
-    [13,"collection-interfaces-and-ienumerable","Collection Interfaces and IEnumerable<T>","collections",12,"014–022, 044"],
-    [14,"generic-types-and-methods","Generic Types and Methods","collections",13,"014, 020"],
-    [15,"generic-constraints","Generic Constraints","collections",14,"032–038"],
-    [16,"variance-at-api-boundaries","Variance at API Boundaries","collections",15,"032, 076"],
-    [17,"encapsulation-and-composition","Encapsulation and Composition","design",16,"028–030, 034"],
-    [18,"interfaces-and-polymorphism","Interfaces and Polymorphism","design",17,"032–033, 075"],
-    [19,"abstract-classes-inheritance-and-overrides","Abstract Classes, Inheritance, and Overrides","design",18,"073–075"],
-    [20,"dependency-direction-and-constructor-injection","Dependency Direction and Constructor Injection","design",19,"035–039, 077"],
-    [21,"linq-pipelines","LINQ Pipelines with Where, Select, and Ordering","linq",20,"022, 045"],
-    [22,"grouping-joining-and-aggregation","Grouping, Joining, and Aggregation","linq",21,"044–045, 080"],
-    [23,"deferred-execution-materialization-and-query-sources","Deferred Execution, Materialization, and Query Sources","linq",22,"045, 060"],
-    [24,"validation-return-values-and-exceptions","Validation, Return Values, and Exceptions","errors",23,"010, 012, 046"],
-    [25,"exception-propagation-idisposable-and-using","Exception Propagation, IDisposable, and using","errors",24,"046, 078"],
-    [26,"tasks-await-and-already-completed-work","Tasks, Await, and Already-Completed Work","async",25,"047"],
-    [27,"sequential-and-concurrent-asynchronous-flow","Sequential and Concurrent Asynchronous Flow","async",26,"047–048"],
-    [28,"cancellation-and-asynchronous-exceptions","Cancellation and Asynchronous Exceptions","async",27,"048, 078"],
-    [29,"unit-tests-and-arrange-act-assert","Unit Tests and Arrange–Act–Assert","testing",28,"063"],
-    [30,"test-doubles-di-lifetimes-and-service-tests","Test Doubles, DI Lifetimes, and Service Tests","testing",29,"035, 064, 077"],
-    [31,"ef-core-context-entities-and-tracking","EF Core Context, Entities, and Tracking","integration",30,"057–059"],
-    [32,"ef-core-query-execution","EF Core Queries: In-Memory versus Database Execution","integration",31,"057, 060–061"],
-    [33,"aspnet-core-requests-routing-and-dtos","ASP.NET Core Requests, Routing, and DTO Boundaries","integration",32,"049–053"],
-    [34,"validation-logging-and-api-errors","Validation, Logging, and API Error Responses","integration",33,"054–056, 062"],
-    [35,"integrated-workflow-and-end-to-end-verification","Integrated Workflow and End-to-End Verification","integration",34,"040–044, 061, 065"]
+    [
+      0,
+      "why-learn-csharp-in-2026",
+      "Why Learn C# in 2026?",
+      "orientation",
+      null,
+      "original orientation material, not derived from practice-07092026 or csharp-refresher; see SOURCE_MAPPING.md"
+    ],
+    [
+      "00.5",
+      "product-overview-and-requirements",
+      "Product Overview & Requirements",
+      "orientation",
+      0,
+      "verified TimeClock behavior and SOURCE_MAPPING.md"
+    ],
+    [
+      "00.6",
+      "from-requirements-to-domain-model",
+      "From Requirements to Domain Model",
+      "orientation",
+      "00.5",
+      "verified TimeClock domain types, services, repositories, and project boundaries"
+    ],
+    [
+      1,
+      "scaffolding-the-solution-src-tests-and-sln",
+      "Scaffolding the Solution: src, tests, and the .sln",
+      "foundations",
+      "00.6",
+      "001–006"
+    ],
+    [
+      2,
+      "project-references-and-dependency-direction",
+      "Project References and Dependency Direction",
+      "foundations",
+      1,
+      "internal: split out of original session 1 (scaffolding), expanded with new dependency-graph and layering material"
+    ],
+    [
+      3,
+      "variables-expressions-and-numeric-types",
+      "Variables, Expressions, and Numeric Types",
+      "foundations",
+      2,
+      "007, 013"
+    ],
+    [
+      "03.5",
+      "choosing-dotnet-numeric-types",
+      "Choosing .NET Numeric Types",
+      "foundations",
+      3,
+      "new conceptual bridge between numeric expressions and control flow"
+    ],
+    [
+      4,
+      "control-flow-and-pattern-based-decisions",
+      "Control Flow and Pattern-Based Decisions",
+      "foundations",
+      "03.5",
+      "007–013"
+    ],
+    [
+      5,
+      "methods-parameters-scope-and-return-values",
+      "Methods, Parameters, Scope, and Return Values",
+      "foundations",
+      4,
+      "008–010"
+    ],
+    [
+      6,
+      "classes-objects-properties-and-constructors",
+      "Classes, Objects, Properties, and Constructors",
+      "foundations",
+      5,
+      "023–027, 040"
+    ],
+    [
+      7,
+      "initialization-nullability-and-invariants",
+      "Initialization, Nullability, and Invariants",
+      "foundations",
+      6,
+      "011, 028–029, 079"
+    ],
+    [
+      8,
+      "value-and-reference-assignment",
+      "Value and Reference Assignment",
+      "memory",
+      7,
+      "076"
+    ],
+    [
+      9,
+      "parameter-passing-with-ref-out-and-in",
+      "Parameter Passing with ref, out, and in",
+      "memory",
+      8,
+      "076"
+    ],
+    [
+      10,
+      "strings-records-structs-and-equality",
+      "Strings, Records, Structs, and Equality",
+      "memory",
+      9,
+      "013, 076"
+    ],
+    [
+      11,
+      "arrays-lists-and-enumeration",
+      "Arrays, Lists, and Enumeration",
+      "collections",
+      10,
+      "014–019"
+    ],
+    [
+      12,
+      "dictionaries-sets-and-lookup-semantics",
+      "Dictionaries, Sets, and Lookup Semantics",
+      "collections",
+      11,
+      "020–021"
+    ],
+    [
+      13,
+      "collection-interfaces-and-ienumerable",
+      "Collection Interfaces and IEnumerable<T>",
+      "collections",
+      12,
+      "014–022, 044"
+    ],
+    [
+      14,
+      "generic-types-and-methods",
+      "Generic Types and Methods",
+      "collections",
+      13,
+      "014, 020"
+    ],
+    [
+      15,
+      "generic-constraints",
+      "Generic Constraints",
+      "collections",
+      14,
+      "032–038"
+    ],
+    [
+      16,
+      "variance-at-api-boundaries",
+      "Variance at API Boundaries",
+      "collections",
+      15,
+      "032, 076"
+    ],
+    [
+      17,
+      "encapsulation-and-composition",
+      "Encapsulation and Composition",
+      "design",
+      16,
+      "028–030, 034"
+    ],
+    [
+      18,
+      "interfaces-and-polymorphism",
+      "Interfaces and Polymorphism",
+      "design",
+      17,
+      "032–033, 075"
+    ],
+    [
+      19,
+      "abstract-classes-inheritance-and-overrides",
+      "Abstract Classes, Inheritance, and Overrides",
+      "design",
+      18,
+      "073–075"
+    ],
+    [
+      20,
+      "dependency-direction-and-constructor-injection",
+      "Dependency Direction and Constructor Injection",
+      "design",
+      19,
+      "035–039, 077"
+    ],
+    [
+      21,
+      "linq-pipelines",
+      "LINQ Pipelines with Where, Select, and Ordering",
+      "linq",
+      20,
+      "022, 045"
+    ],
+    [
+      22,
+      "grouping-joining-and-aggregation",
+      "Grouping, Joining, and Aggregation",
+      "linq",
+      21,
+      "044–045, 080"
+    ],
+    [
+      23,
+      "deferred-execution-materialization-and-query-sources",
+      "Deferred Execution, Materialization, and Query Sources",
+      "linq",
+      22,
+      "045, 060"
+    ],
+    [
+      24,
+      "validation-return-values-and-exceptions",
+      "Validation, Return Values, and Exceptions",
+      "errors",
+      23,
+      "010, 012, 046"
+    ],
+    [
+      25,
+      "exception-propagation-idisposable-and-using",
+      "Exception Propagation, IDisposable, and using",
+      "errors",
+      24,
+      "046, 078"
+    ],
+    [
+      26,
+      "tasks-await-and-already-completed-work",
+      "Tasks, Await, and Already-Completed Work",
+      "async",
+      25,
+      "047"
+    ],
+    [
+      27,
+      "sequential-and-concurrent-asynchronous-flow",
+      "Sequential and Concurrent Asynchronous Flow",
+      "async",
+      26,
+      "047–048"
+    ],
+    [
+      28,
+      "cancellation-and-asynchronous-exceptions",
+      "Cancellation and Asynchronous Exceptions",
+      "async",
+      27,
+      "048, 078"
+    ],
+    [
+      29,
+      "unit-tests-and-arrange-act-assert",
+      "Unit Tests and Arrange–Act–Assert",
+      "testing",
+      28,
+      "063"
+    ],
+    [
+      30,
+      "test-doubles-di-lifetimes-and-service-tests",
+      "Test Doubles, DI Lifetimes, and Service Tests",
+      "testing",
+      29,
+      "035, 064, 077"
+    ],
+    [
+      31,
+      "ef-core-context-entities-and-tracking",
+      "EF Core Context, Entities, and Tracking",
+      "integration",
+      30,
+      "057–059"
+    ],
+    [
+      32,
+      "ef-core-query-execution",
+      "EF Core Queries: In-Memory versus Database Execution",
+      "integration",
+      31,
+      "057, 060–061"
+    ],
+    [
+      33,
+      "aspnet-core-requests-routing-and-dtos",
+      "ASP.NET Core Requests, Routing, and DTO Boundaries",
+      "integration",
+      32,
+      "049–053"
+    ],
+    [
+      34,
+      "validation-logging-and-api-errors",
+      "Validation, Logging, and API Error Responses",
+      "integration",
+      33,
+      "054–056, 062"
+    ],
+    [
+      35,
+      "integrated-workflow-and-end-to-end-verification",
+      "Integrated Workflow and End-to-End Verification",
+      "integration",
+      34,
+      "040–044, 061, 065"
+    ]
   ],
   "refreshers": [
-    ["R1","csharp-evolution-and-language-milestones","C# Evolution & Language Milestones",null,"official C# language history and production-oriented refresher"],
-    ["R2","generics-lambdas-and-linq","Generics, Lambdas & LINQ","R1","supplemental synthesis of Sessions 14–15 and 21–23"],
-    ["R3","async-await-refresher","async/await Refresher","R2","supplemental synthesis of Sessions 26–28"],
-    ["R4","pattern-matching-and-nullable-reference-types","Pattern Matching & Nullable Reference Types","R3","supplemental modern C# production reference"],
-    ["R5","records-modern-construction-and-collection-expressions","Records, Modern Construction & Collection Expressions","R4","supplemental C# 9–13 production reference"]
+    [
+      "R1",
+      "csharp-evolution-and-language-milestones",
+      "C# Evolution & Language Milestones",
+      null,
+      "independent optional refresher"
+    ],
+    [
+      "R2",
+      "generics-lambdas-and-linq",
+      "Generics, Lambdas & LINQ",
+      null,
+      "supplemental synthesis of Sessions 14–15 and 21–23"
+    ],
+    [
+      "R3",
+      "async-await-refresher",
+      "async/await Refresher",
+      null,
+      "independent optional refresher"
+    ],
+    [
+      "R4",
+      "pattern-matching-and-nullable-reference-types",
+      "Pattern Matching & Nullable Reference Types",
+      null,
+      "independent optional refresher"
+    ],
+    [
+      "R5",
+      "records-modern-construction-and-collection-expressions",
+      "Records, Modern Construction & Collection Expressions",
+      null,
+      "supplemental C# 9–13 production reference"
+    ]
   ],
   "sideLabs": [
-    ["01B","vscode-fluency-navigate-manipulate-debug-recover","VS Code Fluency: Navigate, Manipulate, Run, and Recover",1,"optional editor-workflow practice attached to Session 01"],
-    ["03B","formatting-console-output-in-csharp","Formatting Console Output in C#",3,"optional console-formatting reference attached to Session 03"],
-    ["04C","choosing-if-switch-statement-or-switch-expression","Choosing if/else, a switch Statement, or a switch Expression",4,"optional decision-syntax comparison attached to Session 04"],
-    ["05B","properties-backing-fields-and-auto-properties","Properties, Backing Fields, and Auto-Properties",5,"optional property-syntax comparison attached to Session 05"],
-    ["19B","access-modifiers-and-api-boundaries","Access Modifiers and API Boundaries",19,"optional enterprise accessibility synthesis attached to Session 19"],
-    ["24B","choosing-outcome-contracts-across-boundaries","Choosing Outcome Contracts Across Boundaries",24,"optional outcome-design synthesis attached to Session 24"]
+    [
+      "01B",
+      "vscode-fluency-navigate-manipulate-debug-recover",
+      "VS Code Fluency: Navigate, Manipulate, Run, and Recover",
+      1,
+      "independent optional module suggested near Session 01"
+    ],
+    [
+      "03B",
+      "formatting-console-output-in-csharp",
+      "Formatting Console Output in C#",
+      3,
+      "independent optional module suggested near Session 03"
+    ],
+    [
+      "04C",
+      "choosing-if-switch-statement-or-switch-expression",
+      "Choosing if/else, a switch Statement, or a switch Expression",
+      4,
+      "independent optional module suggested near Session 04"
+    ],
+    [
+      "05B",
+      "properties-backing-fields-and-auto-properties",
+      "Properties, Backing Fields, and Auto-Properties",
+      5,
+      "independent optional module suggested near Session 05"
+    ],
+    [
+      "19B",
+      "access-modifiers-and-api-boundaries",
+      "Access Modifiers and API Boundaries",
+      19,
+      "independent optional module suggested near Session 19"
+    ],
+    [
+      "24B",
+      "choosing-outcome-contracts-across-boundaries",
+      "Choosing Outcome Contracts Across Boundaries",
+      24,
+      "independent optional module suggested near Session 24"
+    ]
   ]
 }

@@ -1,217 +1,226 @@
 {
   "number": "04C",
-  "category": "Optional Session 04 sidebar lab",
-  "estimatedTime": "20–25 minutes",
-  "connection": "Session 04 teaches modern relational patterns with a switch expression. This optional sidebar shows the older if/else and switch-statement forms beside the modern switch expression so you can recognize all three in real C# code.",
+  "category": "Independent optional side lab",
+  "estimatedTime": "35–40 minutes",
+  "connection": "This module is independent of Sessions 1–35 and every other optional module. Choose and handle a customer-support ticket priority.",
   "objectives": [
-    "Recognize the visual and behavioral differences between if/else, a traditional switch statement, and a switch expression.",
-    "Explain that switch expressions arrived in C# 8 while traditional switch statements remain valid C#.",
-    "Choose a decision form based on the shape of the problem instead of assuming the newest syntax is always required.",
-    "Read a small enum as a type with a fixed set of named choices."
+    "Choose if/else, switch statements, or switch expressions based on the shape of a decision.",
+    "Create and validate all required setup inside one isolated exercise folder.",
+    "Compare caller-visible behavior and syntax without modifying TimeClock."
   ],
   "visuals": [
     {
-      "diagram": "mental-side-04c-1",
-      "title": "if/else asks Boolean questions",
-      "explanation": "Each condition is a separate true-or-false question. This form works naturally for ranges, unrelated conditions, and branches that perform several statements."
+      "diagram": "solution",
+      "title": "Isolated workspace",
+      "explanation": "The exercise folder stands outside the cumulative solution and owns every file it needs."
     },
     {
-      "diagram": "mental-side-04c-2",
-      "title": "A traditional switch statement chooses a case",
-      "explanation": "The statement form uses case labels, executes statements inside the matching case, and normally uses break to leave that case."
+      "diagram": "pipeline",
+      "title": "Caller and contract",
+      "explanation": "The caller sends inputs through the feature and observes its return value or output contract."
     },
     {
-      "diagram": "mental-side-04c-3",
-      "title": "A switch expression produces a value",
-      "explanation": "The expression form maps one input to one result. It is concise when the purpose of the decision is to calculate or select a value."
+      "diagram": "feedback",
+      "title": "Edit, build, and observe",
+      "explanation": "Compiler and runtime feedback guide one small correction at a time inside this module."
     },
     {
-      "diagram": "mental-side-04c-4",
-      "title": "The problem shape guides the syntax",
-      "explanation": "All three forms are tools. Prefer the one that communicates the conditions, actions, or returned value most clearly in the codebase you are maintaining."
+      "diagram": "tests",
+      "title": "Validation checkpoint",
+      "explanation": "Only this isolated project is built and run; the TimeClock solution is not changed."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Which form was added in C# 8?",
+      "prompt": "What is the primary goal of this optional module?",
       "options": [
-        "if/else",
-        "The traditional switch statement",
-        "The switch expression"
-      ],
-      "correct": 2,
-      "explanation": "Switch expressions were introduced in C# 8. The older statement forms remain supported."
-    },
-    {
-      "prompt": "Which form naturally handles several unrelated Boolean conditions?",
-      "options": [
-        "if/else",
-        "Only a switch expression",
-        "An enum declaration"
+        "Choose if/else, switch statements, or switch expressions based on the shape of a decision.",
+        "Change the TimeClock production application",
+        "Create a prerequisite for another optional module"
       ],
       "correct": 0,
-      "explanation": "if/else can ask different Boolean questions in each branch."
+      "explanation": "Choose if/else, switch statements, or switch expressions based on the shape of a decision."
     },
     {
-      "prompt": "What is an enum in this mini lab?",
+      "prompt": "Which setup may this module assume?",
       "options": [
-        "A loop",
-        "A type with a fixed set of named choices",
-        "A special kind of string"
+        "Only the setup it explicitly creates",
+        "Artifacts from the previous optional module",
+        "A completed numbered session"
       ],
-      "correct": 1,
-      "explanation": "CodeStatus restricts the example to the named NotStarted, InProgress, and Completed choices."
+      "correct": 0,
+      "explanation": "Every optional module is self-contained."
+    },
+    {
+      "prompt": "Where is the complete answer kept?",
+      "options": [
+        "Behind the Solution reveal",
+        "Repeated in every instruction",
+        "Inside a production service"
+      ],
+      "correct": 0,
+      "explanation": "Steps remain incremental; the finished example stays behind Reveal."
     }
   ],
   "concept": [
     {
-      "title": "First, the small enum used by two examples",
+      "title": "Why this feature exists",
       "paragraphs": [
-        "An enum defines a type with a fixed set of named values. You do not need a full enum lesson here; for now, CodeStatus means that a variable represents one of three named states instead of arbitrary text.",
-        "With top-level statements, place the enum declaration after the executable statements in Program.cs."
-      ],
-      "code": "enum CodeStatus\n{\n    NotStarted,\n    InProgress,\n    Completed\n}"
+        "Choose and handle a customer-support ticket priority.",
+        "Choose if/else, switch statements, or switch expressions based on the shape of a decision."
+      ]
     },
     {
-      "title": "1. if/else: ask a sequence of questions",
+      "title": "Read the caller-visible contract",
       "paragraphs": [
-        "Use if/else when branches depend on Boolean conditions, especially ranges or conditions that are not all comparisons against one value.",
-        "The Session 04 variance decision is a natural if/else example because it asks whether a decimal is positive, negative, or neither."
-      ],
-      "code": "string scheduleStatus;\n\nif (varianceHours > 0m)\n{\n    scheduleStatus = \"Above scheduled hours\";\n}\nelse if (varianceHours < 0m)\n{\n    scheduleStatus = \"Below scheduled hours\";\n}\nelse\n{\n    scheduleStatus = \"On schedule\";\n}"
+        "Start with the receiver, input types, return type, and accessibility. A return type promises what a successful caller receives; it does not hide failure meaning.",
+        "Use IntelliSense one parameter or member at a time rather than memorizing a dense signature."
+      ]
     },
     {
-      "title": "2. Traditional switch statement: execute a matching case",
+      "title": "Modern does not automatically mean clearer",
       "paragraphs": [
-        "The traditional switch statement has existed since early C#. It uses case labels and normally ends each case with break so execution does not continue into another case.",
-        "It remains useful in modern C#, particularly when each case performs multiple statements or when you are reading and maintaining an older codebase."
-      ],
-      "code": "string statusMessage;\n\nswitch (codeStatus)\n{\n    case CodeStatus.NotStarted:\n        statusMessage = \"Coding has not started\";\n        break;\n\n    case CodeStatus.InProgress:\n        statusMessage = \"Coding is in progress\";\n        break;\n\n    case CodeStatus.Completed:\n        statusMessage = \"Coding is complete\";\n        break;\n\n    default:\n        statusMessage = \"Unknown status\";\n        break;\n}"
-    },
-    {
-      "title": "3. Switch expression: map one input to one result",
-      "paragraphs": [
-        "C# 8 introduced the switch expression. Each arm uses => to produce a result, commas separate the arms, and the entire expression is assigned or returned.",
-        "Use it when one input is being cleanly translated into one value. It is not a command to replace every if/else or traditional switch statement."
-      ],
-      "code": "string statusMessage = codeStatus switch\n{\n    CodeStatus.NotStarted => \"Coding has not started\",\n    CodeStatus.InProgress => \"Coding is in progress\",\n    CodeStatus.Completed => \"Coding is complete\",\n    _ => \"Unknown status\"\n};"
-    },
-    {
-      "title": "A practical decision guide",
-      "paragraphs": [
-        "Choose for clarity in the project and language version you actually maintain. Modern does not automatically mean better for every branch."
-      ],
-      "table": {
-        "headers": [
-          "Decision form",
-          "Prefer it when",
-          "Recognizable syntax"
-        ],
-        "rows": [
-          [
-            "if/else",
-            "You have ranges, unrelated Boolean conditions, or branches with different kinds of work.",
-            "if (...), else if (...), else"
-          ],
-          [
-            "Traditional switch statement",
-            "One input selects a case, each case performs statements, or an older codebase already uses this form.",
-            "switch (...), case, break, default"
-          ],
-          [
-            "Switch expression (C# 8+)",
-            "One input maps directly to one returned or assigned value.",
-            "value switch, =>, commas, _ fallback"
-          ]
-        ]
-      }
+        "Prefer the form that makes this business rule easiest to read and maintain. Older or more explicit syntax can remain the better teaching or production choice.",
+        "Compiler diagnostics identify unsupported language versions, inaccessible members, missing required values, and unsafe nullable paths."
+      ]
     }
   ],
   "lab": {
-    "objective": "Run the same CodeStatus mapping through a traditional switch statement and a modern switch expression, then choose the clearer form for three scenarios.",
-    "startingCondition": "This is an optional isolated exercise after Session 04. It does not change the TimeClock solution or block Session 05.",
+    "title": "Choosing if/else, a switch Statement, or a switch Expression",
+    "objective": "Choose if/else, switch statements, or switch expressions based on the shape of a decision.",
+    "practice": [
+      "Boolean ranges",
+      "Multiple actions",
+      "One-value mappings",
+      "Decision-shape tradeoffs"
+    ],
+    "task": "Choose and handle a customer-support ticket priority.",
+    "startingCondition": "Prerequisites: the .NET SDK, VS Code or another C# editor, and basic ability to run dotnet commands. No numbered session or optional module is required. Create exercises/optional/support-ticket-decisions from scratch.",
+    "pasteReadyInstructions": true,
+    "stepCheckboxes": true,
     "steps": [
       {
-        "text": "Create and enter a temporary console project outside the TimeClock repository.",
-        "code": "dotnet new console -n DecisionSyntaxSideLab\ncd DecisionSyntaxSideLab"
+        "text": "Step 1/12: Create an isolated console project with dotnet new console -o exercises/optional/support-ticket-decisions. Do not add it to PinkMachine19.TimeClock.sln and do not edit TimeClock production code.",
+        "code": "dotnet new console -o exercises/optional/support-ticket-decisions"
       },
       {
-        "text": "Replace Program.cs with this complete traditional switch-statement example. Because this file uses top-level statements, keep the enum at the bottom.",
-        "code": "CodeStatus codeStatus = CodeStatus.InProgress;\nstring traditionalMessage;\n\nswitch (codeStatus)\n{\n    case CodeStatus.NotStarted:\n        traditionalMessage = \"Coding has not started\";\n        break;\n\n    case CodeStatus.InProgress:\n        traditionalMessage = \"Coding is in progress\";\n        break;\n\n    case CodeStatus.Completed:\n        traditionalMessage = \"Coding is complete\";\n        break;\n\n    default:\n        traditionalMessage = \"Unknown status\";\n        break;\n}\n\nConsole.WriteLine($\"Traditional: {traditionalMessage}\");\n\nenum CodeStatus\n{\n    NotStarted,\n    InProgress,\n    Completed\n}"
+        "text": "Step 2/12: Open exercises/optional/support-ticket-decisions/Program.cs and remove only the template Hello World statement."
       },
       {
-        "text": "Run the project. Expect Traditional: Coding is in progress. Then identify switch, case, break, and default in the code before continuing.",
-        "code": "dotnet run"
+        "text": "Step 3/12: At the top of Program.cs, add a comment naming the scenario: Choose and handle a customer-support ticket priority."
       },
       {
-        "text": "Above Console.WriteLine, add the modern switch expression. Keep the traditional statement so both forms can be compared in one file.",
-        "code": "string modernMessage = codeStatus switch\n{\n    CodeStatus.NotStarted => \"Coding has not started\",\n    CodeStatus.InProgress => \"Coding is in progress\",\n    CodeStatus.Completed => \"Coding is complete\",\n    _ => \"Unknown status\"\n};"
+        "text": "Step 4/12: Create waitingHours and channel inputs for one support ticket."
       },
       {
-        "text": "Directly below the traditional Console.WriteLine, add this second output statement.",
-        "code": "Console.WriteLine($\"Modern: {modernMessage}\");"
+        "text": "Step 5/12: Use if/else for the unrelated Boolean escalation conditions."
       },
       {
-        "text": "Run again. Both output lines should end with Coding is in progress.",
-        "code": "dotnet run"
+        "text": "Step 6/12: Use a switch statement for channel-specific actions that require multiple statements."
       },
-      "Change codeStatus to CodeStatus.NotStarted and then CodeStatus.Completed, running after each edit. Confirm both decision forms produce the same meaning for every enum value.",
-      "Choose a form for each scenario and explain why: a decimal temperature range; an enum case that logs two messages and updates a counter; an enum translated directly into display text. Suggested choices are if/else, traditional switch statement, and switch expression respectively, but your explanation matters more than memorizing that order."
+      {
+        "text": "Step 7/12: Use a switch expression to produce one priority label from waiting-hour ranges."
+      },
+      {
+        "text": "Step 8/12: Add a default or discard path so every input has an outcome."
+      },
+      {
+        "text": "Step 9/12: Run three input combinations and predict which construct handles each decision."
+      },
+      {
+        "text": "Step 10/12: Write one comment explaining why none of the three constructs is universally best."
+      },
+      {
+        "text": "Step 11/12: Build with dotnet build exercises/optional/support-ticket-decisions --configuration Release. Read any diagnostic before changing code."
+      },
+      {
+        "text": "Step 12/12: Run with dotnet run --project exercises/optional/support-ticket-decisions --configuration Release, then open Solution Reveal and compare every line.",
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "Complete isolated solution. Keep it in this module folder only.",
+            "code": "int waitingHours = 30;\nstring channel = \"phone\";\n\nif (waitingHours >= 24 || channel == \"emergency\")\n{\n    Console.WriteLine(\"Escalate now\");\n}\nelse\n{\n    Console.WriteLine(\"Keep in queue\");\n}\n\nswitch (channel)\n{\n    case \"phone\":\n        Console.WriteLine(\"Call the customer\");\n        Console.WriteLine(\"Record the call\");\n        break;\n    default:\n        Console.WriteLine(\"Send a written reply\");\n        break;\n}\n\nstring label = waitingHours switch\n{\n    >= 24 => \"Urgent\",\n    >= 8 => \"High\",\n    _ => \"Normal\"\n};\n\nConsole.WriteLine(label);"
+          }
+        ]
+      }
     ],
-    "expectedBehavior": "The traditional switch statement and modern switch expression produce equivalent messages for all three CodeStatus values, while their syntax and best-fit use cases remain visibly different.",
-    "validation": "dotnet run"
+    "expectedBehavior": "The isolated Choosing if/else, a switch Statement, or a switch Expression example builds and runs without referencing TimeClock or another optional module.",
+    "validation": "dotnet build exercises/optional/support-ticket-decisions --configuration Release\ndotnet run --project exercises/optional/support-ticket-decisions --configuration Release"
   },
   "expectedFiles": [
     {
-      "path": "DecisionSyntaxSideLab/Program.cs",
-      "action": "Temporary exercise",
-      "why": "Compare syntax without changing the cumulative TimeClock project."
+      "path": "exercises/optional/support-ticket-decisions/support-ticket-decisions.csproj",
+      "action": "Add",
+      "why": "Configure the isolated console project."
+    },
+    {
+      "path": "exercises/optional/support-ticket-decisions/Program.cs",
+      "action": "Add",
+      "why": "Contain the complete isolated optional example."
+    },
+    {
+      "path": "site/data/side-labs/side-lab-04c.json",
+      "action": "Modify",
+      "why": "Keep the optional lesson, lab, and quiz representations synchronized."
     }
   ],
-  "commit": "Not applicable — optional side lab; no TimeClock repository changes.",
+  "commit": "optional-04c: compare csharp decision forms",
   "review": [
-    "The enum is declared once and contains exactly three named choices.",
-    "Every traditional switch case assigns a message and exits with break.",
-    "Every switch-expression arm produces a string and ends with a comma except the completed expression's semicolon.",
-    "The comparison explains when each form communicates intent clearly rather than declaring one universal winner."
+    "The module creates its own complete setup.",
+    "No TimeClock production or numbered-session file changes are required.",
+    "No type or file from another optional module is referenced.",
+    "The complete solution matches the numbered steps and remains behind Reveal."
   ],
   "postQuiz": [
     {
-      "prompt": "Why does the traditional switch example use break?",
+      "prompt": "What is the primary goal of this optional module?",
       "options": [
-        "To leave the matching case after its statements run",
-        "To delete the enum value",
-        "To return a string automatically"
+        "Choose if/else, switch statements, or switch expressions based on the shape of a decision.",
+        "Change the TimeClock production application",
+        "Create a prerequisite for another optional module"
       ],
       "correct": 0,
-      "explanation": "break transfers control out of the switch statement after the selected case finishes."
+      "explanation": "Choose if/else, switch statements, or switch expressions based on the shape of a decision."
     },
     {
-      "prompt": "Which form best fits mapping one CodeStatus value directly to one string in C# 8 or later?",
+      "prompt": "Which setup may this module assume?",
       "options": [
-        "A switch expression",
-        "A loop",
-        "A second enum"
+        "Only the setup it explicitly creates",
+        "Artifacts from the previous optional module",
+        "A completed numbered session"
       ],
       "correct": 0,
-      "explanation": "A switch expression concisely represents one-input-to-one-result mapping."
+      "explanation": "Every optional module is self-contained."
     },
     {
-      "prompt": "Does the existence of switch expressions make traditional switch statements invalid?",
+      "prompt": "Where is the complete answer kept?",
       "options": [
-        "Yes",
-        "No; they remain valid and can be clearer for statement-heavy cases",
-        "Only enums can use the older form"
+        "Behind the Solution reveal",
+        "Repeated in every instruction",
+        "Inside a production service"
       ],
-      "correct": 1,
-      "explanation": "New syntax adds another option; it does not remove the traditional statement."
+      "correct": 0,
+      "explanation": "Steps remain incremental; the finished example stays behind Reveal."
     }
   ],
   "reflections": [
-    "Which visual clues immediately distinguish a switch statement from a switch expression?",
-    "Why might a team keep a traditional switch statement even after upgrading to C# 8 or later?",
-    "When does compact syntax improve clarity, and when might it hide too much from a beginner?"
+    "Why does this business scenario need the feature?",
+    "What does the caller see and what remains hidden?",
+    "When might the older or more explicit form be clearer?"
   ],
-  "whatBreaks": "Skipping this optional side lab does not break the TimeClock path. You would only lose practice recognizing older switch statements and comparing the three decision forms deliberately.",
-  "summary": "if/else asks flexible Boolean questions. A traditional switch statement selects and executes a case using case, break, and default. A C# 8+ switch expression maps one input directly to one result using => arms and an optional _ fallback. All three remain useful when their shape matches the problem."
+  "whatBreaks": "Removing this isolated optional exercise removes only its practice and reference value. Sessions 1–35, TimeClock production code, and every other optional module continue to build unchanged.",
+  "summary": "Choose if/else, switch statements, or switch expressions based on the shape of a decision. The module owns all setup under exercises/optional/support-ticket-decisions and remains safe to skip.",
+  "learningEnvironment": "isolated-console",
+  "buildState": {
+    "creates": [
+      "exercises/optional/support-ticket-decisions/support-ticket-decisions.csproj",
+      "exercises/optional/support-ticket-decisions/Program.cs"
+    ],
+    "extends": [
+      "Boolean ranges",
+      "Multiple actions",
+      "One-value mappings",
+      "Decision-shape tradeoffs"
+    ]
+  }
 }

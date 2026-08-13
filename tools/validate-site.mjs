@@ -67,8 +67,7 @@ if (manifest) {
   const expectedRefreshers = ["R1", "R2", "R3", "R4", "R5"];
   for (const [index, refresher] of refreshers.entries()) {
     if (refresher.number !== expectedRefreshers[index]) errors.push(`Refresher sequence breaks at ${refresher.id}`);
-    const expectedPrerequisite = index === 0 ? null : refreshers[index - 1].number;
-    if (refresher.prerequisiteSession !== expectedPrerequisite) errors.push(`Unexpected prerequisite for ${refresher.id}`);
+    if (refresher.prerequisiteSession !== null) errors.push(`${refresher.id} must remain independently startable`);
     for (const field of ["lessonPath", "labPath", "quizPath", "suggestedCommitMessage", "completionStatus"]) {
       if (!refresher[field]) errors.push(`${refresher.id} is missing ${field}`);
     }

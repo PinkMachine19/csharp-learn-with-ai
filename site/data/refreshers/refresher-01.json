@@ -1,70 +1,226 @@
 {
   "number": "R1",
-  "category": "Optional Modern C# refresher",
-  "estimatedTime": "40 minutes",
-  "connection": "This optional track is separate from the TimeClock tutorial. Start here when returning to C# after several years or when interview questions refer to a feature by language version.",
+  "category": "Independent Modern C# refresher",
+  "estimatedTime": "35–40 minutes",
+  "connection": "This module is independent of Sessions 1–35 and every other optional module. A small compatibility report maps useful syntax to the configured language version.",
   "objectives": [
-    "Explain why modern C# code can look different while still using the same object-oriented foundations.",
-    "Associate major production features with the C# version that introduced them.",
-    "Relate language versions to target frameworks and installed SDKs.",
-    "Distinguish stable released features from preview features.",
-    "Read an unfamiliar feature as a newer expression of an older programming idea."
+    "Recognize useful modern C# milestones and verify whether the current toolchain supports them.",
+    "Create and validate all required setup inside one isolated exercise folder.",
+    "Compare caller-visible behavior and syntax without modifying TimeClock."
   ],
   "visuals": [
-    {"diagram":"mental-ref-01-1","title":"Versions form a timeline, not separate languages","explanation":"C# evolves cumulatively. New syntax is added while older classes, methods, interfaces, and control flow remain valid."},
-    {"diagram":"mental-ref-01-2","title":"Features accumulate on stable foundations","explanation":"Generics, LINQ, async, records, and modern patterns layer onto the language rather than replacing its core model."},
-    {"diagram":"mental-ref-01-3","title":"Language, SDK, runtime, and framework are related but different","explanation":"The compiler accepts language syntax; the SDK supplies tooling; the target framework determines the default supported language version and available APIs."},
-    {"diagram":"mental-ref-01-4","title":"Version labels explain syntax availability","explanation":"A feature can be valid C# but unavailable to a project using an older compiler or target framework."}
+    {
+      "diagram": "solution",
+      "title": "Isolated workspace",
+      "explanation": "The exercise folder stands outside the cumulative solution and owns every file it needs."
+    },
+    {
+      "diagram": "pipeline",
+      "title": "Caller and contract",
+      "explanation": "The caller sends inputs through the feature and observes its return value or output contract."
+    },
+    {
+      "diagram": "feedback",
+      "title": "Edit, build, and observe",
+      "explanation": "Compiler and runtime feedback guide one small correction at a time inside this module."
+    },
+    {
+      "diagram": "tests",
+      "title": "Validation checkpoint",
+      "explanation": "Only this isolated project is built and run; the TimeClock solution is not changed."
+    }
   ],
   "preQuiz": [
-    {"prompt":"A project targets .NET 8 and does not set LangVersion. Which C# version does it normally use?","options":["C# 8","C# 12","Always the newest preview"],"correct":1,"explanation":"The default language version follows the target framework; .NET 8 defaults to C# 12."},
-    {"prompt":"Does learning records make classes obsolete?","options":["Yes","No — records add value-oriented data modeling while classes remain appropriate for identity and mutable behavior","Only in web projects"],"correct":1,"explanation":"New features expand the design vocabulary; they do not erase earlier constructs."},
-    {"prompt":"What is safest for production code?","options":["Set LangVersion to preview everywhere","Use the language version supported by the project's target framework unless there is a deliberate reason to change it","Copy syntax until the compiler accepts it"],"correct":1,"explanation":"Framework, SDK, compiler, and team support should move deliberately together."}
+    {
+      "prompt": "What is the primary goal of this optional module?",
+      "options": [
+        "Recognize useful modern C# milestones and verify whether the current toolchain supports them.",
+        "Change the TimeClock production application",
+        "Create a prerequisite for another optional module"
+      ],
+      "correct": 0,
+      "explanation": "Recognize useful modern C# milestones and verify whether the current toolchain supports them."
+    },
+    {
+      "prompt": "Which setup may this module assume?",
+      "options": [
+        "Only the setup it explicitly creates",
+        "Artifacts from the previous optional module",
+        "A completed numbered session"
+      ],
+      "correct": 0,
+      "explanation": "Every optional module is self-contained."
+    },
+    {
+      "prompt": "Where is the complete answer kept?",
+      "options": [
+        "Behind the Solution reveal",
+        "Repeated in every instruction",
+        "Inside a production service"
+      ],
+      "correct": 0,
+      "explanation": "Steps remain incremental; the finished example stays behind Reveal."
+    }
   ],
   "concept": [
-    {"title":"1. Read the timeline in eras","paragraphs":["C# versions are easier to remember as capability eras than as trivia.","The early language established classes, interfaces, delegates, properties, exceptions, and generics. Later releases made data querying, asynchronous work, null safety, and concise modeling first-class language experiences."]},
-    {"title":"2. C# 1–3: the durable base","paragraphs":["C# 1 established the managed, object-oriented language. C# 2 added generics, nullable value types, anonymous methods, and iterators.","C# 3 added lambda expressions, extension methods, anonymous types, expression trees, and LINQ. Much of modern .NET still rests on this group of features."]},
-    {"title":"3. C# 4–7: interoperability and expressive control flow","paragraphs":["C# 4 added dynamic binding and improved COM interoperability. C# 5 introduced async and await.","C# 6 added null-conditional access, expression-bodied members, string interpolation, and using static. C# 7 expanded tuples, local functions, out variables, ref features, and the first major wave of pattern matching."]},
-    {"title":"4. C# 8–10: safer, clearer application code","paragraphs":["C# 8 introduced nullable reference types, async streams, ranges and indices, switch expressions, property patterns, and using declarations.","C# 9 added records, init-only setters, top-level statements, and target-typed new. C# 10 added global usings, file-scoped namespaces, record structs, and improvements to lambdas and interpolated strings."]},
-    {"title":"5. C# 11–12: intent at construction time","paragraphs":["C# 11 added required members, raw string literals, list patterns, generic math support through static abstract interface members, and several ref-safety improvements.","C# 12 added primary constructors for classes and structs, collection expressions, default lambda parameters, type aliases for more kinds of types, and inline arrays."]},
-    {"title":"6. C# 13–14: library and performance-oriented refinement","paragraphs":["C# 13 added params collections, updated lock support, partial properties and indexers, and expanded safe uses of ref-like types.","C# 14 is the released language paired with .NET 10. It includes extension members, null-conditional assignment, field-backed properties, stronger Span conversions, and additional partial members.","Later preview features should be treated as preview until the project deliberately adopts their supporting SDK and risk profile."]},
-    {"title":"7. Target framework chooses the default","paragraphs":["A modern SDK can compile several language versions, but a project's target framework determines its normal default. .NET 8 maps to C# 12, .NET 9 to C# 13, and .NET 10 to C# 14.","Avoid setting LangVersion to latest merely to chase syntax. Builds should remain reproducible across developer machines and CI."]},
-    {"title":"8. Use versions as a lookup tool","paragraphs":["In production, the useful question is rarely 'Can I recite every feature in C# 10?' It is 'What feature am I reading, which toolchain supports it, and what older idea does it express?'","That mindset turns the version history into a map instead of an interview memorization contest."]}
+    {
+      "title": "Why this feature exists",
+      "paragraphs": [
+        "A small compatibility report maps useful syntax to the configured language version.",
+        "Recognize useful modern C# milestones and verify whether the current toolchain supports them."
+      ]
+    },
+    {
+      "title": "Read the caller-visible contract",
+      "paragraphs": [
+        "Start with the receiver, input types, return type, and accessibility. A return type promises what a successful caller receives; it does not hide failure meaning.",
+        "Use IntelliSense one parameter or member at a time rather than memorizing a dense signature."
+      ]
+    },
+    {
+      "title": "Modern does not automatically mean clearer",
+      "paragraphs": [
+        "Prefer the form that makes this business rule easiest to read and maintain. Older or more explicit syntax can remain the better teaching or production choice.",
+        "Compiler diagnostics identify unsupported language versions, inaccessible members, missing required values, and unsafe nullable paths."
+      ]
+    }
   ],
   "lab": {
-    "objective": "Create a one-page C# version map you can use during code review or interview preparation.",
-    "startingCondition": "No TimeClock application changes are required. Work only in a supplemental notes folder.",
-    "steps": [
-      {"text":"Create the refresher notes folder and timeline file.","code":"mkdir -p docs/refreshers\ntouch docs/refreshers/csharp-version-map.md"},
-      "Add headings for C# 1–3, 4–7, 8–10, 11–12, and 13–14.",
-      "Under each heading, list three features you are likely to encounter in production code.",
-      "Mark the first version for generics, LINQ, async/await, nullable reference types, records, required members, primary constructors, and collection expressions.",
-      "Add a short note explaining the .NET 8/C# 12, .NET 9/C# 13, and .NET 10/C# 14 defaults.",
-      "Circle or tag three features you want to revisit in R2–R5."
+    "title": "C# Evolution and Language Milestones",
+    "objective": "Recognize useful modern C# milestones and verify whether the current toolchain supports them.",
+    "practice": [
+      "Language-version configuration",
+      "Older and modern syntax",
+      "Compiler feedback",
+      "Feature selection"
     ],
-    "expectedBehavior": "The version map is concise, groups features into memorable eras, and distinguishes language versions from target frameworks.",
-    "validation": "test -s docs/refreshers/csharp-version-map.md && test $(grep -c '^## ' docs/refreshers/csharp-version-map.md) -ge 5"
+    "task": "A small compatibility report maps useful syntax to the configured language version.",
+    "startingCondition": "Prerequisites: the .NET SDK, VS Code or another C# editor, and basic ability to run dotnet commands. No numbered session or optional module is required. Create exercises/refreshers/r1 from scratch.",
+    "pasteReadyInstructions": true,
+    "stepCheckboxes": true,
+    "steps": [
+      {
+        "text": "Step 1/12: Create an isolated console project with dotnet new console -o exercises/refreshers/r1. Do not add it to PinkMachine19.TimeClock.sln and do not edit TimeClock production code.",
+        "code": "dotnet new console -o exercises/refreshers/r1"
+      },
+      {
+        "text": "Step 2/12: Open exercises/refreshers/r1/Program.cs and remove only the template Hello World statement."
+      },
+      {
+        "text": "Step 3/12: At the top of Program.cs, add a comment naming the scenario: A small compatibility report maps useful syntax to the configured language version."
+      },
+      {
+        "text": "Step 4/12: Inspect the project TargetFramework and run dotnet --version."
+      },
+      {
+        "text": "Step 5/12: Create a tuple array mapping five business-relevant features to their C# versions."
+      },
+      {
+        "text": "Step 6/12: Print the map with aligned interpolation."
+      },
+      {
+        "text": "Step 7/12: Write the older explicit array construction form in a comment."
+      },
+      {
+        "text": "Step 8/12: Use a collection expression for the modern form and explain its shorter intent."
+      },
+      {
+        "text": "Step 9/12: Temporarily set LangVersion to 11, build to read the collection-expression diagnostic, then restore the project."
+      },
+      {
+        "text": "Step 10/12: Run the project and record which syntax your configured toolchain accepts."
+      },
+      {
+        "text": "Step 11/12: Build with dotnet build exercises/refreshers/r1 --configuration Release. Read any diagnostic before changing code."
+      },
+      {
+        "text": "Step 12/12: Run with dotnet run --project exercises/refreshers/r1 --configuration Release, then open Solution Reveal and compare every line.",
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "Complete isolated solution. Keep it in this module folder only.",
+            "code": "var milestones = new (string Feature, string Version)[]\n{\n    (\"nullable reference types\", \"C# 8\"),\n    (\"records\", \"C# 9\"),\n    (\"required members\", \"C# 11\"),\n    (\"collection expressions\", \"C# 12\"),\n    (\"primary constructors\", \"C# 12\")\n};\n\nforeach (var milestone in milestones)\n    Console.WriteLine($\"{milestone.Feature,-28} {milestone.Version}\");\n\nstring[] current = [\"records\", \"collection expressions\"];\nConsole.WriteLine($\"Selected: {string.Join(\", \", current)}\");"
+          }
+        ]
+      }
+    ],
+    "expectedBehavior": "The isolated C# Evolution and Language Milestones example builds and runs without referencing TimeClock or another optional module.",
+    "validation": "dotnet build exercises/refreshers/r1 --configuration Release\ndotnet run --project exercises/refreshers/r1 --configuration Release"
   },
   "expectedFiles": [
-    {"path":"docs/refreshers/csharp-version-map.md","action":"Add","why":"Create a personal modern C# timeline reference."}
+    {
+      "path": "exercises/refreshers/r1/r1.csproj",
+      "action": "Add",
+      "why": "Configure the isolated console project."
+    },
+    {
+      "path": "exercises/refreshers/r1/Program.cs",
+      "action": "Add",
+      "why": "Contain the complete isolated optional example."
+    },
+    {
+      "path": "site/data/refreshers/refresher-01.json",
+      "action": "Modify",
+      "why": "Keep the optional lesson, lab, and quiz representations synchronized."
+    }
   ],
-  "commit": "refresher-r1: add a modern C# language-version map",
+  "commit": "refresher-r1: map useful csharp language milestones",
   "review": [
-    "The map groups versions by capability rather than listing every minor change.",
-    "Every requested milestone is assigned to the correct first major version.",
-    "Released C# 14 features are not confused with later previews.",
-    "The target-framework defaults are stated separately from feature descriptions."
+    "The module creates its own complete setup.",
+    "No TimeClock production or numbered-session file changes are required.",
+    "No type or file from another optional module is referenced.",
+    "The complete solution matches the numbered steps and remains behind Reveal."
   ],
   "postQuiz": [
-    {"prompt":"Which release introduced LINQ and lambda expressions?","options":["C# 2","C# 3","C# 8"],"correct":1,"explanation":"C# 3 introduced the language pieces that make LINQ's fluent query style possible."},
-    {"prompt":"Which pairing is correct?","options":["C# 9 — records and init setters","C# 11 — async/await","C# 12 — nullable reference types"],"correct":0,"explanation":"Records and init-only setters arrived in C# 9; async/await arrived in C# 5; nullable reference types arrived in C# 8."},
-    {"prompt":"Why might valid C# 14 syntax fail in another project?","options":["C# syntax changes by operating system","That project may use an older SDK, compiler, target framework, or explicit language version","C# 14 works only in console apps"],"correct":1,"explanation":"Feature availability depends on the project's toolchain and language-version configuration."}
+    {
+      "prompt": "What is the primary goal of this optional module?",
+      "options": [
+        "Recognize useful modern C# milestones and verify whether the current toolchain supports them.",
+        "Change the TimeClock production application",
+        "Create a prerequisite for another optional module"
+      ],
+      "correct": 0,
+      "explanation": "Recognize useful modern C# milestones and verify whether the current toolchain supports them."
+    },
+    {
+      "prompt": "Which setup may this module assume?",
+      "options": [
+        "Only the setup it explicitly creates",
+        "Artifacts from the previous optional module",
+        "A completed numbered session"
+      ],
+      "correct": 0,
+      "explanation": "Every optional module is self-contained."
+    },
+    {
+      "prompt": "Where is the complete answer kept?",
+      "options": [
+        "Behind the Solution reveal",
+        "Repeated in every instruction",
+        "Inside a production service"
+      ],
+      "correct": 0,
+      "explanation": "Steps remain incremental; the finished example stays behind Reveal."
+    }
   ],
   "reflections": [
-    "Which feature changed how you write C# most significantly?",
-    "Which modern feature have you seen but not yet used confidently?",
-    "Why is recognizing a feature often more useful than memorizing its release number?"
+    "Why does this business scenario need the feature?",
+    "What does the caller see and what remains hidden?",
+    "When might the older or more explicit form be clearer?"
   ],
-  "whatBreaks": "Skipping this refresher does not break the TimeClock path. You only lose a compact map for recognizing when syntax entered the language and which toolchain supports it.",
-  "summary": "C# evolves cumulatively. Generics arrived in C# 2; lambdas and LINQ in C# 3; async/await in C# 5; nullable reference types in C# 8; records and init in C# 9; required members in C# 11; primary constructors and collection expressions in C# 12; and newer library-oriented refinements in C# 13–14. Target frameworks select sensible default language versions, so production adoption should move with the supported SDK and build environment."
+  "whatBreaks": "Removing this isolated optional exercise removes only its practice and reference value. Sessions 1–35, TimeClock production code, and every other optional module continue to build unchanged.",
+  "summary": "Recognize useful modern C# milestones and verify whether the current toolchain supports them. The module owns all setup under exercises/refreshers/r1 and remains safe to skip.",
+  "learningEnvironment": "isolated-console",
+  "buildState": {
+    "creates": [
+      "exercises/refreshers/r1/r1.csproj",
+      "exercises/refreshers/r1/Program.cs"
+    ],
+    "extends": [
+      "Language-version configuration",
+      "Older and modern syntax",
+      "Compiler feedback",
+      "Feature selection"
+    ]
+  }
 }

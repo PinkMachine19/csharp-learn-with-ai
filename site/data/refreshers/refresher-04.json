@@ -1,67 +1,226 @@
 {
   "number": "R4",
-  "category": "Optional Modern C# refresher",
-  "estimatedTime": "45 minutes",
-  "connection": "Modern C# makes state reasoning visible. Pattern matching describes the shapes a value may take; nullable reference types let compiler flow analysis warn when one of those shapes may be null.",
+  "category": "Independent Modern C# refresher",
+  "estimatedTime": "35–40 minutes",
+  "connection": "This module is independent of Sessions 1–35 and every other optional module. Describe optional package-delivery updates safely.",
   "objectives": [
-    "Read type, property, relational, logical, list, and null patterns.",
-    "Choose switch expressions or statements based on clarity.",
-    "Explain nullable annotations separately from runtime null checks.",
-    "Use flow analysis, guards, and null-aware operators deliberately.",
-    "Avoid using the null-forgiving operator as a substitute for proof."
+    "Use nullable flow analysis and pattern matching to describe known delivery states without unsafe dereferencing.",
+    "Create and validate all required setup inside one isolated exercise folder.",
+    "Compare caller-visible behavior and syntax without modifying TimeClock."
   ],
   "visuals": [
-    {"diagram":"mental-ref-04-1","title":"Patterns describe cases by shape","explanation":"A switch can branch on type, properties, relationships, list structure, and null state—not only exact constants."},
-    {"diagram":"mental-ref-04-2","title":"Order moves from specific to general","explanation":"Earlier arms should capture narrower cases before a discard pattern catches everything else."},
-    {"diagram":"mental-ref-04-3","title":"A nullable annotation describes possibility","explanation":"string? says null is allowed; string says callers and implementers should preserve non-null intent."},
-    {"diagram":"mental-ref-04-4","title":"Checks refine compiler knowledge","explanation":"After a successful null or type pattern, the compiler narrows the value's flow state for that branch."}
+    {
+      "diagram": "solution",
+      "title": "Isolated workspace",
+      "explanation": "The exercise folder stands outside the cumulative solution and owns every file it needs."
+    },
+    {
+      "diagram": "pipeline",
+      "title": "Caller and contract",
+      "explanation": "The caller sends inputs through the feature and observes its return value or output contract."
+    },
+    {
+      "diagram": "feedback",
+      "title": "Edit, build, and observe",
+      "explanation": "Compiler and runtime feedback guide one small correction at a time inside this module."
+    },
+    {
+      "diagram": "tests",
+      "title": "Validation checkpoint",
+      "explanation": "Only this isolated project is built and run; the TimeClock solution is not changed."
+    }
   ],
   "preQuiz": [
-    {"prompt":"Does string? create a different runtime CLR type from string?","options":["Yes","No — it adds compile-time nullable intent and analysis","Only on Linux"],"correct":1,"explanation":"Nullable reference annotations primarily guide the compiler and tooling."},
-    {"prompt":"What does value is { Length: > 0 } test?","options":["A property pattern requiring a positive Length","A constructor call","A generic constraint"],"correct":0,"explanation":"Property and relational patterns compose into a readable shape test."},
-    {"prompt":"What does ! mean in name!.Length?","options":["It proves name cannot be null","It suppresses a nullable warning at that expression","It performs a runtime null check"],"correct":1,"explanation":"The null-forgiving operator changes compiler analysis, not runtime behavior."}
+    {
+      "prompt": "What is the primary goal of this optional module?",
+      "options": [
+        "Use nullable flow analysis and pattern matching to describe known delivery states without unsafe dereferencing.",
+        "Change the TimeClock production application",
+        "Create a prerequisite for another optional module"
+      ],
+      "correct": 0,
+      "explanation": "Use nullable flow analysis and pattern matching to describe known delivery states without unsafe dereferencing."
+    },
+    {
+      "prompt": "Which setup may this module assume?",
+      "options": [
+        "Only the setup it explicitly creates",
+        "Artifacts from the previous optional module",
+        "A completed numbered session"
+      ],
+      "correct": 0,
+      "explanation": "Every optional module is self-contained."
+    },
+    {
+      "prompt": "Where is the complete answer kept?",
+      "options": [
+        "Behind the Solution reveal",
+        "Repeated in every instruction",
+        "Inside a production service"
+      ],
+      "correct": 0,
+      "explanation": "Steps remain incremental; the finished example stays behind Reveal."
+    }
   ],
   "concept": [
-    {"title":"1. Pattern matching is structured branching","paragraphs":["Patterns combine a test with optional extraction. A type pattern can both verify a runtime type and introduce a correctly typed variable.","Modern switch expressions are concise when each case maps one input shape to one value."]},
-    {"title":"2. Common pattern families","paragraphs":["Constant and null patterns match exact states. Type and declaration patterns narrow runtime types. Property patterns inspect members. Relational and logical patterns compose ranges and conditions.","Positional patterns use deconstruction. List patterns inspect sequence shape, including slices. Use only the complexity the decision actually needs."]},
-    {"title":"3. Exhaustiveness is design feedback","paragraphs":["A switch expression should account for every meaningful input. The discard arm, _, is a fallback—not permission to ignore a new business case.","When a closed set changes, compiler warnings can reveal switches that need review."]},
-    {"title":"4. Nullable reference types model intent","paragraphs":["string means the design intends a value; string? means absence is allowed. The annotation changes warnings and API communication, not the runtime's ability to hold null.","Enable nullable analysis consistently so annotations remain meaningful across project boundaries."]},
-    {"title":"5. Flow analysis follows evidence","paragraphs":["After if (name is not null), name is known non-null in that branch. Throw helpers, argument guards, pattern checks, and recognized attributes can also refine state.","The compiler is conservative. If it cannot prove safety, change the structure or provide truthful annotations rather than scattering !."]},
-    {"title":"6. Null-aware operators have different jobs","paragraphs":["?. stops member access when the receiver is null. ?? supplies a fallback. ??= assigns only when null. is null and is not null are explicit tests.","Choose operators that preserve domain meaning. An empty string is not automatically a valid substitute for a missing name."]},
-    {"title":"7. Production migration strategy","paragraphs":["For older codebases, enable nullable analysis in controlled scopes, fix public contracts first, then move inward. Warnings expose uncertainty that may already exist.","Do not promise non-null merely to silence warnings. Validate construction paths, database materialization, serializers, and framework callbacks."]}
+    {
+      "title": "Why this feature exists",
+      "paragraphs": [
+        "Describe optional package-delivery updates safely.",
+        "Use nullable flow analysis and pattern matching to describe known delivery states without unsafe dereferencing."
+      ]
+    },
+    {
+      "title": "Read the caller-visible contract",
+      "paragraphs": [
+        "Start with the receiver, input types, return type, and accessibility. A return type promises what a successful caller receives; it does not hide failure meaning.",
+        "Use IntelliSense one parameter or member at a time rather than memorizing a dense signature."
+      ]
+    },
+    {
+      "title": "Modern does not automatically mean clearer",
+      "paragraphs": [
+        "Prefer the form that makes this business rule easiest to read and maintain. Older or more explicit syntax can remain the better teaching or production choice.",
+        "Compiler diagnostics identify unsupported language versions, inaccessible members, missing required values, and unsafe nullable paths."
+      ]
+    }
   ],
   "lab": {
-    "objective": "Write a small classifier that combines nullable flow analysis with property and relational patterns.",
-    "startingCondition": "Use an isolated scratch console project.",
-    "steps": [
-      {"text":"Create the scratch project.","code":"mkdir -p exercises/refreshers/r4\ndotnet new console -o exercises/refreshers/r4"},
-      {"text":"Add this classifier to Program.cs.","code":"static string Classify(string? name, double? hours) => (name, hours) switch\n{\n    (null or \"\", _) => \"missing employee\",\n    (_, null) => \"open entry\",\n    (_, < 0) => \"invalid duration\",\n    (_, > 12) => \"long shift\",\n    _ => \"completed shift\"\n};\n\nConsole.WriteLine(Classify(\"Avery\", 8));"},
-      "Explain why each arm is ordered before the discard arm.",
-      {"text":"Run and confirm the completed-shift path.","code":"dotnet run --project exercises/refreshers/r4"},
-      "Add calls for null name, null hours, negative hours, and 13 hours; predict each result first.",
-      "Confirm the program needs no null-forgiving operator."
+    "title": "Pattern Matching and Nullable Reference Types",
+    "objective": "Use nullable flow analysis and pattern matching to describe known delivery states without unsafe dereferencing.",
+    "practice": [
+      "Nullable annotations",
+      "Null-state analysis",
+      "Property patterns",
+      "Switch expressions"
     ],
-    "expectedBehavior": "The classifier returns one clear result for each nullable and relational case without unsafe dereferencing or warning suppression.",
-    "validation": "dotnet run --project exercises/refreshers/r4 | grep -q 'completed shift'"
+    "task": "Describe optional package-delivery updates safely.",
+    "startingCondition": "Prerequisites: the .NET SDK, VS Code or another C# editor, and basic ability to run dotnet commands. No numbered session or optional module is required. Create exercises/refreshers/r4 from scratch.",
+    "pasteReadyInstructions": true,
+    "stepCheckboxes": true,
+    "steps": [
+      {
+        "text": "Step 1/12: Create an isolated console project with dotnet new console -o exercises/refreshers/r4. Do not add it to PinkMachine19.TimeClock.sln and do not edit TimeClock production code.",
+        "code": "dotnet new console -o exercises/refreshers/r4"
+      },
+      {
+        "text": "Step 2/12: Open exercises/refreshers/r4/Program.cs and remove only the template Hello World statement."
+      },
+      {
+        "text": "Step 3/12: At the top of Program.cs, add a comment naming the scenario: Describe optional package-delivery updates safely."
+      },
+      {
+        "text": "Step 4/12: Enable nullable analysis in the isolated project and declare DeliveryUpdate? update."
+      },
+      {
+        "text": "Step 5/12: Create sealed DeliveryUpdate record with nullable DeliveredAt."
+      },
+      {
+        "text": "Step 6/12: First write the older explicit if/else null-check form in comments."
+      },
+      {
+        "text": "Step 7/12: Create a switch expression whose first arm handles null."
+      },
+      {
+        "text": "Step 8/12: Add a property pattern that requires Delivered true and extracts a non-null DateTime."
+      },
+      {
+        "text": "Step 9/12: Add a non-delivered pattern and a discard fallback for incomplete state."
+      },
+      {
+        "text": "Step 10/12: Run null, delivered, and moving examples and observe that the compiler allows only proven-safe access."
+      },
+      {
+        "text": "Step 11/12: Build with dotnet build exercises/refreshers/r4 --configuration Release. Read any diagnostic before changing code."
+      },
+      {
+        "text": "Step 12/12: Run with dotnet run --project exercises/refreshers/r4 --configuration Release, then open Solution Reveal and compare every line.",
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "Complete isolated solution. Keep it in this module folder only.",
+            "code": "DeliveryUpdate? update = new(\"PX-42\", new DateTime(2026, 8, 13), true);\n\nstring message = update switch\n{\n    null => \"No update found\",\n    { Delivered: true, DeliveredAt: DateTime time } => $\"Delivered at {time:g}\",\n    { Delivered: false } known => $\"{known.TrackingCode} is still moving\",\n    _ => \"Delivery state is incomplete\"\n};\n\nConsole.WriteLine(message);\n\nsealed record DeliveryUpdate(string TrackingCode, DateTime? DeliveredAt, bool Delivered);"
+          }
+        ]
+      }
+    ],
+    "expectedBehavior": "The isolated Pattern Matching and Nullable Reference Types example builds and runs without referencing TimeClock or another optional module.",
+    "validation": "dotnet build exercises/refreshers/r4 --configuration Release\ndotnet run --project exercises/refreshers/r4 --configuration Release"
   },
-  "expectedFiles": [{"path":"exercises/refreshers/r4/Program.cs","action":"Add","why":"Create an isolated patterns and nullability refresher."}],
-  "commit": "refresher-r4: practice pattern matching and nullable flow",
+  "expectedFiles": [
+    {
+      "path": "exercises/refreshers/r4/r4.csproj",
+      "action": "Add",
+      "why": "Configure the isolated console project."
+    },
+    {
+      "path": "exercises/refreshers/r4/Program.cs",
+      "action": "Add",
+      "why": "Contain the complete isolated optional example."
+    },
+    {
+      "path": "site/data/refreshers/refresher-04.json",
+      "action": "Modify",
+      "why": "Keep the optional lesson, lab, and quiz representations synchronized."
+    }
+  ],
+  "commit": "refresher-r4: describe nullable delivery states with patterns",
   "review": [
-    "Specific cases appear before the discard arm.",
-    "Nullable annotations match actual allowed states.",
-    "Every dereference follows compiler-visible evidence.",
-    "No ! operator hides an unresolved design question."
+    "The module creates its own complete setup.",
+    "No TimeClock production or numbered-session file changes are required.",
+    "No type or file from another optional module is referenced.",
+    "The complete solution matches the numbered steps and remains behind Reveal."
   ],
   "postQuiz": [
-    {"prompt":"What is the best use of a discard arm?","options":["A deliberate fallback after meaningful cases","The first arm in every switch","A replacement for validation"],"correct":0,"explanation":"The fallback should be intentional and reviewed when the input domain grows."},
-    {"prompt":"Why can nullable warnings reveal real bugs?","options":["They identify paths where the compiler cannot prove a reference is non-null","They add runtime exceptions","They disallow optional data"],"correct":0,"explanation":"The analysis surfaces uncertainty in existing control flow and contracts."},
-    {"prompt":"Which operator supplies a fallback value?","options":["?.","??","!"],"correct":1,"explanation":"The null-coalescing operator evaluates its right side when the left side is null."}
+    {
+      "prompt": "What is the primary goal of this optional module?",
+      "options": [
+        "Use nullable flow analysis and pattern matching to describe known delivery states without unsafe dereferencing.",
+        "Change the TimeClock production application",
+        "Create a prerequisite for another optional module"
+      ],
+      "correct": 0,
+      "explanation": "Use nullable flow analysis and pattern matching to describe known delivery states without unsafe dereferencing."
+    },
+    {
+      "prompt": "Which setup may this module assume?",
+      "options": [
+        "Only the setup it explicitly creates",
+        "Artifacts from the previous optional module",
+        "A completed numbered session"
+      ],
+      "correct": 0,
+      "explanation": "Every optional module is self-contained."
+    },
+    {
+      "prompt": "Where is the complete answer kept?",
+      "options": [
+        "Behind the Solution reveal",
+        "Repeated in every instruction",
+        "Inside a production service"
+      ],
+      "correct": 0,
+      "explanation": "Steps remain incremental; the finished example stays behind Reveal."
+    }
   ],
   "reflections": [
-    "Which null states in your current codebase are meaningful domain states?",
-    "When does a switch expression become harder to read than a statement?",
-    "What proof would let you remove one null-forgiving operator from production code?"
+    "Why does this business scenario need the feature?",
+    "What does the caller see and what remains hidden?",
+    "When might the older or more explicit form be clearer?"
   ],
-  "whatBreaks": "Skipping R4 does not affect the main tutorial. You lose a focused guide for reading modern branching syntax and maintaining truthful nullability contracts.",
-  "summary": "Pattern matching expresses decisions in terms of value shape: type, properties, relationships, sequence structure, and null state. Nullable reference types document whether absence is allowed and let compiler flow analysis track evidence through branches. Production code benefits when patterns remain readable, switch cases are deliberate, annotations tell the truth, and null-forgiving suppression is rare and justified."
+  "whatBreaks": "Removing this isolated optional exercise removes only its practice and reference value. Sessions 1–35, TimeClock production code, and every other optional module continue to build unchanged.",
+  "summary": "Use nullable flow analysis and pattern matching to describe known delivery states without unsafe dereferencing. The module owns all setup under exercises/refreshers/r4 and remains safe to skip.",
+  "learningEnvironment": "isolated-console",
+  "buildState": {
+    "creates": [
+      "exercises/refreshers/r4/r4.csproj",
+      "exercises/refreshers/r4/Program.cs"
+    ],
+    "extends": [
+      "Nullable annotations",
+      "Null-state analysis",
+      "Property patterns",
+      "Switch expressions"
+    ]
+  }
 }

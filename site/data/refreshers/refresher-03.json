@@ -1,67 +1,226 @@
 {
   "number": "R3",
-  "category": "Optional Modern C# refresher",
-  "estimatedTime": "40 minutes",
-  "connection": "This optional refresher compresses the async mental model into one reference: Task represents unfinished work, await suspends the method without blocking its thread, and cancellation and exceptions remain part of the API contract.",
+  "category": "Independent Modern C# refresher",
+  "estimatedTime": "35–40 minutes",
+  "connection": "This module is independent of Sessions 1–35 and every other optional module. Request a document conversion with cooperative cancellation.",
   "objectives": [
-    "Explain the difference between asynchronous work and parallel CPU work.",
-    "Trace an async method before and after await.",
-    "Choose Task, Task<T>, ValueTask<T>, or async streams deliberately.",
-    "Propagate cancellation and observe asynchronous exceptions.",
-    "Recognize sync-over-async and fire-and-forget hazards."
+    "Trace Task completion, awaited results, cancellation, and asynchronous failure in one isolated operation.",
+    "Create and validate all required setup inside one isolated exercise folder.",
+    "Compare caller-visible behavior and syntax without modifying TimeClock."
   ],
   "visuals": [
-    {"diagram":"mental-ref-03-1","title":"An async method has a before-await and after-await path","explanation":"The method runs synchronously until incomplete awaited work causes it to yield; it resumes when that work completes."},
-    {"diagram":"mental-ref-03-2","title":"Task represents eventual completion","explanation":"Task carries completion, failure, or cancellation; Task<T> also carries a result."},
-    {"diagram":"mental-ref-03-3","title":"Cancellation is cooperative","explanation":"A caller requests cancellation, each layer propagates the token, and operations choose where to observe it."},
-    {"diagram":"mental-ref-03-4","title":"Concurrency is not automatically parallelism","explanation":"Async improves waiting efficiency. Parallelism uses multiple cores for CPU work; the two can overlap but solve different problems."}
+    {
+      "diagram": "solution",
+      "title": "Isolated workspace",
+      "explanation": "The exercise folder stands outside the cumulative solution and owns every file it needs."
+    },
+    {
+      "diagram": "pipeline",
+      "title": "Caller and contract",
+      "explanation": "The caller sends inputs through the feature and observes its return value or output contract."
+    },
+    {
+      "diagram": "feedback",
+      "title": "Edit, build, and observe",
+      "explanation": "Compiler and runtime feedback guide one small correction at a time inside this module."
+    },
+    {
+      "diagram": "tests",
+      "title": "Validation checkpoint",
+      "explanation": "Only this isolated project is built and run; the TimeClock solution is not changed."
+    }
   ],
   "preQuiz": [
-    {"prompt":"What happens when await sees an incomplete Task?","options":["It blocks the current thread until completion","It arranges continuation and returns control to the caller","It creates a new operating-system thread"],"correct":1,"explanation":"Await is non-blocking coordination; it does not promise a new thread."},
-    {"prompt":"Where is an exception from an async Task normally observed?","options":["When the Task is awaited","Only in the debugger","At compile time"],"correct":0,"explanation":"Await unwraps and rethrows the stored exception."},
-    {"prompt":"What is the main role of CancellationToken?","options":["Forcefully terminate a thread","Carry a cooperative cancellation request","Set a timeout automatically"],"correct":1,"explanation":"Operations must propagate and observe the request."}
+    {
+      "prompt": "What is the primary goal of this optional module?",
+      "options": [
+        "Trace Task completion, awaited results, cancellation, and asynchronous failure in one isolated operation.",
+        "Change the TimeClock production application",
+        "Create a prerequisite for another optional module"
+      ],
+      "correct": 0,
+      "explanation": "Trace Task completion, awaited results, cancellation, and asynchronous failure in one isolated operation."
+    },
+    {
+      "prompt": "Which setup may this module assume?",
+      "options": [
+        "Only the setup it explicitly creates",
+        "Artifacts from the previous optional module",
+        "A completed numbered session"
+      ],
+      "correct": 0,
+      "explanation": "Every optional module is self-contained."
+    },
+    {
+      "prompt": "Where is the complete answer kept?",
+      "options": [
+        "Behind the Solution reveal",
+        "Repeated in every instruction",
+        "Inside a production service"
+      ],
+      "correct": 0,
+      "explanation": "Steps remain incremental; the finished example stays behind Reveal."
+    }
   ],
   "concept": [
-    {"title":"1. Async is about waiting efficiently","paragraphs":["Network, file, database, and timer operations spend time waiting. Blocking a thread during that wait wastes a limited resource.","Async APIs let the thread do other work and resume the method after completion."]},
-    {"title":"2. Task is the contract","paragraphs":["Task means eventual completion; Task<T> means eventual completion with a T result. Faulted tasks hold exceptions, and canceled tasks represent cooperative cancellation.","async changes how a method body is compiled. await consumes an awaitable; neither keyword alone creates parallel work."]},
-    {"title":"3. Trace the method in two phases","paragraphs":["Everything before the first incomplete await runs immediately. At the await, the method records what remains and returns an incomplete Task.","When the operation finishes, execution resumes after await. Local variables and try/catch behavior continue as if the method had paused."]},
-    {"title":"4. Await all meaningful work","paragraphs":["Dropping a Task can hide failures and allow the caller to continue before the operation finishes. async void should normally be limited to event handlers.","Use Task.WhenAll for independent operations that should run concurrently. Use sequential awaits when ordering or resource limits matter."]},
-    {"title":"5. Cancellation belongs end to end","paragraphs":["Accept a CancellationToken when callers need control, pass it to every supporting operation, and avoid replacing it with CancellationToken.None.","Cancellation is not failure in the same sense as a bug. Callers should be able to distinguish requested cancellation from faults."]},
-    {"title":"6. Exceptions keep their normal shape","paragraphs":["Place try/catch around the await whose failure you can handle. Exceptions thrown before and after await are captured by the returned Task and rethrown to an awaiting caller.","Do not catch Exception only to log and pretend success. Preserve the failure contract."]},
-    {"title":"7. Production hazards","paragraphs":["Avoid .Result and .Wait() in asynchronous call paths; they block and can contribute to deadlocks or thread starvation.","ValueTask<T> can reduce allocations in specialized high-throughput APIs but adds usage constraints. Prefer Task<T> unless measurement justifies the complexity.","IAsyncEnumerable<T> streams values over time and is useful when materializing the entire result would be expensive."]}
+    {
+      "title": "Why this feature exists",
+      "paragraphs": [
+        "Request a document conversion with cooperative cancellation.",
+        "Trace Task completion, awaited results, cancellation, and asynchronous failure in one isolated operation."
+      ]
+    },
+    {
+      "title": "Read the caller-visible contract",
+      "paragraphs": [
+        "Start with the receiver, input types, return type, and accessibility. A return type promises what a successful caller receives; it does not hide failure meaning.",
+        "Use IntelliSense one parameter or member at a time rather than memorizing a dense signature."
+      ]
+    },
+    {
+      "title": "Modern does not automatically mean clearer",
+      "paragraphs": [
+        "Prefer the form that makes this business rule easiest to read and maintain. Older or more explicit syntax can remain the better teaching or production choice.",
+        "Compiler diagnostics identify unsupported language versions, inaccessible members, missing required values, and unsafe nullable paths."
+      ]
+    }
   ],
   "lab": {
-    "objective": "Create and trace a cancellable asynchronous workflow without changing TimeClock.",
-    "startingCondition": "Use an isolated scratch console project.",
-    "steps": [
-      {"text":"Create the scratch project.","code":"mkdir -p exercises/refreshers/r3\ndotnet new console -o exercises/refreshers/r3"},
-      {"text":"Use this small workflow in Program.cs.","code":"using CancellationTokenSource cts = new(TimeSpan.FromSeconds(1));\n\ntry\n{\n    await Task.Delay(TimeSpan.FromSeconds(5), cts.Token);\n    Console.WriteLine(\"completed\");\n}\ncatch (OperationCanceledException)\n{\n    Console.WriteLine(\"canceled\");\n}"},
-      "Predict which line runs and explain where the method yields.",
-      {"text":"Run the project and confirm cancellation is observed.","code":"dotnet run --project exercises/refreshers/r3"},
-      "Change the delay to 100 milliseconds and predict the new result before rerunning.",
-      "Write one sentence explaining why this is asynchronous but not CPU parallelism."
+    "title": "async/await Refresher",
+    "objective": "Trace Task completion, awaited results, cancellation, and asynchronous failure in one isolated operation.",
+    "practice": [
+      "Task<T> contracts",
+      "await control flow",
+      "CancellationToken forwarding",
+      "Exception observation"
     ],
-    "expectedBehavior": "The first run prints canceled; after shortening the delay it prints completed. The notes identify the yield point and cancellation path.",
-    "validation": "dotnet run --project exercises/refreshers/r3 | grep -Eq '^(canceled|completed)$'"
+    "task": "Request a document conversion with cooperative cancellation.",
+    "startingCondition": "Prerequisites: the .NET SDK, VS Code or another C# editor, and basic ability to run dotnet commands. No numbered session or optional module is required. Create exercises/refreshers/r3 from scratch.",
+    "pasteReadyInstructions": true,
+    "stepCheckboxes": true,
+    "steps": [
+      {
+        "text": "Step 1/12: Create an isolated console project with dotnet new console -o exercises/refreshers/r3. Do not add it to PinkMachine19.TimeClock.sln and do not edit TimeClock production code.",
+        "code": "dotnet new console -o exercises/refreshers/r3"
+      },
+      {
+        "text": "Step 2/12: Open exercises/refreshers/r3/Program.cs and remove only the template Hello World statement."
+      },
+      {
+        "text": "Step 3/12: At the top of Program.cs, add a comment naming the scenario: Request a document conversion with cooperative cancellation."
+      },
+      {
+        "text": "Step 4/12: Create a CancellationTokenSource with a using declaration."
+      },
+      {
+        "text": "Step 5/12: Add private-style top-level helper ConvertDocumentAsync returning Task<string>."
+      },
+      {
+        "text": "Step 6/12: Inside the helper, await Task.Delay with the supplied token."
+      },
+      {
+        "text": "Step 7/12: After the wait, throw InvalidOperationException for a non-PDF name and otherwise return a success string."
+      },
+      {
+        "text": "Step 8/12: Call the helper, store its Task<string>, and explain that Task promises eventual completion plus a string."
+      },
+      {
+        "text": "Step 9/12: Await the Task inside try and catch OperationCanceledException separately from invalid input."
+      },
+      {
+        "text": "Step 10/12: Run success, cancellation, and invalid-extension inputs one at a time."
+      },
+      {
+        "text": "Step 11/12: Build with dotnet build exercises/refreshers/r3 --configuration Release. Read any diagnostic before changing code."
+      },
+      {
+        "text": "Step 12/12: Run with dotnet run --project exercises/refreshers/r3 --configuration Release, then open Solution Reveal and compare every line.",
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "Complete isolated solution. Keep it in this module folder only.",
+            "code": "using var cancellation = new CancellationTokenSource();\n\ntry\n{\n    string result = await ConvertDocumentAsync(\"invoice.pdf\", cancellation.Token);\n    Console.WriteLine(result);\n}\ncatch (OperationCanceledException)\n{\n    Console.WriteLine(\"Conversion canceled\");\n}\n\nstatic async Task<string> ConvertDocumentAsync(string fileName, CancellationToken token)\n{\n    await Task.Delay(100, token);\n    if (!fileName.EndsWith(\".pdf\", StringComparison.OrdinalIgnoreCase))\n        throw new InvalidOperationException(\"Only PDF documents are supported.\");\n    return $\"Converted {fileName}\";\n}"
+          }
+        ]
+      }
+    ],
+    "expectedBehavior": "The isolated async/await Refresher example builds and runs without referencing TimeClock or another optional module.",
+    "validation": "dotnet build exercises/refreshers/r3 --configuration Release\ndotnet run --project exercises/refreshers/r3 --configuration Release"
   },
-  "expectedFiles": [{"path":"exercises/refreshers/r3/Program.cs","action":"Add","why":"Create an isolated async/cancellation refresher."}],
-  "commit": "refresher-r3: trace async await cancellation and exceptions",
+  "expectedFiles": [
+    {
+      "path": "exercises/refreshers/r3/r3.csproj",
+      "action": "Add",
+      "why": "Configure the isolated console project."
+    },
+    {
+      "path": "exercises/refreshers/r3/Program.cs",
+      "action": "Add",
+      "why": "Contain the complete isolated optional example."
+    },
+    {
+      "path": "site/data/refreshers/refresher-03.json",
+      "action": "Modify",
+      "why": "Keep the optional lesson, lab, and quiz representations synchronized."
+    }
+  ],
+  "commit": "refresher-r3: observe async completion cancellation and failure",
   "review": [
-    "Every started Task is awaited or deliberately returned.",
-    "The cancellation token reaches the cancellable operation.",
-    "Cancellation and failure are not silently converted into success.",
-    "No .Result, .Wait(), or unnecessary Task.Run is used."
+    "The module creates its own complete setup.",
+    "No TimeClock production or numbered-session file changes are required.",
+    "No type or file from another optional module is referenced.",
+    "The complete solution matches the numbered steps and remains behind Reveal."
   ],
   "postQuiz": [
-    {"prompt":"When should Task.WhenAll be preferred?","options":["For independent asynchronous operations that may overlap","For every loop","To make one database query faster"],"correct":0,"explanation":"WhenAll coordinates already-started independent operations; it does not make dependent work independent."},
-    {"prompt":"Why is async void risky?","options":["It cannot use await","Callers cannot await its completion or normally observe its exceptions","It always runs in parallel"],"correct":1,"explanation":"Task-returning methods expose completion and failure to callers."},
-    {"prompt":"What does await do with a faulted Task?","options":["Ignores the fault","Rethrows the stored exception at the await point","Converts it to cancellation"],"correct":1,"explanation":"This preserves familiar try/catch flow across asynchronous boundaries."}
+    {
+      "prompt": "What is the primary goal of this optional module?",
+      "options": [
+        "Trace Task completion, awaited results, cancellation, and asynchronous failure in one isolated operation.",
+        "Change the TimeClock production application",
+        "Create a prerequisite for another optional module"
+      ],
+      "correct": 0,
+      "explanation": "Trace Task completion, awaited results, cancellation, and asynchronous failure in one isolated operation."
+    },
+    {
+      "prompt": "Which setup may this module assume?",
+      "options": [
+        "Only the setup it explicitly creates",
+        "Artifacts from the previous optional module",
+        "A completed numbered session"
+      ],
+      "correct": 0,
+      "explanation": "Every optional module is self-contained."
+    },
+    {
+      "prompt": "Where is the complete answer kept?",
+      "options": [
+        "Behind the Solution reveal",
+        "Repeated in every instruction",
+        "Inside a production service"
+      ],
+      "correct": 0,
+      "explanation": "Steps remain incremental; the finished example stays behind Reveal."
+    }
   ],
   "reflections": [
-    "Where have you seen fire-and-forget work cause a production bug?",
-    "Which operations in your normal applications are I/O-bound rather than CPU-bound?",
-    "What does a well-designed cancellation contract promise to callers?"
+    "Why does this business scenario need the feature?",
+    "What does the caller see and what remains hidden?",
+    "When might the older or more explicit form be clearer?"
   ],
-  "whatBreaks": "Skipping R3 does not block TimeClock. You lose a compact review of the Task lifecycle and the most common production async failure modes.",
-  "summary": "Async code coordinates waiting without blocking threads. Task and Task<T> expose completion, results, faults, and cancellation. await splits a method into before-and-after phases while preserving ordinary control flow. Reliable production code awaits meaningful work, propagates CancellationToken, observes exceptions, avoids sync-over-async, and uses concurrency only when operations are genuinely independent."
+  "whatBreaks": "Removing this isolated optional exercise removes only its practice and reference value. Sessions 1–35, TimeClock production code, and every other optional module continue to build unchanged.",
+  "summary": "Trace Task completion, awaited results, cancellation, and asynchronous failure in one isolated operation. The module owns all setup under exercises/refreshers/r3 and remains safe to skip.",
+  "learningEnvironment": "isolated-console",
+  "buildState": {
+    "creates": [
+      "exercises/refreshers/r3/r3.csproj",
+      "exercises/refreshers/r3/Program.cs"
+    ],
+    "extends": [
+      "Task<T> contracts",
+      "await control flow",
+      "CancellationToken forwarding",
+      "Exception observation"
+    ]
+  }
 }

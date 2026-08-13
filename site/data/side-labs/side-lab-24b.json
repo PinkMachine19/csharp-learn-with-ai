@@ -1,182 +1,226 @@
 {
   "number": "24B",
-  "category": "Optional Session 24 sidebar lab",
-  "estimatedTime": "15–20 minutes",
-  "sidebarDescription": "Follow one TimeClock outcome across repository, service, API, and UI boundaries and choose the vocabulary each caller needs.",
-  "connection": "Sessions 09, 12, 17, 20, and 24 introduced Try/out, nullable lookup results, bool outcomes, and exceptions separately. This optional synthesis helps you choose among those contracts without adding outcome-design theory to Session 20.",
-  "nextSessionLabel": "Session 25",
+  "category": "Independent optional side lab",
+  "estimatedTime": "35–40 minutes",
+  "connection": "This module is independent of Sessions 1–35 and every other optional module. Compare inventory lookup, reservation attempts, payment validation, API translation, and UI messaging.",
   "objectives": [
-    "Choose a small outcome contract based on what the caller genuinely needs.",
-    "Distinguish expected absence, ordinary rejection, structured business outcomes, and exceptional failure.",
-    "Explain why repository, service, API, and UI boundaries may translate the same event differently.",
-    "Separate temporary planning notes from permanent executable tests."
+    "Choose outcome contracts based on what a caller must know at each boundary.",
+    "Create and validate all required setup inside one isolated exercise folder.",
+    "Compare caller-visible behavior and syntax without modifying TimeClock."
   ],
   "visuals": [
     {
-      "diagram": "mental-side-24b-1",
-      "title": "One event crosses several boundaries",
-      "explanation": "A repository miss can become a service outcome, an HTTP response, and finally a user-facing message. Each boundary reports what its own caller needs."
+      "diagram": "solution",
+      "title": "Isolated workspace",
+      "explanation": "The exercise folder stands outside the cumulative solution and owns every file it needs."
     },
     {
-      "diagram": "mental-side-24b-2",
-      "title": "Expected outcome or exceptional failure?",
-      "explanation": "Expected absence and ordinary rejection belong in normal control flow; broken invariants and unexpected failures may justify exceptions."
+      "diagram": "pipeline",
+      "title": "Caller and contract",
+      "explanation": "The caller sends inputs through the feature and observes its return value or output contract."
     },
     {
-      "diagram": "mental-side-24b-3",
-      "title": "Return the smallest useful contract",
-      "explanation": "Use bool when yes or no is enough, nullable when absence is expected, and a structured result when callers need several outcome details."
+      "diagram": "feedback",
+      "title": "Edit, build, and observe",
+      "explanation": "Compiler and runtime feedback guide one small correction at a time inside this module."
     },
     {
-      "diagram": "mental-side-24b-4",
-      "title": "Tests preserve settled decisions",
-      "explanation": "Temporary comments help enumerate possibilities; focused tests permanently protect the outcomes the team agrees must remain true."
+      "diagram": "tests",
+      "title": "Validation checkpoint",
+      "explanation": "Only this isolated project is built and run; the TimeClock solution is not changed."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "A repository lookup may normally find no open entry. Which contract communicates that expected absence directly?",
-      "options": ["ClockEntry?", "Always throw an exception", "ref ClockEntry"],
+      "prompt": "What is the primary goal of this optional module?",
+      "options": [
+        "Choose outcome contracts based on what a caller must know at each boundary.",
+        "Change the TimeClock production application",
+        "Create a prerequisite for another optional module"
+      ],
       "correct": 0,
-      "explanation": "A nullable return makes expected absence part of normal control flow."
+      "explanation": "Choose outcome contracts based on what a caller must know at each boundary."
     },
     {
-      "prompt": "Must an API expose the service's bool return value unchanged?",
-      "options": ["No; the API translates outcomes into its own HTTP contract", "Yes; every layer must return the same type", "Only when using controllers"],
+      "prompt": "Which setup may this module assume?",
+      "options": [
+        "Only the setup it explicitly creates",
+        "Artifacts from the previous optional module",
+        "A completed numbered session"
+      ],
       "correct": 0,
-      "explanation": "Each boundary communicates with a different caller and may need a different representation."
+      "explanation": "Every optional module is self-contained."
     },
     {
-      "prompt": "When should temporary requirement comments become tests?",
-      "options": ["When the behavior becomes a lasting contract worth verifying", "Every comment must become a test", "Never"],
+      "prompt": "Where is the complete answer kept?",
+      "options": [
+        "Behind the Solution reveal",
+        "Repeated in every instruction",
+        "Inside a production service"
+      ],
       "correct": 0,
-      "explanation": "Planning notes help while deciding; permanent tests preserve agreed behavior."
+      "explanation": "Steps remain incremental; the finished example stays behind Reveal."
     }
   ],
   "concept": [
     {
-      "title": "Choose by semantics, not syntax preference",
+      "title": "Why this feature exists",
       "paragraphs": [
-        "The question is not which C# feature looks most professional. Ask what happened, what the caller must know, and whether the outcome is expected during ordinary operation. Each layer reports outcomes using the vocabulary of that layer.",
-        "Guard clauses and early returns are already practiced throughout the course. They keep invalid paths short, but they do not decide which public contract a method should expose."
-      ],
-      "table": {
-        "headers": ["Contract", "Use when", "TimeClock-shaped example"],
-        "rows": [
-          ["bool", "The caller needs only accepted or rejected", "Timesheet.TryAdd"],
-          ["T?", "Not found is expected and no explanation is required", "GetOpenClockEntry"],
-          ["enum", "One of several fixed named outcomes is enough", "ClockInOutcome.AlreadyClockedIn"],
-          ["Result object", "The caller needs status plus structured details", "Outcome, message, and employee ID"],
-          ["Try/out", "A conventional Try API must return success plus a value", "Dictionary.TryGetValue or int.TryParse"],
-          ["exception", "An invariant is broken, input violates the contract, or an unexpected failure occurred", "Attempting to complete an already completed entry"],
-          ["HTTP status", "An API must report the outcome through HTTP", "409 Conflict for an already-open entry"],
-          ["UI message", "A person needs actionable language", "You are already clocked in"]
-        ],
-        "highlightRows": [0, 1, 2, 3, 5]
-      }
-    },
-    {
-      "title": "Layers translate outcomes",
-      "paragraphs": [
-        "Do not force one return type through every layer. A repository reports storage-shaped facts; a service reports use-case meaning; an API translates known outcomes into HTTP; a UI presents actionable language to a person.",
-        "Use one evolving TimeClock event: a duplicate clock-in. A repository may return an existing open ClockEntry, the service may return false or AlreadyClockedIn, the API may return HTTP 409 Conflict, and the UI may say You are already clocked in. None of those layers needs to leak its exact representation into the others."
-      ],
-      "table": {
-        "headers": ["Boundary", "Primary caller", "Typical outcome shape"],
-        "rows": [
-          ["Repository", "Application/service code", "Entity, nullable entity, sequence, or persistence failure"],
-          ["Service/use case", "Host such as App or Web", "Value, bool, enum, Result object, or meaningful exception"],
-          ["Controller/API", "Remote client", "HTTP status plus response body"],
-          ["UI", "Person", "Validation state, disabled action, or user-facing message"]
-        ],
-        "highlightRows": [0, 1, 2, 3]
-      }
-    },
-    {
-      "title": "Comments help plan; tests preserve contracts",
-      "paragraphs": [
-        "Before implementation, a short outcome table or temporary comments can turn prose requirements into explicit cases. Remove planning comments once names, control flow, and tests communicate the decision clearly.",
-        "When an outcome must remain true, express it as a permanent test. Session 29 formalizes Arrange, Act, and Assert; this sidebar only connects that testing practice to outcome design."
+        "Compare inventory lookup, reservation attempts, payment validation, API translation, and UI messaging.",
+        "Choose outcome contracts based on what a caller must know at each boundary."
       ]
     },
     {
-      "title": "What should I actually remember?",
+      "title": "Read the caller-visible contract",
       "paragraphs": [
-        "Prioritize the outcome forms you will write often. Recognize specialized parameter contracts without forcing yourself to design new APIs around them from memory."
-      ],
-      "table": {
-        "headers": ["Fluency level", "Patterns"],
-        "rows": [
-          ["Write comfortably", "bool, nullable returns, guard clauses, exceptions for clear contract violations"],
-          ["Recognize and choose deliberately", "Enums and small Result objects for multiple business outcomes"],
-          ["Recognize and understand", "Try/out when an existing .NET API uses it"],
-          ["Specialized — look it up", "Custom ref/in/out APIs and elaborate generic Result frameworks"]
-        ],
-        "highlightRows": [0, 1]
-      }
+        "Start with the receiver, input types, return type, and accessibility. A return type promises what a successful caller receives; it does not hide failure meaning.",
+        "Use IntelliSense one parameter or member at a time rather than memorizing a dense signature."
+      ]
+    },
+    {
+      "title": "Modern does not automatically mean clearer",
+      "paragraphs": [
+        "Prefer the form that makes this business rule easiest to read and maintain. Older or more explicit syntax can remain the better teaching or production choice.",
+        "Compiler diagnostics identify unsupported language versions, inaccessible members, missing required values, and unsafe nullable paths."
+      ]
     }
   ],
   "lab": {
-    "objective": "Classify realistic TimeClock outcomes, trace one outcome across boundaries, and make one small contract improvement.",
-    "startingCondition": "Complete Session 24 first. This optional exercise uses notes or ScratchPad only and changes no required TimeClock production behavior.",
-    "collapseInstructions": true,
-    "labs": [
+    "title": "Choosing Outcome Contracts Across Boundaries",
+    "objective": "Choose outcome contracts based on what a caller must know at each boundary.",
+    "practice": [
+      "bool attempts",
+      "Nullable lookup",
+      "Result details",
+      "Exceptions and boundary translation"
+    ],
+    "task": "Compare inventory lookup, reservation attempts, payment validation, API translation, and UI messaging.",
+    "startingCondition": "Prerequisites: the .NET SDK, VS Code or another C# editor, and basic ability to run dotnet commands. No numbered session or optional module is required. Create exercises/optional/outcome-contracts from scratch.",
+    "pasteReadyInstructions": true,
+    "stepCheckboxes": true,
+    "steps": [
       {
-        "title": "Choose and Translate an Outcome",
-        "objective": "Practice judgment rather than memorizing every possible return syntax.",
-        "practice": ["Outcome semantics", "Boundary translation", "Temporary planning notes", "Contract selection"],
-        "task": "Classify several outcomes, then trace one duplicate clock-in from repository fact to service result, HTTP status, and UI message.",
-        "comment": "// Side Lab 24B - Choose and Translate an Outcome",
-        "instructions": [
-          "Create a temporary three-column note labeled event, expected or exceptional, and caller needs.",
-          "Classify these events: no open entry found, duplicate clock-in rejected, completed entry requested twice, and database unavailable.",
-          "For each event, select the smallest suitable contract from bool, nullable return, enum, Result object, Try/out, or exception.",
-          "Choose duplicate clock-in and trace it through repository, service, API, and UI boundaries.",
-          "Write one sentence explaining why the representations do not have to be identical across those boundaries.",
-          "Sketch a small ClockInOutcome enum containing Success and AlreadyClockedIn; do not modify ClockEntryService in this optional lab.",
-          "Describe the test names you would add if the team adopted that enum permanently.",
-          "Delete or archive the temporary planning note after preserving any agreed behavior as test cases."
-        ],
-        "solution": "A reasonable classification is: repository cannot find an open entry — nullable ClockEntry because absence is expected; duplicate clock-in — bool when the caller needs only yes/no, or ClockInOutcome when it needs a named reason; completing an already completed entry — exception because the object invariant is violated; database unavailable — exception that the application boundary logs and translates appropriately. Across layers, AlreadyClockedIn might be an enum value in the service, an HTTP 409 response in the API, and a clear user-facing message in the UI. Suggested permanent tests: TryClockIn_WhenEntryIsAlreadyOpen_ReturnsAlreadyClockedIn and TryClockIn_WhenNoEntryIsOpen_ReturnsSuccess."
+        "text": "Step 1/12: Create an isolated console project with dotnet new console -o exercises/optional/outcome-contracts. Do not add it to PinkMachine19.TimeClock.sln and do not edit TimeClock production code.",
+        "code": "dotnet new console -o exercises/optional/outcome-contracts"
+      },
+      {
+        "text": "Step 2/12: Open exercises/optional/outcome-contracts/Program.cs and remove only the template Hello World statement."
+      },
+      {
+        "text": "Step 3/12: At the top of Program.cs, add a comment naming the scenario: Compare inventory lookup, reservation attempts, payment validation, API translation, and UI messaging."
+      },
+      {
+        "text": "Step 4/12: Create a scenario table in Program.cs comments covering bool, nullable, result, exception, HTTP status, and UI message."
+      },
+      {
+        "text": "Step 5/12: Add Product and PaymentResult records as setup below the top-level statements."
+      },
+      {
+        "text": "Step 6/12: Add FindProduct returning Product? so absence is the entire repository outcome."
+      },
+      {
+        "text": "Step 7/12: Add TryReserve returning bool for an expected yes/no attempt."
+      },
+      {
+        "text": "Step 8/12: Add Authorize returning PaymentResult because expected rejection details matter."
+      },
+      {
+        "text": "Step 9/12: Write one invalid-operation example in comments showing when an exception would protect an object rule."
+      },
+      {
+        "text": "Step 10/12: Print how repository, service, API, and UI boundaries can translate the same event, then run the project."
+      },
+      {
+        "text": "Step 11/12: Build with dotnet build exercises/optional/outcome-contracts --configuration Release. Read any diagnostic before changing code."
+      },
+      {
+        "text": "Step 12/12: Run with dotnet run --project exercises/optional/outcome-contracts --configuration Release, then open Solution Reveal and compare every line.",
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "Complete isolated solution. Keep it in this module folder only.",
+            "code": "Console.WriteLine(\"Repository lookup: Product? for not found\");\nConsole.WriteLine(\"Reservation attempt: bool for accepted or rejected\");\nConsole.WriteLine(\"Payment decision: PaymentResult for expected details\");\nConsole.WriteLine(\"Invalid operation: exception for a broken usage rule\");\nConsole.WriteLine(\"API mapping: 404 or 409 for transport\");\nConsole.WriteLine(\"UI mapping: readable message for a person\");\nConsole.WriteLine(FindProduct(7)?.Name ?? \"Not found\");\nConsole.WriteLine($\"Reserved: {TryReserve(2)}\");\nConsole.WriteLine(Authorize(125m).Message);\n\nProduct? FindProduct(int id) => id == 7 ? new Product(7, \"Notebook\") : null;\nbool TryReserve(int quantity) => quantity > 0 && quantity <= 5;\nPaymentResult Authorize(decimal amount) => amount <= 100m\n    ? new(true, \"Approved\")\n    : new(false, \"Limit exceeded\");\n\nsealed record Product(int Id, string Name);\nsealed record PaymentResult(bool Succeeded, string Message);"
+          }
+        ]
       }
     ],
-    "expectedBehavior": "You can justify a contract from semantics and explain how later boundaries translate the same outcome for different callers.",
-    "validation": "No build is required; this optional sidebar changes no production files."
+    "expectedBehavior": "The isolated Choosing Outcome Contracts Across Boundaries example builds and runs without referencing TimeClock or another optional module.",
+    "validation": "dotnet build exercises/optional/outcome-contracts --configuration Release\ndotnet run --project exercises/optional/outcome-contracts --configuration Release"
   },
-  "expectedFiles": [],
-  "commit": "Not applicable — optional judgment exercise with no required source changes.",
+  "expectedFiles": [
+    {
+      "path": "exercises/optional/outcome-contracts/outcome-contracts.csproj",
+      "action": "Add",
+      "why": "Configure the isolated console project."
+    },
+    {
+      "path": "exercises/optional/outcome-contracts/Program.cs",
+      "action": "Add",
+      "why": "Contain the complete isolated optional example."
+    },
+    {
+      "path": "site/data/side-labs/side-lab-24b.json",
+      "action": "Modify",
+      "why": "Keep the optional lesson, lab, and quiz representations synchronized."
+    }
+  ],
+  "commit": "optional-24b: compare outcome contracts across boundaries",
   "review": [
-    "Ordinary absence is not modeled as an exception without a specific reason.",
-    "A bool is used only when the caller genuinely needs no explanation.",
-    "Try/out is recognized as a common .NET pattern rather than the default for new application APIs.",
-    "Repository details do not leak directly into API or UI contracts.",
-    "Temporary planning notes are not mistaken for permanent documentation or tests."
+    "The module creates its own complete setup.",
+    "No TimeClock production or numbered-session file changes are required.",
+    "No type or file from another optional module is referenced.",
+    "The complete solution matches the numbered steps and remains behind Reveal."
   ],
   "postQuiz": [
     {
-      "prompt": "When is a Result object more useful than bool?",
-      "options": ["When callers need structured status or details beyond yes/no", "Whenever a method has parameters", "Only in repositories"],
+      "prompt": "What is the primary goal of this optional module?",
+      "options": [
+        "Choose outcome contracts based on what a caller must know at each boundary.",
+        "Change the TimeClock production application",
+        "Create a prerequisite for another optional module"
+      ],
       "correct": 0,
-      "explanation": "Do not add a Result object unless its additional information serves callers."
+      "explanation": "Choose outcome contracts based on what a caller must know at each boundary."
     },
     {
-      "prompt": "Should a missing database connection become a normal nullable entity result?",
-      "options": ["No; infrastructure failure is different from an expected not-found result", "Yes; null means every kind of failure", "Only for async methods"],
+      "prompt": "Which setup may this module assume?",
+      "options": [
+        "Only the setup it explicitly creates",
+        "Artifacts from the previous optional module",
+        "A completed numbered session"
+      ],
       "correct": 0,
-      "explanation": "Conflating failure with absence hides an operational problem."
+      "explanation": "Every optional module is self-contained."
     },
     {
-      "prompt": "Why might a service enum become an HTTP 409 at the API boundary?",
-      "options": ["The API translates business meaning into its caller's protocol", "Enums cannot cross methods", "Controllers must throw"],
+      "prompt": "Where is the complete answer kept?",
+      "options": [
+        "Behind the Solution reveal",
+        "Repeated in every instruction",
+        "Inside a production service"
+      ],
       "correct": 0,
-      "explanation": "HTTP is the API caller's contract, not necessarily the service's internal representation."
+      "explanation": "Steps remain incremental; the finished example stays behind Reveal."
     }
   ],
   "reflections": [
-    "Which current TimeClock bool would become clearer if callers needed to distinguish two rejection reasons?",
-    "Where would returning null accidentally hide a real system failure?",
-    "Which outcome decisions deserve permanent tests rather than explanatory comments?"
+    "Why does this business scenario need the feature?",
+    "What does the caller see and what remains hidden?",
+    "When might the older or more explicit form be clearer?"
   ],
-  "whatBreaks": "Skipping this sidebar does not break Session 25. You would lose only the practical synthesis for choosing and translating method outcomes across application boundaries.",
-  "summary": "Choose outcomes by semantics and caller needs: bool for simple yes/no, nullable for expected absence, enums or Result objects for named or structured business outcomes, Try/out mainly for established Try patterns, and exceptions for violated contracts or unexpected failures. Translate outcomes at repository, service, API, and UI boundaries instead of leaking one representation everywhere."
+  "whatBreaks": "Removing this isolated optional exercise removes only its practice and reference value. Sessions 1–35, TimeClock production code, and every other optional module continue to build unchanged.",
+  "summary": "Choose outcome contracts based on what a caller must know at each boundary. The module owns all setup under exercises/optional/outcome-contracts and remains safe to skip.",
+  "learningEnvironment": "isolated-console",
+  "buildState": {
+    "creates": [
+      "exercises/optional/outcome-contracts/outcome-contracts.csproj",
+      "exercises/optional/outcome-contracts/Program.cs"
+    ],
+    "extends": [
+      "bool attempts",
+      "Nullable lookup",
+      "Result details",
+      "Exceptions and boundary translation"
+    ]
+  }
 }
