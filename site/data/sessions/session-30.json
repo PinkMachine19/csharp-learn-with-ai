@@ -1,206 +1,224 @@
 {
   "number": 30,
-  "category": "Testing and dependency injection",
+  "category": "Dependency injection",
   "estimatedTime": "40 minutes",
-  "connection": "Repository interfaces, services, DI registrations, and a permanent test suite all exist from prior sessions. Test production collaborations with hand-written and library test doubles, then verify DI lifetimes.",
+  "connection": "Session 29 tested the real synchronous payroll behavior. Session 30 now introduces the DI container itself in an isolated ScratchPad experiment; no earlier registration is assumed.",
   "objectives": [
-    "Contrast Moq's Mock<IClockEntryRepository> (Session 29) with a real, hand-written RecordingRepository : IClockEntryRepository test double -- both implement the same interface, by two different mechanisms.",
-    "Explain why a hand-written fake and a Moq mock are both valid test doubles, and what each costs (lines of code written by hand versus a small library dependency and some indirection).",
-    "Explain the real decision-0005 finding: Program.cs registers IClockEntryRepository as Singleton but IClockEntryService, PayrollService, and IEmployeeService as Transient -- and why that mix is safe for this specific console app.",
-    "Use ServiceComposition's real AddTimeClockCore extension to observe Scoped lifetime behavior: one instance per scope, a new instance per new scope."
+    "Build an IServiceCollection and ServiceProvider explicitly.",
+    "Compare transient, scoped, and singleton reuse with ReferenceEquals.",
+    "Identify the composition root as the place that chooses implementations and lifetimes.",
+    "Explain why shared mutable state makes lifetime selection important."
   ],
   "visuals": [
     {
       "diagram": "mental-30-1",
-      "title": "Two real ways to fake IClockEntryRepository",
-      "explanation": "Mock<IClockEntryRepository>() (Session 29, via Moq) and a hand-written RecordingRepository : IClockEntryRepository (this session) both satisfy the same interface for testing purposes."
+      "title": "Boundary map",
+      "explanation": "Shows where Session 30 code belongs and which earlier layer it may call."
     },
     {
       "diagram": "mental-30-2",
-      "title": "Both doubles work because ClockEntryService depends on the interface",
-      "explanation": "Session 18/20 already established this: any class implementing IClockEntryRepository can stand in wherever the interface is expected, hand-written or Moq-generated."
+      "title": "Call timeline",
+      "explanation": "Shows the ordered calls and the point where Session 30 observes a result."
     },
     {
       "diagram": "mental-30-3",
-      "title": "The real, mixed lifetimes in Program.cs",
-      "explanation": "AddSingleton<IClockEntryRepository, ClockEntryRepository>() shares one repository; AddTransient<IClockEntryService, ClockEntryService>() creates a new service instance on every resolution."
+      "title": "State before and after",
+      "explanation": "Shows the state transition that the Session 30 lab verifies."
     },
     {
       "diagram": "mental-30-4",
-      "title": "Scoped sits between Transient and Singleton",
-      "explanation": "ServiceComposition's AddScoped<EntryRecorder>() gives one EntryRecorder per scope -- the same instance within one scope, a different one in the next."
+      "title": "Contract checkpoint",
+      "explanation": "Shows the input, return type, and failure meaning for the main Session 30 API."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "What do Mock<IClockEntryRepository>() and RecordingRepository : IClockEntryRepository have in common as test doubles?",
+      "prompt": "Where does the Session 30 exercise belong?",
       "options": [
-        "Both are objects that implement the real IClockEntryRepository interface, letting a test control GetEmployeeClockEntries/GetClockEntry/SaveClockEntry's behavior without touching the real, in-memory ClockEntryRepository",
-        "Nothing -- they are unrelated testing techniques",
-        "Both require the real database to be running"
+        "scratchpad",
+        "An unrelated earlier project",
+        "A fictional artifact"
       ],
       "correct": 0,
-      "explanation": "The mechanism differs (Moq generates an implementation at runtime; RecordingRepository is a small class written by hand), but the underlying principle -- substituting an interface implementation for testing -- is identical."
+      "explanation": "The verified cumulative design places it in scratchpad."
     },
     {
-      "prompt": "Why does Program.cs register IClockEntryRepository as Singleton while IClockEntryService is Transient?",
+      "prompt": "What should the return type tell a caller?",
       "options": [
-        "ClockEntryRepository holds the actual state (_clockEntries) that ClockIn and Clockout both need to share across calls; ClockEntryService itself holds no state of its own, so a new instance per resolution costs nothing and shares the same underlying (Singleton) repository anyway",
-        "It is an arbitrary, unexplained inconsistency",
-        "Transient services cannot depend on Singleton services"
+        "What completion or value the method promises",
+        "Which CPU thread must run it",
+        "That errors cannot occur"
       ],
       "correct": 0,
-      "explanation": "decision-0005 documents this as real and verified against the actual Program.cs: the lifetime choice tracks which class actually needs shared state, not a uniform policy."
+      "explanation": "A return type is a caller-facing contract."
     },
     {
-      "prompt": "What does AddScoped<EntryRecorder>() guarantee within a single IServiceScope?",
+      "prompt": "What must happen before advancing?",
       "options": [
-        "Every GetRequiredService<EntryRecorder>() call within that one scope returns the SAME EntryRecorder instance; a different scope gets a different instance",
-        "A new instance every single call, scope or not",
-        "Exactly one instance for the entire application's lifetime"
+        "Run the focused behavior, Release build, and complete tests",
+        "Only read the solution",
+        "Rename unrelated learner code"
       ],
       "correct": 0,
-      "explanation": "Scoped is the real middle ground between Transient (always new) and Singleton (always the same) -- ServiceCompositionTests.cs demonstrates this directly with two different scopes."
+      "explanation": "Every session must finish buildable and testable."
     }
   ],
   "concept": [
     {
-      "title": "A test double replaces one collaborator",
+      "title": "Observe dependency injection lifetimes in ScratchPad",
       "paragraphs": [
-        "A hand-written fake is often clearest when it needs a small amount of state. A mocking library is useful when concise interaction configuration improves the test.",
-        "Both implement production interfaces created earlier; neither requires production code to know about tests."
+        "Session 29 tested the real synchronous payroll behavior. Session 30 now introduces the DI container itself in an isolated ScratchPad experiment; no earlier registration is assumed.",
+        "Build an IServiceCollection and ServiceProvider explicitly."
       ]
     },
     {
-      "title": "Test behavior before interaction details",
+      "title": "Read the contract before the body",
       "paragraphs": [
-        "Prefer the result or state the caller cares about. Verify a collaboration call only when making that call is itself part of the contract.",
-        "Over-specified mocks make harmless refactoring break tests."
+        "Use IntelliSense to identify the receiver, parameters, return type, and overload one piece at a time.",
+        "Compare transient, scoped, and singleton reuse with ReferenceEquals."
       ]
     },
     {
-      "title": "DI lifetimes describe reuse boundaries",
+      "title": "Keep the boundary honest",
       "paragraphs": [
-        "Transient creates a new instance per resolution, Singleton reuses one container-wide instance, and Scoped reuses one instance inside a scope.",
-        "Tests resolve the real registrations to confirm the composition root matches those decisions."
+        "This work belongs in scratchpad; the lab does not claim that later artifacts already exist.",
+        "Identify the composition root as the place that chooses implementations and lifetimes."
       ]
     }
   ],
   "lab": {
-    "objective": "Test production collaborations with hand-written and library test doubles, then verify DI lifetimes.",
-    "title": "Test Collaborations and Dependency Lifetimes",
-    "practice": ["Hand-written test doubles", "Interface-based substitution", "Service registration", "Transient, scoped, and singleton identity", "Focused collaboration tests"],
-    "task": "Test ClockEntryService with a small recording fake, centralize application registrations, and prove the chosen service lifetimes.",
-    "collapseInstructions": true,
-    "stepCheckboxes": true,
-    "clickHighlightInstructions": true,
-    "pasteReadyInstructions": true,
-    "startingCondition": "Repository interfaces, services, DI registrations, and a permanent test suite all exist from prior sessions.",
-    "steps": [
-      "Open tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj.",
-      "Add a ProjectReference to src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj if the reference is not already present.",
-      "Build the Domain.Tests project to verify the new project reference.",
-      "Create tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryServiceTests.cs.",
-      "In ClockEntryServiceTests.cs, declare a public sealed class named ClockEntryServiceTests.",
-      "Inside the test file, declare a private sealed recording fake that implements IClockEntryRepository.",
-      "In the fake, store the ClockEntry passed to the save method in a property named SavedEntry.",
-      "Implement the remaining interface members with the smallest behavior required by the service test.",
-      "Add a Fact method whose name states that a successful clock-in saves the new entry.",
-      "In that test, arrange the recording fake and construct ClockEntryService with it.",
-      "Act by calling the service clock-in method for a known employee ID.",
-      "Assert the successful outcome and assert that SavedEntry contains the same employee ID.",
-      "Create src/PinkMachine19.TimeClock.App/ServiceRegistration.cs.",
-      "In ServiceRegistration.cs, declare a public static class named ServiceRegistration.",
-      "Add a public extension method that accepts IServiceCollection and registers the TimeClock repository and service graph.",
-      "Choose and register each Transient, Singleton, or Scoped lifetime explicitly rather than relying on an accidental default.",
-      "Open App/Program.cs and replace duplicate inline registrations with the new composition method while preserving the existing workflow.",
-      "Create tests/PinkMachine19.TimeClock.Domain.Tests/ServiceRegistrationTests.cs.",
-      "Add one focused test for each lifetime whose identity behavior matters: same instance where sharing is required and different instances where independence is required.",
-      "Build a ServiceProvider inside each lifetime test and create a scope when verifying Scoped behavior.",
-      "Run ClockEntryServiceTests and ServiceRegistrationTests.",
-      "Run the full solution test suite."
+    "title": "Observe dependency injection lifetimes in ScratchPad",
+    "objective": "Build an IServiceCollection and ServiceProvider explicitly.",
+    "practice": [
+      "IServiceCollection",
+      "Transient, scoped, and singleton",
+      "Composition root",
+      "Reference identity"
     ],
-    "expectedBehavior": "Tests use the smallest useful double and prove the production DI composition behaves as intended.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+    "task": "Register three marker classes, resolve them in two scopes, and print which instances are reused.",
+    "startingCondition": "Session 29 tested the real synchronous payroll behavior. Session 30 now introduces the DI container itself in an isolated ScratchPad experiment; no earlier registration is assumed.",
+    "pasteReadyInstructions": true,
+    "stepCheckboxes": true,
+    "steps": [
+      {
+        "text": "Step 1/12: In src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj, add Microsoft.Extensions.DependencyInjection version 10.0.0."
+      },
+      {
+        "text": "Step 2/12: In the ScratchPad project, create folder Session30 and file Session30/LifetimeExperiments.cs."
+      },
+      {
+        "text": "Step 3/12: In LifetimeExperiments.cs, add using Microsoft.Extensions.DependencyInjection, then declare public sealed class LifetimeExperiments. sealed says this focused experiment is not designed for inheritance."
+      },
+      {
+        "text": "Step 4/12: Inside LifetimeExperiments, add public void Run and create a ServiceCollection inside that method. This method is the experiment composition root."
+      },
+      {
+        "text": "Step 5/12: Inside Run, call AddTransient<TransientMarker>, AddScoped<ScopedMarker>, and AddSingleton<SingletonMarker>. Read each signature as: register this service type with this reuse rule."
+      },
+      {
+        "text": "Step 6/12: Build the ScratchPad project in Release before adding resolution code."
+      },
+      {
+        "text": "Step 7/12: Inside Run, build the ServiceProvider and create two IServiceScope objects with using declarations."
+      },
+      {
+        "text": "Step 8/12: Inside the class but outside Run, add private static T Resolve<T>(IServiceScope scope) where T : notnull; return scope.ServiceProvider.GetRequiredService<T>(). The helper is private because only this experiment needs it."
+      },
+      {
+        "text": "Step 9/12: Inside Run, resolve each marker twice and use ReferenceEquals to print whether transient, scoped, and singleton objects are reused within and across scopes."
+      },
+      {
+        "text": "Step 10/12: Inside LifetimeExperiments but outside its methods, add three private sealed marker classes named TransientMarker, ScopedMarker, and SingletonMarker."
+      },
+      {
+        "text": "Step 11/12: At the end of ScratchPad/Program.cs, construct LifetimeExperiments and call Run without removing earlier session calls."
+      },
+      {
+        "text": "Step 12/12: Run ScratchPad, then build the full Release solution and run all tests with --no-build.",
+        "reveals": [{"title":"Solution","text":"The complete experiment registers all three lifetimes, resolves within two scopes, and compares reference identity.","code":"services.AddTransient<TransientMarker>();\nservices.AddScoped<ScopedMarker>();\nservices.AddSingleton<SingletonMarker>();\n\nusing ServiceProvider provider = services.BuildServiceProvider();\nusing IServiceScope firstScope = provider.CreateScope();\nusing IServiceScope secondScope = provider.CreateScope();"}]
+      }
+    ],
+    "expectedBehavior": "Register three marker classes, resolve them in two scopes, and print which instances are reused.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj",
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj",
       "action": "Modify",
-      "why": "Reference App for composition-root tests."
+      "why": "Add the DI container package."
     },
     {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryServiceTests.cs",
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session30/LifetimeExperiments.cs",
       "action": "Add",
-      "why": "Verify service collaboration."
+      "why": "Observe all three lifetimes."
     },
     {
-      "path": "src/PinkMachine19.TimeClock.App/ServiceRegistration.cs",
-      "action": "Add",
-      "why": "Expose production registrations for verification."
-    },
-    {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ServiceRegistrationTests.cs",
-      "action": "Add",
-      "why": "Verify DI lifetimes."
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs",
+      "action": "Modify",
+      "why": "Run the experiment."
     },
     {
       "path": "site/data/sessions/session-30.json",
       "action": "Modify",
-      "why": "Keep the lesson synchronized with the cumulative build step."
+      "why": "Synchronize all Session 30 representations."
     }
   ],
-  "commit": "session-29: teach test doubles di lifetimes and service tests",
+  "commit": "session-30: observe dependency injection lifetimes",
   "review": [
-    "The lab uses tests because that is the most natural environment for this concept.",
-    "Every referenced application artifact was created in this session or an earlier session.",
-    "Earlier production code, tests, and ScratchPad experiments remain intact."
+    "Every artifact named by the lesson is explicitly created or already verified.",
+    "Async suffixes and CancellationToken forwarding match genuine I/O only.",
+    "No unrelated learner naming cleanup is included.",
+    "The final solution remains buildable and testable."
   ],
   "postQuiz": [
     {
-      "prompt": "Why would registering IClockEntryRepository as Transient (instead of the real Singleton) break ClockIn/Clockout's real behavior in Program.cs?",
+      "prompt": "Where does the Session 30 exercise belong?",
       "options": [
-        "Each resolution would get a fresh, empty _clockEntries list -- ClockIn's saved entry would live in a different repository instance than the one Clockout later queries, so Clockout would never find it",
-        "Nothing would break -- Transient and Singleton behave identically for this class",
-        "It would cause a compile error"
+        "scratchpad",
+        "An unrelated earlier project",
+        "A fictional artifact"
       ],
       "correct": 0,
-      "explanation": "This is exactly the scenario Session 20's lab explored -- Singleton is what lets ClockIn and Clockout share the same underlying state across two separate method calls."
+      "explanation": "The verified cumulative design places it in scratchpad."
     },
     {
-      "prompt": "When would you choose a hand-written fake like RecordingRepository over a Moq-based mock?",
+      "prompt": "What should the return type tell a caller?",
       "options": [
-        "When the interface is small and the fake's behavior is simple enough that hand-writing it is clearer and has no extra library dependency -- both are legitimate choices, and this codebase genuinely uses both",
-        "Never -- Moq should always be preferred",
-        "Hand-written fakes are only valid for interfaces with one member"
+        "What completion or value the method promises",
+        "Which CPU thread must run it",
+        "That errors cannot occur"
       ],
       "correct": 0,
-      "explanation": "There is no universal rule -- IClockEntryRepository's real test suite uses both approaches in different tests, which is itself the honest answer: it depends on the specific test's needs."
+      "explanation": "A return type is a caller-facing contract."
     },
     {
-      "prompt": "If ClockEntryService.Clockout were called from two different HTTP requests handled concurrently by the real WebApi project (Session 33), and IClockEntryRepository stayed registered as Singleton there too, what real risk would that introduce?",
+      "prompt": "What must happen before advancing?",
       "options": [
-        "Concurrent requests could race on the same shared, mutable _clockEntries list with no synchronization -- a genuine risk this codebase's real, single-threaded console app never had to face",
-        "No risk -- Singleton services are always thread-safe automatically",
-        "The WebApi would fail to start"
+        "Run the focused behavior, Release build, and complete tests",
+        "Only read the solution",
+        "Rename unrelated learner code"
       ],
       "correct": 0,
-      "explanation": "This is a real, forward-looking risk worth naming honestly: Singleton state that was safe in a single-threaded console app becomes a genuine concurrency concern once multiple requests can run in parallel."
+      "explanation": "Every session must finish buildable and testable."
     }
   ],
   "reflections": [
-    "Why does this codebase's test suite use two different test-double styles (Moq and hand-written) instead of standardizing on one?",
-    "What would you need to verify before trusting that IClockEntryRepository's real Singleton registration is still safe once the WebApi project (Session 33) starts handling concurrent requests?",
-    "Where might Scoped be a better fit than Transient or Singleton for a class this codebase doesn't have yet?"
+    "Which boundary owns the new code?",
+    "What does the main return type promise?",
+    "What verified state may the next session assume?"
   ],
-  "whatBreaks": "Registering IClockEntryRepository as Transient instead of Singleton breaks the real ClockIn-then-Clockout sequence, because each resolution would receive an independent, empty _clockEntries list. Using Moq for every single test double, even trivially simple ones, adds a library dependency and a layer of setup-call indirection where a five-line hand-written fake like RecordingRepository would be just as clear. Assuming Singleton services are automatically safe under concurrent access ignores a real risk that becomes relevant the moment this codebase gains a multi-request host (Session 33).",
-  "summary": "This codebase's real test suite uses two legitimate test-double styles side by side: Moq (Session 29's PayrollServiceTests.cs) and hand-written fakes (EntryRecorderTests.cs's RecordingRepository) -- both satisfy IClockEntryRepository, by different mechanisms. decision-0005's real, mixed Transient/Singleton registrations in Program.cs are safe specifically because only ClockEntryRepository holds shared state; ServiceComposition's Scoped example previews a third lifetime this console app never needed but Session 33's ASP.NET Core WebApi (one scope per request) will.",
-  "learningEnvironment": "tests",
+  "whatBreaks": "Removing the Session 30 artifact breaks the focused behavior or its verified integration point.",
+  "summary": "Register three marker classes, resolve them in two scopes, and print which instances are reused.",
+  "learningEnvironment": "scratchpad",
   "buildState": {
-    "creates": [],
+    "creates": [
+      "src/PinkMachine19.TimeClock.ScratchPad/Session30/LifetimeExperiments.cs"
+    ],
     "extends": [
-      "test doubles",
-      "DI lifetime tests"
+      "IServiceCollection",
+      "Transient, scoped, and singleton",
+      "Composition root",
+      "Reference identity"
     ]
   }
 }

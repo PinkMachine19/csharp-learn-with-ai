@@ -1,200 +1,225 @@
 {
   "number": 34,
-  "category": "Data access and application integration",
-  "estimatedTime": "45 minutes",
-  "connection": "Session 33 created a working clock-entry endpoint and complete service registration. Invalid requests still lack a deliberate HTTP contract. Add API validation, structured logging, and consistent error responses around the existing endpoint.",
+  "category": "Application integration",
+  "estimatedTime": "40 minutes",
+  "connection": "Session 33 composed EF Core and AsyncClockEntryService directly in the Web host. Session 34 extracts those actual registrations and verifies constructor resolution.",
   "objectives": [
-    "Reproduce the real bug directly: attempt to resolve PayrollService from PinkMachine19.TimeClock.Web's real DI container and observe the InvalidOperationException it throws.",
-    "Read WebApiRegistrationTests.cs, which already proves this exact failure (and its one-line fix) without needing a running web host.",
-    "Apply the real fix: register IEmployeeService/EmployeeService in Program.cs, and confirm PayrollService now resolves successfully.",
-    "Connect this fix back to Session 24's throw-vs-return rule: should a missing registration surface as a 500 error, or should the API return a more specific status code?"
+    "Identify Web Program.cs as the composition root.",
+    "Register DbContext, repository, and service with scoped lifetimes.",
+    "Explain why one scope per request fits DbContext.",
+    "Verify constructor injection resolves from the real registrations."
   ],
   "visuals": [
     {
       "diagram": "mental-34-1",
-      "title": "The real, latent bug",
-      "explanation": "PayrollService's constructor requires IEmployeeService; PinkMachine19.TimeClock.Web/Program.cs registers IClockEntryRepository, IEmployeeRepository, IClockEntryService, and PayrollService itself -- but never IEmployeeService."
+      "title": "Boundary map",
+      "explanation": "Shows where Session 34 code belongs and which earlier layer it may call."
     },
     {
       "diagram": "mental-34-2",
-      "title": "Undiscovered because nothing calls it yet",
-      "explanation": "Before Session 33 added a controller, and before any controller resolves PayrollService, this bug had no way to surface -- it was real but silent."
+      "title": "Call timeline",
+      "explanation": "Shows the ordered calls and the point where Session 34 observes a result."
     },
     {
       "diagram": "mental-34-3",
-      "title": "The real test proves both the failure and the fix",
-      "explanation": "WebApiRegistrationTests.cs's two tests: one confirms resolving PayrollService throws without IEmployeeService registered; the other confirms adding one line fixes it."
+      "title": "State before and after",
+      "explanation": "Shows the state transition that the Session 34 lab verifies."
     },
     {
       "diagram": "mental-34-4",
-      "title": "A missing DI registration is a different failure than a business rule violation",
-      "explanation": "This bug happens before any request-specific logic runs -- Session 24's throw-vs-return rule was about expected domain outcomes, not startup configuration errors like this one."
+      "title": "Contract checkpoint",
+      "explanation": "Shows the input, return type, and failure meaning for the main Session 34 API."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Why did the real missing-IEmployeeService-registration bug go undiscovered in the source WebApi project for as long as it did?",
+      "prompt": "Where does the Session 34 exercise belong?",
       "options": [
-        "Nothing in the project ever actually tried to resolve PayrollService -- with zero controllers (confirmed in Session 33), the bug had no code path that would trigger it",
-        "It was actually discovered and fixed, then reintroduced",
-        "ASP.NET Core silently ignores missing DI registrations"
+        "production",
+        "An unrelated earlier project",
+        "A fictional artifact"
       ],
       "correct": 0,
-      "explanation": "This is exactly why Session 33's controller work matters here -- once something in the request pipeline resolves PayrollService, the bug becomes immediately, loudly visible."
+      "explanation": "The verified cumulative design places it in production."
     },
     {
-      "prompt": "What does WebApiRegistrationTests.cs's first test prove, without running a full ASP.NET Core host?",
+      "prompt": "What should the return type tell a caller?",
       "options": [
-        "That building a ServiceCollection with the real WebApi's exact registrations (minus IEmployeeService) and resolving PayrollService throws InvalidOperationException -- the same failure a real running host would hit",
-        "That the real WebApi project fails to compile",
-        "That IClockEntryRepository is broken"
+        "What completion or value the method promises",
+        "Which CPU thread must run it",
+        "That errors cannot occur"
       ],
       "correct": 0,
-      "explanation": "Reproducing a DI container's real registration graph in a fast unit test (no web server needed) is exactly how this bug is demonstrated without the overhead of an integration test."
+      "explanation": "A return type is a caller-facing contract."
     },
     {
-      "prompt": "What is the one-line fix for this real bug?",
+      "prompt": "What must happen before advancing?",
       "options": [
-        "Add builder.Services.AddSingleton<IEmployeeService, EmployeeService>(); to Program.cs, alongside the other three real registrations already there",
-        "Rewrite PayrollService's constructor to not require IEmployeeService",
-        "Delete PayrollService entirely"
+        "Run the focused behavior, Release build, and complete tests",
+        "Only read the solution",
+        "Rename unrelated learner code"
       ],
       "correct": 0,
-      "explanation": "The fix is additive and minimal -- exactly what WebApiRegistrationTests.cs's second test confirms: adding the missing registration, and nothing else, resolves the failure."
+      "explanation": "Every session must finish buildable and testable."
     }
   ],
   "concept": [
     {
-      "title": "Validate at the HTTP boundary",
+      "title": "Centralize and verify dependency injection registration",
       "paragraphs": [
-        "Request validation rejects malformed or incomplete wire data before calling the domain service. Domain invariants still protect the model when callers bypass HTTP.",
-        "The two layers answer different questions and should not duplicate every rule."
+        "Session 33 composed EF Core and AsyncClockEntryService directly in the Web host. Session 34 extracts those actual registrations and verifies constructor resolution.",
+        "Identify Web Program.cs as the composition root."
       ]
     },
     {
-      "title": "Translate known failures consistently",
+      "title": "Read the contract before the body",
       "paragraphs": [
-        "A known conflict such as clocking in twice should become a deliberate status and error shape. Unexpected exceptions remain server failures and should be logged once at the boundary.",
-        "Controllers should not contain duplicated try/catch blocks for every endpoint."
+        "Use IntelliSense to identify the receiver, parameters, return type, and overload one piece at a time.",
+        "Register DbContext, repository, and service with scoped lifetimes."
       ]
     },
     {
-      "title": "Structured logs carry searchable context",
+      "title": "Keep the boundary honest",
       "paragraphs": [
-        "Log named values such as EmployeeId and operation outcome rather than building one long string.",
-        "Do not log secrets or turn expected validation failures into noisy stack traces."
-      ],
-      "code": "logger.LogInformation(\"Clock-in completed for employee {EmployeeId}\", employeeId);"
+        "This work belongs in production; the lab does not claim that later artifacts already exist.",
+        "Explain why one scope per request fits DbContext."
+      ]
     }
   ],
   "lab": {
-    "objective": "Add API validation, structured logging, and consistent error responses around the existing endpoint.",
-    "startingCondition": "Session 33 created a working clock-entry endpoint and complete service registration. Invalid requests still lack a deliberate HTTP contract.",
-    "steps": [
-      "Open tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj.",
-      "Add a ProjectReference from Domain.Tests to PinkMachine19.TimeClock.Web if it is not already present.",
-      "Create src/PinkMachine19.TimeClock.Web/Validators if the folder does not yet exist.",
-      "Create src/PinkMachine19.TimeClock.Web/Validators/ClockInRequestValidator.cs.",
-      "In ClockInRequestValidator.cs, declare a validator for the actual ClockInRequest fields introduced in Session 33.",
-      "Add one validation rule for each genuine input requirement; do not invent fields merely to demonstrate validation.",
-      "Open ClockEntriesController or the configured Web boundary that handles known failures.",
-      "Translate an invalid request to one consistent 400 response contract.",
-      "Translate an expected clock-in conflict to one consistent 409 response contract.",
-      "Allow unexpected exceptions to remain distinguishable from known validation and conflict outcomes.",
-      "Inject ILogger<ClockEntriesController> into the controller.",
-      "Add a structured success log containing an {EmployeeId} placeholder.",
-      "Add a structured known-failure log containing stable context but no sensitive data.",
-      "Create tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntriesApiTests.cs.",
-      "Configure the test host with isolated persistence and the production Web registrations.",
-      "Add a test that sends a valid clock-in request and asserts the success status and response shape.",
-      "Add a test that sends invalid input and asserts the validation response.",
-      "Add a test that creates the known conflict and asserts the 409 response.",
-      "Run the focused ClockEntriesApiTests.",
-      "Run the full solution test suite."
+    "title": "Centralize and verify dependency injection registration",
+    "objective": "Identify Web Program.cs as the composition root.",
+    "practice": [
+      "Extension-method registration",
+      "Scoped DbContext lifetime",
+      "Constructor resolution",
+      "Composition tests"
     ],
-    "expectedBehavior": "The endpoint returns predictable success and error contracts and emits structured diagnostic logs.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+    "task": "Add AddTimeClockPersistence, use it from Web, and prove AsyncClockEntryService resolves inside a scope.",
+    "startingCondition": "Session 33 composed EF Core and AsyncClockEntryService directly in the Web host. Session 34 extracts those actual registrations and verifies constructor resolution.",
+    "pasteReadyInstructions": true,
+    "stepCheckboxes": true,
+    "steps": [
+      {
+        "text": "Step 1/12: In Infrastructure, create ServiceRegistration.cs and declare public static class ServiceRegistration."
+      },
+      {
+        "text": "Step 2/12: Inside it, add AddTimeClockPersistence extending IServiceCollection and accepting a SQLite connection string."
+      },
+      {
+        "text": "Step 3/12: Inside AddTimeClockPersistence, call AddDbContext<TimeClockDbContext> with UseSqlite(connectionString)."
+      },
+      {
+        "text": "Step 4/12: Register IAsyncClockEntryRepository to EfClockEntryRepository with AddScoped."
+      },
+      {
+        "text": "Step 5/12: Register AsyncClockEntryService with AddScoped and return the same IServiceCollection."
+      },
+      {
+        "text": "Step 6/12: Signature reminder: AddScoped<TService,TImplementation> maps the requested interface to one implementation reused inside one scope."
+      },
+      {
+        "text": "Step 7/12: In Web/Program.cs, replace the individual persistence registrations with AddTimeClockPersistence. Program.cs remains the composition root choosing the connection string."
+      },
+      {
+        "text": "Step 8/12: Build Web in Release before adding the resolution test."
+      },
+      {
+        "text": "Step 9/12: In the test project, create ServiceRegistrationTests.cs and build a ServiceCollection with AddTimeClockPersistence."
+      },
+      {
+        "text": "Step 10/12: Build the provider, create one scope, and resolve AsyncClockEntryService with GetRequiredService."
+      },
+      {
+        "text": "Step 11/12: Assert the resolved service is not null. Constructor injection must transitively resolve its repository and DbContext."
+      },
+      {
+        "text": "Step 12/12: Run ServiceRegistrationTests, start Web to verify resolution, then build the solution and run all tests with --no-build.",
+        "reveals": [{"title":"Solution","text":"The registration extension owns the actual scoped persistence graph.","code":"services.AddDbContext<TimeClockDbContext>(options => options.UseSqlite(connectionString));\nservices.AddScoped<IAsyncClockEntryRepository, EfClockEntryRepository>();\nservices.AddScoped<AsyncClockEntryService>();\nreturn services;"}]
+      }
+    ],
+    "expectedBehavior": "Add AddTimeClockPersistence, use it from Web, and prove AsyncClockEntryService resolves inside a scope.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj",
-      "action": "Modify",
-      "why": "Reference Web for integration testing."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Web/Validators/ClockInRequestValidator.cs",
+      "path": "src/PinkMachine19.TimeClock.Infrastructure/ServiceRegistration.cs",
       "action": "Add",
-      "why": "Validate request input."
+      "why": "Own persistence registrations."
     },
     {
       "path": "src/PinkMachine19.TimeClock.Web/Program.cs",
       "action": "Modify",
-      "why": "Configure errors and logging."
+      "why": "Use the registration extension."
     },
     {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntriesApiTests.cs",
+      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ServiceRegistrationTests.cs",
       "action": "Add",
-      "why": "Verify HTTP behavior."
+      "why": "Verify constructor resolution."
     },
     {
       "path": "site/data/sessions/session-34.json",
       "action": "Modify",
-      "why": "Keep the lesson synchronized with the cumulative build step."
+      "why": "Synchronize all Session 34 representations."
     }
   ],
-  "commit": "session-33: teach validation logging and api error responses",
+  "commit": "session-34: register async persistence services",
   "review": [
-    "The lab uses mixed because that is the most natural environment for this concept.",
-    "Every referenced application artifact was created in this session or an earlier session.",
-    "Earlier production code, tests, and ScratchPad experiments remain intact."
+    "Every artifact named by the lesson is explicitly created or already verified.",
+    "Async suffixes and CancellationToken forwarding match genuine I/O only.",
+    "No unrelated learner naming cleanup is included.",
+    "The final solution remains buildable and testable."
   ],
   "postQuiz": [
     {
-      "prompt": "Why did WebApiRegistrationTests.cs's two tests not need a running ASP.NET Core web server to prove this bug and its fix?",
+      "prompt": "Where does the Session 34 exercise belong?",
       "options": [
-        "The bug is entirely about DI container registration, which a plain ServiceCollection reproduces exactly -- no HTTP request, routing, or web server involvement is needed to trigger or observe it",
-        "ASP.NET Core tests always require a running server",
-        "The tests are not actually testing the real bug"
+        "production",
+        "An unrelated earlier project",
+        "A fictional artifact"
       ],
       "correct": 0,
-      "explanation": "Isolating exactly the layer where a bug lives (here, DI registration) is what let this test run fast and without any web-hosting overhead."
+      "explanation": "The verified cumulative design places it in production."
     },
     {
-      "prompt": "If a second service were added to PayrollService's constructor in the future without updating Program.cs's registrations, what category of bug would result?",
+      "prompt": "What should the return type tell a caller?",
       "options": [
-        "The same category as this session's real bug -- a missing DI registration, undiscovered until something actually tries to resolve the affected service",
-        "A compile-time error, caught immediately",
-        "No bug -- DI containers automatically register every dependency"
+        "What completion or value the method promises",
+        "Which CPU thread must run it",
+        "That errors cannot occur"
       ],
       "correct": 0,
-      "explanation": "This is exactly why WebApiRegistrationTests.cs's pattern -- reproducing the real registration graph in a fast test -- is worth keeping around: it would catch this exact class of regression immediately."
+      "explanation": "A return type is a caller-facing contract."
     },
     {
-      "prompt": "Is 'PayrollService cannot be resolved' the same kind of failure as ClockEntryService.Clockout's 'employee not currently clocked in' from Session 24?",
+      "prompt": "What must happen before advancing?",
       "options": [
-        "No -- the first is a startup/configuration failure (a missing registration, unrelated to any specific request's data); the second is an expected, everyday domain outcome Session 24's throw-vs-return rule was written for",
-        "Yes -- both should be handled identically",
-        "No -- the first cannot actually occur in a real application"
+        "Run the focused behavior, Release build, and complete tests",
+        "Only read the solution",
+        "Rename unrelated learner code"
       ],
       "correct": 0,
-      "explanation": "Session 24's rule was scoped to domain-level expected/unexpected outcomes -- this session's bug lives one layer below that, in DI configuration, and is worth naming as a distinct category rather than forcing it into the same rule."
+      "explanation": "Every session must finish buildable and testable."
     }
   ],
   "reflections": [
-    "Why might a bug like this one -- real, verified, and simple to fix -- persist undiscovered in a real project for a long time?",
-    "What would you add to this codebase's test suite to catch a similar missing-registration bug the moment a new dependency is introduced, rather than only after this specific one was found?",
-    "How does resolving this bug change your confidence in the rest of PinkMachine19.TimeClock.Web/Program.cs's registrations -- would you want to write a similar test for each one?"
+    "Which boundary owns the new code?",
+    "What does the main return type promise?",
+    "What verified state may the next session assume?"
   ],
-  "whatBreaks": "Leaving IEmployeeService unregistered means any future controller action that resolves PayrollService (directly or via a dependency chain) throws InvalidOperationException at the moment of resolution -- a real, silent trap for anyone who adds a new endpoint without knowing this gap exists. Registering EmployeeService with the wrong lifetime (say, Scoped instead of matching the other Singleton registrations) would still fix the immediate resolution failure but introduce the same kind of lifetime-mismatch question Session 30 studied.",
-  "summary": "PinkMachine19.TimeClock.Web/Program.cs -- mirroring the real, current the TimeClock Web project/Program.cs -- never registers IEmployeeService, even though PayrollService's constructor requires it; resolving PayrollService throws InvalidOperationException as a result. WebApiRegistrationTests.cs already proves both the failure and its one-line fix without a running web host; this session's lab applies that same fix to the real Program.cs, and distinguishes this startup/configuration failure from Session 24's domain-level throw-vs-return rule.",
-  "learningEnvironment": "mixed",
+  "whatBreaks": "Removing the Session 34 artifact breaks the focused behavior or its verified integration point.",
+  "summary": "Add AddTimeClockPersistence, use it from Web, and prove AsyncClockEntryService resolves inside a scope.",
+  "learningEnvironment": "production",
   "buildState": {
-    "creates": [],
+    "creates": [
+      "src/PinkMachine19.TimeClock.Infrastructure/ServiceRegistration.cs",
+      "tests/PinkMachine19.TimeClock.Domain.Tests/ServiceRegistrationTests.cs"
+    ],
     "extends": [
-      "API validation",
-      "logging",
-      "error responses",
-      "web tests"
+      "Extension-method registration",
+      "Scoped DbContext lifetime",
+      "Constructor resolution",
+      "Composition tests"
     ]
   }
 }

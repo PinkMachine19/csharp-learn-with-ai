@@ -1,50 +1,384 @@
 {
   "philosophy": "zero-to-N",
-  "priority": ["production", "tests", "scratchpad"],
+  "priority": [
+    "production",
+    "tests",
+    "scratchpad"
+  ],
   "rules": {
     "production": "Use when the concept implements or improves a verified TimeClock requirement.",
     "tests": "Use when assertions are the clearest natural expression of the behavior.",
     "scratchpad": "Use only for isolated language experiments that do not belong in the product. Preserve every experiment."
   },
   "sessions": [
-    {"number":0,"environment":"documentation","creates":["foundation-notes.md"]},
-    {"number":"00.5","environment":"documentation","creates":["docs/timeclock-product-brief.md"]},
-    {"number":"00.6","environment":"documentation","creates":["docs/timeclock-domain-model.md"]},
-    {"number":1,"environment":"solution","creates":["PinkMachine19.TimeClock.sln","Domain project","App project","Infrastructure project","Web project","ScratchPad project","Domain.Tests project"]},
-    {"number":2,"environment":"solution","extends":["project references toward Domain","ScratchPad reference to Domain"]},
-    {"number":3,"environment":"scratchpad","extends":["ScratchPad numeric-expression notebook"]},
-    {"number":"03.5","environment":"scratchpad","extends":["ScratchPad numeric-type comparison"]},
-    {"number":4,"environment":"scratchpad","extends":["ScratchPad control-flow experiment"]},
-    {"number":5,"environment":"scratchpad","extends":["ScratchPad methods and scope experiment"]},
-    {"number":6,"environment":"production","creates":["Address","Employee","ClockEntry"],"extends":["App demonstration"]},
-    {"number":7,"environment":"production","extends":["ClockEntry completion state","Employee initialization invariants"]},
-    {"number":8,"environment":"scratchpad","extends":["assignment-semantics experiment using production models"]},
-    {"number":9,"environment":"scratchpad","extends":["parameter-passing experiment"]},
-    {"number":10,"environment":"mixed","creates":["WorkSummary"],"extends":["equality experiment using production values"]},
-    {"number":11,"environment":"production","creates":["ClockEntryRepository"],"extends":["ClockEntry collection behavior"]},
-    {"number":12,"environment":"production","creates":["EmployeeRepository"],"extends":["employee lookup and uniqueness"]},
-    {"number":13,"environment":"scratchpad","extends":["ScratchPad repository enumeration-contract experiment"]},
-    {"number":14,"environment":"scratchpad","extends":["generic method experiment"]},
-    {"number":15,"environment":"scratchpad","extends":["generic constraint experiment"]},
-    {"number":16,"environment":"scratchpad","extends":["variance experiment"]},
-    {"number":17,"environment":"production","creates":["Timesheet"],"extends":["repository encapsulation"]},
-    {"number":18,"environment":"production","creates":["repository and service interfaces","ClockEntryService","EmployeeService"]},
-    {"number":19,"environment":"scratchpad","extends":["inheritance and abstract-member experiment"]},
-    {"number":20,"environment":"production","extends":["App dependency-injection composition","PayrollService"]},
-    {"number":21,"environment":"production","extends":["clock-entry LINQ queries"]},
-    {"number":22,"environment":"production","extends":["multi-employee work summaries"]},
-    {"number":23,"environment":"tests","creates":["deferred-execution tests"]},
-    {"number":24,"environment":"mixed","extends":["domain validation","exception tests"]},
-    {"number":25,"environment":"scratchpad","extends":["exception propagation","IDisposable","using blocks","ScratchPad resource-cleanup experiment"]},
-    {"number":26,"environment":"scratchpad","creates":["Session26 AsyncFlowExperiments"],"extends":["Task","Task<T>","async","await","already-completed Tasks"]},
-    {"number":27,"environment":"scratchpad","extends":["sequential-versus-concurrent async experiment"]},
-    {"number":28,"environment":"production","extends":["cancellation through repository and service boundaries"]},
-    {"number":29,"environment":"tests","extends":["AAA domain and payroll tests"]},
-    {"number":30,"environment":"tests","extends":["test doubles","DI lifetime tests"]},
-    {"number":31,"environment":"production","creates":["TimeClockDbContext","ClockEntryEntity"]},
-    {"number":32,"environment":"mixed","extends":["EF Core queries","SQLite integration tests"]},
-    {"number":33,"environment":"production","creates":["ClockEntriesController","request and response contracts"]},
-    {"number":34,"environment":"mixed","extends":["API validation","logging","error responses","web tests"]},
-    {"number":35,"environment":"mixed","extends":["end-to-end clock-entry workflow","integration tests"]}
+    {
+      "number": 0,
+      "environment": "documentation",
+      "creates": [
+        "foundation-notes.md"
+      ]
+    },
+    {
+      "number": "00.5",
+      "environment": "documentation",
+      "creates": [
+        "docs/timeclock-product-brief.md"
+      ]
+    },
+    {
+      "number": "00.6",
+      "environment": "documentation",
+      "creates": [
+        "docs/timeclock-domain-model.md"
+      ]
+    },
+    {
+      "number": 1,
+      "environment": "solution",
+      "creates": [
+        "PinkMachine19.TimeClock.sln",
+        "Domain project",
+        "App project",
+        "Infrastructure project",
+        "Web project",
+        "ScratchPad project",
+        "Domain.Tests project"
+      ]
+    },
+    {
+      "number": 2,
+      "environment": "solution",
+      "extends": [
+        "project references toward Domain",
+        "ScratchPad reference to Domain"
+      ]
+    },
+    {
+      "number": 3,
+      "environment": "scratchpad",
+      "extends": [
+        "ScratchPad numeric-expression notebook"
+      ]
+    },
+    {
+      "number": "03.5",
+      "environment": "scratchpad",
+      "extends": [
+        "ScratchPad numeric-type comparison"
+      ]
+    },
+    {
+      "number": 4,
+      "environment": "scratchpad",
+      "extends": [
+        "ScratchPad control-flow experiment"
+      ]
+    },
+    {
+      "number": 5,
+      "environment": "scratchpad",
+      "extends": [
+        "ScratchPad methods and scope experiment"
+      ]
+    },
+    {
+      "number": 6,
+      "environment": "production",
+      "creates": [
+        "Address",
+        "Employee",
+        "ClockEntry"
+      ],
+      "extends": [
+        "App demonstration"
+      ]
+    },
+    {
+      "number": 7,
+      "environment": "production",
+      "extends": [
+        "ClockEntry completion state",
+        "Employee initialization invariants"
+      ]
+    },
+    {
+      "number": 8,
+      "environment": "scratchpad",
+      "extends": [
+        "assignment-semantics experiment using production models"
+      ]
+    },
+    {
+      "number": 9,
+      "environment": "scratchpad",
+      "extends": [
+        "parameter-passing experiment"
+      ]
+    },
+    {
+      "number": 10,
+      "environment": "mixed",
+      "creates": [
+        "WorkSummary"
+      ],
+      "extends": [
+        "equality experiment using production values"
+      ]
+    },
+    {
+      "number": 11,
+      "environment": "production",
+      "creates": [
+        "ClockEntryRepository"
+      ],
+      "extends": [
+        "ClockEntry collection behavior"
+      ]
+    },
+    {
+      "number": 12,
+      "environment": "production",
+      "creates": [
+        "EmployeeRepository"
+      ],
+      "extends": [
+        "employee lookup and uniqueness"
+      ]
+    },
+    {
+      "number": 13,
+      "environment": "scratchpad",
+      "extends": [
+        "ScratchPad repository enumeration-contract experiment"
+      ]
+    },
+    {
+      "number": 14,
+      "environment": "scratchpad",
+      "extends": [
+        "generic method experiment"
+      ]
+    },
+    {
+      "number": 15,
+      "environment": "scratchpad",
+      "extends": [
+        "generic constraint experiment"
+      ]
+    },
+    {
+      "number": 16,
+      "environment": "scratchpad",
+      "extends": [
+        "variance experiment"
+      ]
+    },
+    {
+      "number": 17,
+      "environment": "production",
+      "creates": [
+        "Timesheet"
+      ],
+      "extends": [
+        "repository encapsulation"
+      ]
+    },
+    {
+      "number": 18,
+      "environment": "production",
+      "creates": [
+        "repository and service interfaces",
+        "ClockEntryService",
+        "EmployeeService"
+      ]
+    },
+    {
+      "number": 19,
+      "environment": "scratchpad",
+      "extends": [
+        "inheritance and abstract-member experiment"
+      ]
+    },
+    {
+      "number": 20,
+      "environment": "production",
+      "extends": [
+        "App dependency-injection composition",
+        "PayrollService"
+      ]
+    },
+    {
+      "number": 21,
+      "environment": "production",
+      "extends": [
+        "clock-entry LINQ queries"
+      ]
+    },
+    {
+      "number": 22,
+      "environment": "production",
+      "extends": [
+        "multi-employee work summaries"
+      ]
+    },
+    {
+      "number": 23,
+      "environment": "tests",
+      "creates": [
+        "deferred-execution tests"
+      ]
+    },
+    {
+      "number": 24,
+      "environment": "mixed",
+      "extends": [
+        "domain validation",
+        "exception tests"
+      ]
+    },
+    {
+      "number": 25,
+      "environment": "scratchpad",
+      "extends": [
+        "exception propagation",
+        "IDisposable",
+        "using blocks",
+        "ScratchPad resource-cleanup experiment"
+      ]
+    },
+    {
+      "number": 26,
+      "environment": "scratchpad",
+      "creates": [
+        "Session26 AsyncFlowExperiments"
+      ],
+      "extends": [
+        "Task",
+        "Task<T>",
+        "async",
+        "await",
+        "already-completed Tasks"
+      ]
+    },
+    {
+      "number": 27,
+      "environment": "scratchpad",
+      "creates": [
+        "Session27 SequentialConcurrentExperiments"
+      ],
+      "extends": [
+        "sequential async flow",
+        "concurrent async flow",
+        "Task.WhenAll with explicit Tasks"
+      ]
+    },
+    {
+      "number": 28,
+      "environment": "scratchpad",
+      "creates": [
+        "Session28 AsyncFailureExperiments"
+      ],
+      "extends": [
+        "faulted Tasks",
+        "awaited exception observation"
+      ]
+    },
+    {
+      "number": 29,
+      "environment": "tests",
+      "creates": [
+        "PayrollService behavior tests"
+      ],
+      "extends": [
+        "Arrange–Act–Assert"
+      ]
+    },
+    {
+      "number": 30,
+      "environment": "scratchpad",
+      "extends": [
+        "IServiceCollection",
+        "Transient, scoped, and singleton",
+        "Composition root",
+        "Reference identity"
+      ],
+      "creates": [
+        "src/PinkMachine19.TimeClock.ScratchPad/Session30/LifetimeExperiments.cs"
+      ]
+    },
+    {
+      "number": 31,
+      "environment": "production",
+      "creates": [
+        "src/PinkMachine19.TimeClock.Domain/Repositories/IAsyncClockEntryRepository.cs",
+        "src/PinkMachine19.TimeClock.Domain/Services/AsyncClockEntryService.cs",
+        "src/PinkMachine19.TimeClock.Infrastructure/ClockEntryEntity.cs",
+        "src/PinkMachine19.TimeClock.Infrastructure/TimeClockDbContext.cs",
+        "src/PinkMachine19.TimeClock.Infrastructure/EfClockEntryRepository.cs",
+        "tests/PinkMachine19.TimeClock.Domain.Tests/EfClockEntryRepositoryTests.cs"
+      ],
+      "extends": [
+        "EF Core DbContext",
+        "Async repository contracts",
+        "Entity mapping",
+        "CancellationToken forwarding"
+      ]
+    },
+    {
+      "number": 32,
+      "environment": "production",
+      "extends": [
+        "IQueryable",
+        "Provider translation",
+        "ToListAsync",
+        "SQLite integration tests"
+      ],
+      "creates": [
+        "src/PinkMachine19.TimeClock.Infrastructure/ClockEntryDataQueries.cs",
+        "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryDataQueriesTests.cs"
+      ]
+    },
+    {
+      "number": 33,
+      "environment": "production",
+      "creates": [
+        "src/PinkMachine19.TimeClock.Web/Requests/ClockInRequest.cs",
+        "src/PinkMachine19.TimeClock.Web/Responses/ClockEntryResponse.cs",
+        "src/PinkMachine19.TimeClock.Web/Controllers/ClockEntriesController.cs"
+      ],
+      "extends": [
+        "Controller routing",
+        "Request and response contracts",
+        "ActionResult",
+        "Async service calls"
+      ]
+    },
+    {
+      "number": 34,
+      "environment": "production",
+      "extends": [
+        "Extension-method registration",
+        "Scoped DbContext lifetime",
+        "Constructor resolution",
+        "Composition tests"
+      ],
+      "creates": [
+        "src/PinkMachine19.TimeClock.Infrastructure/ServiceRegistration.cs",
+        "tests/PinkMachine19.TimeClock.Domain.Tests/ServiceRegistrationTests.cs"
+      ]
+    },
+    {
+      "number": 35,
+      "environment": "tests",
+      "extends": [
+        "Integration testing",
+        "Real SQLite I/O",
+        "State verification",
+        "Failure atomicity"
+      ],
+      "creates": [
+        "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryWorkflowTests.cs"
+      ]
+    }
   ]
 }

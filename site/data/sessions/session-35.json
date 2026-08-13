@@ -1,192 +1,214 @@
 {
   "number": 35,
   "category": "Application milestone",
-  "estimatedTime": "45 minutes",
-  "connection": "Sessions 01–34 cumulatively created the solution, domain, services, tests, persistence, async flow, cancellation, and HTTP boundary. No prebuilt production artifact is assumed. Complete and verify the end-to-end record-completed-entry workflow built across the curriculum.",
+  "estimatedTime": "40 minutes",
+  "connection": "Sessions 26–30 prepared Task and DI concepts; Sessions 31–34 created real SQLite persistence, query execution, an HTTP boundary, and verified registrations. Session 35 tests the natural duplicate-clock-in rule across those boundaries.",
   "objectives": [
-    "Trace a TimeClock operation across domain and persistence boundaries, from EntryCompletion's validation through PayrollDbContext's persistence to a typed WorkSummary result.",
-    "Confirm Session 28's Clockout fix and Session 34's IEmployeeService registration fix are both still in place and still passing their respective tests.",
-    "Keep validation ahead of state-changing work: an invalid clock-out must never reach the database.",
-    "Verify both successful persistence and failure atomicity with a real SQLite integration test."
+    "Exercise AsyncClockEntryService with the real EF repository and SQLite.",
+    "Verify the first clock-in persists.",
+    "Verify a duplicate open clock-in is rejected without a second row.",
+    "Distinguish an expected false result from an exception."
   ],
   "visuals": [
     {
       "diagram": "mental-35-1",
-      "title": "One request, explicit stages",
-      "explanation": "Input flows through construction, validation, persistence, and a typed summary result."
+      "title": "Boundary map",
+      "explanation": "Shows where Session 35 code belongs and which earlier layer it may call."
     },
     {
       "diagram": "mental-35-2",
-      "title": "Validation guards persistence",
-      "explanation": "Invalid completion stops before the DbContext receives a new entity."
+      "title": "Call timeline",
+      "explanation": "Shows the ordered calls and the point where Session 35 observes a result."
     },
     {
       "diagram": "mental-35-3",
-      "title": "Result state controls the path",
-      "explanation": "A failed completion returns immediately; success continues with a known duration."
+      "title": "State before and after",
+      "explanation": "Shows the state transition that the Session 35 lab verifies."
     },
     {
       "diagram": "mental-35-4",
-      "title": "Integration checks the boundary",
-      "explanation": "A real SQLite in-memory database verifies mapping, saving, querying, and the no-write failure case."
+      "title": "Contract checkpoint",
+      "explanation": "Shows the input, return type, and failure meaning for the main Session 35 API."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "When should persistence begin?",
+      "prompt": "Where does the Session 35 exercise belong?",
       "options": [
-        "After domain validation succeeds",
-        "Before constructing the domain object",
-        "After ignoring the completion result"
+        "tests",
+        "An unrelated earlier project",
+        "A fictional artifact"
       ],
       "correct": 0,
-      "explanation": "Validation must protect the state-changing boundary."
+      "explanation": "The verified cumulative design places it in tests."
     },
     {
-      "prompt": "What does an in-memory SQLite test add beyond a mocked repository?",
+      "prompt": "What should the return type tell a caller?",
       "options": [
-        "Real provider mapping and query execution",
-        "A production database server",
-        "Automatic proof of every HTTP behavior"
+        "What completion or value the method promises",
+        "Which CPU thread must run it",
+        "That errors cannot occur"
       ],
       "correct": 0,
-      "explanation": "It exercises EF Core against the actual SQLite provider without external infrastructure."
+      "explanation": "A return type is a caller-facing contract."
     },
     {
-      "prompt": "Where should the cancellation token travel?",
+      "prompt": "What must happen before advancing?",
       "options": [
-        "Into the asynchronous persistence operation",
-        "Only into synchronous constructors",
-        "Nowhere once validation succeeds"
+        "Run the focused behavior, Release build, and complete tests",
+        "Only read the solution",
+        "Rename unrelated learner code"
       ],
       "correct": 0,
-      "explanation": "Passing the token lets the database operation cooperate with cancellation."
+      "explanation": "Every session must finish buildable and testable."
     }
   ],
   "concept": [
     {
-      "title": "Compose previously learned boundaries",
+      "title": "Verify the cumulative async clock-in workflow",
       "paragraphs": [
-        "The workflow does not invent a second validation rule. It creates the domain object and delegates completion to EntryCompletion.",
-        "Only a successful Result permits mapping to a persistence entity."
-      ],
-      "code": "Result<TimeSpan> completion = EntryCompletion.TryComplete(entry, clockedOutAt);\nif (!completion.IsSuccess) return Result<WorkSummary>.Failure(completion.Error!);"
+        "Sessions 26–30 prepared Task and DI concepts; Sessions 31–34 created real SQLite persistence, query execution, an HTTP boundary, and verified registrations. Session 35 tests the natural duplicate-clock-in rule across those boundaries.",
+        "Exercise AsyncClockEntryService with the real EF repository and SQLite."
+      ]
     },
     {
-      "title": "Persist after the invariant holds",
+      "title": "Read the contract before the body",
       "paragraphs": [
-        "The EF Core entity represents storage shape, while ClockEntry remains responsible for domain behavior.",
-        "SaveChangesAsync receives the caller's cancellation token, keeping asynchronous control explicit."
-      ],
-      "code": "db.ClockEntries.Add(entity);\nawait db.SaveChangesAsync(cancellationToken);"
+        "Use IntelliSense to identify the receiver, parameters, return type, and overload one piece at a time.",
+        "Verify the first clock-in persists."
+      ]
     },
     {
-      "title": "Verify outcome and atomicity",
+      "title": "Keep the boundary honest",
       "paragraphs": [
-        "The success test queries through the provider and checks the stored clock-out value.",
-        "The failure test confirms an invalid completion produces a failure result and leaves the table empty."
-      ],
-      "code": "Assert.False(result.IsSuccess);\nAssert.Empty(await db.ClockEntries.ToListAsync());"
+        "This work belongs in tests; the lab does not claim that later artifacts already exist.",
+        "Verify a duplicate open clock-in is rejected without a second row."
+      ]
     }
   ],
   "lab": {
-    "objective": "Complete and verify the end-to-end record-completed-entry workflow built across the curriculum.",
-    "startingCondition": "Sessions 01–34 cumulatively created the solution, domain, services, tests, persistence, async flow, cancellation, and HTTP boundary. No prebuilt production artifact is assumed.",
-    "steps": [
-      "Write a temporary trace listing the Web endpoint, service method, repository method, EF Core context, and Domain model involved in one clock-entry workflow.",
-      "Follow one clock-in request through those existing files and record any real integration gap without changing code yet.",
-      "Follow the matching clock-out request through those existing files and record any second real gap.",
-      "Follow the completed-entry query and summary calculation through those existing files.",
-      "Create src/PinkMachine19.TimeClock.Infrastructure/ClockEntryWorkflow.cs only if the trace proves one coordination boundary is genuinely missing.",
-      "In ClockEntryWorkflow.cs, declare a public sealed class named ClockEntryWorkflow.",
-      "Inject only the existing collaborators required to record, complete, persist, query, and summarize an entry.",
-      "Add one asynchronous workflow method with explicit employee, clock-in, clock-out, period, and CancellationToken inputs.",
-      "In the workflow method, record the entry through the existing service or repository boundary.",
-      "Complete the entry through the Domain behavior that protects its invariant.",
-      "Persist the completed state before querying the report.",
-      "Query the completed entry through the EF-backed boundary.",
-      "Produce and return the existing WorkSummary result without duplicating its aggregation logic.",
-      "Create tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryWorkflowTests.cs.",
-      "Arrange one isolated in-memory SQLite database and the production workflow collaborators.",
-      "Act by running the complete workflow with deterministic times.",
-      "Assert the successful WorkSummary employee ID and total hours.",
-      "Query the database independently and assert that exactly one completed entry was persisted.",
-      "Add one failure-path assertion proving invalid completion does not leave partial persisted state.",
-      "Run the focused ClockEntryWorkflowTests.",
-      "Run App and Web smoke checks.",
-      "Run the full solution test suite and review the build sequence for every workflow file."
+    "title": "Verify the cumulative async clock-in workflow",
+    "objective": "Exercise AsyncClockEntryService with the real EF repository and SQLite.",
+    "practice": [
+      "Integration testing",
+      "Real SQLite I/O",
+      "State verification",
+      "Failure atomicity"
     ],
-    "expectedBehavior": "The application built from Session 01 works end to end, and the final test proves the same artifacts the student created throughout the course.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+    "task": "Prove one clock-in is persisted and a second open clock-in is rejected without changing database state.",
+    "startingCondition": "Sessions 26–30 prepared Task and DI concepts; Sessions 31–34 created real SQLite persistence, query execution, an HTTP boundary, and verified registrations. Session 35 tests the natural duplicate-clock-in rule across those boundaries.",
+    "pasteReadyInstructions": true,
+    "stepCheckboxes": true,
+    "steps": [
+      {
+        "text": "Step 1/12: In the test project, create ClockEntryWorkflowTests.cs and declare public sealed class ClockEntryWorkflowTests."
+      },
+      {
+        "text": "Step 2/12: Add async Fact TryClockInAsync_PersistsOnceAndRejectsADuplicateOpenEntry returning Task."
+      },
+      {
+        "text": "Step 3/12: Inside Arrange, create and open one in-memory SqliteConnection. Keep it open for the whole test so the database survives across contexts and commands."
+      },
+      {
+        "text": "Step 4/12: Create DbContextOptions<TimeClockDbContext> with UseSqlite(connection), construct the context, and await EnsureCreatedAsync."
+      },
+      {
+        "text": "Step 5/12: Construct EfClockEntryRepository and AsyncClockEntryService using that real context."
+      },
+      {
+        "text": "Step 6/12: Choose fixed employee ID 35 and a fixed clock-in DateTime."
+      },
+      {
+        "text": "Step 7/12: Inside Act, await TryClockInAsync once and store firstAttempt."
+      },
+      {
+        "text": "Step 8/12: Await TryClockInAsync again for the same employee and store secondAttempt."
+      },
+      {
+        "text": "Step 9/12: Assert firstAttempt is true and secondAttempt is false. false represents the expected duplicate-open-entry rejection."
+      },
+      {
+        "text": "Step 10/12: Await dbContext.ClockEntries.CountAsync and assert the database still contains exactly one row."
+      },
+      {
+        "text": "Step 11/12: Run ClockEntryWorkflowTests and review the passing result."
+      },
+      {
+        "text": "Step 12/12: Run ScratchPad and App, start Web to verify startup, build the full Release solution, and run every test with --no-build.",
+        "reveals": [{"title":"Solution","text":"The integration test proves success, expected duplicate rejection, and unchanged row count.","code":"bool firstAttempt = await service.TryClockInAsync(35, clockInTime);\nbool secondAttempt = await service.TryClockInAsync(35, clockInTime.AddMinutes(1));\n\nAssert.True(firstAttempt);\nAssert.False(secondAttempt);\nAssert.Equal(1, await dbContext.ClockEntries.CountAsync());"}]
+      }
+    ],
+    "expectedBehavior": "Prove one clock-in is persisted and a second open clock-in is rejected without changing database state.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
       "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryWorkflowTests.cs",
       "action": "Add",
-      "why": "Verify the complete workflow."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Infrastructure/ClockEntryWorkflow.cs",
-      "action": "Add",
-      "why": "Coordinate persistence only if the existing service boundary requires it."
+      "why": "Verify the complete real persistence flow."
     },
     {
       "path": "site/data/sessions/session-35.json",
       "action": "Modify",
-      "why": "Keep the lesson synchronized with the cumulative build step."
+      "why": "Synchronize all Session 35 representations."
     }
   ],
-  "commit": "session-34: integrate and verify the time entry workflow",
+  "commit": "session-35: verify the async clock-in workflow",
   "review": [
-    "The lab uses mixed because that is the most natural environment for this concept.",
-    "Every referenced application artifact was created in this session or an earlier session.",
-    "Earlier production code, tests, and ScratchPad experiments remain intact."
+    "Every artifact named by the lesson is explicitly created or already verified.",
+    "Async suffixes and CancellationToken forwarding match genuine I/O only.",
+    "No unrelated learner naming cleanup is included.",
+    "The final solution remains buildable and testable."
   ],
   "postQuiz": [
     {
-      "prompt": "Why does the workflow call EntryCompletion instead of duplicating its checks?",
+      "prompt": "Where does the Session 35 exercise belong?",
       "options": [
-        "To keep one authoritative domain rule",
-        "To make EF Core validate timestamps",
-        "To avoid returning a result"
+        "tests",
+        "An unrelated earlier project",
+        "A fictional artifact"
       ],
       "correct": 0,
-      "explanation": "Delegation prevents validation rules from drifting across layers."
+      "explanation": "The verified cumulative design places it in tests."
     },
     {
-      "prompt": "What proves the invalid workflow is atomic in this lab?",
+      "prompt": "What should the return type tell a caller?",
       "options": [
-        "The failure result and empty table",
-        "The entity has a generated ID",
-        "The query uses OrderBy"
+        "What completion or value the method promises",
+        "Which CPU thread must run it",
+        "That errors cannot occur"
       ],
       "correct": 0,
-      "explanation": "No persisted row remains after the rejected operation."
+      "explanation": "A return type is a caller-facing contract."
     },
     {
-      "prompt": "What boundary does ToListAsync cross?",
+      "prompt": "What must happen before advancing?",
       "options": [
-        "Query description to provider execution and materialized results",
-        "Domain object to HTTP request",
-        "Task to dedicated thread"
+        "Run the focused behavior, Release build, and complete tests",
+        "Only read the solution",
+        "Rename unrelated learner code"
       ],
       "correct": 0,
-      "explanation": "Materialization causes the provider to execute the composed query."
+      "explanation": "Every session must finish buildable and testable."
     }
   ],
   "reflections": [
-    "Which session supplied each part of the final workflow?",
-    "Where would logging and an HTTP DTO map around this workflow?",
-    "Which failures belong in Result and which should still propagate as exceptions?"
+    "Which boundary owns the new code?",
+    "What does the main return type promise?",
+    "What verified state may the next session assume?"
   ],
-  "whatBreaks": "Removing domain validation permits invalid persistence. Removing SaveChangesAsync makes successful results disagree with stored state. Removing the cancellation token prevents cooperative cancellation at the database boundary. Removing the integration tests allows mapping, provider translation, or atomicity regressions to escape detection.",
-  "summary": "The completed workflow composes domain invariants, result-based expected failure, asynchronous persistence, cancellation, relational query execution, and integration testing without collapsing their boundaries.",
-  "learningEnvironment": "mixed",
+  "whatBreaks": "Removing the Session 35 artifact breaks the focused behavior or its verified integration point.",
+  "summary": "Prove one clock-in is persisted and a second open clock-in is rejected without changing database state.",
+  "learningEnvironment": "tests",
   "buildState": {
-    "creates": [],
+    "creates": [
+      "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryWorkflowTests.cs"
+    ],
     "extends": [
-      "end-to-end clock-entry workflow",
-      "integration tests"
+      "Integration testing",
+      "Real SQLite I/O",
+      "State verification",
+      "Failure atomicity"
     ]
   }
 }

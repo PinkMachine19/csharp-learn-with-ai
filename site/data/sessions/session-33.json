@@ -1,208 +1,238 @@
 {
   "number": 33,
-  "category": "Data access and application integration",
-  "estimatedTime": "45 minutes",
-  "connection": "Domain and Infrastructure support the complete clock-entry workflow. Web is still its scaffolded host with no TimeClock endpoint. Create the first HTTP clock-entry endpoint over the production services and explicit wire contracts.",
+  "category": "Web API",
+  "estimatedTime": "40 minutes",
+  "connection": "Session 32 verified the database query boundary. Session 33 explicitly creates the previously nonexistent Web project, request/response contracts, controller, route, and async service call.",
   "objectives": [
-    "Read PinkMachine19.TimeClock.Web/Program.cs and confirm, by inspection, that AddControllers()/MapControllers() are wired up with no Controllers/ directory and no controller classes anywhere in the project -- a real, verified gap, not a hypothetical.",
-    "Write ClockEntriesController, the project's first real controller, exposing an HTTP endpoint over the real IClockEntryService.",
-    "Explain why a controller action's parameters and return type form a DTO boundary distinct from the domain's ClockEntry/Employee types.",
-    "Confirm MapControllers() now has at least one real route to map, by calling the new endpoint."
+    "Create an ASP.NET Core composition root.",
+    "Keep request and response records separate from domain entities.",
+    "Translate expected rejection to HTTP status results.",
+    "Forward request cancellation to genuine database I/O."
   ],
   "visuals": [
     {
       "diagram": "mental-33-1",
-      "title": "The real, verified gap",
-      "explanation": "builder.Services.AddControllers(); ... app.MapControllers(); -- both real lines exist in the TimeClock Web project/Program.cs today, with zero [ApiController] classes anywhere in the project for them to map."
+      "title": "Boundary map",
+      "explanation": "Shows where Session 33 code belongs and which earlier layer it may call."
     },
     {
       "diagram": "mental-33-2",
-      "title": "A controller action is the missing piece",
-      "explanation": "[HttpPost] public IActionResult ClockIn(int employeeId) gives MapControllers() something real to route requests to -- the first controller this real project has ever had."
+      "title": "Call timeline",
+      "explanation": "Shows the ordered calls and the point where Session 33 observes a result."
     },
     {
       "diagram": "mental-33-3",
-      "title": "The action's parameters are the HTTP boundary, not the domain boundary",
-      "explanation": "A controller action receives request data (route values, query strings, request bodies) -- it is not the same thing as calling IClockEntryService.ClockIn(int employeeId) directly from C# code."
+      "title": "State before and after",
+      "explanation": "Shows the state transition that the Session 33 lab verifies."
     },
     {
       "diagram": "mental-33-4",
-      "title": "One request, routed to one action, calling the real service",
-      "explanation": "POST /employees/1/clock-in -> ClockEntriesController.ClockIn(1) -> the real, unmodified IClockEntryService.ClockIn(1)."
+      "title": "Contract checkpoint",
+      "explanation": "Shows the input, return type, and failure meaning for the main Session 33 API."
     }
   ],
   "preQuiz": [
     {
-      "prompt": "Why does the real the TimeClock Web project project currently have zero working HTTP endpoints, despite calling AddControllers() and MapControllers()?",
+      "prompt": "Where does the Session 33 exercise belong?",
       "options": [
-        "Those two calls only wire up the infrastructure FOR controllers -- MapControllers() maps whatever [ApiController]-attributed classes it finds, and the real project has never had any",
-        "AddControllers() and MapControllers() are broken in this version of ASP.NET Core",
-        "The project uses minimal APIs instead, which are incompatible with MapControllers()"
+        "production",
+        "An unrelated earlier project",
+        "A fictional artifact"
       ],
       "correct": 0,
-      "explanation": "This is confirmed by inspecting the real project directly -- the DI/routing infrastructure is present and correctly configured; only the controllers themselves are missing."
+      "explanation": "The verified cumulative design places it in production."
     },
     {
-      "prompt": "What does ClockEntriesController.ClockIn(int employeeId) actually call to perform the real work?",
+      "prompt": "What should the return type tell a caller?",
       "options": [
-        "The real, unmodified IClockEntryService.ClockIn(int employeeId) -- the controller is a thin HTTP-facing wrapper around logic that already exists and is already tested",
-        "A new, duplicate implementation of the clock-in logic written specifically for the controller",
-        "PayrollService directly"
+        "What completion or value the method promises",
+        "Which CPU thread must run it",
+        "That errors cannot occur"
       ],
       "correct": 0,
-      "explanation": "This is the whole point of Sessions 5-19's interface-based design: the controller is new, but the logic it calls into is the same real, already-tested ClockEntryService."
+      "explanation": "A return type is a caller-facing contract."
     },
     {
-      "prompt": "Is a controller action's int employeeId parameter (bound from the URL) the same thing as calling IClockEntryService.ClockIn(employeeId) directly in C# code?",
+      "prompt": "What must happen before advancing?",
       "options": [
-        "Not exactly -- the controller parameter is bound from an HTTP request (route value, query string, or body) by ASP.NET Core's model binding, THEN passed to the real ClockIn method; the HTTP boundary and the domain method call are two distinct steps",
-        "Yes -- they are identical in every respect",
-        "No -- controller actions cannot call domain services at all"
+        "Run the focused behavior, Release build, and complete tests",
+        "Only read the solution",
+        "Rename unrelated learner code"
       ],
       "correct": 0,
-      "explanation": "This distinction matters for Session 34's DTO/validation discussion: HTTP requests need explicit binding and validation before their values can be trusted as valid domain method arguments."
+      "explanation": "Every session must finish buildable and testable."
     }
   ],
   "concept": [
     {
-      "title": "The real, verified gap",
+      "title": "Create the first HTTP clock-in boundary",
       "paragraphs": [
-        "PinkMachine19.TimeClock.Web/Program.cs mirrors the TimeClock Web project/Program.cs verbatim: builder.Services.AddControllers(); wires up controller-related services, and app.MapControllers(); tells ASP.NET Core's routing to map any [ApiController]-attributed classes it discovers -- but there is no Controllers/ directory anywhere in the project, and zero such classes exist.",
-        "This is real and current, not a hypothetical scenario -- confirmed by inspecting both the real cumulative learner solution repository and this course's own PinkMachine19.TimeClock.Web project before this session's lab."
-      ],
-      "code": "// src/PinkMachine19.TimeClock.Web/Program.cs -- real, mirrored verbatim from the source WebApi\nvar builder = WebApplication.CreateBuilder(args);\nbuilder.Services.AddControllers();\n\nbuilder.Services.AddSingleton<IClockEntryRepository, ClockEntryRepository>();\nbuilder.Services.AddSingleton<IEmployeeRepository, EmployeeRepositor>();\nbuilder.Services.AddSingleton<IClockEntryService, ClockEntryService>();\nbuilder.Services.AddSingleton<PayrollService>();\n\nvar app = builder.Build();\napp.MapControllers();   // maps nothing today -- zero controllers exist\napp.Run();"
+        "Session 32 verified the database query boundary. Session 33 explicitly creates the previously nonexistent Web project, request/response contracts, controller, route, and async service call.",
+        "Create an ASP.NET Core composition root."
+      ]
     },
     {
-      "title": "ClockEntriesController: the first real controller",
+      "title": "Read the contract before the body",
       "paragraphs": [
-        "A minimal controller action exposing the real, already-tested IClockEntryService.ClockIn over HTTP -- new code, but calling into logic Sessions 5 and 19 already built and tested.",
-        "[ApiController] plus a route attribute is what makes this class discoverable by MapControllers(); nothing about IClockEntryService itself needs to change for this to work."
-      ],
-      "code": "// New: PinkMachine19.TimeClock.Web/Controllers/ClockEntriesController.cs\n[ApiController]\n[Route(\"employees/{employeeId}/clock-in\")]\npublic sealed class ClockEntriesController(IClockEntryService clockEntryService) : ControllerBase\n{\n    [HttpPost]\n    public IActionResult ClockIn(int employeeId)\n    {\n        clockEntryService.ClockIn(employeeId);\n        return Accepted();\n    }\n}"
+        "Use IntelliSense to identify the receiver, parameters, return type, and overload one piece at a time.",
+        "Keep request and response records separate from domain entities."
+      ]
     },
     {
-      "title": "The HTTP boundary is a separate step from the domain call",
+      "title": "Keep the boundary honest",
       "paragraphs": [
-        "Before ClockIn(int employeeId) ever runs, ASP.NET Core's model binding has already parsed employeeId out of the URL segment {employeeId} and converted it to an int -- a step Session 34 studies more closely when it can fail (a non-numeric segment, for instance).",
-        "This is why controller actions are described as a boundary: everything on one side (HTTP requests, routing, model binding) is new to this session; everything on the other side (IClockEntryService, ClockEntry, the real domain) is unchanged from Sessions 5-29."
-      ],
-      "code": "dotnet test PinkMachine19.TimeClock.sln --configuration Release"
+        "This work belongs in production; the lab does not claim that later artifacts already exist.",
+        "Translate expected rejection to HTTP status results."
+      ]
     }
   ],
   "lab": {
-    "objective": "Create the first HTTP clock-entry endpoint over the production services and explicit wire contracts.",
-    "startingCondition": "Domain and Infrastructure support the complete clock-entry workflow. Web is still its scaffolded host with no TimeClock endpoint.",
-    "steps": [
-      "Open src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj.",
-      "Add a ProjectReference from Web to PinkMachine19.TimeClock.Infrastructure if it is not already present.",
-      "Open src/PinkMachine19.TimeClock.Web/Program.cs and preserve the existing host setup.",
-      "Register controllers with builder.Services.AddControllers.",
-      "Register the complete repository and service graph required by the clock-in operation.",
-      "Create src/PinkMachine19.TimeClock.Web/Requests.",
-      "Create src/PinkMachine19.TimeClock.Web/Requests/ClockInRequest.cs.",
-      "In ClockInRequest.cs, declare the smallest public request contract containing only values supplied by the HTTP caller.",
-      "Create src/PinkMachine19.TimeClock.Web/Responses.",
-      "Create src/PinkMachine19.TimeClock.Web/Responses/ClockEntryResponse.cs.",
-      "In ClockEntryResponse.cs, declare a public response contract containing only values intentionally exposed over HTTP.",
-      "Do not expose ClockEntryEntity or another persistence type through either HTTP contract.",
-      "Create src/PinkMachine19.TimeClock.Web/Controllers.",
-      "Create src/PinkMachine19.TimeClock.Web/Controllers/ClockEntriesController.cs.",
-      "Declare ClockEntriesController as a public sealed class deriving from ControllerBase.",
-      "Add ApiController and the intended employees/{employeeId}/clock-in route attributes.",
-      "Inject IClockEntryService through the controller constructor and store it in a private readonly field.",
-      "Add an HttpPost action named ClockIn with an int employeeId route parameter.",
-      "Inside ClockIn, call the existing service clock-in operation once.",
-      "Translate the service outcome to the intended HTTP result without returning a persistence entity.",
-      "In Web/Program.cs, call app.MapControllers before app.Run.",
-      "Run the Web project and send one POST request to the new route.",
-      "Verify the response status and shape match the declared HTTP contract."
+    "title": "Create the first HTTP clock-in boundary",
+    "objective": "Create an ASP.NET Core composition root.",
+    "practice": [
+      "Controller routing",
+      "Request and response contracts",
+      "ActionResult",
+      "Async service calls"
     ],
-    "expectedBehavior": "A real HTTP request reaches production service behavior and returns a deliberate response contract.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+    "task": "Expose POST /clock-entries/clock-in over AsyncClockEntryService and return BadRequest, Conflict, or Created deliberately.",
+    "startingCondition": "Session 32 verified the database query boundary. Session 33 explicitly creates the previously nonexistent Web project, request/response contracts, controller, route, and async service call.",
+    "pasteReadyInstructions": true,
+    "stepCheckboxes": true,
+    "steps": [
+      {
+        "text": "Step 1/12: Create src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj with Microsoft.NET.Sdk.Web, targeting net10.0 and referencing Domain and Infrastructure."
+      },
+      {
+        "text": "Step 2/12: Add the Web project to PinkMachine19.TimeClock.sln."
+      },
+      {
+        "text": "Step 3/12: In Web/Requests, create sealed record ClockInRequest(int EmployeeId, DateTime ClockInTime)."
+      },
+      {
+        "text": "Step 4/12: In Web/Responses, create sealed record ClockEntryResponse(int EmployeeId, DateTime ClockInTime)."
+      },
+      {
+        "text": "Step 5/12: In Web/Controllers, create sealed ClockEntriesController : ControllerBase with ApiController and Route(\"clock-entries\") attributes."
+      },
+      {
+        "text": "Step 6/12: Inject AsyncClockEntryService through the controller constructor."
+      },
+      {
+        "text": "Step 7/12: Add HttpPost(\"clock-in\") action ClockInAsync returning Task<ActionResult<ClockEntryResponse>> and accepting ClockInRequest plus CancellationToken."
+      },
+      {
+        "text": "Step 8/12: Inside ClockInAsync, return BadRequest when EmployeeId is not positive. This is an expected request rejection, not an exception."
+      },
+      {
+        "text": "Step 9/12: Await TryClockInAsync and forward the CancellationToken. Return Conflict when the service reports an existing open entry."
+      },
+      {
+        "text": "Step 10/12: Return Created with ClockEntryResponse when persistence succeeds."
+      },
+      {
+        "text": "Step 11/12: In Web/Program.cs, add controllers, register persistence, ensure the SQLite database exists, and map controllers."
+      },
+      {
+        "text": "Step 12/12: Build Web, start it long enough to verify startup, then build the solution and run every test with --no-build.",
+        "reveals": [{"title":"Solution","text":"The completed action validates input, awaits the service, and translates each expected result.","code":"if (request.EmployeeId <= 0) return BadRequest(\"EmployeeId must be positive.\");\nbool accepted = await _service.TryClockInAsync(request.EmployeeId, request.ClockInTime, cancellationToken);\nif (!accepted) return Conflict(\"The employee already has an open clock entry.\");\nreturn Created($\"/clock-entries/{request.EmployeeId}/open\", new ClockEntryResponse(request.EmployeeId, request.ClockInTime));"}]
+      }
+    ],
+    "expectedBehavior": "Expose POST /clock-entries/clock-in over AsyncClockEntryService and return BadRequest, Conflict, or Created deliberately.",
+    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
     {
       "path": "src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj",
       "action": "Modify",
-      "why": "Reference Infrastructure for composition."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Web/Requests/ClockInRequest.cs",
-      "action": "Add",
-      "why": "Define incoming data."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Web/Responses/ClockEntryResponse.cs",
-      "action": "Add",
-      "why": "Define outgoing data."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Web/Controllers/ClockEntriesController.cs",
-      "action": "Add",
-      "why": "Expose the clock-in use case."
+      "why": "Create the first HTTP host."
     },
     {
       "path": "src/PinkMachine19.TimeClock.Web/Program.cs",
       "action": "Modify",
-      "why": "Compose and route the web application."
+      "why": "Compose and route the app."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Web/Requests/ClockInRequest.cs",
+      "action": "Add",
+      "why": "Define input."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Web/Responses/ClockEntryResponse.cs",
+      "action": "Add",
+      "why": "Define output."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.Web/Controllers/ClockEntriesController.cs",
+      "action": "Add",
+      "why": "Translate HTTP to the service call."
     },
     {
       "path": "site/data/sessions/session-33.json",
       "action": "Modify",
-      "why": "Keep the lesson synchronized with the cumulative build step."
+      "why": "Synchronize all Session 33 representations."
     }
   ],
-  "commit": "session-32: teach aspnet core requests routing and dto boundaries",
+  "commit": "session-33: add the async clock-in api",
   "review": [
-    "The lab uses production because that is the most natural environment for this concept.",
-    "Every referenced application artifact was created in this session or an earlier session.",
-    "Earlier production code, tests, and ScratchPad experiments remain intact."
+    "Every artifact named by the lesson is explicitly created or already verified.",
+    "Async suffixes and CancellationToken forwarding match genuine I/O only.",
+    "No unrelated learner naming cleanup is included.",
+    "The final solution remains buildable and testable."
   ],
   "postQuiz": [
     {
-      "prompt": "If PayrollService were resolved inside a new controller action today, without any other changes, what real bug from the source WebApi would surface?",
+      "prompt": "Where does the Session 33 exercise belong?",
       "options": [
-        "The real, latent missing-IEmployeeService-registration bug -- PayrollService's constructor requires IEmployeeService, which PinkMachine19.TimeClock.Web/Program.cs (mirroring the real WebApi) never registers, so resolution would throw InvalidOperationException",
-        "Nothing -- PayrollService resolves without issue in the WebApi host",
-        "A compile error, not a runtime error"
+        "production",
+        "An unrelated earlier project",
+        "A fictional artifact"
       ],
       "correct": 0,
-      "explanation": "This is exactly the bug Session 34 discovers and fixes -- Session 33 deliberately used IClockEntryService, which IS fully registered, so this particular controller avoids the bug; Session 34 confronts it directly."
+      "explanation": "The verified cumulative design places it in production."
     },
     {
-      "prompt": "Why does ClockEntriesController.ClockIn accept int employeeId as a route parameter rather than, say, a full ClockEntry object in the request body?",
+      "prompt": "What should the return type tell a caller?",
       "options": [
-        "Clocking in only requires an identity (which employee); ClockEntry's ClockIn timestamp is set by the server (DateTime.Now, inside the real ClockEntryService.ClockIn), not supplied by the client -- the route parameter matches exactly what the operation actually needs from the caller",
-        "ASP.NET Core does not support request bodies",
-        "ClockEntry cannot be deserialized from JSON"
+        "What completion or value the method promises",
+        "Which CPU thread must run it",
+        "That errors cannot occur"
       ],
       "correct": 0,
-      "explanation": "This matches the current ClockEntryService.ClockIn(int employeeId) signature exactly -- the controller's parameter list is deliberately no wider than the domain method it calls."
+      "explanation": "A return type is a caller-facing contract."
     },
     {
-      "prompt": "Was writing ClockEntriesController itself a change to any existing, real, tested code?",
+      "prompt": "What must happen before advancing?",
       "options": [
-        "No -- it is entirely new code; IClockEntryService, ClockEntryService, and every existing test remain completely unmodified",
-        "Yes -- IClockEntryService needed a new HTTP-specific method",
-        "Yes -- ClockEntry's constructor needed to change"
+        "Run the focused behavior, Release build, and complete tests",
+        "Only read the solution",
+        "Rename unrelated learner code"
       ],
       "correct": 0,
-      "explanation": "This is deliberate: the controller is additive, calling into the exact same real, already-verified domain logic every earlier session already tested."
+      "explanation": "Every session must finish buildable and testable."
     }
   ],
   "reflections": [
-    "Why did MapControllers() compile and run successfully for 31 sessions with zero controllers to map, without ever producing an error?",
-    "What would you need to add to ClockEntriesController for it to also expose Clockout and CalculateTotalHours over HTTP?",
-    "How does keeping ClockEntriesController's action parameters narrow (just employeeId) protect it from becoming coupled to internal domain details that might change?"
+    "Which boundary owns the new code?",
+    "What does the main return type promise?",
+    "What verified state may the next session assume?"
   ],
-  "whatBreaks": "Forgetting the [ApiController] attribute (or a valid route) on a new controller class means MapControllers() still will not discover it -- ASP.NET Core needs both the attribute and app.MapControllers() together to route requests to it. Calling PayrollService instead of IClockEntryService from a new controller action today would surface the real, still-unfixed missing-IEmployeeService-registration bug before Session 34 formally addresses it.",
-  "summary": "PinkMachine19.TimeClock.Web/Program.cs -- mirroring the real, current the TimeClock Web project/Program.cs -- calls AddControllers()/MapControllers() against zero controller classes, a real and verified gap, not a hypothetical one. This session's lab writes ClockEntriesController, the project's first real controller, calling directly into the same real, already-tested IClockEntryService every earlier session built -- the HTTP boundary (routing, model binding) is new; the domain logic it reaches is not.",
+  "whatBreaks": "Removing the Session 33 artifact breaks the focused behavior or its verified integration point.",
+  "summary": "Expose POST /clock-entries/clock-in over AsyncClockEntryService and return BadRequest, Conflict, or Created deliberately.",
   "learningEnvironment": "production",
   "buildState": {
     "creates": [
-      "ClockEntriesController",
-      "request and response contracts"
+      "src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj",
+      "src/PinkMachine19.TimeClock.Web/Program.cs",
+      "src/PinkMachine19.TimeClock.Web/Requests/ClockInRequest.cs",
+      "src/PinkMachine19.TimeClock.Web/Responses/ClockEntryResponse.cs",
+      "src/PinkMachine19.TimeClock.Web/Controllers/ClockEntriesController.cs"
     ],
-    "extends": []
+    "extends": [
+      "Controller routing",
+      "Request and response contracts",
+      "ActionResult",
+      "Async service calls"
+    ]
   }
 }

@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
     <ProjectReference Include="..\PinkMachine19.TimeClock.Domain\PinkMachine19.TimeClock.Domain.csproj" />
   </ItemGroup>
 

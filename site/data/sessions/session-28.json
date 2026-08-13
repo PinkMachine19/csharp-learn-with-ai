@@ -1,205 +1,71 @@
 {
   "number": 28,
   "category": "Asynchronous programming",
-  "estimatedTime": "45 minutes",
-  "connection": "Session 26 established awaited repository/service flow. Those methods do not yet accept or observe cancellation. Propagate cancellation through the real asynchronous repository and service workflow.",
+  "estimatedTime": "40 minutes",
+  "connection": "Sessions 26 and 27 introduced Task, await, and overlapping independent waits in ScratchPad. Production remains synchronous. Session 28 uses a deliberate ScratchPad failure to show that awaiting a Task observes both completion and exceptions.",
   "objectives": [
-    "Fix the real CS4014 bug: add await to Program.cs's clockEntryService.Clockout(1) call and remove the pragma suppression, confirming the build is warning-free without it.",
-    "Explain why the fix changes CalculateTotalHours's printed total from a near-zero accident to a real, deterministic, non-trivial number of hours.",
-    "Read IClockEntryRepository.GetClockEntry's CancellationToken cancellationToken = default parameter and confirm, by reading ClockEntryRepository's real implementation, that it is never actually checked or passed anywhere.",
-    "Contrast that decorative token with CancellableEntrySource, a new extension whose CancellationToken is genuinely passed to Task.Delay and can actually cancel an in-flight operation."
+    "Explain that calling an async method returns a Task representing eventual completion or failure.",
+    "Store a Task before awaiting it so the operation and its later observation remain visible.",
+    "Use await inside try/catch to observe an asynchronous exception.",
+    "Explain why discarding a Task loses deliberate control of completion and failure.",
+    "Finish with no fire-and-forget call, compiler warning, or unhandled exception."
   ],
   "visuals": [
-    {
-      "diagram": "mental-28-1",
-      "title": "Before the fix: a race with an accidental near-correct answer",
-      "explanation": "clockEntryService.Clockout(1) without await lets Program.cs call CalculateTotalHours before Clockout's body has necessarily finished -- the near-zero total was luck, not correctness."
-    },
-    {
-      "diagram": "mental-28-2",
-      "title": "After the fix: ClockIn, then Clockout, then the total, guaranteed in order",
-      "explanation": "await clockEntryService.Clockout(1); ensures Clockout's entire body -- including SaveClockEntry -- completes before CalculateTotalHours runs."
-    },
-    {
-      "diagram": "mental-28-3",
-      "title": "A CancellationToken parameter is not automatically functional",
-      "explanation": "IClockEntryRepository.GetClockEntry accepts a CancellationToken but its real implementation never reads it -- passing one has no effect on the real GetClockEntry today."
-    },
-    {
-      "diagram": "mental-28-4",
-      "title": "CancellableEntrySource shows what a real, functioning token looks like",
-      "explanation": "await Task.Delay(latency, cancellationToken) genuinely observes cancellation -- a real contrast to GetClockEntry's decorative parameter."
-    }
+    {"diagram": "mental-28-1", "title": "One Task carries completion or failure", "explanation": "FailAfterDelayAsync returns one Task immediately. That Task later completes in a faulted state carrying InvalidOperationException."},
+    {"diagram": "mental-28-2", "title": "await is the observation point", "explanation": "The try block awaits failureTask. When the Task faults, await rethrows its exception at that line so the matching catch can handle it."},
+    {"diagram": "mental-28-3", "title": "Stored Task keeps a handle on the work", "explanation": "Keeping failureTask lets the caller deliberately await completion. Discarding the Task removes that direct control and can hide failure from the intended flow."},
+    {"diagram": "mental-28-4", "title": "Catch restores the experiment's path", "explanation": "The matching catch handles the intentional InvalidOperationException, after which RunAsync reaches its final continuation message instead of terminating ScratchPad."}
   ],
   "preQuiz": [
-    {
-      "prompt": "Why did Program.cs's unawaited Clockout(1) call produce a near-zero total-hours output rather than a clearly wrong one?",
-      "options": [
-        "ClockIn and the fire-and-forget Clockout run essentially back-to-back with almost no real elapsed time between them, and if CalculateTotalHours runs before Clockout's SaveClockEntry completes, GetEmployeeClockEntries may find zero completed entries in the requested window -- a near-zero result was the accidental, not guaranteed, outcome",
-        "The total was always correct -- there was never a real bug",
-        "CalculateTotalHours has a rounding bug unrelated to await"
-      ],
-      "correct": 0,
-      "explanation": "This is the real, documented consequence of the CS4014 warning -- Session 26 identified it; this session fixes it and explains exactly why the output changes."
-    },
-    {
-      "prompt": "After adding await to clockEntryService.Clockout(1), what does Program.cs now guarantee about the order of operations?",
-      "options": [
-        "ClockIn completes, then Clockout's entire body (including the real SaveClockEntry call inside it) completes, THEN CalculateTotalHours runs -- removing the race entirely",
-        "Nothing changes -- await has no effect on execution order here",
-        "ClockIn and Clockout now run concurrently instead of the reverse"
-      ],
-      "correct": 0,
-      "explanation": "await is precisely what removes the race: the calling code cannot proceed past the awaited call until it has genuinely finished."
-    },
-    {
-      "prompt": "Does passing a real, non-default CancellationToken to the current GetClockEntry implementation actually let you cancel an in-flight lookup?",
-      "options": [
-        "No -- the real ClockEntryRepository.GetClockEntry implementation never reads or checks its cancellationToken parameter anywhere in its body; passing one has no observable effect today",
-        "Yes -- every async method automatically respects any CancellationToken passed to it",
-        "Only if the lookup takes longer than one second"
-      ],
-      "correct": 0,
-      "explanation": "This is confirmed by reading the production code directly -- the parameter exists in the signature (the only CancellationToken in the whole codebase) but is unused, decorative."
-    }
+    {"prompt": "What can a Task represent besides successful completion?", "options": ["Failure or cancellation", "Only a thread", "Only a returned string"], "correct": 0, "explanation": "A Task records eventual completion state, including faults and cancellation."},
+    {"prompt": "Where does an exception from a faulted Task become observable in ordinary async code?", "options": ["At the await expression", "At the method name", "Only when the process exits"], "correct": 0, "explanation": "await observes the Task and rethrows its stored exception."},
+    {"prompt": "Should this lesson leave an unawaited failing Task in Program.cs?", "options": ["No", "Yes", "Only in Release builds"], "correct": 0, "explanation": "The final repository should deliberately await or return every created Task."}
   ],
   "concept": [
-    {
-      "title": "Cancellation is a cooperative request",
-      "paragraphs": [
-        "A CancellationToken carries a request to stop. Code at a cancellable boundary must observe it; adding a parameter without using or forwarding it changes nothing.",
-        "Cancellation is not failure and should not be converted into an unrelated domain exception."
-      ],
-      "code": "token.ThrowIfCancellationRequested();"
-    },
-    {
-      "title": "Propagate the same token",
-      "paragraphs": [
-        "App passes the token to the service, and the service passes it to the repository. Each layer should avoid replacing it with CancellationToken.None.",
-        "The operation that waits on I/O is usually where cancellation becomes effective."
-      ],
-      "code": "await entries.FindOpenAsync(employeeId, token);"
-    },
-    {
-      "title": "Test cancellation deterministically",
-      "paragraphs": [
-        "An already-cancelled token gives a deterministic first test. A second test proves normal work still succeeds.",
-        "There is no need to preserve a known unawaited-call bug merely to teach cancellation."
-      ]
-    }
+    {"title": "A Task is the handle to later completion", "paragraphs": ["Calling FailAfterDelayAsync starts the method and returns Task. The helper reaches Task.Delay, yields while waiting, and later throws.", "Task does not mean a new thread. Task.Delay schedules a wait without dedicating a thread to sleep."], "code": "Task failureTask = FailAfterDelayAsync();"},
+    {"title": "await observes failure", "paragraphs": ["The exception is stored by the faulted Task. await failureTask observes that Task and throws InvalidOperationException at the await line.", "Placing await inside try lets a matching catch handle the intentional failure and allows ScratchPad to continue."], "code": "try\n{\n    await failureTask;\n}\ncatch (InvalidOperationException exception)\n{\n    Console.WriteLine($\"Observed: {exception.Message}\");\n}"},
+    {"title": "Discarding a Task gives up deliberate control", "paragraphs": ["A call such as _ = FailAfterDelayAsync(); explicitly discards the returned Task. The compiler may accept that syntax, but the current method no longer awaits completion or handles failure in its normal control flow.", "This lesson discusses that risk without leaving a discarded failing Task in the final code. Background work needs an intentional owner and error strategy; it is optional advanced material, not this lab."], "code": "// Discuss, but do not leave in the final experiment:\n_ = FailAfterDelayAsync();"}
   ],
   "lab": {
-    "objective": "Propagate cancellation through the real asynchronous repository and service workflow.",
-    "title": "Propagate and Prove Cancellation",
-    "practice": ["CancellationToken flow", "Cooperative cancellation", "ThrowIfCancellationRequested", "Cancellation-focused tests"],
-    "task": "Pass one cancellation token from the application through services and repositories, then test both cancelled and active paths.",
-    "collapseInstructions": true,
-    "stepCheckboxes": true,
-    "clickHighlightInstructions": true,
+    "title": "Observe an Exception Through await",
+    "objective": "Create one deliberate asynchronous failure, store its Task, await it inside try/catch, and prove ScratchPad continues after handling it.",
+    "practice": ["Faulted Tasks", "await as observation", "try/catch around await", "Task ownership"],
+    "task": "Build AsyncFailureExperiments in Session28 without changing production or leaving fire-and-forget work.",
+    "startingCondition": "Session 27 awaits SequentialConcurrentExperiments from ScratchPad Program.cs. Production repositories and services remain synchronous.",
     "pasteReadyInstructions": true,
-    "startingCondition": "Session 26 established awaited repository/service flow. Those methods do not yet accept or observe cancellation.",
+    "stepCheckboxes": true,
     "steps": [
-      "Open IClockEntryRepository and locate every asynchronous member introduced in Session 26.",
-      "Confirm each asynchronous repository member accepts a CancellationToken parameter named cancellationToken.",
-      "Open the repository implementation and pass cancellationToken to any genuinely cancellable operation it performs.",
-      "At an in-memory boundary with no naturally cancellable wait, call cancellationToken.ThrowIfCancellationRequested before changing or returning state.",
-      "Open ClockEntryService and add an optional CancellationToken parameter to each asynchronous public method.",
-      "Pass the same cancellationToken to every awaited repository call; do not create a replacement token.",
-      "Open PayrollService and add an optional CancellationToken parameter if CalculateTotalHoursAsync awaits repository work.",
-      "Pass that same cancellationToken through the awaited repository call.",
-      "Open Program.cs and create or reuse one CancellationToken value for the App workflow.",
-      "Pass the token from Program.cs through each asynchronous service call.",
-      "Create tests/PinkMachine19.TimeClock.Domain.Tests/CancellationTests.cs.",
-      "In CancellationTests.cs, declare a public sealed class named CancellationTests.",
-      "Add a Fact method named RepositoryOperation_WhenTokenAlreadyCancelled_ThrowsOperationCanceledException.",
-      "In that test, create a CancellationTokenSource and call Cancel before invoking the repository.",
-      "Use Assert.ThrowsAsync<OperationCanceledException> around the cancellable repository operation.",
-      "Add a second Fact method named RepositoryOperation_WhenTokenIsActive_CompletesNormally.",
-      "In the second test, use CancellationToken.None with the same repository operation.",
-      "Assert the normal observable result of that operation.",
-      "Run the focused CancellationTests.",
-      "Run App and the full solution test suite."
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, create folder Session28 and file src/PinkMachine19.TimeClock.ScratchPad/Session28/AsyncFailureExperiments.cs."},
+      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session28, file AsyncFailureExperiments.cs, declare public sealed class AsyncFailureExperiments. public lets Program.cs create it; sealed prevents inheritance from this focused experiment."},
+      {"text": "Inside AsyncFailureExperiments, add public async Task RunAsync() with a temporary throw. Task promises eventual completion without a result; async permits await and does not create a thread."},
+      {"text": "Inside AsyncFailureExperiments but outside RunAsync, add private async Task FailAfterDelayAsync() with a temporary throw. private keeps the helper inside this experiment."},
+      {"text": "Inside AsyncFailureExperiments.FailAfterDelayAsync, await Task.Delay(100), then throw InvalidOperationException with message Intentional Session 28 failure. Task.Delay simulates waiting and is not production I/O."},
+      {"text": "From the csharp-practice-working solution folder, build project src/PinkMachine19.TimeClock.ScratchPad before integrating the caller.", "code": "dotnet build src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"},
+      {"text": "Inside AsyncFailureExperiments.RunAsync, remove the temporary throw, call FailAfterDelayAsync without immediately awaiting it, and store the returned Task in failureTask. Print Failure Task created."},
+      {"text": "Still inside AsyncFailureExperiments.RunAsync, add try and catch (InvalidOperationException exception). Inside try, await failureTask. await observes the Task's completion and failure."},
+      {"text": "Inside the catch in AsyncFailureExperiments.RunAsync, print Observed: followed by exception.Message. After catch, print Experiment continued after the catch."},
+      {"text": "In src/PinkMachine19.TimeClock.ScratchPad/Program.cs, after earlier session calls, add a Session 28 heading, create AsyncFailureExperiments, and await RunAsync. Do not discard its Task."},
+      {"text": "From the csharp-practice-working solution folder, run ScratchPad and verify the Task is created, the intentional failure is observed, and execution continues.", "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"},
+      {"text": "Build PinkMachine19.TimeClock.sln in Release and run the complete test suite without rebuilding. Open Solution Reveal only after both pass.", "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build", "reveals": [{"title": "Solution", "text": "The Task is stored, awaited, and its exception handled deliberately.", "code": "public sealed class AsyncFailureExperiments\n{\n    public async Task RunAsync()\n    {\n        Task failureTask = FailAfterDelayAsync();\n        Console.WriteLine(\"Failure Task created.\");\n\n        try\n        {\n            await failureTask;\n        }\n        catch (InvalidOperationException exception)\n        {\n            Console.WriteLine($\"Observed: {exception.Message}\");\n        }\n\n        Console.WriteLine(\"Experiment continued after the catch.\");\n    }\n\n    private async Task FailAfterDelayAsync()\n    {\n        await Task.Delay(100);\n        throw new InvalidOperationException(\"Intentional Session 28 failure.\");\n    }\n}"}]}
     ],
-    "expectedBehavior": "Cancellation is meaningful, propagated, and tested rather than decorative.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+    "expectedBehavior": "Failure Task created.\nObserved: Intentional Session 28 failure.\nExperiment continued after the catch.",
+    "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
-    {
-      "path": "src/PinkMachine19.TimeClock.Domain/IClockEntryRepository.cs",
-      "action": "Modify",
-      "why": "Accept cancellation."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Domain/Repositories/ClockEntryRepository.cs",
-      "action": "Modify",
-      "why": "Observe cancellation."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Domain/ClockEntryService.cs",
-      "action": "Modify",
-      "why": "Propagate cancellation."
-    },
-    {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/CancellationTests.cs",
-      "action": "Add",
-      "why": "Verify cancellation behavior."
-    },
-    {
-      "path": "site/data/sessions/session-28.json",
-      "action": "Modify",
-      "why": "Keep the lesson synchronized with the cumulative build step."
-    }
+    {"path": "src/PinkMachine19.TimeClock.ScratchPad/Session28/AsyncFailureExperiments.cs", "action": "Add", "why": "Preserve the deliberate fault-observation experiment."},
+    {"path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs", "action": "Modify", "why": "Await Session 28 after earlier experiments."},
+    {"path": "site/data/sessions/session-28.json", "action": "Modify", "why": "Synchronize all Session 28 representations."}
   ],
-  "commit": "session-27: teach cancellation and asynchronous exceptions",
-  "review": [
-    "The lab uses production because that is the most natural environment for this concept.",
-    "Every referenced application artifact was created in this session or an earlier session.",
-    "Earlier production code, tests, and ScratchPad experiments remain intact."
-  ],
+  "commit": "session-28: observe asynchronous failures with await",
+  "review": ["Production and tests remain unchanged.", "Every created Task is stored and awaited; no final warning or unhandled exception remains.", "No CancellationToken, Task.Run, Clockout, GetClockEntry, or CalculateTotalHours race is introduced.", "The solution remains hidden behind Reveal."],
   "postQuiz": [
-    {
-      "prompt": "Why was it correct for Sessions 5 through 25 to keep Program.cs's Clockout(1) call unawaited, rather than fixing it immediately when it was first introduced?",
-      "options": [
-        "The bug is real, observable, and pedagogically useful exactly as-is -- fixing it only once async/await (Session 26) and cancellation (this session) have been properly taught lets learners understand WHY it's a bug, not just that it is one",
-        "It was an oversight that should have been fixed in Session 6",
-        "Unawaited async calls are actually correct C# and never need fixing"
-      ],
-      "correct": 0,
-      "explanation": "This mirrors the production code's own history: the bug exists in production-adjacent code precisely because understanding why it matters requires the async/await knowledge this course builds up to across Sessions 25-27."
-    },
-    {
-      "prompt": "If GetClockEntry's CancellationToken parameter started being genuinely checked (e.g. with cancellationToken.ThrowIfCancellationRequested()), what real behavior would change for existing callers?",
-      "options": [
-        "Existing callers passing the default token would see no change at all, since a default CancellationToken is never in a cancelled state -- only callers who explicitly pass and trigger a real token would newly observe OperationCanceledException",
-        "Every existing call to GetClockEntry would immediately start throwing",
-        "The method's return type would need to change"
-      ],
-      "correct": 0,
-      "explanation": "This is exactly why adding real cancellation support to an existing method is usually a safe, additive change -- default(CancellationToken) callers are unaffected."
-    },
-    {
-      "prompt": "What is the real, functional difference in this codebase between a CancellationToken parameter that exists but is unused, and one that is genuinely checked?",
-      "options": [
-        "The unused one (GetClockEntry's) has zero effect on the method's behavior no matter what token is passed; the checked one (CancellableEntrySource's) can genuinely stop the operation early via OperationCanceledException",
-        "There is no real difference -- both behave identically",
-        "The checked one always runs faster"
-      ],
-      "correct": 0,
-      "explanation": "This is the entire teaching point of contrasting the two: a CancellationToken parameter's mere presence in a signature proves nothing about whether cancellation actually works."
-    }
+    {"prompt": "Why does the catch handle the exception thrown after Task.Delay?", "options": ["await rethrows the faulted Task's exception inside the try", "Task.Delay deletes the exception", "Console.WriteLine catches it"], "correct": 0, "explanation": "The Task stores the failure and await observes it at the await line."},
+    {"prompt": "What control is lost when a Task is discarded?", "options": ["The current flow no longer deliberately awaits its completion or failure", "The compiler deletes the method", "The Task automatically becomes parallel"], "correct": 0, "explanation": "A discarded Task has no direct owner in the current flow."},
+    {"prompt": "Does this experiment prove another thread handled the delay?", "options": ["No", "Yes", "Only because the Task faulted"], "correct": 0, "explanation": "Async waiting and Task.Delay do not guarantee a dedicated thread."}
   ],
-  "reflections": [
-    "Why does fixing Program.cs's real bug in Session 28 (rather than Session 26, where it was first identified) feel like the right pedagogical placement now that you understand cancellation?",
-    "Where else in this codebase might a parameter exist in a signature without being genuinely used, the way GetClockEntry's CancellationToken is?",
-    "What would you need to change about ClockEntryRepository for GetClockEntry's CancellationToken to become genuinely functional?"
-  ],
-  "whatBreaks": "Reverting Program.cs's await fix reintroduces the real race condition between Clockout's completion and CalculateTotalHours's read of GetEmployeeClockEntries, along with the real CS4014 warning that would then need re-suppressing to keep the build warning-free. Assuming GetClockEntry's CancellationToken parameter provides genuine cancellation support (because the parameter exists) would lead to writing cancellation-dependent code around a method that currently cannot honor it.",
-  "summary": "Program.cs's real, long-standing unawaited Clockout(1) call is fixed here, in the session where async/await and cancellation are both fully in scope: adding await removes the race that made CalculateTotalHours's near-zero output an accident rather than a guarantee, and the CS4014 pragma suppression is removed along with the bug it was protecting. GetClockEntry's CancellationToken parameter is confirmed, by reading its real implementation, to be entirely decorative -- a real contrast to CancellableEntrySource's genuinely functioning one.",
-  "learningEnvironment": "production",
-  "buildState": {
-    "creates": [],
-    "extends": [
-      "cancellation through repository and service boundaries"
-    ]
-  }
+  "reflections": ["What changes about exception handling when the failing Task is awaited outside the try block?", "Why is storing failureTask clearer for this lesson than discarding the return value?", "What responsibilities would a real background-work owner need?"],
+  "whatBreaks": "Removing await from failureTask means RunAsync no longer deliberately observes completion or failure. Moving await outside try lets the intentional exception escape the experiment. Removing the Program.cs await gives up deliberate control of RunAsync itself.",
+  "summary": "An async call returns a Task that records eventual completion or failure. Awaiting that Task observes its result and rethrows its exception at the await line, where ordinary try/catch can handle it. The final experiment owns every Task and leaves no warning or unhandled failure.",
+  "learningEnvironment": "scratchpad",
+  "buildState": {"creates": ["src/PinkMachine19.TimeClock.ScratchPad/Session28/AsyncFailureExperiments.cs"], "extends": ["faulted Tasks", "awaited exception observation"]}
 }
