@@ -43,7 +43,7 @@ if (manifest) {
   if (new Set(sessions.map((session) => session.id)).size !== sessions.length) errors.push("Duplicate session IDs exist");
   if (new Set(sessions.map((session) => session.slug)).size !== sessions.length) errors.push("Duplicate session slugs exist");
   if (layers.length !== 10) errors.push(`Expected 10 curriculum layers, found ${layers.length}`);
-  const expectedNumbers = [0, "00.5", "00.6", 1, 2, 3, "03.5", ...Array.from({ length: 25 }, (_, index) => index + 4), "28B", ...Array.from({ length: 7 }, (_, index) => index + 29)];
+  const expectedNumbers = [0, "00.5", "00.6", 1, 2, 3, "03.5", ...Array.from({ length: 25 }, (_, index) => index + 4), "28B", 29, 30, "30B", ...Array.from({ length: 5 }, (_, index) => index + 31)];
   for (const [index, session] of sessions.entries()) {
     if (session.number !== expectedNumbers[index]) errors.push(`Session sequence breaks at ${session.id}`);
     const expectedPrerequisite = index === 0 ? null : sessions[index - 1].number;
@@ -153,18 +153,16 @@ const cumulativeFiles = new Set();
 for (const session of manifest.sessions) {
   if (!allowedEnvironments.has(session.learningEnvironment)) errors.push(`${session.id} uses an unknown learning environment`);
   const source = JSON.parse(await readFile(path.join(root, "site", "data", "sessions", `${session.id}.json`), "utf8"));
-  if (Number(session.number) >= 1 && Number(session.number) <= 24) {
-    const lesson = await readFile(path.join(dist, session.lessonPath), "utf8");
-    const standaloneLab = await readFile(path.join(dist, session.labPath), "utf8");
-    const stepTotals = source.lab.labs
-      ? source.lab.labs.map((lab) => lab.instructions.length)
-      : [source.lab.steps.length];
-    for (const total of stepTotals) {
-      for (let index = 1; index <= total; index++) {
-        const label = `Step ${index}/${total}`;
-        if (!lesson.includes(label)) errors.push(`${session.id} lesson is missing ${label}`);
-        if (!standaloneLab.includes(label)) errors.push(`${session.id} standalone lab is missing ${label}`);
-      }
+  const lesson = await readFile(path.join(dist, session.lessonPath), "utf8");
+  const standaloneLab = await readFile(path.join(dist, session.labPath), "utf8");
+  const stepTotals = source.lab.labs
+    ? source.lab.labs.map((lab) => lab.instructions.length)
+    : [source.lab.steps.length];
+  for (const total of stepTotals) {
+    for (let index = 1; index <= total; index++) {
+      const label = `Step ${index}/${total}`;
+      if (!lesson.includes(label)) errors.push(`${session.id} lesson is missing ${label}`);
+      if (!standaloneLab.includes(label)) errors.push(`${session.id} standalone lab is missing ${label}`);
     }
   }
   const serializedLab = JSON.stringify(source.lab);

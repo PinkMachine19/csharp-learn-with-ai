@@ -1,224 +1,91 @@
 {
   "number": 30,
-  "category": "Dependency injection",
+  "category": "Testing",
   "estimatedTime": "40 minutes",
-  "connection": "Session 29 tested the real synchronous payroll behavior. Session 30 now introduces the DI container itself in an isolated ScratchPad experiment; no earlier registration is assumed.",
+  "connection": "Session 29 tested PayrollService with a real in-memory repository. Session 30 isolates ClockEntryService from IClockEntryRepository, first with a hand-written recording fake and then with Moq.",
   "objectives": [
-    "Build an IServiceCollection and ServiceProvider explicitly.",
-    "Compare transient, scoped, and singleton reuse with ReferenceEquals.",
-    "Identify the composition root as the place that chooses implementations and lifetimes.",
-    "Explain why shared mutable state makes lifetime selection important."
+    "Explain how a test double isolates one class from a collaborator.",
+    "Build a small recording fake that supplies state and records an interaction.",
+    "Use Moq to configure the same repository boundary and verify a save call.",
+    "Choose between a real collaborator, fake, stub, and mock based on the evidence a test needs."
   ],
   "visuals": [
-    {
-      "diagram": "mental-30-1",
-      "title": "Boundary map",
-      "explanation": "Shows where Session 30 code belongs and which earlier layer it may call."
-    },
-    {
-      "diagram": "mental-30-2",
-      "title": "Call timeline",
-      "explanation": "Shows the ordered calls and the point where Session 30 observes a result."
-    },
-    {
-      "diagram": "mental-30-3",
-      "title": "State before and after",
-      "explanation": "Shows the state transition that the Session 30 lab verifies."
-    },
-    {
-      "diagram": "mental-30-4",
-      "title": "Contract checkpoint",
-      "explanation": "Shows the input, return type, and failure meaning for the main Session 30 API."
-    }
+    {"diagram":"mental-30-1","title":"Isolation puts one class under the lens","explanation":"ClockEntryService is the unit under test. A controlled IClockEntryRepository replaces storage so repository behavior cannot obscure the service decision."},
+    {"diagram":"mental-30-2","title":"A fake is working test code","explanation":"The recording fake implements the real interface, returns configured values, and records saved entries in ordinary C# members the test can inspect."},
+    {"diagram":"mental-30-3","title":"Moq configures and verifies","explanation":"Setup supplies the repository response. Verify checks that SaveClockEntry received the expected ClockEntry exactly once."},
+    {"diagram":"mental-30-4","title":"Choose the evidence, then the double","explanation":"Use a real collaborator when it is fast and deterministic, a hand-written fake when state makes the behavior clear, and Moq when configuration or interaction verification is the clearest evidence."}
   ],
   "preQuiz": [
-    {
-      "prompt": "Where does the Session 30 exercise belong?",
-      "options": [
-        "scratchpad",
-        "An unrelated earlier project",
-        "A fictional artifact"
-      ],
-      "correct": 0,
-      "explanation": "The verified cumulative design places it in scratchpad."
-    },
-    {
-      "prompt": "What should the return type tell a caller?",
-      "options": [
-        "What completion or value the method promises",
-        "Which CPU thread must run it",
-        "That errors cannot occur"
-      ],
-      "correct": 0,
-      "explanation": "A return type is a caller-facing contract."
-    },
-    {
-      "prompt": "What must happen before advancing?",
-      "options": [
-        "Run the focused behavior, Release build, and complete tests",
-        "Only read the solution",
-        "Rename unrelated learner code"
-      ],
-      "correct": 0,
-      "explanation": "Every session must finish buildable and testable."
-    }
+    {"prompt":"What is isolated in a ClockEntryService unit test?","options":["ClockEntryService from its repository collaborator","The test runner from C#","Every class from its own methods"],"correct":0,"explanation":"The test controls IClockEntryRepository so it can focus on ClockEntryService behavior."},
+    {"prompt":"What makes a recording fake different from production storage?","options":["It implements the contract with small deterministic test behavior","It uses a real database","It changes the service API"],"correct":0,"explanation":"A fake is a test implementation of the same interface."},
+    {"prompt":"What does Moq Verify provide?","options":["Evidence that a configured interaction occurred","A production repository","Automatic proof of every requirement"],"correct":0,"explanation":"Verify checks a specific collaborator call; assertions are still chosen by the test author."}
   ],
   "concept": [
-    {
-      "title": "Observe dependency injection lifetimes in ScratchPad",
-      "paragraphs": [
-        "Session 29 tested the real synchronous payroll behavior. Session 30 now introduces the DI container itself in an isolated ScratchPad experiment; no earlier registration is assumed.",
-        "Build an IServiceCollection and ServiceProvider explicitly."
-      ]
-    },
-    {
-      "title": "Read the contract before the body",
-      "paragraphs": [
-        "Use IntelliSense to identify the receiver, parameters, return type, and overload one piece at a time.",
-        "Compare transient, scoped, and singleton reuse with ReferenceEquals."
-      ]
-    },
-    {
-      "title": "Keep the boundary honest",
-      "paragraphs": [
-        "This work belongs in scratchpad; the lab does not claim that later artifacts already exist.",
-        "Identify the composition root as the place that chooses implementations and lifetimes."
-      ]
-    }
+    {"title":"A test double replaces a collaborator","paragraphs":["ClockEntryService is constructed with IClockEntryRepository. A unit test can supply a controlled implementation of that interface so the test exercises the service decision without depending on repository storage behavior.","Test double is the umbrella term. A stub supplies answers, a fake has a small working implementation, and a mock is commonly configured to verify interactions. Teams sometimes use these words loosely, so focus on the role the object performs."],"code":"ClockEntryService service = new(repositoryDouble);"},
+    {"title":"State evidence and interaction evidence answer different questions","paragraphs":["A recording fake can expose LastSavedEntry and SaveCallCount. Assertions inspect that recorded state to prove what the service asked the collaborator to do.","Moq can express the same boundary with Setup and Verify. Setup controls what GetOpenClockEntry returns. Verify checks that SaveClockEntry received a matching ClockEntry exactly once."],"code":"repository.Setup(item => item.GetOpenClockEntry(1)).Returns((ClockEntry?)null);\nrepository.Verify(item => item.SaveClockEntry(It.IsAny<ClockEntry>()), Times.Once);"},
+    {"title":"Isolation does not mean mocking everything","paragraphs":["Session 29 correctly used the real in-memory repository because it was fast, deterministic, and part of the behavior being exercised. Session 30 replaces the repository because the new question is specifically how ClockEntryService collaborates through its interface.","Use the smallest double that makes the required evidence clear. A hand-written fake is often easier to debug; Moq is valuable when several responses must be configured or an interaction must be verified precisely."],"code":"// Choose the boundary from the test question, not from habit."},
+    {"title":"Read Moq one expression at a time","paragraphs":["Mock<IClockEntryRepository> is a configurable wrapper. repository.Object is the IClockEntryRepository passed to production code.","It.Is<ClockEntry>(entry => ...) describes the argument that must match. Times.Once states the required call count. These expressions do not call the production method; they describe the verification Moq performs afterward."],"code":"Mock<IClockEntryRepository> repository = new();\nIClockEntryRepository collaborator = repository.Object;"}
   ],
   "lab": {
-    "title": "Observe dependency injection lifetimes in ScratchPad",
-    "objective": "Build an IServiceCollection and ServiceProvider explicitly.",
-    "practice": [
-      "IServiceCollection",
-      "Transient, scoped, and singleton",
-      "Composition root",
-      "Reference identity"
-    ],
-    "task": "Register three marker classes, resolve them in two scopes, and print which instances are reused.",
-    "startingCondition": "Session 29 tested the real synchronous payroll behavior. Session 30 now introduces the DI container itself in an isolated ScratchPad experiment; no earlier registration is assumed.",
-    "pasteReadyInstructions": true,
-    "stepCheckboxes": true,
-    "steps": [
+    "title":"Isolate ClockEntryService with Two Test-Double Styles",
+    "objective":"Test the same clock-in collaboration first with a recording fake and then with Moq, comparing the evidence each style provides.",
+    "practice":["Test doubles","Hand-written fakes","Moq Setup and Verify","Unit isolation"],
+    "task":"Prove that TryCLockIn returns true and saves one new entry when no open entry exists, without using the real repository implementation.",
+    "startingCondition":"Session 29 added permanent tests. ClockEntryService already depends on IClockEntryRepository, and the learner test project does not yet reference Moq.",
+    "pasteReadyInstructions":true,
+    "stepCheckboxes":true,
+    "labs":[
       {
-        "text": "Step 1/12: In src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj, add Microsoft.Extensions.DependencyInjection version 10.0.0."
+        "title":"Isolate with a Recording Fake",
+        "objective":"Implement a minimal IClockEntryRepository fake and use its recorded state to verify ClockEntryService collaboration.",
+        "practice":["Interface implementation","Controlled return values","Recorded calls","State-based assertions"],
+        "task":"Test the successful TryCLockIn path without ClockEntryRepository.",
+        "instructions":[
+          {"text":"In project tests/PinkMachine19.TimeClock.Domain.Tests, create ClockEntryServiceTests.cs. Declare public sealed class ClockEntryServiceTests in the global namespace used by the learner repository."},
+          {"text":"Inside the test class, add private sealed class RecordingClockEntryRepository implementing IClockEntryRepository. Stub every required interface member with warning-free return values, but do not implement recording behavior yet."},
+          {"text":"Add ClockEntry? OpenEntryToReturn, ClockEntry? LastSavedEntry, and int SaveCallCount properties to the fake. Make GetOpenClockEntry return OpenEntryToReturn. Make SaveClockEntry store its argument and increment SaveCallCount. Keep GetEmployeeClockEntries returning an empty sequence.","purposeAfter":"The fake now controls the repository answer and records what the service saves. Next, the test will arrange no open entry and inspect this ordinary C# state as evidence."},
+          {"text":"In ClockEntryServiceTests, type Fact method TryCLockIn_WhenNoOpenEntryExists_SavesEntryAndReturnsTrue. Arrange RecordingClockEntryRepository, ClockEntryService, and a fixed DateTime using explicit local types."},
+          {"text":"Act once by calling the real TryCLockIn spelling with employee ID 1 and the fixed time. Store the bool result."},
+          {"text":"Assert true, SaveCallCount equal to 1, LastSavedEntry not null, and the saved employee ID and clock-in time equal the arranged values.","purposeAfter":"The first test isolates ClockEntryService with a readable hand-written fake. Its recorded state proves both the returned outcome and the collaboration without a real repository."},
+          {"text":"Run only TryCLockIn_WhenNoOpenEntryExists_SavesEntryAndReturnsTrue and review the passing name. Use the IDE test runner or the supplied CLI filter.","code":"dotnet test tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj --configuration Release --filter FullyQualifiedName~TryCLockIn_WhenNoOpenEntryExists_SavesEntryAndReturnsTrue"}
+        ],
+        "solution":"public sealed class ClockEntryServiceTests\n{\n    [Fact]\n    public void TryCLockIn_WhenNoOpenEntryExists_SavesEntryAndReturnsTrue()\n    {\n        RecordingClockEntryRepository repository = new();\n        ClockEntryService service = new(repository);\n        DateTime clockIn = new(2026, 8, 15, 9, 0, 0);\n\n        bool result = service.TryCLockIn(1, clockIn);\n\n        Assert.True(result);\n        Assert.Equal(1, repository.SaveCallCount);\n        Assert.NotNull(repository.LastSavedEntry);\n        Assert.Equal(1, repository.LastSavedEntry.EmployeeId);\n        Assert.Equal(clockIn, repository.LastSavedEntry.ClockIn);\n    }\n\n    private sealed class RecordingClockEntryRepository : IClockEntryRepository\n    {\n        public ClockEntry? OpenEntryToReturn { get; set; }\n        public ClockEntry? LastSavedEntry { get; private set; }\n        public int SaveCallCount { get; private set; }\n\n        public void SaveClockEntry(ClockEntry clockEntry)\n        {\n            LastSavedEntry = clockEntry;\n            SaveCallCount++;\n        }\n\n        public IEnumerable<ClockEntry> GetEmployeeClockEntries(int employeeId, DateTime startDate, DateTime endDate)\n        {\n            return Array.Empty<ClockEntry>();\n        }\n\n        public ClockEntry? GetOpenClockEntry(int employeeId)\n        {\n            return OpenEntryToReturn;\n        }\n    }\n}"
       },
       {
-        "text": "Step 2/12: In the ScratchPad project, create folder Session30 and file Session30/LifetimeExperiments.cs."
-      },
-      {
-        "text": "Step 3/12: In LifetimeExperiments.cs, add using Microsoft.Extensions.DependencyInjection, then declare public sealed class LifetimeExperiments. sealed says this focused experiment is not designed for inheritance."
-      },
-      {
-        "text": "Step 4/12: Inside LifetimeExperiments, add public void Run and create a ServiceCollection inside that method. This method is the experiment composition root."
-      },
-      {
-        "text": "Step 5/12: Inside Run, call AddTransient<TransientMarker>, AddScoped<ScopedMarker>, and AddSingleton<SingletonMarker>. Read each signature as: register this service type with this reuse rule."
-      },
-      {
-        "text": "Step 6/12: Build the ScratchPad project in Release before adding resolution code."
-      },
-      {
-        "text": "Step 7/12: Inside Run, build the ServiceProvider and create two IServiceScope objects with using declarations."
-      },
-      {
-        "text": "Step 8/12: Inside the class but outside Run, add private static T Resolve<T>(IServiceScope scope) where T : notnull; return scope.ServiceProvider.GetRequiredService<T>(). The helper is private because only this experiment needs it."
-      },
-      {
-        "text": "Step 9/12: Inside Run, resolve each marker twice and use ReferenceEquals to print whether transient, scoped, and singleton objects are reused within and across scopes."
-      },
-      {
-        "text": "Step 10/12: Inside LifetimeExperiments but outside its methods, add three private sealed marker classes named TransientMarker, ScopedMarker, and SingletonMarker."
-      },
-      {
-        "text": "Step 11/12: At the end of ScratchPad/Program.cs, construct LifetimeExperiments and call Run without removing earlier session calls."
-      },
-      {
-        "text": "Step 12/12: Run ScratchPad, then build the full Release solution and run all tests with --no-build.",
-        "reveals": [{"title":"Solution","text":"The complete experiment registers all three lifetimes, resolves within two scopes, and compares reference identity.","code":"services.AddTransient<TransientMarker>();\nservices.AddScoped<ScopedMarker>();\nservices.AddSingleton<SingletonMarker>();\n\nusing ServiceProvider provider = services.BuildServiceProvider();\nusing IServiceScope firstScope = provider.CreateScope();\nusing IServiceScope secondScope = provider.CreateScope();"}]
+        "title":"Express the Same Boundary with Moq",
+        "objective":"Configure IClockEntryRepository with Moq and verify the service's save interaction precisely.",
+        "practice":["Mock<T>","Setup","Object","Verify and Times.Once"],
+        "task":"Test the same successful clock-in behavior so the two double styles can be compared fairly.",
+        "instructions":[
+          {"text":"In the learner test-project csproj, add Moq version 4.20.72. Restore and build the test project before writing Moq syntax.","code":"dotnet add tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj package Moq --version 4.20.72\ndotnet build tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj --configuration Release"},
+          {"text":"At the top of ClockEntryServiceTests.cs, add using Moq. Inside the test class, type Fact method TryCLockIn_WhenNoOpenEntryExists_VerifiesSaveWithMoq."},
+          {"text":"Arrange Mock<IClockEntryRepository> named repository. Use Setup so GetOpenClockEntry for employee 1 returns a nullable ClockEntry value of null. Pass repository.Object to ClockEntryService.","purposeAfter":"Moq now supplies the same controlled answer as the fake: no open entry exists. repository.Object is the interface implementation consumed by ClockEntryService; the next steps exercise and verify the service decision."},
+          {"text":"Create a fixed DateTime, then Act once by calling TryCLockIn for employee 1. Store the bool result."},
+          {"text":"Assert that the result is true. Then Verify SaveClockEntry with It.Is<ClockEntry> matching employee ID 1 and the fixed ClockIn value, and require Times.Once."},
+          {"text":"Compare the tests before running: the fake exposes recorded state in ordinary members, while Moq describes the expected interaction with Verify. Neither approach changes ClockEntryService production code.","purposeAfter":"Both tests isolate the same service boundary and prove the same requirement with different evidence styles. The focused run now checks that both remain readable and pass together."},
+          {"text":"Run all ClockEntryServiceTests. Then build the Release solution and run the complete suite with --no-build. Open both Solution Reveals only after validation passes.","code":"dotnet test tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj --configuration Release --filter FullyQualifiedName~ClockEntryServiceTests\ndotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"}
+        ],
+        "solution":"using Moq;\n\npublic sealed class ClockEntryServiceTests\n{\n    [Fact]\n    public void TryCLockIn_WhenNoOpenEntryExists_VerifiesSaveWithMoq()\n    {\n        Mock<IClockEntryRepository> repository = new();\n        repository.Setup(item => item.GetOpenClockEntry(1))\n            .Returns((ClockEntry?)null);\n        ClockEntryService service = new(repository.Object);\n        DateTime clockIn = new(2026, 8, 15, 9, 0, 0);\n\n        bool result = service.TryCLockIn(1, clockIn);\n\n        Assert.True(result);\n        repository.Verify(\n            item => item.SaveClockEntry(It.Is<ClockEntry>(entry =>\n                entry.EmployeeId == 1 && entry.ClockIn == clockIn)),\n            Times.Once);\n    }\n}"
       }
     ],
-    "expectedBehavior": "Register three marker classes, resolve them in two scopes, and print which instances are reused.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+    "expectedBehavior":"Both focused tests pass. Each proves that ClockEntryService returns true and requests one correctly populated save when no open entry exists.",
+    "validation":"dotnet test tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj --configuration Release --filter FullyQualifiedName~ClockEntryServiceTests && dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
-  "expectedFiles": [
-    {
-      "path": "src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj",
-      "action": "Modify",
-      "why": "Add the DI container package."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session30/LifetimeExperiments.cs",
-      "action": "Add",
-      "why": "Observe all three lifetimes."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs",
-      "action": "Modify",
-      "why": "Run the experiment."
-    },
-    {
-      "path": "site/data/sessions/session-30.json",
-      "action": "Modify",
-      "why": "Synchronize all Session 30 representations."
-    }
+  "expectedFiles":[
+    {"path":"tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj","action":"Modify","why":"Add Moq for the second isolated service test."},
+    {"path":"tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryServiceTests.cs","action":"Add","why":"Preserve the hand-written fake and Moq comparison."},
+    {"path":"site/data/sessions/session-30.json","action":"Modify","why":"Synchronize all Session 30 representations."}
   ],
-  "commit": "session-30: observe dependency injection lifetimes",
-  "review": [
-    "Every artifact named by the lesson is explicitly created or already verified.",
-    "Async suffixes and CancellationToken forwarding match genuine I/O only.",
-    "No unrelated learner naming cleanup is included.",
-    "The final solution remains buildable and testable."
+  "commit":"session-30: compare test doubles for service isolation",
+  "review":["Both tests use the learner's actual TryCLockIn and IClockEntryRepository spellings.","The hand-written fake and Moq test isolate the same behavior for a fair comparison.","No production code changes or async APIs are invented.","The complete implementations remain behind Solution Reveal."],
+  "postQuiz":[
+    {"prompt":"Why can both tests omit ClockEntryRepository?","options":["ClockEntryService depends on the IClockEntryRepository contract","Moq edits production code","The service has no dependency"],"correct":0,"explanation":"Constructor injection allows either controlled implementation to satisfy the contract."},
+    {"prompt":"What evidence does the recording fake expose?","options":["Recorded state such as LastSavedEntry and SaveCallCount","A database row","A DI lifetime"],"correct":0,"explanation":"The fake stores interaction evidence in ordinary members."},
+    {"prompt":"When is Moq especially useful?","options":["When configuration or precise interaction verification is clearer","Whenever any class is tested","Only for asynchronous methods"],"correct":0,"explanation":"Choose Moq for the evidence and complexity of the boundary, not by habit."}
   ],
-  "postQuiz": [
-    {
-      "prompt": "Where does the Session 30 exercise belong?",
-      "options": [
-        "scratchpad",
-        "An unrelated earlier project",
-        "A fictional artifact"
-      ],
-      "correct": 0,
-      "explanation": "The verified cumulative design places it in scratchpad."
-    },
-    {
-      "prompt": "What should the return type tell a caller?",
-      "options": [
-        "What completion or value the method promises",
-        "Which CPU thread must run it",
-        "That errors cannot occur"
-      ],
-      "correct": 0,
-      "explanation": "A return type is a caller-facing contract."
-    },
-    {
-      "prompt": "What must happen before advancing?",
-      "options": [
-        "Run the focused behavior, Release build, and complete tests",
-        "Only read the solution",
-        "Rename unrelated learner code"
-      ],
-      "correct": 0,
-      "explanation": "Every session must finish buildable and testable."
-    }
-  ],
-  "reflections": [
-    "Which boundary owns the new code?",
-    "What does the main return type promise?",
-    "What verified state may the next session assume?"
-  ],
-  "whatBreaks": "Removing the Session 30 artifact breaks the focused behavior or its verified integration point.",
-  "summary": "Register three marker classes, resolve them in two scopes, and print which instances are reused.",
-  "learningEnvironment": "scratchpad",
-  "buildState": {
-    "creates": [
-      "src/PinkMachine19.TimeClock.ScratchPad/Session30/LifetimeExperiments.cs"
-    ],
-    "extends": [
-      "IServiceCollection",
-      "Transient, scoped, and singleton",
-      "Composition root",
-      "Reference identity"
-    ]
-  }
+  "reflections":["Which part of each test isolates ClockEntryService from repository behavior?","Which test would be easier to debug without knowing a library API?","What additional repository scenarios would make Moq configuration more valuable?"],
+  "whatBreaks":"Using the real repository would mix service collaboration with storage behavior. Removing the fake's recording members loses state evidence. Removing Moq Verify allows the test to pass without proving the save interaction.",
+  "summary":"A test double replaces a collaborator so a unit test can focus on one class. A recording fake provides explicit working test code and state evidence; Moq provides concise configuration and interaction verification. Neither is automatically superior—choose the smallest tool that makes the required evidence clear.",
+  "learningEnvironment":"tests",
+  "buildState":{"creates":["tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryServiceTests.cs"],"extends":["unit isolation","hand-written test doubles","Moq interaction verification"]}
 }

@@ -6,7 +6,7 @@
     "subtitle": "A Practical C# and .NET Refresher",
     "basePath": "/csharp-learn-with-ai/",
     "advancementThreshold": 80,
-    "sessionCount": 40
+    "sessionCount": 41
   },
   "layers": [
     {
@@ -61,7 +61,7 @@
       "id": "testing",
       "number": 9,
       "title": "Testing and Dependency Injection",
-      "range": "29–30"
+      "range": "29–30B"
     },
     {
       "id": "integration",
@@ -345,18 +345,26 @@
     ],
     [
       30,
-      "test-doubles-di-lifetimes-and-service-tests",
-      "Test Doubles, DI Lifetimes, and Service Tests",
+      "test-doubles-and-isolated-service-tests",
+      "Test Doubles and Isolated Service Tests",
       "testing",
       29,
       "035, 064, 077"
+    ],
+    [
+      "30B",
+      "dependency-injection-containers-and-lifetimes",
+      "Dependency Injection Containers and Lifetimes",
+      "testing",
+      30,
+      "split from Session 30 so container lifetimes remain a focused cumulative lesson"
     ],
     [
       31,
       "ef-core-context-entities-and-tracking",
       "EF Core Context, Entities, and Tracking",
       "integration",
-      30,
+      "30B",
       "057–059"
     ],
     [

@@ -2,7 +2,7 @@
   "number": 31,
   "category": "Data access",
   "estimatedTime": "40 minutes",
-  "connection": "Production remains synchronous and in-memory through Session 30. Session 31 deliberately adds SQLite I/O, a separate async repository contract, and EF Core async calls for the first time.",
+  "connection": "Production remains synchronous and in-memory through Session 30B. Session 31 deliberately adds SQLite I/O, a separate async repository contract, and EF Core async calls for the first time.",
   "objectives": [
     "Add EF Core SQLite to Infrastructure.",
     "Define IAsyncClockEntryRepository with Async suffixes and CancellationToken parameters.",
@@ -67,7 +67,7 @@
     {
       "title": "Create the first genuine asynchronous persistence boundary",
       "paragraphs": [
-        "Production remains synchronous and in-memory through Session 30. Session 31 deliberately adds SQLite I/O, a separate async repository contract, and EF Core async calls for the first time.",
+        "Production remains synchronous and in-memory through Session 30B. Session 31 deliberately adds SQLite I/O, a separate async repository contract, and EF Core async calls for the first time.",
         "Add EF Core SQLite to Infrastructure."
       ]
     },
@@ -96,7 +96,7 @@
       "CancellationToken forwarding"
     ],
     "task": "Persist and retrieve an open ClockEntry through SQLite without replacing the earlier synchronous in-memory repository.",
-    "startingCondition": "Production remains synchronous and in-memory through Session 30. Session 31 deliberately adds SQLite I/O, a separate async repository contract, and EF Core async calls for the first time.",
+    "startingCondition": "Production remains synchronous and in-memory through Session 30B. Session 31 deliberately adds SQLite I/O, a separate async repository contract, and EF Core async calls for the first time.",
     "pasteReadyInstructions": true,
     "stepCheckboxes": true,
     "steps": [

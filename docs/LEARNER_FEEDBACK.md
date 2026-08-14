@@ -110,3 +110,15 @@ The learner reasonably asked whether developers really type the long filtered `d
 - CLI commands are editor-independent, repeatable, precise about project/configuration/filter, and suitable for continuous integration.
 - Developers commonly reuse long commands through terminal history, editor tasks, or scripts rather than retyping them.
 - In the lab, the explicit command teaches exactly what is executed; the learner may use the IDE test runner for the focused run if the same two tests are selected and reviewed.
+
+## Session 30 and 30B — Separate test doubles from DI lifetimes
+
+The earlier Session 30 title promised test doubles, Moq, service tests, and DI lifetimes, but its actual lab only contained a compressed ScratchPad lifetime experiment. These are related through dependency injection, but they require different practice and should not compete inside one 40-minute lesson.
+
+- Session 30 now teaches unit isolation through the learner's real `ClockEntryService` and `IClockEntryRepository` boundary.
+- Its first lab builds a small recording fake so the learner sees that a test double is ordinary C# implementing a real contract.
+- Its second lab tests the same behavior with Moq so `Setup`, `Object`, `It.Is`, `Verify`, and `Times.Once` can be compared fairly with the fake's recorded state.
+- Moq is not described as merely a clarity shortcut. It is useful for controlled collaborator responses and precise interaction verification, while still requiring deliberate test design.
+- Session 30B is a primary cumulative lesson, not an optional side lab. It owns `IServiceCollection`, the composition root, transient/scoped/singleton rules, scopes, disposal, mutable-state implications, and `ReferenceEquals` observations.
+
+Keep the memory distinction: constructor injection lets a caller provide dependencies; a DI container automates construction and lifetime rules. Constructor injection does not require a container.

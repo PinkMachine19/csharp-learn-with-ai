@@ -307,6 +307,18 @@
     },
     {
       "number": 30,
+      "environment": "tests",
+      "extends": [
+        "unit isolation",
+        "hand-written test doubles",
+        "Moq interaction verification"
+      ],
+      "creates": [
+        "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryServiceTests.cs"
+      ]
+    },
+    {
+      "number": "30B",
       "environment": "scratchpad",
       "extends": [
         "IServiceCollection",
@@ -315,7 +327,7 @@
         "Reference identity"
       ],
       "creates": [
-        "src/PinkMachine19.TimeClock.ScratchPad/Session30/LifetimeExperiments.cs"
+        "src/PinkMachine19.TimeClock.ScratchPad/Session30B/LifetimeExperiments.cs"
       ]
     },
     {
