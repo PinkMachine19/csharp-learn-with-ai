@@ -32,6 +32,8 @@ The learner reasonably expected cancellation because the visible lesson title sa
 
 The learner reported losing the purpose of the exercise after typing through several steps. Apply a forward-looking rule to all newly authored or corrected labs: insert short purpose checkpoints after natural groups of mechanical steps and before integration, running, and final validation. Do not retroactively rewrite every earlier session solely for this note.
 
-## Planned cumulative Session 28B — Cooperative cancellation
+## Adopted cumulative Session 28B — Cooperative cancellation
 
-Session 28B is under consideration as a real cumulative lesson immediately after Session 28, not an optional side lab. It should continue from the learner's completed Session 28 ScratchPad state, create its own distinct Session 28B experiment, and teach cooperative cancellation without changing production TimeClock code. If adopted, update the primary manifest, navigation, prerequisites, generated lesson/lab/quiz pages, and downstream session links so Session 29 follows Session 28B. The lesson must not be represented as optional or safe-to-skip if later cumulative sessions are allowed to assume its concepts.
+Session 28B is a real cumulative lesson immediately after Session 28, not an optional side lab. It continues from the learner's completed Session 28 ScratchPad state, creates its own distinct Session 28B experiment, and teaches cooperative cancellation without changing production TimeClock code. The primary manifest, navigation, prerequisites, generated lesson/lab/quiz pages, and downstream session links place Session 29 after Session 28B. The lesson is not represented as optional or safe to skip.
+
+The lab uses unnumbered purpose checkpoints after short groups of mechanical steps and before integration, running, and final validation. It preserves warning-free temporary `Task.CompletedTask` methods until each method first needs `await`, and reinforces method-call parentheses, stored Tasks, and the difference between awaiting `Task` and `Task<T>`.

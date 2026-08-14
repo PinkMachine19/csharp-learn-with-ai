@@ -16,6 +16,10 @@ Console.WriteLine("Session 28");
 AsyncFailureExperiments session28 = new();
 await session28.RunAsync();
 
+Console.WriteLine("Session 28B");
+CooperativeCancellationExperiments session28B = new();
+await session28B.RunAsync();
+
 Console.WriteLine("Session 30");
 LifetimeExperiments session30 = new();
 session30.Run();

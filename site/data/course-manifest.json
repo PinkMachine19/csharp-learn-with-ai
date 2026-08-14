@@ -6,7 +6,7 @@
     "subtitle": "A Practical C# and .NET Refresher",
     "basePath": "/csharp-learn-with-ai/",
     "advancementThreshold": 80,
-    "sessionCount": 39
+    "sessionCount": 40
   },
   "layers": [
     {
@@ -55,7 +55,7 @@
       "id": "async",
       "number": 8,
       "title": "Asynchronous Programming",
-      "range": "26–28"
+      "range": "26–28B"
     },
     {
       "id": "testing",
@@ -328,11 +328,19 @@
       "048, 078"
     ],
     [
+      "28B",
+      "cooperative-cancellation",
+      "Cooperative Cancellation",
+      "async",
+      28,
+      "new cumulative bridge from asynchronous failures to cancellation-token forwarding"
+    ],
+    [
       29,
       "unit-tests-and-arrange-act-assert",
       "Unit Tests and Arrange–Act–Assert",
       "testing",
-      28,
+      "28B",
       "063"
     ],
     [

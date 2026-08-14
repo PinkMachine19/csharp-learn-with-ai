@@ -284,6 +284,18 @@
       ]
     },
     {
+      "number": "28B",
+      "environment": "scratchpad",
+      "creates": [
+        "Session28B CooperativeCancellationExperiments"
+      ],
+      "extends": [
+        "CancellationTokenSource ownership",
+        "CancellationToken propagation",
+        "cooperative cancellation observation"
+      ]
+    },
+    {
       "number": 29,
       "environment": "tests",
       "creates": [
