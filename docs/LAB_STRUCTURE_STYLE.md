@@ -35,9 +35,23 @@ Each lab should present these sections in this order:
 
 The learner should understand what they are building and why before reading mechanical instructions.
 
+### Purpose reminders during a lab
+
+Do not explain the objective only at the beginning and assume the learner will retain it through many mechanical steps. After a natural cluster of roughly two to four implementation steps, add a short purpose checkpoint that restates:
+
+- What the learner has built so far.
+- What behavior that code currently provides.
+- Why the next step is necessary.
+- How the next action supports the session's primary objective.
+
+Keep the reminder to two or three TTS-friendly sentences. Do not repeat the complete lesson introduction, preview future implementation details, or turn the checkpoint into another numbered coding action. Use concrete wording tied to the current code, such as: “You now have a Task that will become faulted. The next step awaits that stored Task inside try/catch so the caller deliberately observes the failure.”
+
+Purpose checkpoints are especially important immediately before integration, running, and final validation. Before asking the learner to edit `Program.cs`, remind them why the new experiment needs a caller. Before asking them to run, state exactly which behavior the output should prove. Before the final build and tests, distinguish verifying the focused experiment from checking that the cumulative solution remains healthy.
+
 ## 4. Write beginner-usable instructions
 
 - Use numbered progress notation and checkboxes.
+- Insert brief, unnumbered purpose checkpoints after natural groups of steps so the learner does not lose the reason behind the mechanics.
 - Display every instruction using progress notation in the form `Step n/n`, where the denominator is the actual number of lab steps.
 - Make each step perform one small action.
 - Keep steps granular and manageable like Session 21. Do not compress several implementation actions into one broad step merely to reduce the displayed step count.

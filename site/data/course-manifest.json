@@ -321,8 +321,8 @@
     ],
     [
       28,
-      "cancellation-and-asynchronous-exceptions",
-      "Cancellation and Asynchronous Exceptions",
+      "observing-asynchronous-exceptions",
+      "Observing Asynchronous Exceptions",
       "async",
       27,
       "048, 078"

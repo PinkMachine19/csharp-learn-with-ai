@@ -12,104 +12,195 @@
     "Choose sequential flow when operations depend on order or share constrained resources."
   ],
   "visuals": [
-    {"diagram": "mental-27-1", "title": "Sequential flow crosses one bridge at a time", "explanation": "Start employee 1, await employee 1, then start employee 2 and await employee 2. The second operation does not exist while the first await is incomplete."},
-    {"diagram": "mental-27-2", "title": "Concurrent flow places both orders first", "explanation": "Call the first operation and keep its Task, call the second and keep its Task, then await both. Both independent waits may now overlap."},
-    {"diagram": "mental-27-3", "title": "Task.WhenAll is one finish line for two Tasks", "explanation": "Task.WhenAll returns a combined Task that completes after both supplied Task<string> values complete. Awaiting it returns a string array in supplied-Task order."},
-    {"diagram": "mental-27-4", "title": "Concurrency overlaps waiting; parallelism overlaps execution", "explanation": "The experiment uses Task.Delay to simulate waiting. It does not prove that CPU work ran simultaneously or that another thread was created."}
+    {
+      "diagram": "mental-27-1",
+      "title": "Sequential flow crosses one bridge at a time",
+      "explanation": "Start employee 1, await employee 1, then start employee 2 and await employee 2. The second operation does not exist while the first await is incomplete."
+    },
+    {
+      "diagram": "mental-27-2",
+      "title": "Concurrent flow places both orders first",
+      "explanation": "Call the first operation and keep its Task, call the second and keep its Task, then await both. Both independent waits may now overlap."
+    },
+    {
+      "diagram": "mental-27-3",
+      "title": "Task.WhenAll is one finish line for two Tasks",
+      "explanation": "Task.WhenAll returns a combined Task that completes after both supplied Task<string> values complete. Awaiting it returns a string array in supplied-Task order."
+    },
+    {
+      "diagram": "mental-27-4",
+      "title": "Concurrency overlaps waiting; parallelism overlaps execution",
+      "explanation": "The experiment uses Task.Delay to simulate waiting. It does not prove that CPU work ran simultaneously or that another thread was created."
+    }
   ],
   "preQuiz": [
-    {"prompt": "If the first asynchronous operation is immediately awaited, has the second operation started?", "options": ["No", "Yes", "Only on a multi-core computer"], "correct": 0, "explanation": "The second method call has not executed yet, so its operation and Task do not exist."},
-    {"prompt": "What normally happens when an async method is called?", "options": ["It starts executing and returns a Task when it reaches incomplete waiting", "It always creates a new thread", "It waits for every other async method first"], "correct": 0, "explanation": "Calling starts the method. Its Task represents the method's eventual completion."},
-    {"prompt": "Does concurrent asynchronous work guarantee multiple threads?", "options": ["No", "Yes", "Only when Task<string> is used"], "correct": 0, "explanation": "Concurrency means lifetimes can overlap. It does not guarantee parallel threads or CPU execution."}
+    {
+      "prompt": "If the first asynchronous operation is immediately awaited, has the second operation started?",
+      "options": [
+        "No",
+        "Yes",
+        "Only on a multi-core computer"
+      ],
+      "correct": 0,
+      "explanation": "The second method call has not executed yet, so its operation and Task do not exist."
+    },
+    {
+      "prompt": "What normally happens when an async method is called?",
+      "options": [
+        "It starts executing and returns a Task when it reaches incomplete waiting",
+        "It always creates a new thread",
+        "It waits for every other async method first"
+      ],
+      "correct": 0,
+      "explanation": "Calling starts the method. Its Task represents the method's eventual completion."
+    },
+    {
+      "prompt": "Does concurrent asynchronous work guarantee multiple threads?",
+      "options": [
+        "No",
+        "Yes",
+        "Only when Task<string> is used"
+      ],
+      "correct": 0,
+      "explanation": "Concurrency means lifetimes can overlap. It does not guarantee parallel threads or CPU execution."
+    }
   ],
   "concept": [
     {
       "title": "Sequential starts the second operation later",
       "paragraphs": [
-        "An async method begins when it is called. If code immediately awaits the first call, execution does not reach the second call until the first Task completes.",
-        "Sequential flow is appropriate when the second operation depends on the first, order matters, a rate limit applies, shared mutable state is involved, or a resource can handle only one operation at a time."
-      ],
-      "code": "string firstName = await LoadEmployeeNameAsync(1, 300);\nstring secondName = await LoadEmployeeNameAsync(2, 100);"
+        "An asynchronous method begins when it is called. If code immediately awaits the first call, execution does not reach the second call until the first Task completes.",
+        "Sequential flow is appropriate when the second operation depends on the first, order matters, or a constrained resource permits only one operation at a time."
+      ]
     },
     {
       "title": "Concurrent starts both independent operations first",
       "paragraphs": [
-        "Calling LoadEmployeeNameAsync without immediately awaiting it starts the method and returns Task<string>. Calling it a second time creates another operation before either Task is awaited.",
-        "This pattern is appropriate only when the operations are independent and safe to overlap. Concurrent does not mean parallel, and async does not automatically create a thread."
-      ],
-      "code": "Task<string> firstTask = LoadEmployeeNameAsync(1, 300);\nTask<string> secondTask = LoadEmployeeNameAsync(2, 100);\n\nstring[] names = await Task.WhenAll(firstTask, secondTask);"
-    },
-    {
-      "title": "Task.Delay makes waiting visible without pretending it is production I/O",
-      "paragraphs": [
-        "Task.Delay simulates an incomplete wait so the console can show when each operation starts and finishes. It is not a repository call and does not create a dedicated background thread.",
-        "The different delays make employee 2 usually finish first during the concurrent observation. That completion order is not a general guarantee and is not a precise performance test. The lesson demonstrates overlapping waiting, not parallel CPU execution."
-      ],
-      "code": "Console.WriteLine($\"Starting employee {employeeId}\");\nawait Task.Delay(delayMilliseconds);\nConsole.WriteLine($\"Finished employee {employeeId}\");"
-    },
-    {
-      "title": "Reading the Task.WhenAll signature",
-      "paragraphs": [
-        "IntelliSense may show Task.WhenAll<TResult>(params Task<TResult>[] tasks). TResult is string in this call because each supplied argument is Task<string>.",
-        "Task.WhenAll returns one combined Task. Awaiting that combined Task produces string[]. The array preserves the order of the supplied Tasks, not the order in which they finished."
-      ],
-      "code": "Task.WhenAll<TResult>(params Task<TResult>[] tasks)\n\n// Here: TResult is string.\nstring[] names = await Task.WhenAll(firstTask, secondTask);"
-    },
-    {
-      "title": "Restaurant-orders analogy",
-      "paragraphs": [
-        "Sequential: place the first restaurant order, wait until it is ready, and only then place the second order. Concurrent: place both independent orders first, then wait until both are ready.",
-        "The kitchen might use one worker or several workers. The analogy shows overlapping work and waiting; it does not guarantee parallel execution."
+        "Calling an asynchronous method without immediately awaiting it returns a Task that can be stored. Calling the second independent method before awaiting either Task permits their waiting periods to overlap.",
+        "Concurrency does not guarantee parallel CPU execution, simultaneous execution, multiple threads, or improved performance."
       ]
     },
     {
-      "title": "Optional advanced side-lab outline — Generalize and test concurrency",
+      "title": "Task.Delay makes waiting visible",
       "paragraphs": [
-        "This optional follow-up is not required for Session 27. It can later generalize two explicit Tasks into IEnumerable<int>, LINQ Select, a Func<int, Task<string>> load delegate, and Task.WhenAll over a generated sequence.",
-        "A later testing-focused version can introduce TaskCompletionSource, in-flight counters, and deterministic gates. Those concepts are intentionally excluded from the primary lab so they do not hide the basic start-first-versus-await-first decision."
-      ],
-      "list": [
-        {"term": "Inputs", "text": "IEnumerable<int> employee IDs"},
-        {"term": "Task creation", "text": "Select calls an async load delegate for each ID"},
-        {"term": "Delegate", "text": "Func<int, Task<string>> describes a loader"},
-        {"term": "Aggregation", "text": "Task.WhenAll awaits the generated sequence"},
-        {"term": "Deterministic testing", "text": "TaskCompletionSource gates and counters prove overlap without timing guesses"}
+        "Task.Delay simulates waiting so the console can show start and finish order. It is not a repository call and does not create a dedicated background thread.",
+        "The delayMilliseconds parameter lets each caller choose a different simulated delay instead of hiding one hardcoded delay inside the helper."
       ]
+    },
+    {
+      "title": "How Task.WhenAll infers string",
+      "paragraphs": [
+        "IntelliSense shows a signature shaped like Task.WhenAll<TResult>(params Task<TResult>[] tasks). firstTask and secondTask are both Task<string>, so the compiler uses those argument types as concrete evidence that TResult is string.",
+        "Awaiting the resulting combined Task produces string[]. Type inference hides repeated type spelling; it does not remove type safety.",
+        "IntelliSense is supported by the C# language service, which performs compiler-like type analysis in the background. It is not loosely guessing. The real build compiler performs the authoritative compilation later.",
+        "The returned array follows the order in which Tasks were supplied to Task.WhenAll, not the order in which the operations completed."
+      ],
+      "code": "Task.WhenAll<TResult>(params Task<TResult>[] tasks)\n\nfirstTask  : Task<string>\nsecondTask : Task<string>\nTResult    : string\nawait      : string[]"
     }
   ],
   "lab": {
     "title": "Observe Sequential and Concurrent Waiting",
     "objective": "Call the same two independent asynchronous operations sequentially and concurrently, then observe when each operation starts and finishes.",
-    "practice": ["Immediate await", "Creating Tasks before awaiting", "Task.WhenAll", "Task<string> results", "Concurrency versus parallelism"],
+    "practice": [
+      "Immediate await",
+      "Creating Tasks before awaiting",
+      "Task.WhenAll",
+      "Task<string> results",
+      "Concurrency versus parallelism"
+    ],
     "task": "Create a distinct Session 27 experiment that uses short simulated delays to make sequential and concurrent start/finish order visible.",
-    "startingCondition": "Session 26 created src/PinkMachine19.TimeClock.ScratchPad/Session26/AsyncFlowExperiments.cs and awaits it from ScratchPad Program.cs. Production repositories and services remain synchronous.",
+    "startingCondition": "Session 26 is complete on the learner working branch. AsyncFlowExperiments exists and is awaited from ScratchPad Program.cs. Production repositories and services remain synchronous. Session 27 creates only a distinct ScratchPad experiment.",
     "collapseInstructions": true,
     "stepCheckboxes": true,
     "clickHighlightInstructions": true,
     "pasteReadyInstructions": true,
     "steps": [
-      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, create folder Session27 and file src/PinkMachine19.TimeClock.ScratchPad/Session27/SequentialConcurrentExperiments.cs. Setup code: add a comment identifying the Session 27 comparison."},
-      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session27, file SequentialConcurrentExperiments.cs, declare public sealed class SequentialConcurrentExperiments. public lets Program.cs create it; sealed prevents inheritance from this focused experiment class."},
-      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session27, file SequentialConcurrentExperiments.cs, inside SequentialConcurrentExperiments, add public async Task RunAsync() with a temporary throw. Task means eventual completion without a returned result; async permits await and does not create a thread."},
-      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session27, file SequentialConcurrentExperiments.cs, inside SequentialConcurrentExperiments but outside RunAsync, add private async Task<string> LoadEmployeeNameAsync(int employeeId, int delayMilliseconds) with a temporary throw. private keeps the helper inside this experiment; Task<string> means it eventually produces a string."},
-      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session27, file SequentialConcurrentExperiments.cs, inside LoadEmployeeNameAsync, replace the throw: print Starting employee and the ID, await Task.Delay(delayMilliseconds), print Finished employee and the ID, then return Employee plus the ID. Task.Delay is simulated waiting, not a repository call or parallel CPU proof."},
-      {"text": "From the csharp-practice-working solution folder, build project src/PinkMachine19.TimeClock.ScratchPad before adding the comparison methods.", "code": "dotnet build src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"},
-      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session27, file SequentialConcurrentExperiments.cs, inside SequentialConcurrentExperiments but outside the existing methods, add private async Task RunSequentialAsync() with a temporary throw."},
-      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session27, file SequentialConcurrentExperiments.cs, inside RunSequentialAsync, replace the throw: call and immediately await employee 1 with 300 milliseconds, then employee 2 with 100 milliseconds; store both names and print them. Because the first call is immediately awaited, employee 2 has not started yet."},
-      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session27, file SequentialConcurrentExperiments.cs, inside SequentialConcurrentExperiments but outside the existing methods, add private async Task RunConcurrentAsync() with a temporary throw."},
-      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session27, file SequentialConcurrentExperiments.cs, inside RunConcurrentAsync, replace the throw by calling LoadEmployeeNameAsync for employee 1 without await and storing Task<string> firstTask, then doing the same for employee 2 in secondTask. Calling each async method starts it and returns a Task, so both have started before either is awaited."},
-      {"text": "Still inside SequentialConcurrentExperiments.RunConcurrentAsync, await Task.WhenAll(firstTask, secondTask), store the result in string[] names, then print the names. Signature reminder: TResult is string, both arguments are Task<string>, and the returned array follows supplied-Task order rather than completion order."},
-      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, folder Session27, file SequentialConcurrentExperiments.cs, inside RunAsync, remove the temporary throw. Print Sequential, await RunSequentialAsync, print Concurrent, then await RunConcurrentAsync."},
-      {"text": "In project src/PinkMachine19.TimeClock.ScratchPad, file src/PinkMachine19.TimeClock.ScratchPad/Program.cs, after all earlier session calls, add a Session 27 heading, create SequentialConcurrentExperiments in sequentialConcurrentExperiments, and await RunAsync. Run ScratchPad and compare the messages; employee 2 will usually finish first concurrently, but completion order is not a general guarantee.", "code": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"},
-      {"text": "From the csharp-practice-working solution folder, build PinkMachine19.TimeClock.sln in Release and run the complete test suite without rebuilding. Open Solution Reveal only after both pass.", "code": "dotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build", "reveals": [{"title": "Solution", "text": "Sequential awaits each operation before starting the next. Concurrent creates both Tasks first and then awaits the combined Task.", "code": "// src/PinkMachine19.TimeClock.ScratchPad/Session27/SequentialConcurrentExperiments.cs\npublic sealed class SequentialConcurrentExperiments\n{\n    public async Task RunAsync()\n    {\n        Console.WriteLine(\"Sequential\");\n        await RunSequentialAsync();\n\n        Console.WriteLine(\"Concurrent\");\n        await RunConcurrentAsync();\n    }\n\n    private async Task RunSequentialAsync()\n    {\n        string firstName = await LoadEmployeeNameAsync(1, 300);\n        string secondName = await LoadEmployeeNameAsync(2, 100);\n        Console.WriteLine($\"Results: {firstName}, {secondName}\");\n    }\n\n    private async Task RunConcurrentAsync()\n    {\n        Task<string> firstTask = LoadEmployeeNameAsync(1, 300);\n        Task<string> secondTask = LoadEmployeeNameAsync(2, 100);\n\n        string[] names = await Task.WhenAll(firstTask, secondTask);\n        Console.WriteLine($\"Results: {string.Join(\", \", names)}\");\n    }\n\n    private async Task<string> LoadEmployeeNameAsync(\n        int employeeId,\n        int delayMilliseconds)\n    {\n        Console.WriteLine($\"Starting employee {employeeId}\");\n        await Task.Delay(delayMilliseconds);\n        Console.WriteLine($\"Finished employee {employeeId}\");\n        return $\"Employee {employeeId}\";\n    }\n}\n\n// In ScratchPad Program.cs, after earlier session calls:\nConsole.WriteLine(\"Session 27\");\nvar sequentialConcurrentExperiments = new SequentialConcurrentExperiments();\nawait sequentialConcurrentExperiments.RunAsync();"}]}
+      {
+        "text": "Step 1/14",
+        "code": "// Create this file:\n//\n// src/PinkMachine19.TimeClock.ScratchPad/Session27/SequentialConcurrentExperiments.cs"
+      },
+      {
+        "text": "Step 2/14",
+        "code": "// In SequentialConcurrentExperiments.cs:\n//\n// Declare a public sealed class named\n// SequentialConcurrentExperiments.\n//\n// public allows Program.cs to create it.\n// sealed prevents inheritance."
+      },
+      {
+        "text": "Step 3/14",
+        "code": "// Inside SequentialConcurrentExperiments:\n//\n// Add a public method named RunAsync.\n// It has no parameters and returns Task.\n//\n// For now, return Task.CompletedTask.\n// Do not add async yet.\n//\n// Task represents eventual completion\n// without a returned value."
+      },
+      {
+        "text": "Step 4/14",
+        "code": "// Inside SequentialConcurrentExperiments,\n// but outside RunAsync:\n//\n// Add a private method named\n// LoadEmployeeNameAsync.\n//\n// Accept int employeeId and\n// int delayMilliseconds.\n// Return Task<string>.\n//\n// For now, return an already-completed\n// Task containing string.Empty.\n//\n// Remember: Task.FromResult is a static\n// method call. Do not use new."
+      },
+      {
+        "text": "Step 5/14",
+        "code": "// Inside LoadEmployeeNameAsync:\n//\n// Convert the method to async Task<string>.\n// Print a starting message using employeeId.\n// Await Task.Delay using delayMilliseconds.\n// Print a finished message using employeeId.\n// Return text containing Employee and employeeId.\n//\n// After adding async and await, return the string.\n// Do not wrap it in Task.FromResult.\n//\n// Task.Delay simulates waiting.\n// It is not repository I/O and does not\n// create a dedicated background thread."
+      },
+      {
+        "text": "Step 6/14",
+        "code": "// From the csharp-practice-working solution folder:\n//\n// Build only the ScratchPad project.",
+        "code": "// Run this command in the terminal:\n//\n// dotnet build src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"
+      },
+      {
+        "text": "Step 7/14",
+        "code": "// Inside SequentialConcurrentExperiments,\n// outside the existing methods:\n//\n// Add a private method named RunSequentialAsync.\n// It has no parameters and returns Task.\n//\n// For now, return Task.CompletedTask.\n// Do not add async yet."
+      },
+      {
+        "text": "Step 8/14",
+        "code": "// Inside RunSequentialAsync:\n//\n// Convert the method to async Task.\n// Call LoadEmployeeNameAsync for employee 1\n// with a 300 millisecond delay.\n// Immediately await it.\n// Store the returned string in firstName.\n//\n// Then call the helper for employee 2\n// with a 100 millisecond delay.\n// Immediately await it.\n// Store the returned string in secondName.\n//\n// Display both names.\n//\n// Employee 2 has not started during the first\n// await because execution has not reached\n// the second method call."
+      },
+      {
+        "text": "Step 9/14",
+        "code": "// Inside SequentialConcurrentExperiments,\n// outside all existing methods:\n//\n// Add a private method named RunConcurrentAsync.\n// It has no parameters and returns Task.\n//\n// For now, return Task.CompletedTask.\n// Do not add async yet."
+      },
+      {
+        "text": "Step 10/14",
+        "code": "// Inside RunConcurrentAsync:\n//\n// Convert the method to async Task.\n// Call LoadEmployeeNameAsync for employee 1\n// with a 300 millisecond delay.\n// Do not await it yet.\n// Store the returned Task<string>\n// in a variable named firstTask.\n//\n// Call the helper for employee 2\n// with a 100 millisecond delay.\n// Do not await it yet.\n// Store the returned Task<string>\n// in a variable named secondTask.\n//\n// Calling both methods before awaiting permits\n// their waiting periods to overlap."
+      },
+      {
+        "text": "Step 11/14",
+        "code": "// Still inside RunConcurrentAsync:\n//\n// Pass firstTask and secondTask as arguments\n// to Task.WhenAll.\n// Await the combined Task.\n// Store the returned string array in names.\n// Display the returned names.\n//\n// Do not write Task.WhenAll<string>() with no\n// arguments. WhenAll needs the Tasks to combine.\n// Both arguments are Task<string>, so the compiler\n// infers TResult as string. Await then produces\n// string[]. No explicit <string> is needed.\n//\n// Type inference hides repeated type spelling;\n// it does not remove type safety.\n// The array follows supplied-Task order,\n// not completion order."
+      },
+      {
+        "text": "Step 12/14",
+        "code": "// Inside RunAsync:\n//\n// Remove the temporary implementation.\n// Convert RunAsync to async Task.\n// Display a Sequential heading.\n// Await RunSequentialAsync.\n// Display a Concurrent heading.\n// Await RunConcurrentAsync.\n//\n// The demonstrations run one after another\n// so their output remains easy to compare."
+      },
+      {
+        "text": "Step 13/14",
+        "code": "// In ScratchPad Program.cs:\n//\n// Preserve all earlier session code.\n// Display a Session 27 heading.\n// Create SequentialConcurrentExperiments.\n// Store it in sequentialConcurrentExperiments.\n// Await its RunAsync method.\n//\n// Run the ScratchPad project.",
+        "code": "// In ScratchPad Program.cs:\n//\n// Preserve all earlier session code.\n// Display a Session 27 heading.\n// Create SequentialConcurrentExperiments.\n// Store it in sequentialConcurrentExperiments.\n// Await its RunAsync method.\n//\n// Run this command in the terminal:\n//\n// dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release"
+      },
+      {
+        "text": "Step 14/14",
+        "code": "// From the csharp-practice-working solution folder:\n//\n// Build PinkMachine19.TimeClock.sln in Release.\n// Run the complete test suite with --no-build.\n// Open Solution Reveal only after both pass.",
+        "code": "// Run these commands in the terminal:\n//\n// dotnet build PinkMachine19.TimeClock.sln --configuration Release\n// dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build",
+        "reveals": [
+          {
+            "title": "Solution",
+            "text": "The complete implementation stays hidden until the learner finishes all fourteen steps.",
+            "code": "// src/PinkMachine19.TimeClock.ScratchPad/Session27/SequentialConcurrentExperiments.cs\npublic sealed class SequentialConcurrentExperiments\n{\n    public async Task RunAsync()\n    {\n        Console.WriteLine(\"Sequential\");\n        await RunSequentialAsync();\n\n        Console.WriteLine(\"Concurrent\");\n        await RunConcurrentAsync();\n    }\n\n    private async Task RunSequentialAsync()\n    {\n        string firstName = await LoadEmployeeNameAsync(1, 300);\n        string secondName = await LoadEmployeeNameAsync(2, 100);\n        Console.WriteLine($\"Results: {firstName}, {secondName}\");\n    }\n\n    private async Task RunConcurrentAsync()\n    {\n        Task<string> firstTask = LoadEmployeeNameAsync(1, 300);\n        Task<string> secondTask = LoadEmployeeNameAsync(2, 100);\n\n        string[] names = await Task.WhenAll(firstTask, secondTask);\n        Console.WriteLine($\"Results: {string.Join(\", \", names)}\");\n    }\n\n    private async Task<string> LoadEmployeeNameAsync(\n        int employeeId,\n        int delayMilliseconds)\n    {\n        Console.WriteLine($\"Starting employee {employeeId}\");\n        await Task.Delay(delayMilliseconds);\n        Console.WriteLine($\"Finished employee {employeeId}\");\n        return $\"Employee {employeeId}\";\n    }\n}\n\n// In ScratchPad Program.cs, after earlier session calls:\nConsole.WriteLine(\"Session 27\");\nvar sequentialConcurrentExperiments = new SequentialConcurrentExperiments();\nawait sequentialConcurrentExperiments.RunAsync();"
+          }
+        ]
+      }
     ],
     "expectedBehavior": "Sequential\nStarting employee 1\nFinished employee 1\nStarting employee 2\nFinished employee 2\nResults: Employee 1, Employee 2\nConcurrent\nStarting employee 1\nStarting employee 2\nFinished employee 2\nFinished employee 1\nResults: Employee 1, Employee 2\n\nThe different delays make employee 2 usually finish first concurrently. The lesson relies only on both start messages appearing before completion; it does not treat completion timing as a general guarantee.",
     "validation": "dotnet run --project src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
-    {"path": "src/PinkMachine19.TimeClock.ScratchPad/Session27/SequentialConcurrentExperiments.cs", "action": "Add", "why": "Preserve the sequential-versus-concurrent observation without changing production."},
-    {"path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs", "action": "Modify", "why": "Await the Session 27 experiment after earlier session calls."},
-    {"path": "site/data/sessions/session-27.json", "action": "Modify", "why": "Synchronize the main lesson, standalone lab, quizzes, summary, and solution reveal."}
+    {
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Session27/SequentialConcurrentExperiments.cs",
+      "action": "Add",
+      "why": "Preserve the sequential-versus-concurrent observation without changing production."
+    },
+    {
+      "path": "src/PinkMachine19.TimeClock.ScratchPad/Program.cs",
+      "action": "Modify",
+      "why": "Await the Session 27 experiment after earlier session calls."
+    },
+    {
+      "path": "site/data/sessions/session-27.json",
+      "action": "Modify",
+      "why": "Synchronize the main lesson, standalone lab, quizzes, summary, and solution reveal."
+    }
   ],
   "commit": "session-27: compare sequential and concurrent async flow",
   "review": [
@@ -119,9 +210,36 @@
     "Every Task is deliberately awaited, and the full implementation remains behind Solution Reveal."
   ],
   "postQuiz": [
-    {"prompt": "Why can the two employee operations overlap in RunConcurrentAsync?", "options": ["Both async methods are called and their Tasks stored before Task.WhenAll is awaited", "Task.WhenAll always creates two threads", "The second delay is shorter"], "correct": 0, "explanation": "Both operations have started before the combined Task is awaited. The delay lengths affect observation, not the reason overlap is possible."},
-    {"prompt": "When is sequential flow preferable?", "options": ["When order, dependency, rate limits, shared state, or constrained resources matter", "Whenever Task<string> is returned", "Only when a computer has one CPU core"], "correct": 0, "explanation": "Concurrency is a design choice for independent work, not an automatic improvement."},
-    {"prompt": "What does awaiting Task.WhenAll over two Task<string> values return?", "options": ["A string array in supplied-Task order", "One arbitrary string", "Two guaranteed background threads"], "correct": 0, "explanation": "The generic result type is string, so awaiting the combined Task produces string[]."}
+    {
+      "prompt": "Why can the two employee operations overlap in RunConcurrentAsync?",
+      "options": [
+        "Both async methods are called and their Tasks stored before Task.WhenAll is awaited",
+        "Task.WhenAll always creates two threads",
+        "The second delay is shorter"
+      ],
+      "correct": 0,
+      "explanation": "Both operations have started before the combined Task is awaited. The delay lengths affect observation, not the reason overlap is possible."
+    },
+    {
+      "prompt": "When is sequential flow preferable?",
+      "options": [
+        "When order, dependency, rate limits, shared state, or constrained resources matter",
+        "Whenever Task<string> is returned",
+        "Only when a computer has one CPU core"
+      ],
+      "correct": 0,
+      "explanation": "Concurrency is a design choice for independent work, not an automatic improvement."
+    },
+    {
+      "prompt": "What does awaiting Task.WhenAll over two Task<string> values return?",
+      "options": [
+        "A string array in supplied-Task order",
+        "One arbitrary string",
+        "Two guaranteed background threads"
+      ],
+      "correct": 0,
+      "explanation": "The generic result type is string, so awaiting the combined Task produces string[]."
+    }
   ],
   "reflections": [
     "At which exact line does employee 2 begin in sequential flow, and why has it not started earlier?",
@@ -131,5 +249,14 @@
   "whatBreaks": "Immediately awaiting firstTask before calling the second helper turns the concurrent method back into sequential flow. Removing await from Task.WhenAll lets RunConcurrentAsync finish before both operations are observed. Reusing the global name AsyncFlowExperiments would collide with Session 26 because this project currently has no namespaces separating those types.",
   "summary": "Calling and immediately awaiting one operation before calling the next creates sequential flow. Calling two independent async methods first creates two Tasks whose waits can overlap; Task.WhenAll returns a combined Task that completes after both. This is concurrency, not guaranteed parallel execution, and production remains synchronous.",
   "learningEnvironment": "scratchpad",
-  "buildState": {"creates": ["src/PinkMachine19.TimeClock.ScratchPad/Session27/SequentialConcurrentExperiments.cs"], "extends": ["sequential async flow", "concurrent async flow", "Task.WhenAll with explicit Tasks"]}
+  "buildState": {
+    "creates": [
+      "src/PinkMachine19.TimeClock.ScratchPad/Session27/SequentialConcurrentExperiments.cs"
+    ],
+    "extends": [
+      "sequential async flow",
+      "concurrent async flow",
+      "Task.WhenAll with explicit Tasks"
+    ]
+  }
 }
