@@ -236,3 +236,43 @@ Provide a short troubleshooting order:
 4. Use `dotnet test --list-tests` to distinguish assembly discovery from an editor-cache problem.
 
 Keep this troubleshooting collapsed or adjacent to the run step so it is available when needed without burdening every learner before a problem occurs.
+
+### Session 30B learner feedback: create marker types before registering them
+
+The lesson asked the learner to register `TransientMarker`, `ScopedMarker`, and `SingletonMarker` before those types existed. The resulting “type could not be found” errors made the learner reasonably wonder whether a namespace was missing. Future DI labs should create new service or marker types before registration code references them, unless diagnosing an unresolved type is itself the stated objective.
+
+Explain why the Session 30B marker classes are intentionally empty: they are distinct object types used only to isolate and observe reference identity. Their behavior is held constant so the registered lifetime is the only variable. Use the memory anchor: “Blank marker; visible identity.” After the types compile, register them and explain the generic registration grammar.
+
+### Session 30B learner feedback: refresh the generic Resolve helper
+
+Repository evidence shows the learner previously wrote `private static T SelectGreater<T>(...) where T : IComparable<T>` in Sessions 14 and 15. Therefore, a separate prerequisite side lab is not necessary solely for the Session 30B `Resolve<T>` helper. However, Session 30B combines that older grammar with two unfamiliar details: the new `notnull` constraint and a generic third-party call to `GetRequiredService<T>()`.
+
+Before asking the learner to compose the helper, provide a compact retrieval refresher that reads `private static T Resolve<T>(IServiceScope scope) where T : notnull` from left to right. Explicitly substitute one concrete call, such as `Resolve<TransientMarker>(firstScope)`, to show that every `T` becomes `TransientMarker`. Explain that `static` is appropriate because the helper uses only its parameter and no `LifetimeExperiments` instance state. Then introduce `notnull` as the new part and explain how it matches the required-service contract. This should be an inline refresher, not a new side lab, unless broader future feedback reveals that generic method fundamentals were not retained.
+
+### Session 30B learner feedback: separate setup typing from prediction work
+
+The learner understood the three lifetime rules but became bored while typing nearly identical resolution and `ReferenceEquals` blocks. Repetition had stopped producing retrieval and became copy/paste work merely to finish. In lifetime labs, label package setup, provider/scope construction, and repeated output formatting as pasteable setup once their role is understood. Retain one complete learner-authored comparison, then use partial scaffolds whose meaningful blanks require choosing the marker type, scope boundary, or expected identity.
+
+The active task should be committing to a prediction before resolution and reconciling the observed Boolean afterward. Do not equate understanding with retyping unchanged declarations. Use the anchors: “Transient: new every request,” “Scoped: one per scope,” and “Singleton: one per provider.”
+
+### Session 30B learner feedback: package CLI and disposal ownership
+
+Offer the established `dotnet add ... package` command as a first-class workflow and explain that it edits the project file and restores the package. Manual `PackageReference` editing remains a valid alternative, not the only professional route.
+
+When creating `ServiceProvider` and `IServiceScope`, explain how the learner can discover disposal requirements: hover the type, use Go to Definition, look for `IDisposable` or `IAsyncDisposable`, and consult API ownership documentation. Use the ownership anchor: “I created it, it is disposable, so I probably own its disposal—unless the API says otherwise.” State that using declarations dispose in reverse declaration order: second scope, first scope, then provider.
+
+### Course-wide learner feedback: add a compact practice-drills section
+
+The learner does not want to repeat a complete lesson merely to strengthen syntax recall. Design a dedicated optional, non-prerequisite **Drills** section for the entire course, organized by session and concept. Session 30B is one concrete example, not the limit of the feature. Each completed session should be able to contribute several tiny retrieval exercises rather than another guided implementation.
+
+Include drills such as:
+
+- Reconstruct `private static T Resolve<T>(IServiceScope scope) where T : notnull` from a plain-English description.
+- Label the return type, method type parameter, ordinary parameter, and constraint.
+- Substitute `TransientMarker` for every `T` in one concrete call.
+- Write one transient, scoped, and singleton registration from memory.
+- Predict identity results for repeated resolutions within one scope and across two scopes.
+- Identify which disposable object owns each scope and state the reverse disposal order.
+- Correct deliberately broken examples, such as resolving through the wrong object or scope, choosing the wrong lifetime, missing generic brackets, or using a type before declaring it.
+
+Keep each drill independently repeatable in roughly one to three minutes. Provide answers behind Reveal and label the drills section as optional retrieval practice, not a new cumulative session and not a prerequisite. Its purpose is to build fluency across all completed labs without asking the learner to redo a 40-minute lesson. Add navigation and indexing that let the learner filter or jump by session, layer, and concept when this feature is implemented. Do not create the full drills section during an unrelated lesson correction; preserve this note as a future course-wide design task.
