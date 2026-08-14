@@ -69,3 +69,44 @@ The learner tried to cancel `processingTask`. Teach the responsibility split bef
 - The observing API cooperates, after which the Task transitions to the canceled state and `await` reports that state to the caller.
 
 Use the memory anchors: “Source requests. Token carries. Code cooperates.” and “Cancel the source. Await the Task.”
+
+## Session 29 — Test naming, type spelling, dates, and test runners
+
+### Type meaningful test names instead of copying them
+
+The learner found that typing a descriptive test name helps the test's behavior and naming convention sink in. When a test first uses the established naming pattern, encourage the learner to type the important name rather than pasting a completed declaration:
+
+`MethodUnderTest_WhenCondition_ExpectedResult`
+
+For example, typing `CalculateTotalHours_WhenCompletedEntriesExist_ReturnsTheirTotal` reinforces which method is under test, the scenario being arranged, and the expected outcome. Keep the visible instructions paste-ready as comments, but let those comments direct the learner to type the declaration themselves.
+
+### Explicit local types versus var
+
+The learner prefers explicit local types such as `ClockEntryRepository repository = new();` and `PayrollService service = new(repository);`. Treat this as valid C# rather than steering every example toward `var`.
+
+- Both explicit types and `var` produce statically typed local variables.
+- `var` asks the compiler to infer the compile-time type; it is not dynamic typing.
+- Use `var` when the type is obvious from the right side and repeating it adds little.
+- Spell out the type when seeing it helps the reader understand the code or the contract.
+- Target-typed `new` can keep an explicit-type declaration concise.
+
+Use the practical rule: “Use `var` when the type is obvious and unimportant. Spell out the type when seeing it helps the reader.”
+
+### DateTime constructor argument order
+
+The learner twice reversed the arguments to the `DateTime` constructor while trying to represent August 14, 2026. Show the constructor shape near the first fixed-date instruction:
+
+```csharp
+DateTime(int year, int month, int day)
+```
+
+Then ask the learner to substitute the intended year, month, and day. This prevents a distracting out-of-range failure while still requiring the learner to type the actual test data.
+
+### IDE test runners and command-line verification
+
+The learner reasonably asked whether developers really type the long filtered `dotnet test` command instead of using VS Code. Explain both workflows without treating either as less professional:
+
+- VS Code's Testing panel, Visual Studio Test Explorer, Rider, and keyboard shortcuts are normal for everyday focused test runs.
+- CLI commands are editor-independent, repeatable, precise about project/configuration/filter, and suitable for continuous integration.
+- Developers commonly reuse long commands through terminal history, editor tasks, or scripts rather than retyping them.
+- In the lab, the explicit command teaches exactly what is executed; the learner may use the IDE test runner for the focused run if the same two tests are selected and reviewed.
