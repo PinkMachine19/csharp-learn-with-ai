@@ -48,6 +48,12 @@ Keep the reminder to two or three TTS-friendly sentences. Do not repeat the comp
 
 Purpose checkpoints are especially important immediately before integration, running, and final validation. Before asking the learner to edit `Program.cs`, remind them why the new experiment needs a caller. Before asking them to run, state exactly which behavior the output should prove. Before the final build and tests, distinguish verifying the focused experiment from checking that the cumulative solution remains healthy.
 
+### Inline comprehension pauses
+
+When a lab introduces several unfamiliar roles or a compact third-party API, add a brief unnumbered quick check after the relevant step. Ask one purpose question at a time, accept an ordinary-language answer, and keep the answer behind a small reveal. These checks are not scored quiz gates and do not increase the numbered step count.
+
+Use a quick check to distinguish roles such as the class under test versus its test equipment, configuration versus execution, or execution versus verification. Do not ask the learner to explain the whole construction while they are still assembling it.
+
 ## 4. Write beginner-usable instructions
 
 - Use numbered progress notation and checkboxes.
@@ -94,6 +100,8 @@ Purpose checkpoints are especially important immediately before integration, run
 ## 6. Make explanations explicit where mistakes are likely
 
 - Explain unfamiliar types or APIs briefly before using them, such as `HashSet<T>`, `IEnumerable<T>`, `sealed`, or constructor injection.
+- Before first use of an external library, state its overall job and identify which visible names belong to the library. Show genuinely new third-party syntax on first use instead of asking the learner to guess it from prose or discover it through IntelliSense.
+- For fluent library syntax, identify the object currently held, what each call configures or checks, who invokes any lambda later, and what role the returned object plays in enabling the next chained call.
 - State important filtering conditions directly. Do not make learners infer why open or incomplete entries must be excluded.
 - Explain the semantic reason for a design choice, not only its syntax.
 - Distinguish teaching simplifications from typical production architecture.

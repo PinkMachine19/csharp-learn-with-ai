@@ -122,3 +122,117 @@ The earlier Session 30 title promised test doubles, Moq, service tests, and DI l
 - Session 30B is a primary cumulative lesson, not an optional side lab. It owns `IServiceCollection`, the composition root, transient/scoped/singleton rules, scopes, disposal, mutable-state implications, and `ReferenceEquals` observations.
 
 Keep the memory distinction: constructor injection lets a caller provide dependencies; a DI container automates construction and lifetime rules. Constructor injection does not require a container.
+
+### Session 30 observed misunderstanding: nested test-helper placement
+
+The instruction “Inside the test class, add private sealed class RecordingClockEntryRepository” did not make the brace placement concrete enough. The learner reasonably created `RecordingClockEntryRepository` as a separate public top-level class after the closing brace of `ClockEntryServiceTests`.
+
+When a lesson first requests a nested test helper, explicitly state:
+
+- Place the helper after the test methods but before the final closing brace of the containing test class.
+- The helper's opening and closing braces must remain inside the containing class's braces.
+- `private` means only the containing test class can name the helper.
+- `sealed` means the focused fake is not designed for inheritance.
+- Nesting keeps a test-only implementation beside the tests that use it and prevents it from appearing as a reusable production or test-project API.
+
+Show a brace-only grammatical shape without exposing the completed helper implementation:
+
+```csharp
+public sealed class ExampleTests
+{
+    // Test methods remain here.
+
+    private sealed class ExampleFake
+    {
+        // Fake members remain here.
+    }
+}
+```
+
+Do not assume that “inside the class” unambiguously communicates nested-type syntax to a learner who has primarily created top-level classes.
+
+### Session 30 learner feedback: inline comprehension pauses
+
+The recording-fake lab introduced the interface implementation, nested helper class, configurable return state, recorded call state, access modifiers, and test arrangement close together. The learner could mechanically type the syntax but felt unable to explain the complete construction. A large explanation or end-of-lab quiz would add more load at that moment.
+
+Add brief, low-pressure comprehension pauses directly between appropriate lab steps. Each pause should ask one small question about the purpose of the code already typed, accept an ordinary-language answer, and resolve that question before continuing. Do not require formal terminology or ask several questions at once.
+
+For the Session 30 recording-fake lab, include checkpoints equivalent to:
+
+1. Which object is the test actually testing: `ClockEntryService` or `RecordingClockEntryRepository`?
+2. When the service tries to save an entry, which object records that call for the test to inspect?
+3. After arranging the objects, what repository situation is the test controlling?
+
+Reinforce the compact mental model: “We test the service; the recording fake observes what the service does.” Apply this pattern to future labs whenever a step combines multiple new syntax or conceptual roles. These pauses supplement the formal quizzes; they are not scored gates.
+
+### Future optional side lab: prove the value of an interaction test with a regression
+
+The learner understood what the recording fake stored but could not yet feel why that evidence mattered because the current implementation was visibly calling the repository. Add a short optional, disposable side lab that demonstrates a believable real-world regression and lets the learner watch the test detect it.
+
+The side lab should:
+
+- Start with a tiny service, repository boundary, and passing test in an isolated exercise project rather than modifying permanent TimeClock production code.
+- First verify only the returned success value, then introduce a plausible developer mistake where the service still returns success but no longer requests the save.
+- Run the incomplete test and observe that it passes despite the defect.
+- Add recording or interaction evidence, rerun, and observe the failure that identifies the missing save.
+- Restore the correct service behavior and rerun to green.
+- Explain the practical distinction: reading the implementation describes what it appears to do now; a regression test repeatedly checks that the promised behavior survives later edits.
+- Use ordinary language such as “the fake keeps a receipt” before introducing formal interaction-testing terminology.
+
+The lesson's central question should be: “Could this test still pass if the service claimed success but forgot to save?” Keep the exercise small enough that the learner experiences the red/green contrast rather than receiving another abstract testing explanation.
+
+### Optional tooling lab feedback: manually type and read common .NET CLI commands
+
+The learner commonly copies long `dotnet` commands to keep moving but wants deliberate practice typing the everyday commands manually. Audit the existing VS Code Fluency side lab before creating another module. Prefer extending that optional tooling material, or create a distinct CLI side lab only if the existing lab cannot hold the topic cleanly.
+
+The exercise should use a disposable project and cover a small practical command vocabulary, including `dotnet build`, `dotnet test`, `dotnet run`, `dotnet add ... package`, and `dotnet list ... package`. Teach each command as a readable sentence: executable, verb, project path, and options. Include short manual-typing repetitions, path completion from the terminal, command history, and a reminder to inspect a command before pressing Enter. Do not turn it into shell memorization or require long project paths to be retyped repeatedly after the command shape is understood.
+
+Distinguish learning practice from normal professional workflow: manually typing common command shapes can build fluency, while copy/paste, shell history, IDE test controls, and task shortcuts remain legitimate everyday tools. Keep this optional and separate from the testing concept being learned in Session 30.
+
+### Future optional side lab: how fluent library APIs are built
+
+While first using Moq, the learner recognized that `Setup(...).Returns(...)` is deliberately shaped to read like a small sentence and wanted to understand how library authors create APIs like this. Record this as a potential advanced side lab rather than expanding the current testing lesson.
+
+Use a tiny library designed within the exercise—do not attempt to recreate Moq. Build the idea progressively from an ordinary method call to a method returning a configuration object, then chain a second method from that returned object. Connect the visible syntax to generic types, lambda parameters, delegates, and fluent method chaining. Only introduce expression trees after delegates and lambdas have already been established, and clearly distinguish instance methods from extension methods: a fluent chain does not automatically imply that every method in it is an extension method.
+
+The lab should answer the learner's practical question: “How did the library author make this code possible?” It should trace compile-time types through one short chain and let the learner implement a miniature `Choose(...).Returns(...)` API in a disposable project. Keep Moq internals illustrative rather than claiming to reproduce or exhaustively explain its implementation.
+
+### Course-wide feedback: orient the learner before first-use library syntax
+
+When a lab first introduces an external library or a compact domain-specific API such as Moq, do not move directly from a conceptual paragraph to instructions that assume the learner can author the library's grammar. Anticipate the learner's likely “What is this?” questions at the point of first use.
+
+Before each new expression shape, briefly identify:
+
+- what object the learner currently has;
+- whether the line configures behavior, runs production behavior, or checks evidence;
+- who will invoke the described call later;
+- the type or role returned by one fluent method so the next chained method is possible;
+- which syntax is ordinary C# and which names come from the library;
+- what the complete line means in one ordinary-language sentence.
+
+Show genuinely new third-party syntax on first use; do not ask the learner to guess it from prose or discover it through IntelliSense. Follow the reveal with a tiny recognition question or a small value change so the learner still participates. Reuse the compact explanation on subsequent steps instead of repeating a large theory section. Apply this pattern to future labs, especially mocking, dependency injection, serialization, database, HTTP, and assertion libraries.
+
+### Session 30 learner feedback: explain Moq's entire purpose before Setup and Verify
+
+Before presenting any Moq grammar, state why the learner is repeating the recording-fake test with a library. Use the direct comparison: the hand-written fake supplies an answer and exposes its receipt through properties; Moq creates the substitute and keeps the receipt internally, `Setup` supplies the answer, and `Verify` inspects the receipt. Make clear that Moq is optional rather than automatically superior. It becomes useful when manually maintaining several fake methods, configured responses, or recorded interactions would obscure the test.
+
+The learner should encounter this three-part story before syntax:
+
+1. `Setup`: tell the substitute what answer to give when the service asks a question.
+2. Act: call the real service once.
+3. `Verify`: inspect Moq's recorded calls and require the expected interaction.
+
+Explicitly say that `Verify` does not call `SaveClockEntry` again. It searches the call history created when the production service ran. Explain `It.Is<ClockEntry>` primarily as an argument-condition matcher: the method contract already requires a `ClockEntry`; the predicate checks that its employee ID and clock-in time are the expected values.
+
+### Session 30 learner feedback: separate test discovery from VS Code's display
+
+The completed `[Fact]` tests built successfully and were discoverable through `dotnet test --list-tests`, but the new test did not immediately appear in VS Code's Testing panel. The lesson's validation step should explain that these are separate layers. If command-line discovery lists the test, do not rewrite a valid test merely because the editor view is stale.
+
+Provide a short troubleshooting order:
+
+1. Confirm VS Code is connected to the intended WSL environment and has the learner repository root open.
+2. Refresh the Testing panel or run `Test: Refresh Tests` from the Command Palette.
+3. If necessary, run `Developer: Reload Window` and reopen Testing.
+4. Use `dotnet test --list-tests` to distinguish assembly discovery from an editor-cache problem.
+
+Keep this troubleshooting collapsed or adjacent to the run step so it is available when needed without burdening every learner before a problem occurs.
