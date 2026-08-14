@@ -37,3 +37,35 @@ The learner reported losing the purpose of the exercise after typing through sev
 Session 28B is a real cumulative lesson immediately after Session 28, not an optional side lab. It continues from the learner's completed Session 28 ScratchPad state, creates its own distinct Session 28B experiment, and teaches cooperative cancellation without changing production TimeClock code. The primary manifest, navigation, prerequisites, generated lesson/lab/quiz pages, and downstream session links place Session 29 after Session 28B. The lesson is not represented as optional or safe to skip.
 
 The lab uses unnumbered purpose checkpoints after short groups of mechanical steps and before integration, running, and final validation. It preserves warning-free temporary `Task.CompletedTask` methods until each method first needs `await`, and reinforces method-call parentheses, stored Tasks, and the difference between awaiting `Task` and `Task<T>`.
+
+### Session 28B observed misunderstanding: using declarations and disposal
+
+The learner naturally wrote a traditional `using` block because the lesson requested a `using` declaration without first teaching that syntax. Future lessons must explicitly distinguish the two valid forms before asking the learner to choose one:
+
+- A `using` block disposes the object when execution leaves that block and adds a nested scope.
+- A `using` declaration, such as `using CancellationTokenSource cancellationSource = new();`, has no extra braces and disposes the object when execution leaves the current containing scope.
+- A normal local-variable declaration is not automatically disposed merely because the method ends or the variable goes out of scope. Garbage collection and deterministic `Dispose` calls are different mechanisms.
+- `CancellationTokenSource` implements `IDisposable`. Even though this ScratchPad example is not a database connection, disposing the source releases resources it may own. Teach the general ownership rule without exaggerating the cost of this tiny experiment.
+
+When a lab first introduces a `using` declaration, show its grammatical shape, name the end of its disposal scope, and contrast it briefly with the already-familiar `using (...) { }` block. Do not assume the newer declaration syntax is known.
+
+### Session 28B observed misunderstanding: calling versus awaiting async work
+
+After storing `Task processingTask = ProcessReportAsync(cancellationToken);`, the learner asked whether the operation waits to start until `await processingTask`. Future async lessons must state the timeline explicitly:
+
+- Calling `ProcessReportAsync(...)` invokes the method immediately. It runs synchronously until it reaches an incomplete awaited operation, then returns a Task representing the remaining work.
+- Assigning that returned Task to `processingTask` preserves the caller's handle; assignment does not delay or start the operation.
+- `await processingTask` does not start the method. It waits for and observes the already-started Task's completion, cancellation, or failure.
+
+Use the memory anchor: “The call starts the work. The Task tracks the work. Await observes the work.” Add this reminder at the first lab step that separates Task creation from its later await.
+
+### Session 28B observed misunderstanding: cancellation ownership
+
+The learner tried to cancel `processingTask`. Teach the responsibility split before the cancellation step:
+
+- A Task represents and tracks an operation; it does not own this cancellation request and has no `Cancel()` method.
+- `cancellationSource` owns the request, so the caller invokes `cancellationSource.Cancel()`.
+- `cancellationToken` transports the request through the helper to `Task.Delay`.
+- The observing API cooperates, after which the Task transitions to the canceled state and `await` reports that state to the caller.
+
+Use the memory anchors: “Source requests. Token carries. Code cooperates.” and “Cancel the source. Await the Task.”
