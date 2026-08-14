@@ -121,6 +121,11 @@ if (!quizPage.includes("data-check-answer") || !quizPage.includes('role="status"
 if (!quizPage.includes("reveal-card") || !quizPage.includes('aria-expanded="false"')) errors.push("Reveal interaction contract is incomplete");
 const script = await readFile(path.join(dist, "assets", "app.js"), "utf8");
 if (!script.includes("dataset.correct") || !script.includes("aria-expanded")) errors.push("Interaction JavaScript is incomplete");
+const notesWidget = await readFile(path.join(dist, "assets", "notes-widget.js"), "utf8");
+const bookmarkWidget = await readFile(path.join(dist, "assets", "bookmark-widget.js"), "utf8");
+for (const [name, widget] of [["Notes", notesWidget], ["Bookmark", bookmarkWidget]]) {
+  if (!widget.includes("|[a-z]") || !widget.includes("sessionMatch")) errors.push(`${name} widget does not recognize alphanumeric primary session routes`);
+}
 
 const requiredLessonHeadings = [
   "1. Learning Objectives", "2. Pre-Coding Quiz", "3. The Concept", "4. Lab",
@@ -130,6 +135,11 @@ const requiredLessonHeadings = [
 ];
 for (const session of [...manifest.sessions, ...(manifest.sideLabs || []), ...(manifest.refreshers || [])].filter((item) => item.completionStatus === "complete")) {
   const lesson = await readFile(path.join(dist, session.lessonPath), "utf8");
+  if (!session.isSupplemental) {
+    for (const asset of ["notes-widget.js", "bookmark-widget.js"]) {
+      if (!lesson.includes(asset)) errors.push(`${session.id} is missing ${asset}`);
+    }
+  }
   for (const heading of requiredLessonHeadings) if (!lesson.includes(`>${heading}</h2>`)) errors.push(`${session.id} is missing section: ${heading}`);
   const svgCount = (lesson.match(/<svg /g) || []).length;
   if (svgCount < 4 || svgCount > 8) errors.push(`${session.id} must contain 4–8 opening SVGs; found ${svgCount}`);

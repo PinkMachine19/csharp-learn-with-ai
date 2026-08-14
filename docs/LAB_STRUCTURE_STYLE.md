@@ -129,6 +129,13 @@ Purpose checkpoints are especially important immediately before integration, run
 
 ## 8. Keep solutions and validation truthful
 
+### Required lesson-page controls
+
+- Every generated primary lesson page must initialize and display the Notes and Bookmark floating buttons used by the established session-page design.
+- When adding a new session identifier format, such as an alphanumeric identifier, verify that widget URL detection recognizes the route. Loading the widget files is not enough; confirm the runtime creates both `.notes-fab` and `.bookmark-fab`.
+- Validate at least one generated page for each supported identifier format: integer, decimal, and alphanumeric.
+- Keep these controls available alongside shortcuts and other established lesson interactions. Do not omit them from a new primary session merely because its identifier or route differs from earlier sessions.
+
 - The collapsed solution must match the instructions, expected output, actual member names, and project structure.
 - Code examples in the concept overview, lab, expected-files table, solution reveal, standalone lab, and synchronized source must agree.
 - List every file added, modified, or deleted by the lab and no files the lab does not touch.
