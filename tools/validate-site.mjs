@@ -165,6 +165,25 @@ for (const session of manifest.sessions) {
       if (!standaloneLab.includes(label)) errors.push(`${session.id} standalone lab is missing ${label}`);
     }
   }
+  if (source.number === 31) {
+    if (!source.lab.preLabCleanup) errors.push("session-31 is missing unnumbered pre-lab cleanup");
+    if (source.lab.steps.some((step) => !step.completeWhen)) errors.push("session-31 has a step without a completion condition");
+    for (const page of [lesson, standaloneLab]) {
+      if (!page.includes("Pre-lab cleanup")) errors.push("session-31 is missing rendered pre-lab cleanup");
+      if (!page.includes("This step is complete when:")) errors.push("session-31 is missing rendered step completion conditions");
+      if (!page.includes("What you should be asking right now")) errors.push("session-31 is missing rendered learner-question sections");
+    }
+  }
+  if (source.number === 32) {
+    if (source.lab.steps.some((step) => !step.completeWhen)) errors.push("session-32 has a step without a completion condition");
+    const session32Lab = JSON.stringify(source.lab);
+    for (const required of ["public static class ClockEntryDataQueries", "Task.FromResult(query.ToList())", "query.ToListAsync(cancellationToken)", "Assert.Single(results)", "Assert.Same(completedEntry, result)"]) {
+      if (!session32Lab.includes(required)) errors.push(`session-32 is missing ${required}`);
+    }
+    for (const page of [lesson, standaloneLab]) {
+      if (!page.includes("This step is complete when:")) errors.push("session-32 is missing rendered step completion conditions");
+    }
+  }
   const serializedLab = JSON.stringify(source.lab);
   if (/completed reference implementation|temporary scratch|scratch folder outside|pre-?built application/i.test(serializedLab)) errors.push(`${session.id} reintroduces a prebuilt or disposable-workspace assumption`);
   const changedPaths = source.expectedFiles.map((item) => item.path);

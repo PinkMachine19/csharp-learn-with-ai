@@ -69,6 +69,8 @@ Use a quick check to distinguish roles such as the class under test versus its t
 - Tell the learner how to invoke a new class from `Program.cs` or `Main` without removing earlier calls.
 - Avoid repeating established boilerplate. Refer to the established session pattern, but keep enough context that the lab remains completable without guessing.
 - Include a copyable starter comment when the learner is expected to type code.
+- Before an unfamiliar method signature, provide a pasteable comment-first scaffold naming the access modifier, other modifiers, return type, method name, parameters, optional defaults, and warning-free temporary return behavior. Ask the learner to type the real C# directly beneath it; shorten the scaffold only after the grammatical shape becomes established retrieval practice.
+- A comment-first scaffold guides construction without exposing the completed implementation. Keep it immediately beside the code location it describes, and tell the learner when temporary instructional comments may be removed or retained as notes.
 - Preserve useful retrieval practice. Repeating a class, constructor, property, method, LINQ expression, or injected dependency can reinforce learning; do not remove repetition merely because the syntax appeared earlier.
 - Repetition is welcome when it reinforces useful syntax and meaning. Repeat short reminders such as why a class is sealed, what a Task represents, and where a method belongs; do not repeat work merely to pad the lab.
 - Add short reminders only at the step where they help, using wording such as `Remember from Session 21:`. Do not turn every instruction into a recap of every prior concept.
@@ -76,6 +78,8 @@ Use a quick check to distinguish roles such as the class under test versus its t
 - Include signature-reading help when LINQ, delegates, Tasks, or testing APIs expose long IntelliSense signatures. Prefer a focused optional sidebar when the supporting concept would interrupt the primary lab.
 - Do not assume a learner can independently compose a large `Program.cs` demonstration unless the course previously practiced that exact composition.
 - Use `Step n/n` numbering consistently and keep instructions concise and text-to-speech friendly.
+- Present each numbered step as one complete TTS unit. End it with a visible “This step is complete when…” condition; if that condition needs several hidden parts, split them into additional numbered steps instead.
+- Treat repository housekeeping that teaches no session concept as unnumbered pre-lab cleanup rather than inflating the learning-step count.
 
 ### Paste-ready instruction standard for Sessions 01–24
 
@@ -102,6 +106,7 @@ Use a quick check to distinguish roles such as the class under test versus its t
 - Explain unfamiliar types or APIs briefly before using them, such as `HashSet<T>`, `IEnumerable<T>`, `sealed`, or constructor injection.
 - Before first use of an external library, state its overall job and identify which visible names belong to the library. Show genuinely new third-party syntax on first use instead of asking the learner to guess it from prose or discover it through IntelliSense.
 - For fluent library syntax, identify the object currently held, what each call configures or checks, who invokes any lambda later, and what role the returned object plays in enabling the next chained call.
+- After a small framework-heavy cluster, offer a collapsed “What you should be asking right now” section with two or three conversational questions and answers. Explain required meaning at the point of use; do not outsource essential understanding to a glossary.
 - State important filtering conditions directly. Do not make learners infer why open or incomplete entries must be excluded.
 - Explain the semantic reason for a design choice, not only its syntax.
 - Distinguish teaching simplifications from typical production architecture.

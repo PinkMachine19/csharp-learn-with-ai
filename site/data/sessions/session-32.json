@@ -1,220 +1,70 @@
 {
-  "number": 32,
-  "category": "Data access",
-  "estimatedTime": "40 minutes",
-  "connection": "Session 31 created a real EF Core DbContext and SQLite database boundary. Session 32 separates building a provider-translated query from executing it.",
-  "objectives": [
-    "Distinguish IEnumerable from IQueryable.",
-    "Build a provider-translated expression with Where.",
-    "Identify ToListAsync as the database execution point.",
-    "Explain that deferred execution is not a background thread."
+  "number":32,
+  "category":"Data access",
+  "estimatedTime":"40 minutes",
+  "connection":"Session 31 created a real EF Core DbContext and SQLite boundary. Session 32 separates composing a provider-translated query from executing it asynchronously.",
+  "objectives":["Compose IQueryable<ClockEntryEntity> without executing it.","Filter completed entries for one employee through an EF-translated predicate.","Identify ToListAsync as the async materialization boundary.","Prove both filters with one SQLite-backed three-row test."],
+  "visuals":[
+    {"diagram":"mental-32-1","title":"The query is a written order","explanation":"ClockEntries and Where build an expression describing requested rows; no SQL result has been retrieved yet."},
+    {"diagram":"mental-32-2","title":"Materialization sends the order","explanation":"ToListAsync gives the stored expression to EF Core's provider, which translates and executes SQLite SQL."},
+    {"diagram":"mental-32-3","title":"Three rows test two gates","explanation":"One matching completed row passes; the target employee's open row and another employee's completed row each fail one filter."},
+    {"diagram":"mental-32-4","title":"Tracking preserves identity here","explanation":"The same DbContext tracks the inserted matching entity, so this specific tracking query returns the same object reference."}
   ],
-  "visuals": [
-    {
-      "diagram": "mental-32-1",
-      "title": "Boundary map",
-      "explanation": "Shows where Session 32 code belongs and which earlier layer it may call."
-    },
-    {
-      "diagram": "mental-32-2",
-      "title": "Call timeline",
-      "explanation": "Shows the ordered calls and the point where Session 32 observes a result."
-    },
-    {
-      "diagram": "mental-32-3",
-      "title": "State before and after",
-      "explanation": "Shows the state transition that the Session 32 lab verifies."
-    },
-    {
-      "diagram": "mental-32-4",
-      "title": "Contract checkpoint",
-      "explanation": "Shows the input, return type, and failure meaning for the main Session 32 API."
-    }
+  "preQuiz":[
+    {"prompt":"What has happened after IQueryable.Where is called but before materialization?","options":["A query expression was composed","SQLite returned all rows","A background thread started"],"correct":0,"explanation":"Where builds the provider expression; it does not execute SQL."},
+    {"prompt":"Which operation executes this query asynchronously?","options":["ToListAsync","Where","ClockEntries property access"],"correct":0,"explanation":"ToListAsync is the materialization boundary."},
+    {"prompt":"Why include three deliberately different rows?","options":["To prove employee and completion filters independently","To test pagination","To disable tracking"],"correct":0,"explanation":"Each excluded row violates one separate predicate condition."}
   ],
-  "preQuiz": [
-    {
-      "prompt": "Where does the Session 32 exercise belong?",
-      "options": [
-        "production",
-        "An unrelated earlier project",
-        "A fictional artifact"
-      ],
-      "correct": 0,
-      "explanation": "The verified cumulative design places it in production."
-    },
-    {
-      "prompt": "What should the return type tell a caller?",
-      "options": [
-        "What completion or value the method promises",
-        "Which CPU thread must run it",
-        "That errors cannot occur"
-      ],
-      "correct": 0,
-      "explanation": "A return type is a caller-facing contract."
-    },
-    {
-      "prompt": "What must happen before advancing?",
-      "options": [
-        "Run the focused behavior, Release build, and complete tests",
-        "Only read the solution",
-        "Rename unrelated learner code"
-      ],
-      "correct": 0,
-      "explanation": "Every session must finish buildable and testable."
-    }
+  "concept":[
+    {"title":"Compose first; execute later","paragraphs":["IQueryable stores an expression that an EF provider can translate. ClockEntries begins the query and Where adds filtering meaning; neither operation alone retrieves the rows.","Materialization asks the provider for results. In this lesson, ToListAsync executes the translated SQLite query and produces List<ClockEntryEntity>."],"code":"Where builds the query. Materialization runs the query.\nIQueryable stores the query. ToListAsync executes it and produces the list."},
+    {"title":"Same project is not a project reference","paragraphs":["ClockEntryEntity, TimeClockDbContext, and ClockEntryDataQueries all belong to Infrastructure, so they resolve as same-project types. Infrastructure's Domain project reference is unrelated to resolving those three names.","Folder placement, project membership, namespace, and project reference are different organizational mechanisms. These learner files use the global namespace, so different folders do not require an extra using directive."],"code":"Infrastructure project: ClockEntryEntity + TimeClockDbContext + ClockEntryDataQueries"},
+    {"title":"One matrix, two filter requirements","paragraphs":["The target employee's completed row must be included. The target employee's open row proves the completion filter. Another employee's completed row proves the employee filter.","Every row is a ClockEntryEntity and is added exactly once before one SaveChangesAsync call."]}
   ],
-  "concept": [
-    {
-      "title": "Build IQueryable and execute it with ToListAsync",
-      "paragraphs": [
-        "Session 31 created a real EF Core DbContext and SQLite database boundary. Session 32 separates building a provider-translated query from executing it.",
-        "Distinguish IEnumerable from IQueryable."
-      ]
-    },
-    {
-      "title": "Read the contract before the body",
-      "paragraphs": [
-        "Use IntelliSense to identify the receiver, parameters, return type, and overload one piece at a time.",
-        "Build a provider-translated expression with Where."
-      ]
-    },
-    {
-      "title": "Keep the boundary honest",
-      "paragraphs": [
-        "This work belongs in production; the lab does not claim that later artifacts already exist.",
-        "Identify ToListAsync as the database execution point."
-      ]
-    }
-  ],
-  "lab": {
-    "title": "Build IQueryable and execute it with ToListAsync",
-    "objective": "Distinguish IEnumerable from IQueryable.",
-    "practice": [
-      "IQueryable",
-      "Provider translation",
-      "ToListAsync",
-      "SQLite integration tests"
+  "lab":{
+    "title":"Compose and Materialize an EF Core Query",
+    "objective":"Keep query construction visibly separate from async SQLite execution.",
+    "practice":["Static query methods","IQueryable and deferred execution","ToListAsync","Tracking identity assertions"],
+    "task":"Return only completed rows for one employee from a three-row SQLite database.",
+    "startingCondition":"Session 31 created ClockEntryEntity, TimeClockDbContext, the SQLite provider, and the in-memory SQLite test pattern.",
+    "pasteReadyInstructions":true,
+    "stepCheckboxes":true,
+    "steps":[
+      {"text":"At the Bash repository root, define query_file with no spaces around =. Create the file, then open that filename explicitly. touch produces no normal output, so touch file | code would pipe an empty standard-output stream rather than pass the filename to VS Code.","code":"query_file=\"src/PinkMachine19.TimeClock.Infrastructure/ClockEntryDataQueries.cs\"\n\ntouch \"$query_file\"\ncode \"$query_file\"","completeWhen":"ClockEntryDataQueries.cs exists in Infrastructure and is open in the editor."},
+      {"text":"In ClockEntryDataQueries.cs, declare public static class ClockEntryDataQueries. This is a stateless container for query methods: static prevents construction and requires static members. sealed would only prevent inheritance and would still describe an instantiable class, so it is not the requested design. Add using Microsoft.EntityFrameworkCore only because later ToListAsync is an EF Core extension method.","completeWhen":"The file contains the public static class and only the genuinely required EF Core using directive."},
+      {"text":"Immediately inside the class, paste a comment-first scaffold describing CompletedForEmployee: public access, static modifier, IQueryable<ClockEntryEntity> return type, exact singular method name, TimeClockDbContext dbContext parameter, int employeeId parameter, and a temporary return of dbContext.ClockEntries. Then type the real method beneath those comments. All three named types are in Infrastructure; the Domain reference is not why they resolve, and global namespaces require no extra using. If suggestions are stale, save, complete the surrounding syntax, press Ctrl+Space, then build Infrastructure.","completeWhen":"CompletedForEmployee compiles and temporarily returns dbContext.ClockEntries without filtering.","questionsAfter":[{"question":"Why static rather than sealed?","answer":"The class is never instantiated and contains stateless static query methods; sealed only blocks inheritance."},{"question":"Does Infrastructure need a project reference for ClockEntryEntity?","answer":"No. ClockEntryEntity and the query class are already in the same project."}],"purposeAfter":"The method now returns a composable EF query but applies no filters. No SQL has executed; the next step adds the two required conditions to the expression."},
+      {"text":"Replace the temporary return with dbContext.ClockEntries.Where. Filter entry.EmployeeId == employeeId and entry.Clockout != null. The lambda parameter is inferred as ClockEntryEntity, which is why EmployeeId and Clockout appear after entry. Integer .Equals(employeeId) also works, but == is the clearest conventional form here.","completeWhen":"CompletedForEmployee returns an IQueryable filtered by both employee identity and completion state.","questionsAfter":[{"question":"Has SQLite returned rows now?","answer":"No. Where added a translatable expression to IQueryable."},{"question":"How does entry know its type?","answer":"ClockEntries is DbSet<ClockEntryEntity>, so the Where lambda parameter is inferred as ClockEntryEntity."}],"purposeAfter":"The expression now describes exactly the desired rows, but it remains deferred. Memory anchor: Where builds the query. Materialization runs the query."},
+      {"text":"Pause at the call site or add a temporary learning comment answering: Has SQL executed after CompletedForEmployee returns? State no and name the operation that will execute it: ToListAsync. Remove the temporary comment later or retain it as a learning note.","completeWhen":"You can state that the IQueryable describes the request and ToListAsync will retrieve the results."},
+      {"text":"Below CompletedForEmployee, paste a comment-first scaffold for MaterializeAsync. Describe a public static method returning Task<List<ClockEntryEntity>>, named MaterializeAsync, with IQueryable<ClockEntryEntity> query and optional CancellationToken cancellationToken = default parameters. Give it a warning-free temporary body returning Task.FromResult(query.ToList()). Type the real method beneath the comments. ToList materializes synchronously before the already-completed Task is created.","completeWhen":"MaterializeAsync compiles with Task.FromResult(query.ToList()) and has the complete signature, parameter list, and body."},
+      {"text":"Replace the temporary Task.FromResult(query.ToList()) with query.ToListAsync(cancellationToken). This EF Core extension asks the provider to materialize asynchronously and forwards cancellation. IQueryable and Where still do not fetch rows; this line is the execution boundary.","completeWhen":"MaterializeAsync returns query.ToListAsync(cancellationToken) and no longer uses synchronous ToList.","purposeAfter":"The course now has an explicit async execution boundary with cancellation forwarding. IQueryable stores the query; ToListAsync executes it and produces the list."},
+      {"text":"Define infrastructure_project and build Infrastructure in Release.","code":"infrastructure_project=\"src/PinkMachine19.TimeClock.Infrastructure/PinkMachine19.TimeClock.Infrastructure.csproj\"\n\ndotnet build \"$infrastructure_project\" --configuration Release","completeWhen":"Infrastructure builds with zero errors after ToListAsync is introduced."},
+      {"text":"In the test project, create ClockEntryDataQueriesTests.cs and async Fact CompletedForEmployee_WhenMaterialized_ReturnsOnlyMatchingCompletedEntries. Setup code: paste an await-using in-memory SqliteConnection, open it, build options with UseSqlite(connection), create an await-using TimeClockDbContext, and await EnsureCreatedAsync. Keep the connection open because the database exists only for that connection's lifetime.","completeWhen":"The test has an open SQLite connection, configured context, and created schema before arranging rows.","purposeAfter":"The real SQLite boundary is ready. Three deliberately different rows will now isolate the employee filter from the completion filter."},
+      {"text":"Learning code: create exactly three explicitly typed ClockEntryEntity objects. Use a target employee ID and fixed DateTime(year, month, day, hour, minute, second). Give completedEntry the target ID and a Clockout value. Give openEntry the target ID and omit Clockout or set it null. Give completedEntryForOtherEmployee another ID and a Clockout value. Assigning a time to openEntry would accidentally make it completed.","code":"Employee | State | Expected\nTarget   | Completed | Included\nTarget   | Open      | Excluded\nOther    | Completed | Excluded","completeWhen":"The three distinct entities match the matrix and only completedEntry satisfies both future filters."},
+      {"text":"Add the three entity objects exactly once with one AddRangeAsync call, then call SaveChangesAsync once. Do not Add(completedEntry) separately and also include the same instance in AddRangeAsync.","completeWhen":"SQLite contains exactly the three arranged rows with no duplicate add of any entity."},
+      {"text":"Construct the query without awaiting anything. Declare an explicitly typed IQueryable<ClockEntryEntity> variable named query and assign ClockEntryDataQueries.CompletedForEmployee(dbContext, targetEmployeeId). This line describes the request but has not retrieved rows.","completeWhen":"The test stores the deferred query in an explicitly typed variable and no materialization call appears on that statement.","purposeAfter":"Query construction is now visible as its own event. The following step crosses the execution boundary and must remain separate."},
+      {"text":"On the next statement, await ClockEntryDataQueries.MaterializeAsync(query) and store the returned value in an explicitly typed List<ClockEntryEntity> named results.","completeWhen":"The test has one separate awaited materialization statement producing results."},
+      {"text":"Assert the intended evidence. Assert.Single(results) verifies exactly one element and returns it; store that ClockEntryEntity as result. Assert.Same(completedEntry, result) verifies both variables point to the exact same tracked object. A negative identity assertion such as Assert.NotStrictEqual expresses the opposite and is incorrect here. Identity is expected specifically because this same DbContext still tracks the inserted entity; do not generalize that to every EF query or AsNoTracking configuration.","code":"ClockEntryEntity result = Assert.Single(results);\nAssert.Same(completedEntry, result);","completeWhen":"The test asserts one result and the expected tracked-object identity.","purposeAfter":"The test now proves both predicate conditions, deferred construction, async execution, and the intended tracking evidence."},
+      {"text":"Define tests_project. Run the focused ClockEntryDataQueriesTests in Release, then run the full test project. If VS Code is stale but command-line discovery lists the test, refresh Testing or reload the window instead of rewriting valid test code.","code":"tests_project=\"tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj\"\n\ndotnet test \"$tests_project\" --configuration Release --filter FullyQualifiedName~ClockEntryDataQueriesTests\ndotnet test \"$tests_project\" --configuration Release","completeWhen":"The focused query test and complete test project both pass."},
+      {"text":"Build the complete Release solution, then run the complete suite with --no-build. The focused test proves Session 32 behavior; the final commands prove earlier behavior remains healthy. Open Solution Reveal only after validation.","code":"dotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build","completeWhen":"The Release solution builds and every test passes.","purposeAfter":"Session 32 has separated expression composition from provider execution and verified the boundary through SQLite. Later sessions can rely on this query behavior without adding their own persistence abstractions."}
     ],
-    "task": "Query only completed rows for one employee and materialize the translated database query asynchronously.",
-    "startingCondition": "Session 31 created a real EF Core DbContext and SQLite database boundary. Session 32 separates building a provider-translated query from executing it.",
-    "pasteReadyInstructions": true,
-    "stepCheckboxes": true,
-    "steps": [
-      {
-        "text": "Step 1/12: In Infrastructure, create ClockEntryDataQueries.cs and declare public static class ClockEntryDataQueries."
-      },
-      {
-        "text": "Step 2/12: Inside the class, stub CompletedForEmployee returning IQueryable<ClockEntryEntity> and accepting TimeClockDbContext plus int employeeId."
-      },
-      {
-        "text": "Step 3/12: Inside CompletedForEmployee, return dbContext.ClockEntries.Where for the matching employee whose Clockout is not null."
-      },
-      {
-        "text": "Step 4/12: Remember: IQueryable stores an expression for the EF provider; it has not executed SQL yet."
-      },
-      {
-        "text": "Step 5/12: Inside the class but outside CompletedForEmployee, stub MaterializeAsync returning Task<List<ClockEntryEntity>> and accepting IQueryable<ClockEntryEntity> plus an optional CancellationToken."
-      },
-      {
-        "text": "Step 6/12: Inside MaterializeAsync, return query.ToListAsync(cancellationToken). Read the signature as: execute this entity query and eventually produce a List<ClockEntryEntity>."
-      },
-      {
-        "text": "Step 7/12: Build Infrastructure in Release before writing the test."
-      },
-      {
-        "text": "Step 8/12: In the test project, create ClockEntryDataQueriesTests.cs with an open in-memory SQLite connection and a TimeClockDbContext."
-      },
-      {
-        "text": "Step 9/12: Inside the test, save one matching completed row, one matching open row, and one completed row for another employee."
-      },
-      {
-        "text": "Step 10/12: Build the query by calling CompletedForEmployee. Deliberately store it as IQueryable<ClockEntryEntity>."
-      },
-      {
-        "text": "Step 11/12: Execute it by awaiting MaterializeAsync, then assert that exactly the matching completed row was returned."
-      },
-      {
-        "text": "Step 12/12: Run ClockEntryDataQueriesTests, then build the solution and run all tests with --no-build.",
-        "reveals": [{"title":"Solution","text":"CompletedForEmployee builds the provider expression; MaterializeAsync executes it.","code":"IQueryable<ClockEntryEntity> query = dbContext.ClockEntries.Where(\n    entry => entry.EmployeeId == employeeId && entry.Clockout != null);\n\nList<ClockEntryEntity> rows = await query.ToListAsync(cancellationToken);"}]
-      }
-    ],
-    "expectedBehavior": "Query only completed rows for one employee and materialize the translated database query asynchronously.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+    "solution":"// Infrastructure/ClockEntryDataQueries.cs\nusing Microsoft.EntityFrameworkCore;\n\npublic static class ClockEntryDataQueries\n{\n    public static IQueryable<ClockEntryEntity> CompletedForEmployee(TimeClockDbContext dbContext, int employeeId)\n    {\n        return dbContext.ClockEntries.Where(entry => entry.EmployeeId == employeeId && entry.Clockout != null);\n    }\n\n    public static Task<List<ClockEntryEntity>> MaterializeAsync(IQueryable<ClockEntryEntity> query, CancellationToken cancellationToken = default)\n    {\n        return query.ToListAsync(cancellationToken);\n    }\n}\n\n// Tests/ClockEntryDataQueriesTests.cs\nusing Microsoft.Data.Sqlite;\nusing Microsoft.EntityFrameworkCore;\n\npublic sealed class ClockEntryDataQueriesTests\n{\n    [Fact]\n    public async Task CompletedForEmployee_WhenMaterialized_ReturnsOnlyMatchingCompletedEntries()\n    {\n        await using SqliteConnection connection = new(\"Data Source=:memory:\");\n        await connection.OpenAsync();\n        DbContextOptions<TimeClockDbContext> options = new DbContextOptionsBuilder<TimeClockDbContext>().UseSqlite(connection).Options;\n        await using TimeClockDbContext dbContext = new(options);\n        await dbContext.Database.EnsureCreatedAsync();\n\n        int targetEmployeeId = 19;\n        DateTime start = new(2026, 8, 15, 9, 0, 0);\n        ClockEntryEntity completedEntry = new() { EmployeeId = targetEmployeeId, ClockIn = start, Clockout = start.AddHours(4) };\n        ClockEntryEntity openEntry = new() { EmployeeId = targetEmployeeId, ClockIn = start.AddDays(1) };\n        ClockEntryEntity completedEntryForOtherEmployee = new() { EmployeeId = 20, ClockIn = start, Clockout = start.AddHours(4) };\n        await dbContext.AddRangeAsync(completedEntry, openEntry, completedEntryForOtherEmployee);\n        await dbContext.SaveChangesAsync();\n\n        IQueryable<ClockEntryEntity> query = ClockEntryDataQueries.CompletedForEmployee(dbContext, targetEmployeeId);\n        List<ClockEntryEntity> results = await ClockEntryDataQueries.MaterializeAsync(query);\n        ClockEntryEntity result = Assert.Single(results);\n        Assert.Same(completedEntry, result);\n    }\n}",
+    "expectedBehavior":"The SQLite-backed test returns exactly the target employee's completed tracked entity; the open target row and completed other-employee row are excluded.",
+    "validation":"dotnet test tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj --configuration Release --filter FullyQualifiedName~ClockEntryDataQueriesTests && dotnet test tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj --configuration Release && dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
-  "expectedFiles": [
-    {
-      "path": "src/PinkMachine19.TimeClock.Infrastructure/ClockEntryDataQueries.cs",
-      "action": "Add",
-      "why": "Separate query construction from execution."
-    },
-    {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryDataQueriesTests.cs",
-      "action": "Add",
-      "why": "Verify provider-executed filtering."
-    },
-    {
-      "path": "site/data/sessions/session-32.json",
-      "action": "Modify",
-      "why": "Synchronize all Session 32 representations."
-    }
+  "expectedFiles":[
+    {"path":"src/PinkMachine19.TimeClock.Infrastructure/ClockEntryDataQueries.cs","action":"Add","why":"Separate query composition from execution."},
+    {"path":"tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryDataQueriesTests.cs","action":"Add","why":"Verify both filters and async SQLite materialization."},
+    {"path":"site/data/sessions/session-32.json","action":"Modify","why":"Synchronize all Session 32 representations."}
   ],
-  "commit": "session-32: execute ef core queries asynchronously",
-  "review": [
-    "Every artifact named by the lesson is explicitly created or already verified.",
-    "Async suffixes and CancellationToken forwarding match genuine I/O only.",
-    "No unrelated learner naming cleanup is included.",
-    "The final solution remains buildable and testable."
+  "commit":"session-32: execute ef core queries asynchronously",
+  "review":["ClockEntryDataQueries is static rather than merely sealed.","CompletedForEmployee consistently uses the singular name.","Query construction and ToListAsync materialization remain separate.","Exactly three entities are each added once.","Assert.Single and Assert.Same express the intended tracking evidence.","No Session 33 HTTP or production DI material is introduced."],
+  "postQuiz":[
+    {"prompt":"Which line first asks SQLite for query results?","options":["query.ToListAsync(cancellationToken)","dbContext.ClockEntries","query.Where(...)"],"correct":0,"explanation":"ToListAsync is the materialization and execution boundary."},
+    {"prompt":"Why does the open target row stay out?","options":["Clockout != null rejects it","The employee ID differs","Assert.Same deletes it"],"correct":0,"explanation":"The completion predicate rejects null Clockout."},
+    {"prompt":"What does Assert.Same prove in this specific test?","options":["The result is the same tracked object reference","The values merely compare equal","The query used AsNoTracking"],"correct":0,"explanation":"The same context is tracking the inserted matching entity."}
   ],
-  "postQuiz": [
-    {
-      "prompt": "Where does the Session 32 exercise belong?",
-      "options": [
-        "production",
-        "An unrelated earlier project",
-        "A fictional artifact"
-      ],
-      "correct": 0,
-      "explanation": "The verified cumulative design places it in production."
-    },
-    {
-      "prompt": "What should the return type tell a caller?",
-      "options": [
-        "What completion or value the method promises",
-        "Which CPU thread must run it",
-        "That errors cannot occur"
-      ],
-      "correct": 0,
-      "explanation": "A return type is a caller-facing contract."
-    },
-    {
-      "prompt": "What must happen before advancing?",
-      "options": [
-        "Run the focused behavior, Release build, and complete tests",
-        "Only read the solution",
-        "Rename unrelated learner code"
-      ],
-      "correct": 0,
-      "explanation": "Every session must finish buildable and testable."
-    }
-  ],
-  "reflections": [
-    "Which boundary owns the new code?",
-    "What does the main return type promise?",
-    "What verified state may the next session assume?"
-  ],
-  "whatBreaks": "Removing the Session 32 artifact breaks the focused behavior or its verified integration point.",
-  "summary": "Query only completed rows for one employee and materialize the translated database query asynchronously.",
-  "learningEnvironment": "production",
-  "buildState": {
-    "creates": [
-      "src/PinkMachine19.TimeClock.Infrastructure/ClockEntryDataQueries.cs",
-      "tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryDataQueriesTests.cs"
-    ],
-    "extends": [
-      "IQueryable",
-      "Provider translation",
-      "ToListAsync",
-      "SQLite integration tests"
-    ]
-  }
+  "reflections":["At which statement does the query change from description to results?","Which excluded row proves each predicate condition?","Why is Assert.Same appropriate here but not a universal EF promise?"],
+  "whatBreaks":"Removing the employee condition leaks other employees' rows. Removing the completion condition includes open entries. Replacing ToListAsync with synchronous ToList loses the genuine async execution boundary. Adding an entity twice corrupts the test matrix.",
+  "summary":"Session 32 composes an EF-translatable IQueryable, preserves deferred execution until ToListAsync, and proves the two-condition filter with one deliberate SQLite matrix.",
+  "learningEnvironment":"production",
+  "buildState":{"creates":["src/PinkMachine19.TimeClock.Infrastructure/ClockEntryDataQueries.cs","tests/PinkMachine19.TimeClock.Domain.Tests/ClockEntryDataQueriesTests.cs"],"extends":["IQueryable","Provider translation","ToListAsync","SQLite integration tests"]}
 }

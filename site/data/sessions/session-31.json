@@ -1,244 +1,80 @@
 {
-  "number": 31,
-  "category": "Data access",
-  "estimatedTime": "40 minutes",
-  "connection": "Production remains synchronous and in-memory through Session 30B. Session 31 deliberately adds SQLite I/O, a separate async repository contract, and EF Core async calls for the first time.",
-  "objectives": [
-    "Add EF Core SQLite to Infrastructure.",
-    "Define IAsyncClockEntryRepository with Async suffixes and CancellationToken parameters.",
-    "Map ClockEntry to a persistence entity.",
-    "Await FirstOrDefaultAsync and SaveChangesAsync as genuine external I/O."
+  "number":31,
+  "category":"Data access",
+  "estimatedTime":"40 minutes",
+  "connection":"Production remains synchronous and in-memory through Session 30B. Session 31 deliberately adds SQLite I/O, a separate async repository contract, and EF Core async calls for the first time.",
+  "objectives":["Add EF Core SQLite to Infrastructure.","Define IAsyncClockEntryRepository with Async suffixes and CancellationToken parameters.","Map ClockEntry to a persistence entity without weakening Domain invariants.","Await FirstOrDefaultAsync and SaveChangesAsync as genuine external I/O."],
+  "visuals":[
+    {"diagram":"mental-31-1","title":"Domain promise, Infrastructure fulfillment","explanation":"Domain owns a persistence-agnostic async contract. Infrastructure fulfills that promise with EF Core and SQLite."},
+    {"diagram":"mental-31-2","title":"Options travel into the base context","explanation":"The caller builds options, TimeClockDbContext receives them, and base(options) gives the same configuration to EF Core before the derived constructor body runs."},
+    {"diagram":"mental-31-3","title":"Tracking precedes database I/O","explanation":"Add marks an entity Added in the context. SaveChangesAsync examines tracked changes and sends the SQL insert."},
+    {"diagram":"mental-31-4","title":"One real SQLite round trip","explanation":"A Domain ClockEntry becomes an entity row, is inserted and queried through SQLite, then becomes a valid Domain ClockEntry again."}
   ],
-  "visuals": [
-    {
-      "diagram": "mental-31-1",
-      "title": "Boundary map",
-      "explanation": "Shows where Session 31 code belongs and which earlier layer it may call."
-    },
-    {
-      "diagram": "mental-31-2",
-      "title": "Call timeline",
-      "explanation": "Shows the ordered calls and the point where Session 31 observes a result."
-    },
-    {
-      "diagram": "mental-31-3",
-      "title": "State before and after",
-      "explanation": "Shows the state transition that the Session 31 lab verifies."
-    },
-    {
-      "diagram": "mental-31-4",
-      "title": "Contract checkpoint",
-      "explanation": "Shows the input, return type, and failure meaning for the main Session 31 API."
-    }
+  "preQuiz":[
+    {"prompt":"Who should own a persistence-agnostic repository promise?","options":["Domain","The SQLite native bundle","A test runner"],"correct":0,"explanation":"Domain owns the contract; Infrastructure supplies the EF Core implementation."},
+    {"prompt":"Does DbSet.Add immediately execute an SQL insert?","options":["No, it marks the entity Added for SaveChanges","Yes, synchronously","Only when AsNoTracking is used"],"correct":0,"explanation":"SaveChangesAsync is the genuine database-I/O point."},
+    {"prompt":"Why keep an in-memory SQLite connection open?","options":["The database exists for that connection's lifetime","To make Task create a thread","To enable Domain namespaces"],"correct":0,"explanation":"Closing the connection destroys that in-memory database."}
   ],
-  "preQuiz": [
-    {
-      "prompt": "Where does the Session 31 exercise belong?",
-      "options": [
-        "production",
-        "An unrelated earlier project",
-        "A fictional artifact"
-      ],
-      "correct": 0,
-      "explanation": "The verified cumulative design places it in production."
-    },
-    {
-      "prompt": "What should the return type tell a caller?",
-      "options": [
-        "What completion or value the method promises",
-        "Which CPU thread must run it",
-        "That errors cannot occur"
-      ],
-      "correct": 0,
-      "explanation": "A return type is a caller-facing contract."
-    },
-    {
-      "prompt": "What must happen before advancing?",
-      "options": [
-        "Run the focused behavior, Release build, and complete tests",
-        "Only read the solution",
-        "Rename unrelated learner code"
-      ],
-      "correct": 0,
-      "explanation": "Every session must finish buildable and testable."
-    }
+  "concept":[
+    {"title":"Start with one boundary map","paragraphs":["Domain owns the promise; Infrastructure fulfills it. The existing synchronous contract remains unchanged while a separate asynchronous contract describes genuine database I/O.","A project reference exposes another project's compiled types. A NuGet package reference supplies external library code and assets."],"code":"Domain contract → Infrastructure EF repository → SQLite"},
+    {"title":"Essential EF vocabulary","paragraphs":["An entity represents stored columns. DbContext is one EF Core work session. DbSet<TEntity> is the query-and-save entry point for one entity type, not a List containing every row.","Tracking means the context remembers entity instances and states such as Added, Unchanged, Modified, and Deleted. Materialization is when query results become objects."],"code":"Add tracks the change. SaveChanges sends the change."},
+    {"title":"Keep Domain rules intact","paragraphs":["An invariant is a rule that must remain true for a valid domain object. ClockEntry protects its invariants through its constructor and methods; ClockEntryEntity has settable storage properties so EF can materialize rows.","Mapping back constructs a valid ClockEntry rather than bypassing its rules. Public entity setters do not require Domain to surrender its invariants."]}
   ],
-  "concept": [
-    {
-      "title": "Create the first genuine asynchronous persistence boundary",
-      "paragraphs": [
-        "Production remains synchronous and in-memory through Session 30B. Session 31 deliberately adds SQLite I/O, a separate async repository contract, and EF Core async calls for the first time.",
-        "Add EF Core SQLite to Infrastructure."
-      ]
-    },
-    {
-      "title": "Read the contract before the body",
-      "paragraphs": [
-        "Use IntelliSense to identify the receiver, parameters, return type, and overload one piece at a time.",
-        "Define IAsyncClockEntryRepository with Async suffixes and CancellationToken parameters."
-      ]
-    },
-    {
-      "title": "Keep the boundary honest",
-      "paragraphs": [
-        "This work belongs in production; the lab does not claim that later artifacts already exist.",
-        "Map ClockEntry to a persistence entity."
-      ]
-    }
-  ],
-  "lab": {
-    "title": "Create the first genuine asynchronous persistence boundary",
-    "objective": "Add EF Core SQLite to Infrastructure.",
-    "practice": [
-      "EF Core DbContext",
-      "Async repository contracts",
-      "Entity mapping",
-      "CancellationToken forwarding"
+  "lab":{
+    "title":"Create the First Genuine Asynchronous Persistence Boundary",
+    "objective":"Persist and retrieve an open ClockEntry through EF Core and SQLite while preserving the Domain boundary.",
+    "practice":["Project and package references","EF Core context and tracking","Async repository contracts","SQLite integration testing"],
+    "task":"Complete one real round trip: Domain ClockEntry to SQLite row and back to a valid Domain ClockEntry.",
+    "startingCondition":"Session 30B is complete. Infrastructure still contains only its unused Class1.cs template, and the asynchronous persistence files do not exist yet.",
+    "pasteReadyInstructions":true,
+    "stepCheckboxes":true,
+    "preLabCleanup":{"text":"Verify that src/PinkMachine19.TimeClock.Infrastructure/Class1.cs is still only the unused template placeholder. Delete only that file. This is repository cleanup, not an EF Core learning step."},
+    "steps":[
+      {"text":"Open a Bash terminal at the learner repository root. Define the descriptive variables shown, then add a project reference from Infrastructure to Domain. These are temporary shell variables, not C# or project-file syntax. The reference lets Infrastructure implement Domain contracts and map to Domain objects.","code":"infrastructure_project=\"src/PinkMachine19.TimeClock.Infrastructure/PinkMachine19.TimeClock.Infrastructure.csproj\"\ndomain_project=\"src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\"\ndotnet_package_version=\"10.0.10\"\nsqlite_bundle_version=\"2.1.12\"\n\ndotnet add \"$infrastructure_project\" reference \"$domain_project\"","completeWhen":"Infrastructure.csproj contains the Domain ProjectReference and the four Bash variables remain available in that terminal."},
+      {"text":"Add Microsoft.EntityFrameworkCore.Sqlite. It supplies DbContext APIs, the SQLite provider, relational behavior, and the async database methods used here.","code":"dotnet add \"$infrastructure_project\" package Microsoft.EntityFrameworkCore.Sqlite --version \"$dotnet_package_version\"","completeWhen":"The package command succeeds and Infrastructure.csproj lists Microsoft.EntityFrameworkCore.Sqlite 10.0.10."},
+      {"text":"Add Microsoft.Extensions.DependencyInjection.Abstractions. It supplies DI contracts and registration abstractions without adding the complete container implementation where only abstractions are needed.","code":"dotnet add \"$infrastructure_project\" package Microsoft.Extensions.DependencyInjection.Abstractions --version \"$dotnet_package_version\"","completeWhen":"Infrastructure.csproj lists Microsoft.Extensions.DependencyInjection.Abstractions 10.0.10."},
+      {"text":"Add the selected native SQLite bundle. The repository pins patched SQLitePCLRaw.bundle_e_sqlite3 version 2.1.12 so native SQLite loading is deterministic instead of silently varying with a transitive version.","code":"dotnet add \"$infrastructure_project\" package SQLitePCLRaw.bundle_e_sqlite3 --version \"$sqlite_bundle_version\"","completeWhen":"Infrastructure.csproj lists all three package references at the requested versions.","purposeAfter":"Infrastructure can now name Domain contracts and use EF Core's SQLite implementation. The next step defines the persistence promise before any framework-specific class fulfills it."},
+      {"text":"In Domain/Repositories, create IAsyncClockEntryRepository.cs beside IClockEntryRepository. This repository organizes contracts by responsibility; a generic Interfaces folder could work elsewhere but would create a second convention here. Folders organize these global-namespace files but do not automatically create C# namespaces. Declare SaveClockEntryAsync returning Task and GetOpenClockEntryAsync returning Task<ClockEntry?>. Both accept CancellationToken cancellationToken = default.","code":"// Task means completion without a result value.\n// Task<ClockEntry?> means completion with a ClockEntry or null.\n// = default lets callers omit a token while preserving forwarding.","completeWhen":"The interface contains both async signatures at Domain/Repositories/IAsyncClockEntryRepository.cs.","questionsAfter":[{"question":"Why does the interface live in Domain?","answer":"Domain owns the persistence-agnostic promise; Infrastructure will fulfill it with EF Core."},{"question":"Does the Repositories folder create a namespace?","answer":"No. This learner repository uses global namespaces; the folder communicates source responsibility."}],"purposeAfter":"The asynchronous promise now exists, but it has no persistence implementation. Infrastructure will next define the stored shape and EF Core work session."},
+      {"text":"Build the Domain project in Release before adding EF types.","code":"dotnet build \"$domain_project\" --configuration Release","completeWhen":"Domain builds with zero errors and the new interface has no missing-return or async warnings."},
+      {"text":"In Infrastructure, create sealed ClockEntryEntity with settable Id, EmployeeId, ClockIn, and nullable Clockout properties. Id is the SQLite-generated row key. Do not add business methods. Remember: an invariant is a rule that must remain true for a valid Domain object; this entity represents columns while Domain ClockEntry continues protecting those rules.","completeWhen":"ClockEntryEntity.cs compiles as a storage shape with exactly the four required properties.","questionsAfter":[{"question":"Why are the entity setters public when ClockEntry uses private setters?","answer":"EF materializes storage objects through settable properties; Domain still protects business invariants through its own constructor and methods."},{"question":"Why is Id not a Domain ClockEntry property?","answer":"Id identifies the SQLite row and is generated by persistence; it is not part of this Domain model's business identity."}]},
+      {"text":"In Infrastructure, create sealed TimeClockDbContext deriving from DbContext. Accept DbContextOptions<TimeClockDbContext> options and forward it with : base(options). The caller created these options; they describe the provider, SQLite connection or connection string, and optional EF behavior—not stored rows. Expose ClockEntries as DbSet<ClockEntryEntity> by returning Set<ClockEntryEntity>().","code":"Caller builds options\n→ TimeClockDbContext receives them\n→ base(options) forwards them to DbContext\n→ EF Core configures the context\n→ the derived constructor body runs","completeWhen":"TimeClockDbContext has the forwarding constructor and ClockEntries DbSet property.","questionsAfter":[{"question":"Who creates the options?","answer":"The composition caller—later, the integration test—builds and passes them."},{"question":"Has SQL run merely because ClockEntries was accessed?","answer":"No. DbSet begins query/save work; translated queries execute only when materialized."},{"question":"Is DbSet a List of every row?","answer":"No. It is EF Core's query-and-save entry point for that entity type."}],"purposeAfter":"The storage shape and EF work session now exist, but no repository maps between Domain objects and those persistence objects."},
+      {"text":"Build Infrastructure in Release before writing the repository.","code":"dotnet build \"$infrastructure_project\" --configuration Release","completeWhen":"Domain and Infrastructure both build with zero errors."},
+      {"text":"Create sealed EfClockEntryRepository implementing IAsyncClockEntryRepository and inject TimeClockDbContext. Start with warning-free non-async temporary methods: SaveClockEntryAsync returns Task.CompletedTask, and GetOpenClockEntryAsync returns Task.FromResult<ClockEntry?>(null).","completeWhen":"The repository shell implements both interface methods and Infrastructure still builds without missing returns or unnecessary async warnings."},
+      {"text":"Implement SaveClockEntryAsync. First add async and remove Task.CompletedTask. Refresh object-initializer grammar with the generic shape shown, then create ClockEntryEntity from EmployeeId, ClockIn, and Clockout. Do not copy Id because SQLite generates it. Call ClockEntries.Add, then await SaveChangesAsync(cancellationToken).","code":"SomeType value = new()\n{\n    PropertyOne = source.PropertyOne,\n    PropertyTwo = source.PropertyTwo\n};\n\n// Add tracks the change. SaveChanges sends the change.","completeWhen":"SaveClockEntryAsync maps the Domain entry, marks the entity Added, and awaits SaveChangesAsync with the forwarded token.","questionsAfter":[{"question":"Did Add execute an INSERT?","answer":"No. Add changes in-memory tracking state to Added."},{"question":"Where does genuine database I/O happen?","answer":"SaveChangesAsync examines tracked changes and sends SQL through SQLite."},{"question":"Does await automatically create another thread?","answer":"No. Await observes asynchronous completion; it does not itself create a thread."}],"purposeAfter":"The repository can now translate and persist a Domain entry. It still needs the reverse path: execute one filtered SQLite query and reconstruct an open Domain entry."},
+      {"text":"Implement GetOpenClockEntryAsync as one complete, compilable step. Add async and remove Task.FromResult. Begin with ClockEntries, add AsNoTracking for read-only intent, filter employeeId and Clockout == null, then await FirstOrDefaultAsync with cancellationToken. EF translates this predicate to SQL; it does not load the whole table first. Return null when no row exists; otherwise construct ClockEntry through its public constructor. Because only open rows are queried, do not call ClockOutEntry.","completeWhen":"The method executes the translated query, forwards cancellation, and returns either null or a valid open Domain ClockEntry.","questionsAfter":[{"question":"What executes the query?","answer":"FirstOrDefaultAsync materializes the translated SQLite query and returns the first entity or null."},{"question":"Why AsNoTracking?","answer":"The returned entity is read-only evidence, so the context does not need to remember it for later updates."},{"question":"Why reconstruct through the Domain constructor?","answer":"The constructor preserves Domain invariants instead of treating the entity's public setters as Domain rules."}],"purposeAfter":"The EF repository now owns persistence mechanics in both directions. The service can stay focused on the business decision: reject a second open entry or save a new one."},
+      {"text":"In Domain/Services, create sealed AsyncClockEntryService and inject IAsyncClockEntryRepository. Add TryClockInAsync returning Task<bool>. Await GetOpenClockEntryAsync with the caller's token; return false when an open entry exists. Otherwise construct ClockEntry, await SaveClockEntryAsync with the same token, and return true.","completeWhen":"The service coordinates the acceptance rule and forwards cancellation to both genuine I/O calls without referencing EF Core."},
+      {"text":"Build the full solution in Release before writing the integration test so production errors remain separate from test setup.","code":"dotnet build PinkMachine19.TimeClock.sln --configuration Release","completeWhen":"The solution builds and the new Domain service has no Infrastructure or EF Core dependency."},
+      {"text":"Modify the test project to reference Infrastructure. Create EfClockEntryRepositoryTests.cs and async Fact SaveAndGetOpenClockEntryAsync_PersistsAndReturnsEntry. Setup code: paste the SQLite connection, open call, options builder with UseSqlite(connection), context construction, EnsureCreatedAsync, and repository construction. Keep the connection open because this in-memory database exists only for that connection's lifetime. UseSqlite selects the provider and connection; EnsureCreatedAsync creates the schema before the first save.","completeWhen":"The test reaches a constructed EfClockEntryRepository backed by an open, schema-created in-memory SQLite connection.","questionsAfter":[{"question":"Why is this boilerplate pasteable?","answer":"It establishes framework plumbing; the learning evidence is the Domain-to-SQLite round trip."},{"question":"What happens if the connection closes early?","answer":"The in-memory SQLite database disappears, so later operations cannot observe the saved row."},{"question":"What does UseSqlite(connection) do?","answer":"It puts the selected SQLite provider and open connection into DbContextOptions."}],"purposeAfter":"The test now owns a real but disposable SQLite boundary. The next step writes the meaningful evidence: save a Domain entry, query it back, and assert the reconstructed Domain state."},
+      {"text":"Learning code: write the test's Arrange, Act, and Assert section. Create a fixed DateTime, employee ID, and open Domain ClockEntry. Await SaveClockEntryAsync, then await GetOpenClockEntryAsync. Assert the result is not null and has the expected EmployeeId, ClockIn, and null Clockout.","code":"Domain ClockEntry\n→ mapped entity\n→ SQLite insert\n→ SQLite query\n→ mapped Domain ClockEntry","completeWhen":"The test proves one complete SQLite round trip through the repository rather than merely constructing EF objects."},
+      {"text":"Run only EfClockEntryRepositoryTests. If VS Code does not display it, run the list-tests command. Command-line discovery is authoritative for the built assembly; the Testing panel is an editor view. If listed, confirm VS Code is connected to WSL at the repository root, run Test: Refresh Tests, then Developer: Reload Window if needed.","code":"tests_project=\"tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj\"\n\ndotnet test \"$tests_project\" --configuration Release --filter FullyQualifiedName~EfClockEntryRepositoryTests\ndotnet test \"$tests_project\" --list-tests","completeWhen":"The focused EF repository test passes and command-line discovery lists it."},
+      {"text":"Build PinkMachine19.TimeClock.sln in Release, then run the complete test suite with --no-build. Focused validation proved the SQLite behavior; this final validation checks cumulative solution health. Open Solution Reveal only after both commands pass.","code":"dotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build","completeWhen":"The Release solution builds and the complete test suite passes.","purposeAfter":"Session 31 now has focused persistence evidence and cumulative verification. Session 32 may build provider-translated query composition on this established SQLite boundary.","reveals":[{"title":"Integration test solution","text":"The framework setup stays visible here only after validation; the learner-authored evidence is the save, query, and assertions.","code":"using Microsoft.Data.Sqlite;\nusing Microsoft.EntityFrameworkCore;\n\npublic sealed class EfClockEntryRepositoryTests\n{\n    [Fact]\n    public async Task SaveAndGetOpenClockEntryAsync_PersistsAndReturnsEntry()\n    {\n        await using SqliteConnection connection = new(\"Data Source=:memory:\");\n        await connection.OpenAsync();\n        DbContextOptions<TimeClockDbContext> options = new DbContextOptionsBuilder<TimeClockDbContext>().UseSqlite(connection).Options;\n        await using TimeClockDbContext dbContext = new(options);\n        await dbContext.Database.EnsureCreatedAsync();\n        EfClockEntryRepository repository = new(dbContext);\n\n        int employeeId = 1;\n        DateTime clockIn = new(2026, 8, 15, 9, 0, 0);\n        ClockEntry entry = new(employeeId, clockIn);\n        await repository.SaveClockEntryAsync(entry);\n        ClockEntry? retrieved = await repository.GetOpenClockEntryAsync(employeeId);\n\n        Assert.NotNull(retrieved);\n        Assert.Equal(employeeId, retrieved.EmployeeId);\n        Assert.Equal(clockIn, retrieved.ClockIn);\n        Assert.Null(retrieved.Clockout);\n    }\n}"}]}
     ],
-    "task": "Persist and retrieve an open ClockEntry through SQLite without replacing the earlier synchronous in-memory repository.",
-    "startingCondition": "Production remains synchronous and in-memory through Session 30B. Session 31 deliberately adds SQLite I/O, a separate async repository contract, and EF Core async calls for the first time.",
-    "pasteReadyInstructions": true,
-    "stepCheckboxes": true,
-    "steps": [
-      {
-        "text": "Step 1/12: Delete only the unused Infrastructure/Class1.cs template placeholder."
-      },
-      {
-        "text": "Step 2/12: In Infrastructure.csproj, reference Domain and add Microsoft.EntityFrameworkCore.Sqlite version 10.0.10, Microsoft.Extensions.DependencyInjection.Abstractions version 10.0.10, and the patched SQLitePCLRaw.bundle_e_sqlite3 version 2.1.12."
-      },
-      {
-        "text": "Step 3/12: In Domain/Repositories, create IAsyncClockEntryRepository.cs with SaveClockEntryAsync and GetOpenClockEntryAsync. Each method accepts CancellationToken cancellationToken = default."
-      },
-      {
-        "text": "Step 4/12: Build the Domain and Infrastructure projects before implementing the repository."
-      },
-      {
-        "text": "Step 5/12: In Infrastructure, create sealed ClockEntryEntity with Id, EmployeeId, ClockIn, and nullable Clockout properties."
-      },
-      {
-        "text": "Step 6/12: In Infrastructure, create sealed TimeClockDbContext : DbContext, accept DbContextOptions<TimeClockDbContext>, and expose DbSet<ClockEntryEntity> ClockEntries."
-      },
-      {
-        "text": "Step 7/12: In Infrastructure, create sealed EfClockEntryRepository : IAsyncClockEntryRepository and inject TimeClockDbContext through its constructor."
-      },
-      {
-        "text": "Step 8/12: Inside SaveClockEntryAsync, map the domain ClockEntry to ClockEntryEntity, call Add, then await SaveChangesAsync(cancellationToken). Task promises completion; await observes the database operation and does not itself mean another thread."
-      },
-      {
-        "text": "Step 9/12: Inside GetOpenClockEntryAsync, query the matching open row with FirstOrDefaultAsync and forward cancellationToken. Map a found entity back to ClockEntry."
-      },
-      {
-        "text": "Step 10/12: In Domain/Services, create sealed AsyncClockEntryService, inject IAsyncClockEntryRepository, and add TryClockInAsync that checks for an open entry before saving."
-      },
-      {
-        "text": "Step 11/12: In the test project, reference Infrastructure and add EfClockEntryRepositoryTests.cs using an open in-memory SQLite connection."
-      },
-      {
-        "text": "Step 12/12: Run EfClockEntryRepositoryTests, then build the full Release solution and run every test with --no-build.",
-        "reveals": [{"title":"Solution","text":"The completed repository maps ClockEntry to ClockEntryEntity and awaits the genuine EF Core I/O calls.","code":"_dbContext.ClockEntries.Add(entity);\nawait _dbContext.SaveChangesAsync(cancellationToken);\n\nClockEntryEntity? open = await _dbContext.ClockEntries\n    .AsNoTracking()\n    .FirstOrDefaultAsync(entry => entry.EmployeeId == employeeId && entry.Clockout == null, cancellationToken);"}]
-      }
-    ],
-    "expectedBehavior": "Persist and retrieve an open ClockEntry through SQLite without replacing the earlier synchronous in-memory repository.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+    "solution":"// Domain/Repositories/IAsyncClockEntryRepository.cs\npublic interface IAsyncClockEntryRepository\n{\n    Task SaveClockEntryAsync(ClockEntry clockEntry, CancellationToken cancellationToken = default);\n    Task<ClockEntry?> GetOpenClockEntryAsync(int employeeId, CancellationToken cancellationToken = default);\n}\n\n// Infrastructure/ClockEntryEntity.cs\npublic sealed class ClockEntryEntity\n{\n    public int Id { get; set; }\n    public int EmployeeId { get; set; }\n    public DateTime ClockIn { get; set; }\n    public DateTime? Clockout { get; set; }\n}\n\n// Infrastructure/TimeClockDbContext.cs\nusing Microsoft.EntityFrameworkCore;\npublic sealed class TimeClockDbContext : DbContext\n{\n    public TimeClockDbContext(DbContextOptions<TimeClockDbContext> options) : base(options) { }\n    public DbSet<ClockEntryEntity> ClockEntries => Set<ClockEntryEntity>();\n}\n\n// Infrastructure/EfClockEntryRepository.cs\nusing Microsoft.EntityFrameworkCore;\npublic sealed class EfClockEntryRepository : IAsyncClockEntryRepository\n{\n    private readonly TimeClockDbContext _dbContext;\n    public EfClockEntryRepository(TimeClockDbContext dbContext) { _dbContext = dbContext; }\n    public async Task SaveClockEntryAsync(ClockEntry clockEntry, CancellationToken cancellationToken = default)\n    {\n        ClockEntryEntity entity = new() { EmployeeId = clockEntry.EmployeeId, ClockIn = clockEntry.ClockIn, Clockout = clockEntry.Clockout };\n        _dbContext.ClockEntries.Add(entity);\n        await _dbContext.SaveChangesAsync(cancellationToken);\n    }\n    public async Task<ClockEntry?> GetOpenClockEntryAsync(int employeeId, CancellationToken cancellationToken = default)\n    {\n        ClockEntryEntity? entity = await _dbContext.ClockEntries.AsNoTracking().FirstOrDefaultAsync(item => item.EmployeeId == employeeId && item.Clockout == null, cancellationToken);\n        if (entity is null) return null;\n        return new ClockEntry(entity.EmployeeId, entity.ClockIn);\n    }\n}\n\n// Domain/Services/AsyncClockEntryService.cs\npublic sealed class AsyncClockEntryService\n{\n    private readonly IAsyncClockEntryRepository _repository;\n    public AsyncClockEntryService(IAsyncClockEntryRepository repository) { _repository = repository; }\n    public async Task<bool> TryClockInAsync(int employeeId, DateTime clockInTime, CancellationToken cancellationToken = default)\n    {\n        ClockEntry? open = await _repository.GetOpenClockEntryAsync(employeeId, cancellationToken);\n        if (open is not null) return false;\n        await _repository.SaveClockEntryAsync(new ClockEntry(employeeId, clockInTime), cancellationToken);\n        return true;\n    }\n}",
+    "expectedBehavior":"The focused test saves one open Domain ClockEntry through EF Core into SQLite, queries it back without tracking, and reconstructs the expected Domain ClockEntry.",
+    "validation":"dotnet test tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj --configuration Release --filter FullyQualifiedName~EfClockEntryRepositoryTests && dotnet build PinkMachine19.TimeClock.sln --configuration Release && dotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
-  "expectedFiles": [
-    {
-      "path": "src/PinkMachine19.TimeClock.Domain/Repositories/IAsyncClockEntryRepository.cs",
-      "action": "Add",
-      "why": "Define the first production async I/O contract."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Domain/Services/AsyncClockEntryService.cs",
-      "action": "Add",
-      "why": "Coordinate async clock-in."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Infrastructure/ClockEntryEntity.cs",
-      "action": "Add",
-      "why": "Represent stored rows."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Infrastructure/TimeClockDbContext.cs",
-      "action": "Add",
-      "why": "Configure EF Core access."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Infrastructure/EfClockEntryRepository.cs",
-      "action": "Add",
-      "why": "Implement genuine async persistence."
-    },
-    {
-      "path": "tests/PinkMachine19.TimeClock.Domain.Tests/EfClockEntryRepositoryTests.cs",
-      "action": "Add",
-      "why": "Verify SQLite persistence."
-    },
-    {
-      "path": "site/data/sessions/session-31.json",
-      "action": "Modify",
-      "why": "Synchronize all Session 31 representations."
-    }
+  "expectedFiles":[
+    {"path":"src/PinkMachine19.TimeClock.Infrastructure/Class1.cs","action":"Delete","why":"Remove only the unused template during pre-lab cleanup."},
+    {"path":"src/PinkMachine19.TimeClock.Infrastructure/PinkMachine19.TimeClock.Infrastructure.csproj","action":"Modify","why":"Reference Domain and add EF Core SQLite dependencies."},
+    {"path":"src/PinkMachine19.TimeClock.Domain/Repositories/IAsyncClockEntryRepository.cs","action":"Add","why":"Define the persistence-agnostic async contract."},
+    {"path":"src/PinkMachine19.TimeClock.Domain/Services/AsyncClockEntryService.cs","action":"Add","why":"Coordinate the async clock-in decision."},
+    {"path":"src/PinkMachine19.TimeClock.Infrastructure/ClockEntryEntity.cs","action":"Add","why":"Represent stored columns."},
+    {"path":"src/PinkMachine19.TimeClock.Infrastructure/TimeClockDbContext.cs","action":"Add","why":"Configure the EF Core work session."},
+    {"path":"src/PinkMachine19.TimeClock.Infrastructure/EfClockEntryRepository.cs","action":"Add","why":"Map and persist Domain entries through SQLite."},
+    {"path":"tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj","action":"Modify","why":"Reference Infrastructure for the integration test."},
+    {"path":"tests/PinkMachine19.TimeClock.Domain.Tests/EfClockEntryRepositoryTests.cs","action":"Add","why":"Verify the real SQLite round trip."},
+    {"path":"site/data/sessions/session-31.json","action":"Modify","why":"Synchronize all Session 31 representations."}
   ],
-  "commit": "session-31: introduce async sqlite persistence",
-  "review": [
-    "Every artifact named by the lesson is explicitly created or already verified.",
-    "Async suffixes and CancellationToken forwarding match genuine I/O only.",
-    "No unrelated learner naming cleanup is included.",
-    "The final solution remains buildable and testable."
+  "commit":"session-31: introduce async sqlite persistence",
+  "review":["Domain owns the async promise while Infrastructure owns EF mechanics.","Temporary Task implementations keep intermediate builds warning-free.","Add and SaveChangesAsync are described as tracking versus I/O.","The test keeps SQLite setup separate from round-trip learning evidence.","No HTTP, migrations, production DI registration, or Session 32 query API is introduced."],
+  "postQuiz":[
+    {"prompt":"What does ClockEntries.Add(entity) prove by itself?","options":["Only that EF tracks the entity as Added","That SQLite committed an INSERT","That every row was loaded"],"correct":0,"explanation":"SaveChangesAsync performs the database I/O."},
+    {"prompt":"What does FirstOrDefaultAsync do here?","options":["Executes a translated SQLite query and returns one entity or null","Filters an already loaded List","Creates a background thread"],"correct":0,"explanation":"The provider translates and executes the predicate at materialization."},
+    {"prompt":"Why map an entity back through the ClockEntry constructor?","options":["To preserve Domain invariants","To enable public Domain setters","To create the SQLite schema"],"correct":0,"explanation":"Persistence materialization must not bypass Domain validity rules."}
   ],
-  "postQuiz": [
-    {
-      "prompt": "Where does the Session 31 exercise belong?",
-      "options": [
-        "production",
-        "An unrelated earlier project",
-        "A fictional artifact"
-      ],
-      "correct": 0,
-      "explanation": "The verified cumulative design places it in production."
-    },
-    {
-      "prompt": "What should the return type tell a caller?",
-      "options": [
-        "What completion or value the method promises",
-        "Which CPU thread must run it",
-        "That errors cannot occur"
-      ],
-      "correct": 0,
-      "explanation": "A return type is a caller-facing contract."
-    },
-    {
-      "prompt": "What must happen before advancing?",
-      "options": [
-        "Run the focused behavior, Release build, and complete tests",
-        "Only read the solution",
-        "Rename unrelated learner code"
-      ],
-      "correct": 0,
-      "explanation": "Every session must finish buildable and testable."
-    }
-  ],
-  "reflections": [
-    "Which boundary owns the new code?",
-    "What does the main return type promise?",
-    "What verified state may the next session assume?"
-  ],
-  "whatBreaks": "Removing the Session 31 artifact breaks the focused behavior or its verified integration point.",
-  "summary": "Persist and retrieve an open ClockEntry through SQLite without replacing the earlier synchronous in-memory repository.",
-  "learningEnvironment": "production",
-  "buildState": {
-    "creates": [
-      "src/PinkMachine19.TimeClock.Domain/Repositories/IAsyncClockEntryRepository.cs",
-      "src/PinkMachine19.TimeClock.Domain/Services/AsyncClockEntryService.cs",
-      "src/PinkMachine19.TimeClock.Infrastructure/ClockEntryEntity.cs",
-      "src/PinkMachine19.TimeClock.Infrastructure/TimeClockDbContext.cs",
-      "src/PinkMachine19.TimeClock.Infrastructure/EfClockEntryRepository.cs",
-      "tests/PinkMachine19.TimeClock.Domain.Tests/EfClockEntryRepositoryTests.cs"
-    ],
-    "extends": [
-      "EF Core DbContext",
-      "Async repository contracts",
-      "Entity mapping",
-      "CancellationToken forwarding"
-    ]
-  }
+  "reflections":["Which project owns the promise and which fulfills it?","At what exact lines does database I/O occur?","Which test lines are framework setup and which prove the round trip?"],
+  "whatBreaks":"Without the Domain contract, Infrastructure leaks into business coordination. Without SaveChangesAsync, Added entities never reach SQLite. Without the open connection, the in-memory database disappears. Without constructor mapping, persistence could bypass Domain validity rules.",
+  "summary":"Session 31 creates the first genuine asynchronous persistence boundary: Domain defines the promise, Infrastructure maps and performs SQLite I/O, and an integration test proves the complete round trip.",
+  "learningEnvironment":"production",
+  "buildState":{"creates":["src/PinkMachine19.TimeClock.Domain/Repositories/IAsyncClockEntryRepository.cs","src/PinkMachine19.TimeClock.Domain/Services/AsyncClockEntryService.cs","src/PinkMachine19.TimeClock.Infrastructure/ClockEntryEntity.cs","src/PinkMachine19.TimeClock.Infrastructure/TimeClockDbContext.cs","src/PinkMachine19.TimeClock.Infrastructure/EfClockEntryRepository.cs","tests/PinkMachine19.TimeClock.Domain.Tests/EfClockEntryRepositoryTests.cs"],"extends":["EF Core DbContext","Async repository contracts","Entity mapping","CancellationToken forwarding"]}
 }

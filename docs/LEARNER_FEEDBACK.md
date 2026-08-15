@@ -276,3 +276,92 @@ Include drills such as:
 - Correct deliberately broken examples, such as resolving through the wrong object or scope, choosing the wrong lifetime, missing generic brackets, or using a type before declaring it.
 
 Keep each drill independently repeatable in roughly one to three minutes. Provide answers behind Reveal and label the drills section as optional retrieval practice, not a new cumulative session and not a prerequisite. Its purpose is to build fluency across all completed labs without asking the learner to redo a 40-minute lesson. Add navigation and indexing that let the learner filter or jump by session, layer, and concept when this feature is implemented. Do not create the full drills section during an unrelated lesson correction; preserve this note as a future course-wide design task.
+
+## Session 31 learner feedback: explain every added dependency
+
+The Session 31 lab asks the learner to add a Domain project reference and three NuGet packages without explaining what each dependency contributes. Before showing installation commands, future corrections must identify why Infrastructure needs each item:
+
+- The Domain project reference lets Infrastructure implement Domain repository contracts and map persistence entities to and from Domain objects.
+- `Microsoft.EntityFrameworkCore.Sqlite` supplies EF Core's `DbContext` APIs, SQLite provider, relational behavior, and async database operations used by this lesson.
+- `Microsoft.Extensions.DependencyInjection.Abstractions` supplies DI contracts and registration abstractions without requiring the full container implementation where only abstractions are needed.
+- `SQLitePCLRaw.bundle_e_sqlite3` supplies the native SQLite bundle selected by the repository; explain why the pinned patched version is required rather than making the learner treat the package name as magic.
+
+Offer the corresponding `dotnet add reference` and `dotnet add package` commands as the normal CLI workflow. Do not reduce dependency setup to unexplained project-file edits or unexplained commands. After installation, briefly distinguish a project reference from a NuGet package reference and tell the learner which later type or method will prove that each dependency is actually being used.
+
+### Session 31 learner feedback: make long CLI commands readable
+
+The repeated full project paths in several `dotnet add` commands made the actual operation difficult to see. When a Bash/WSL lab repeats long paths or a pinned version, define descriptive task-specific variables first, quote every expansion, and then show short commands using those variables. For example, define `infrastructure_project`, `domain_project`, and `package_version` rather than repeating the paths and version four times.
+
+Explain that these are shell variables used only to improve command readability; they do not change the `.csproj` syntax or become C# variables. Keep each installation command on its own line so failures remain attributable to one dependency. Avoid opaque one-letter variables and do not use broad system variable names.
+
+Present this pattern directly in the visible lab instructions, not only in a concept sidebar. Immediately before or after each command, add one short TTS-friendly sentence explaining what that specific reference or package enables in the upcoming code. Keep the explanation brief enough that the command sequence remains scannable.
+
+### Session 31 learner feedback: explain contract folder ownership
+
+The learner initially created `IAsyncClockEntryRepository` under Infrastructure and then reasonably asked why it should not live in a generic Domain `Interfaces` folder. The corrected lesson must explain both the architectural boundary and the repository's existing organization convention before naming the path.
+
+- Domain owns the persistence-agnostic contract; Infrastructure implements that contract with EF Core.
+- The existing synchronous `IClockEntryRepository` already lives in `Domain/Repositories`, so the async repository contract belongs beside it.
+- This repository organizes contracts by responsibility (`Repositories`, `Services`, and similar capability folders) rather than placing every interface in one technical-kind `Interfaces` folder.
+- An `Interfaces` folder would be valid in another codebase, but introducing it here would create a second convention during an unrelated EF lesson.
+- Because the learner project currently uses global namespaces, the folder location organizes source but does not automatically create or change a C# namespace.
+
+Use the memory anchor: “Domain owns the promise; Infrastructure fulfills it.” State the reason before instructing the learner to create the file so the path is an architectural decision rather than unexplained ceremony.
+
+### Course-wide learner feedback: refresh older definitions at the point of reuse
+
+The learner frequently encounters important earlier terms, such as “invariant,” many sessions after their original introduction. Future labs should occasionally provide a one-sentence retrieval reminder exactly where an older concept becomes relevant again rather than assuming the vocabulary remains immediately available.
+
+For example, when Session 31 separates `ClockEntry` from `ClockEntryEntity`, remind the learner: “An invariant is a rule that must remain true for a valid domain object.” Connect the definition to the current action: Domain constructors and methods protect those rules, while an EF persistence entity primarily represents stored columns.
+
+Apply this selectively across future labs for terms such as invariant, contract, composition root, materialization, deferred execution, object identity, and ownership. Keep reminders short, concrete, and tied to the current step. Do not repeat entire earlier lessons or interrupt every familiar term with a glossary entry.
+
+### Session 31 learner feedback: explain the C# and EF grammar before DbContext composition
+
+The `TimeClockDbContext` step introduced several layers at once: a derived class, a generic options type, a base-constructor initializer, an expression-bodied `DbSet` property, and EF Core change tracking. The learner could type the completed shape but could not yet explain what those pieces meant, creating cognitive overload.
+
+Correct the step using just-in-time explanation before asking for composition:
+
+- Explain that `: DbContext` is inheritance: `TimeClockDbContext` derives from EF Core's `DbContext`.
+- Explain that `: base(options)` is a C# constructor initializer. It invokes the base-class constructor before the derived constructor body runs and passes along the same `options` object.
+- State what the options contain in this lesson: the selected database provider, the SQLite connection or connection string, and other EF Core behavior configured by the caller. They are not domain data, employee addresses, or stored clock-entry rows.
+- Explain that `DbSet<ClockEntryEntity>` is EF Core's query-and-save entry point for rows represented by `ClockEntryEntity`; it is not simply a `List<T>` held by the property.
+- Explain that `Set<ClockEntryEntity>()` asks this context for its managed `DbSet` for that entity type.
+- Define tracking: while the context is alive, EF Core records entity instances and their states, such as `Added`, `Unchanged`, `Modified`, or `Deleted`, so `SaveChanges` knows which SQL operations to send.
+- Clarify that a `DbSet` does not mean all rows are already loaded in memory. A query is translated and executed through the configured provider when the query is materialized; individual returned or added entities may then be tracked in memory by the context.
+
+Teach each layer with a tiny grammar example or labeled signature before combining them. Avoid relying on completed code plus a dense list of new definitions. Use occasional comprehension pauses such as: “Who creates the options?”, “Which constructor receives them next?”, and “Has a database query run merely because the DbSet property was accessed?”
+
+Use layered placement rather than putting all depth before or after the lab:
+
+1. **Before the lab:** give only the small boundary map and vocabulary needed to understand the goal.
+2. **Immediately before an unfamiliar line:** provide the minimum just-in-time grammar and framework explanation required to write it deliberately.
+3. **Immediately after that small code cluster:** provide a collapsed “Why this works” or “Deeper understanding” section covering mechanics, lifecycle, and common misconceptions.
+4. **At the purpose checkpoint:** ask one short comprehension question that reconnects the mechanics to the objective.
+5. **In the optional reference/drills area:** preserve searchable definitions and retrieval practice for later recovery.
+
+Do not place essential understanding only after the entire lab, because the learner would type unexplained code first. Do not front-load every deep detail before coding, because the learner has no concrete code to attach it to. Essential meaning belongs just in time; deeper mechanics belong adjacent and collapsible.
+
+Use a consistent, approachable title for the adjacent collapsed section, such as **“What you should be asking right now”**. Inside it, phrase two or three likely learner questions conversationally—for example: “What configuration is actually inside `options`?”, “Did accessing this `DbSet` load the table into memory?”, and “Who is tracking these objects?” Answer each directly and briefly. The slightly playful title should normalize asking foundational questions rather than implying the learner should already know the framework's hidden mechanics.
+
+Apply the learner's placement rule: corrections necessary to understand the active lab belong in `docs/LEARNER_FEEDBACK.md`; broader tooling, glossary, or future-module ideas belong in `docs/SECONDARY_TERTIARY_THOUGHTS.md`.
+
+## Session 32 learner feedback: comment-first scaffolding for unfamiliar signatures
+
+When a lab asks the learner to write an unfamiliar method signature, first provide a pasteable comment block that describes the signature in ordinary language. Name the access modifier, other modifiers such as `static`, return type, method name, parameters, and temporary return behavior. Then ask the learner to type the actual C# beneath those comments.
+
+Do not require pure recall before the learner has had enough practice with that grammatical shape. The comment scaffold should guide construction without revealing the completed implementation. After the learner types the method, let them compare it with a code example only if they are stuck or want verification. Gradually shorten or remove the scaffold when the same syntax becomes established retrieval practice.
+
+For Session 32's first query method, the scaffold should direct the learner to create a public static `CompletedForEmployee` method, return `IQueryable<ClockEntryEntity>`, accept a `TimeClockDbContext` and employee ID, and temporarily return the context's `ClockEntries` query. The filtering logic remains a later learner-authored step.
+
+### Session 32 learner feedback: separate organization concepts at first use
+
+The learner initially reasoned that Infrastructure's Domain project reference made `ClockEntryEntity` and `TimeClockDbContext` available. Correct this adjacent to the query class: those types already belong to the same Infrastructure project. A project reference exposes public types from another project; folders organize files; namespaces qualify type names; project membership determines compilation. These concepts are related but not interchangeable. In the current global-namespace learner repository, moving between Infrastructure folders does not itself require another `using` directive.
+
+Explain that `ClockEntryDataQueries` is `static` because it is a stateless method container that is never instantiated. `sealed` only prevents inheritance and does not enforce static members or prevent ordinary construction.
+
+### Session 32 learner feedback: make the SQLite matrix and assertions explicit
+
+The learner accidentally completed the intended open row, added one entity twice, and initially chose a negative identity assertion. State the three-row matrix immediately before arrangement: target completed is included, target open is excluded, and other completed is excluded. Every row is a `ClockEntryEntity`; an open row leaves `Clockout` null; every instance is added exactly once through one `AddRangeAsync` followed by one `SaveChangesAsync`.
+
+Before assertion selection, explain that `Assert.Single(results)` proves one row and returns it, while `Assert.Same(completedEntry, result)` proves the exact tracked reference. Negative identity assertions express the opposite. Limit this identity expectation to this test's same tracking `DbContext`; do not present it as a promise for every EF query or no-tracking configuration.
