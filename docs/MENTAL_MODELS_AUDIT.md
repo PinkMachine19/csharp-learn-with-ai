@@ -49,6 +49,7 @@ This inventory covers every primary session. Each row records the concrete visua
 | 05B | A guarded mailbox separates hidden storage from getter/setter access while keeping one simple public slot. |
 | 19B | A building divides its lobby, staff workshop, family stairway, and sealed room into distinct access zones. |
 | 24B | A triage desk classifies an outcome, translates it across a boundary, and stamps the resulting contract for verification. |
+| R0 | A source-to-runtime conveyor separates C# text, compiler output, managed assembly, CLR execution, reusable libraries, and SDK controls. |
 | R1 | Geological strata accumulate newer C# features over a stable foundation while a version marker identifies availability. |
 | R2 | A typed assembly line passes known shapes through capability, lambda, and LINQ stations without losing type information. |
 | R3 | A baggage claim ticket represents eventual completion while work continues, cancellation is observed, and multiple belts remain distinct from parallel machinery. |

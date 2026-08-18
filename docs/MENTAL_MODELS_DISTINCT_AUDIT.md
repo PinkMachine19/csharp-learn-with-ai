@@ -49,6 +49,7 @@ The “original” count refers to the immediately preceding highlighted-frame i
 | 05B | 4 | 4 | 4 | 0 | 0 | None |
 | 19B | 4 | 4 | 4 | 0 | 0 | None |
 | 24B | 4 | 4 | 4 | 0 | 0 | None |
+| R0 | 4 | 4 | 4 | 0 | 0 | None |
 | R1 | 4 | 4 | 4 | 0 | 0 | None |
 | R2 | 4 | 4 | 4 | 0 | 0 | None |
 | R3 | 4 | 4 | 4 | 0 | 0 | None |

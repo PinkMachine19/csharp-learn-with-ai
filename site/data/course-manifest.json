@@ -410,6 +410,13 @@
   ],
   "refreshers": [
     [
+      "R0",
+      "what-csharp-dotnet-clr-and-libraries-are",
+      "What C#, .NET, the CLR, and the Libraries Actually Are",
+      null,
+      "independent platform mental-model refresher before language evolution"
+    ],
+    [
       "R1",
       "csharp-evolution-and-language-milestones",
       "C# Evolution & Language Milestones",

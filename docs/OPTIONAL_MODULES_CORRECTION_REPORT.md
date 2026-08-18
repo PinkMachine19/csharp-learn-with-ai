@@ -16,6 +16,7 @@ No Session 1–35 JSON, TimeClock production source, cumulative ScratchPad runne
 | Properties (`05B`) | Side lab | Added session-named ScratchPad classes and modified its runner. | Normalized customer email and simple loyalty points | Backing field only when custom access behavior is needed | Own console project with unique `CustomerPropertyProfile`; revealed code built and ran. |
 | Access Modifiers/API Boundaries (`19B`) | Side lab | Required Sessions 17–19 and modified App, Infrastructure, and ScratchPad. | Public document service with hidden formatter details | Accessibility from same- and cross-assembly callers | Own library and runner projects; both assemblies built and runner executed. |
 | Outcome Contracts (`24B`) | Side lab | Required several sessions, used TimeClock terminology, and named no exact output file. | Product lookup, reservation, and payment outcomes | bool, nullable, result, exception, HTTP, and UI translations | Own console project; revealed code built and ran. |
+| Platform Pieces (`R0`) | Refresher | New prerequisite mental model requested before platform and language history. | Source/compiler/assembly/runtime experiments | C#, CLR, libraries, SDK, compiler errors, and runtime exceptions | Own console project; revealed code built and ran. |
 | Language Milestones (`R1`) | Refresher | Notes-only task used platform-specific shell commands and acted as a track prerequisite. | Toolchain compatibility report | Useful language milestones and compiler version feedback | Own console project; revealed code built and ran. |
 | Generics/Lambdas/LINQ (`R2`) | Refresher | Setup and signature reading were too compressed. | Purchase-line total | Typed collections, delegates, and LINQ pipeline | Own console project; revealed code built and ran. |
 | async/await (`R3`) | Refresher | Dense summary lacked sufficiently explicit standalone setup. | Document conversion | Task results, await, cancellation, and observed failure | Own console project; revealed code built and ran. |
@@ -25,7 +26,7 @@ No Session 1–35 JSON, TimeClock production source, cumulative ScratchPad runne
 ## Cross-check classification
 
 - Intentional illustrative references: every module says that it does not modify TimeClock or Sessions 1–35. These are isolation warnings, not implementation dependencies.
-- Navigation-only references: side labs remain visually suggested near Sessions 01, 03, 04, 05, 19, and 24. Refresher cards remain ordered R1–R5 for discoverability. All refresher prerequisite fields are null.
+- Navigation-only references: side labs remain visually suggested near Sessions 01, 03, 04, 05, 19, and 24. Refresher cards remain ordered R0–R5 for discoverability. All refresher prerequisite fields are null.
 - Shared framework/template references: all modules use the same site generator, lesson renderer, quiz renderer, and validator. Shared rendering does not create code or knowledge dependencies.
 - Accidental coupling requiring correction: none remains in the optional JSON. Searches found no “continue from,” “complete Session,” cumulative `ScratchPad/Program.cs`, production project path, or refresher-prerequisite requirement.
 - Duplicate global types: none across revealed solutions. Each exercise also compiles in its own project, so identical framework names cannot collide.
@@ -34,7 +35,7 @@ No Session 1–35 JSON, TimeClock production source, cumulative ScratchPad runne
 ## Validation
 
 - JSON and generated pages: `npm run build` and `npm run validate` passed.
-- Generated output: 156 HTML pages, including 6 side labs and 5 refreshers, passed navigation, interaction, SVG accessibility, content-policy, and internal-reference checks.
+- Generated output: 168 HTML pages, including 6 side labs and 6 refreshers, passed navigation, interaction, SVG accessibility, content-policy, and internal-reference checks after R0 was added.
 - Revealed code: 10 standalone console projects plus the Access Modifiers library/runner pair built under .NET 10 with 0 warnings and 0 errors.
 - Runtime: all 11 examples ran successfully.
 - Isolation searches: no implementation dependency on a numbered session, production project, cumulative ScratchPad runner, or another optional module remains.

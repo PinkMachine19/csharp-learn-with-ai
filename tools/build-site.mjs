@@ -198,7 +198,7 @@ const syllabus = page({ title: "Syllabus", active: "syllabus", description: "The
   <h2>Syllabus</h2>
   <div class="table-wrap"><table><thead><tr><th>Session</th><th>Topic</th><th>Prerequisite</th><th>Status</th></tr></thead><tbody>${syllabusRows}</tbody></table></div>
   <section class="refresher-track" aria-labelledby="modern-csharp-refresher">
-    <div class="refresher-banner"><span class="refresher-icon" aria-hidden="true">↻</span><div><p class="refresher-kicker">Optional supplemental track</p><h2 id="modern-csharp-refresher">Modern C# Refresher</h2><p>Version history, language features, production syntax, and interview refreshers. This track is independent of the TimeClock application path and can be skipped without blocking any main session.</p></div></div>
+    <div class="refresher-banner"><span class="refresher-icon" aria-hidden="true">↻</span><div><p class="refresher-kicker">Optional supplemental track</p><h2 id="modern-csharp-refresher">C# and .NET Refreshers</h2><p>Start with observable platform pieces, then explore version history, language features, and production syntax. This track is independent of the TimeClock application path and can be skipped without blocking any main session.</p></div></div>
     <div class="table-wrap refresher-table"><table><thead><tr><th>Ref</th><th>Topic</th><th>Suggested order</th><th>Status</th></tr></thead><tbody>${refresherRows}</tbody></table></div>
   </section>
 </div></main>` });

@@ -64,7 +64,7 @@ if (manifest) {
     }
   }
   if (refreshers.length !== course.refresherCount) errors.push(`Refresher count ${refreshers.length} does not match course count ${course.refresherCount}`);
-  const expectedRefreshers = ["R1", "R2", "R3", "R4", "R5"];
+  const expectedRefreshers = ["R0", "R1", "R2", "R3", "R4", "R5"];
   for (const [index, refresher] of refreshers.entries()) {
     if (refresher.number !== expectedRefreshers[index]) errors.push(`Refresher sequence breaks at ${refresher.id}`);
     if (refresher.prerequisiteSession !== null) errors.push(`${refresher.id} must remain independently startable`);
@@ -75,6 +75,15 @@ if (manifest) {
       try { await access(path.join(dist, refresher[field])); }
       catch { errors.push(`${refresher.id} ${field} does not exist`); }
     }
+  }
+  const r0 = refreshers.find((refresher) => refresher.number === "R0");
+  if (r0) {
+    const r0Source = JSON.parse(await readFile(path.join(root, "site", "data", "refreshers", "refresher-00.json"), "utf8"));
+    const r0Lab = JSON.stringify(r0Source.lab);
+    for (const required of ["dotnet build", "syntax error", "IL + metadata", "dotnet PlatformPieces.dll", "runtime exception", "List<int>", "dotnet --version"]) {
+      if (!r0Lab.includes(required)) errors.push(`refresher-r0 is missing ${required}`);
+    }
+    if (r0Source.lab.steps.length < 10 || r0Source.lab.steps.length > 14) errors.push("refresher-r0 must contain 10–14 meaningful steps");
   }
   if (sideLabs.length !== course.sideLabCount) errors.push(`Side-lab count ${sideLabs.length} does not match course count ${course.sideLabCount}`);
   for (const sideLab of sideLabs) {

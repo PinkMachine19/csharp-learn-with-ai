@@ -1,0 +1,85 @@
+{
+  "number":"R0",
+  "category":"Independent C# and .NET platform refresher",
+  "estimatedTime":"20–30 minutes",
+  "connection":"This independent refresher comes before the evolution lessons. It turns C#, the compiler, assemblies, the CLR, libraries, and SDK tooling into things the learner can observe on the machine.",
+  "objectives":[
+    "Distinguish C# source, compiler output, runtime execution, .NET libraries, and SDK tooling.",
+    "Locate source text, compiler diagnostics, a built assembly, runtime output, and the installed SDK on the machine.",
+    "Contrast a compiler error with a runtime exception using two tiny experiments.",
+    "Explain how C# relates to the larger .NET platform without changing TimeClock."
+  ],
+  "visuals":[
+    {"diagram":"pipeline","title":"Source becomes a running program","explanation":"C# source passes through the C# compiler into IL and metadata inside an assembly; the CLR loads that managed assembly and executes the program."},
+    {"diagram":"stack","title":"The larger .NET platform","explanation":"The runtime or CLR, .NET libraries, SDK and build tooling, and application frameworks such as ASP.NET Core are platform pieces. C# is a language commonly used to target them."},
+    {"diagram":"compilerboundary","title":"Compiler gate","explanation":"Invalid C# syntax stops at the compiler and never becomes a newly runnable assembly."},
+    {"diagram":"exceptionpropagation","title":"Runtime failure","explanation":"Valid C# can compile successfully and then throw while the CLR is executing the resulting assembly."}
+  ],
+  "preQuiz":[
+    {"prompt":"Which item is the programming language?","options":["C#","The CLR","The dotnet CLI"],"correct":0,"explanation":"C# supplies source-language syntax and rules."},
+    {"prompt":"What does a successful build produce for this console project?","options":["A .NET assembly containing IL and metadata","Only a copy of Program.cs","A running HTTP server"],"correct":0,"explanation":"The compiler and build tooling produce an assembly that the runtime can load."},
+    {"prompt":"Which piece provides List<T> and File APIs?","options":["The .NET libraries","C# grammar alone","The project filename"],"correct":0,"explanation":"C# provides syntax; reusable framework types come from .NET libraries."}
+  ],
+  "concept":[
+    {"title":"One observable pipeline","paragraphs":["You write Program.cs as C# source text. A C# compiler checks that text and, after a successful build, produces a .NET assembly containing IL and metadata. The CLR, also called the .NET runtime, loads and executes the managed assembly.","The lab follows one rule: see the abstraction, locate evidence of it on the machine, change something, and observe which layer reacts."],"code":"C# SOURCE CODE\n      |\n      v\nC# COMPILER\n      |\n      v\nIL + METADATA\n      |\n      v\nCLR / .NET RUNTIME\n      |\n      v\nRUNNING PROGRAM"},
+    {"title":"Language and libraries are different","paragraphs":["C# defines language syntax such as variable declarations, braces, generic type syntax, and method calls. .NET libraries provide reusable types and behavior such as String, List<T>, Task, File APIs, and HTTP APIs.","The running program uses C# syntax to call library code. You did not write List<T>, and List<T> is not itself the C# language."],"code":"RUNNING PROGRAM CAN USE\n.NET LIBRARIES\nString · List<T> · Task\nFile APIs · HTTP APIs · more"},
+    {"title":".NET is the larger platform","paragraphs":["The .NET platform includes the runtime or CLR, .NET libraries, the SDK and build tooling, and application frameworks such as ASP.NET Core. C# is the programming language commonly used to target this platform.","The SDK is tooling used to create, restore, build, inspect, and run projects. It includes the dotnet CLI and compiler tooling. Do not confuse the SDK with the CLR that executes managed code."]},
+    {"title":"Compiler failure and runtime failure happen at different stages","paragraphs":["Bad C# syntax is rejected by the compiler before the changed program becomes runnable code. A compiler error means the program did not successfully become a new runnable assembly.","Valid C# can build successfully and still fail while running. An exception from deliberately executed valid code is runtime evidence, not a compiler rejection."]}
+  ],
+  "lab":{
+    "title":"Observe the pieces of the .NET platform",
+    "objective":"Create one isolated console project and physically observe source, compiler, assembly, runtime, libraries, and SDK tooling.",
+    "practice":["C# source text","Compiler diagnostics","Build output","CLR execution","Runtime exceptions",".NET library types","SDK inspection"],
+    "task":"Follow source code through build and execution while changing one layer at a time.",
+    "startingCondition":"Prerequisites: a .NET SDK and a terminal. No TimeClock session or other refresher is required. The project stays under exercises/refreshers/r0 and is never added to PinkMachine19.TimeClock.sln.",
+    "pasteReadyInstructions":true,
+    "stepCheckboxes":true,
+    "steps":[
+      {"text":"Create the isolated console project named PlatformPieces under exercises/refreshers/r0. This creates a project file and Program.cs without touching the TimeClock solution.","code":"dotnet new console --name PlatformPieces --output exercises/refreshers/r0","completeWhen":"exercises/refreshers/r0 contains PlatformPieces.csproj and Program.cs, and the TimeClock solution is unchanged."},
+      {"text":"Open Program.cs and replace the template statement with a tiny valid program that prints Source became a running program. Read the file as plain source text written in the C# language.","code":"// Type this C# source into Program.cs.\nConsole.WriteLine(\"Source became a running program.\");","completeWhen":"Program.cs visibly contains the C# source statement and has been saved."},
+      {"text":"Build the isolated project. Observe that dotnet invokes SDK build tooling and the C# compiler; do not run the program yet.","code":"dotnet build exercises/refreshers/r0 --configuration Release","completeWhen":"The build succeeds and reports the path to PlatformPieces.dll."},
+      {"text":"Introduce one harmless syntax error by removing the semicolon from the Console.WriteLine statement. Build again and read the compiler diagnostic. The changed source did not successfully become newly runnable code.","code":"dotnet build exercises/refreshers/r0 --configuration Release","completeWhen":"The compiler reports a syntax error before execution begins."},
+      {"text":"Restore the semicolon, save Program.cs, and build again. This proves the compiler gate accepts valid C# after rejecting the invalid edit.","code":"dotnet build exercises/refreshers/r0 --configuration Release","completeWhen":"The restored program builds successfully."},
+      {"text":"Inspect exercises/refreshers/r0/bin/Release and locate the target-framework folder and PlatformPieces.dll. The assembly contains .NET IL + metadata rather than the original C# source text. Advanced IL inspection is optional; ILSpy may be used later but is not required.","code":"find exercises/refreshers/r0/bin/Release -maxdepth 3 -type f -print | sort","completeWhen":"PlatformPieces.dll is visible in the successful build output."},
+      {"text":"Run the project through the project-oriented command and observe the expected console line. dotnet run builds when needed and launches the result.","code":"dotnet run --project exercises/refreshers/r0 --configuration Release","completeWhen":"The console prints Source became a running program."},
+      {"text":"Move into the Release target-framework output folder shown by build, then run the built assembly directly. The runtime loads PlatformPieces.dll; it is not directly executing Program.cs in this workflow.","code":"cd exercises/refreshers/r0/bin/Release/net10.0\ndotnet PlatformPieces.dll\ncd ../../../../..","completeWhen":"Direct assembly execution prints the same successful output."},
+      {"text":"Replace Program.cs temporarily with valid C# that deliberately throws an exception. Build first and confirm compilation succeeds; then run it and observe the runtime exception.","code":"// Valid C#: the compiler accepts it, then execution deliberately fails.\nthrow new InvalidOperationException(\"Deliberate runtime experiment.\");\n\n// From the repository root:\ndotnet build exercises/refreshers/r0 --configuration Release\ndotnet run --project exercises/refreshers/r0 --configuration Release","completeWhen":"Build succeeds before execution produces the deliberate runtime exception."},
+      {"text":"Restore a successful Program.cs. Add an explicitly typed List<int>, add two values, and print the count. Ask: did we write List<T>, or did our C# source call reusable code from the .NET libraries?","code":"// Use C# syntax to construct and call a .NET library type.\nList<int> numbers = new List<int>();\nnumbers.Add(10);\nnumbers.Add(20);\nConsole.WriteLine($\"Library list count: {numbers.Count}\");","completeWhen":"The valid program uses List<int> and prints a count of 2."},
+      {"text":"Add one simple String library operation by creating an explicitly typed string and calling ToUpperInvariant. C# supplies declaration and call syntax; System.String supplies the reusable operation.","code":"string label = \"dotnet library\";\nConsole.WriteLine(label.ToUpperInvariant());","completeWhen":"The program prints DOTNET LIBRARY after the list count."},
+      {"text":"Inspect installed tooling with dotnet --version and optionally dotnet --info. The dotnet CLI and SDK create, build, inspect, and run projects; the SDK is not the CLR.","code":"dotnet --version\ndotnet --info","completeWhen":"The installed SDK version is visible and you can distinguish the CLI/SDK from the runtime."},
+      {"text":"Run one final Release build and both execution forms. Then open Solution Reveal and compare only after your own observations are complete.","code":"dotnet build exercises/refreshers/r0 --configuration Release\ndotnet run --project exercises/refreshers/r0 --configuration Release\ncd exercises/refreshers/r0/bin/Release/net10.0\ndotnet PlatformPieces.dll","completeWhen":"The final source builds and both runtime commands print the library output.","purposeAfter":"You have physically observed source text, compiler rejection and acceptance, a .dll assembly, CLR execution, a runtime exception, .NET library use, and SDK tooling."}
+    ],
+    "solution":"// exercises/refreshers/r0/Program.cs\nList<int> numbers = new List<int>();\nnumbers.Add(10);\nnumbers.Add(20);\nConsole.WriteLine($\"Library list count: {numbers.Count}\");\n\nstring label = \"dotnet library\";\nConsole.WriteLine(label.ToUpperInvariant());",
+    "expectedBehavior":"The isolated project builds, produces PlatformPieces.dll, runs through the project and assembly forms, and prints a list count of 2 followed by DOTNET LIBRARY.",
+    "validation":"dotnet build exercises/refreshers/r0 --configuration Release\ndotnet run --project exercises/refreshers/r0 --configuration Release\ncd exercises/refreshers/r0/bin/Release/net10.0 && dotnet PlatformPieces.dll"
+  },
+  "expectedFiles":[
+    {"path":"exercises/refreshers/r0/PlatformPieces.csproj","action":"Add","why":"Define the isolated console project without joining TimeClock."},
+    {"path":"exercises/refreshers/r0/Program.cs","action":"Add","why":"Contain the observable source, compiler, runtime, and library experiments."},
+    {"path":"site/data/refreshers/refresher-00.json","action":"Add","why":"Define the synchronized R0 lesson, lab, quiz, and metadata."}
+  ],
+  "commit":"refresher-r0: observe csharp and dotnet platform pieces",
+  "review":[
+    "The exercise remains outside PinkMachine19.TimeClock.sln.",
+    "The final Program.cs is valid and the deliberate syntax and runtime failures were temporary.",
+    "Compiler diagnostics and runtime exceptions are described as different stages.",
+    "List<int> and String are identified as .NET library types rather than C# syntax.",
+    "The SDK/tooling and CLR/runtime are not treated as synonyms.",
+    "The complete final source remains behind Solution Reveal."
+  ],
+  "postQuiz":[
+    {"prompt":"What directly loads PlatformPieces.dll in the direct execution experiment?","options":["The .NET runtime/CLR","Program.cs as plain text","List<T>"],"correct":0,"explanation":"The runtime loads and executes managed code from the compiled assembly."},
+    {"prompt":"What does the successful build followed by a thrown exception prove?","options":["Valid C# can fail at runtime","The compiler did not run","The SDK and CLR are identical"],"correct":0,"explanation":"Compilation and execution are separate stages with different failure evidence."},
+    {"prompt":"Which statement best describes .NET?","options":["A platform including runtime, libraries, SDK tooling, and frameworks","Another name for C# syntax only","Only the dotnet build command"],"correct":0,"explanation":"C# commonly targets the larger .NET platform."}
+  ],
+  "reflections":[
+    "Which physical file was source, and which physical file was the compiled assembly?",
+    "How did the evidence differ when the compiler rejected syntax versus when the runtime observed an exception?",
+    "Which parts of the final program came from C# syntax, and which came from .NET libraries?",
+    "What job belongs to the SDK, and what job belongs to the CLR?"
+  ],
+  "whatBreaks":"Removing R0 removes only this independent platform experiment. TimeClock, numbered sessions, R1–R5, and every other optional module remain unchanged.",
+  "summary":"I write C# source. The compiler produces IL and metadata inside a .NET assembly. The CLR loads and executes managed code. .NET libraries provide reusable functionality. The SDK and dotnet CLI create, build, inspect, and run projects. .NET is the larger platform tying those pieces together. The next refreshers can discuss how C# and .NET evolved because each historical change now has a known layer.",
+  "learningEnvironment":"isolated-console",
+  "buildState":{"creates":["exercises/refreshers/r0/PlatformPieces.csproj","exercises/refreshers/r0/Program.cs"],"extends":["Compiler diagnostics","Assembly output","CLR execution","Runtime exceptions",".NET libraries","SDK tooling"]}
+}
