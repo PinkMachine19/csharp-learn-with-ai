@@ -43,7 +43,7 @@ if (manifest) {
   if (new Set(sessions.map((session) => session.id)).size !== sessions.length) errors.push("Duplicate session IDs exist");
   if (new Set(sessions.map((session) => session.slug)).size !== sessions.length) errors.push("Duplicate session slugs exist");
   if (layers.length !== 10) errors.push(`Expected 10 curriculum layers, found ${layers.length}`);
-  const expectedNumbers = [0, "00.5", "00.6", 1, 2, 3, "03.5", ...Array.from({ length: 25 }, (_, index) => index + 4), "28B", 29, 30, "30B", ...Array.from({ length: 5 }, (_, index) => index + 31)];
+  const expectedNumbers = [0, "00.5", "00.6", 1, 2, 3, "03.5", ...Array.from({ length: 25 }, (_, index) => index + 4), "28B", 29, 30, "30B", 31, 32, 33, "34A", "34B", 35];
   for (const [index, session] of sessions.entries()) {
     if (session.number !== expectedNumbers[index]) errors.push(`Session sequence breaks at ${session.id}`);
     const expectedPrerequisite = index === 0 ? null : sessions[index - 1].number;
@@ -182,6 +182,31 @@ for (const session of manifest.sessions) {
     }
     for (const page of [lesson, standaloneLab]) {
       if (!page.includes("This step is complete when:")) errors.push("session-32 is missing rendered step completion conditions");
+    }
+  }
+  if (source.number === 33) {
+    if (source.lab.steps.length !== 24) errors.push("session-33 must contain exactly 24 complete numbered steps");
+    if (source.lab.steps.some((step) => !step.completeWhen)) errors.push("session-33 has a step without a completion condition");
+    const session33Lab = JSON.stringify(source.lab);
+    for (const required of ["dotnet new web", "--framework net10.0", "Action<DbContextOptionsBuilder>", "new ActionResult<ClockEntryResponse>(badRequestResult)", "using (IServiceScope scope = app.Services.CreateScope())", "app.MapControllers()", "curl -i -X POST"]) {
+      if (!session33Lab.includes(required)) errors.push(`session-33 is missing ${required}`);
+    }
+    for (const page of [lesson, standaloneLab]) {
+      if (!page.includes("Earlier scaffolding created a non-buildable Web folder shell")) errors.push("session-33 is missing its truthful starting condition");
+      if (!page.includes("This step is complete when:")) errors.push("session-33 is missing rendered completion conditions");
+      if (!page.includes("After this step, 0 numbered steps remain")) errors.push("session-33 is missing rendered remaining-step progress");
+    }
+  }
+  if (source.number === "34A") {
+    const session34ALab = JSON.stringify(source.lab);
+    for (const required of ["AddTimeClockPersistence", "ServiceRegistrationTests", "GetRequiredService<AsyncClockEntryService>", "not clock-in or database behavior"]) {
+      if (!session34ALab.includes(required)) errors.push(`session-34A is missing ${required}`);
+    }
+  }
+  if (source.number === "34B") {
+    const session34BLab = JSON.stringify(source.lab);
+    for (const required of ["ILogger<ClockEntriesController>", "Status400BadRequest", "Status409Conflict", "Status500InternalServerError", "LogError(exception"]) {
+      if (!session34BLab.includes(required)) errors.push(`session-34B is missing ${required}`);
     }
   }
   const serializedLab = JSON.stringify(source.lab);

@@ -6,7 +6,7 @@
     "subtitle": "A Practical C# and .NET Refresher",
     "basePath": "/csharp-learn-with-ai/",
     "advancementThreshold": 80,
-    "sessionCount": 41
+    "sessionCount": 42
   },
   "layers": [
     {
@@ -384,11 +384,19 @@
       "049–053"
     ],
     [
-      34,
+      "34A",
+      "centralizing-and-verifying-dependency-injection-registration",
+      "Centralizing and Verifying Dependency-Injection Registration",
+      "integration",
+      33,
+      "split from the former Session 34 application-integration lab"
+    ],
+    [
+      "34B",
       "validation-logging-and-api-errors",
       "Validation, Logging, and API Error Responses",
       "integration",
-      33,
+      "34A",
       "054–056, 062"
     ],
     [
@@ -396,7 +404,7 @@
       "integrated-workflow-and-end-to-end-verification",
       "Integrated Workflow and End-to-End Verification",
       "integration",
-      34,
+      "34B",
       "040–044, 061, 065"
     ]
   ],

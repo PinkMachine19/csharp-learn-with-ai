@@ -2,237 +2,90 @@
   "number": 33,
   "category": "Web API",
   "estimatedTime": "40 minutes",
-  "connection": "Session 32 verified the database query boundary. Session 33 explicitly creates the previously nonexistent Web project, request/response contracts, controller, route, and async service call.",
+  "connection": "Earlier scaffolding created a non-buildable Web folder shell. Session 33 activates that shell as a real ASP.NET Core project, then exposes the first HTTP clock-in boundary.",
   "objectives": [
-    "Create an ASP.NET Core composition root.",
-    "Keep request and response records separate from domain entities.",
-    "Translate expected rejection to HTTP status results.",
-    "Forward request cancellation to genuine database I/O."
+    "Activate the existing Web shell with the official ASP.NET Core template.",
+    "Keep request and response transport records separate from Domain and persistence types.",
+    "Translate validation and service outcomes into deliberate HTTP results.",
+    "Compose and start the real controller, service, repository, DbContext, and SQLite graph."
   ],
   "visuals": [
-    {
-      "diagram": "mental-33-1",
-      "title": "Boundary map",
-      "explanation": "Shows where Session 33 code belongs and which earlier layer it may call."
-    },
-    {
-      "diagram": "mental-33-2",
-      "title": "Call timeline",
-      "explanation": "Shows the ordered calls and the point where Session 33 observes a result."
-    },
-    {
-      "diagram": "mental-33-3",
-      "title": "State before and after",
-      "explanation": "Shows the state transition that the Session 33 lab verifies."
-    },
-    {
-      "diagram": "mental-33-4",
-      "title": "Contract checkpoint",
-      "explanation": "Shows the input, return type, and failure meaning for the main Session 33 API."
-    }
+    {"diagram":"mental-33-1","title":"HTTP boundary","explanation":"An HTTP request enters the controller, which translates transport data into one application-service call and translates the outcome back to HTTP."},
+    {"diagram":"mental-33-2","title":"Nested result contract","explanation":"Read ClockEntryResponse, ActionResult<ClockEntryResponse>, and Task<ActionResult<ClockEntryResponse>> from the inside out."},
+    {"diagram":"mental-33-3","title":"Composition root lifecycle","explanation":"Program.cs registers recipes, builds the provider, initializes SQLite inside a bounded scope, maps routes, and runs the host."},
+    {"diagram":"mental-33-4","title":"Request-time scope","explanation":"Each HTTP request receives a controller, service, repository, and scoped DbContext connected to SQLite."}
   ],
   "preQuiz": [
-    {
-      "prompt": "Where does the Session 33 exercise belong?",
-      "options": [
-        "production",
-        "An unrelated earlier project",
-        "A fictional artifact"
-      ],
-      "correct": 0,
-      "explanation": "The verified cumulative design places it in production."
-    },
-    {
-      "prompt": "What should the return type tell a caller?",
-      "options": [
-        "What completion or value the method promises",
-        "Which CPU thread must run it",
-        "That errors cannot occur"
-      ],
-      "correct": 0,
-      "explanation": "A return type is a caller-facing contract."
-    },
-    {
-      "prompt": "What must happen before advancing?",
-      "options": [
-        "Run the focused behavior, Release build, and complete tests",
-        "Only read the solution",
-        "Rename unrelated learner code"
-      ],
-      "correct": 0,
-      "explanation": "Every session must finish buildable and testable."
-    }
+    {"prompt":"What existed before Session 33?","options":["A non-buildable Web folder shell","A running Web API","No Web-related folder"],"correct":0,"explanation":"Earlier scaffolding created placeholder folders, not a project with a .csproj and Program.cs."},
+    {"prompt":"Which part of Task<ActionResult<ClockEntryResponse>> names the successful body?","options":["ClockEntryResponse","ActionResult","Task"],"correct":0,"explanation":"Read the nested contract from the inside out."},
+    {"prompt":"When must service registrations occur?","options":["Before builder.Build()","After app.Run()","Only after the first request"],"correct":0,"explanation":"Build creates the provider from the completed registrations."}
   ],
   "concept": [
-    {
-      "title": "Create the first HTTP clock-in boundary",
-      "paragraphs": [
-        "Session 32 verified the database query boundary. Session 33 explicitly creates the previously nonexistent Web project, request/response contracts, controller, route, and async service call.",
-        "Create an ASP.NET Core composition root."
-      ]
-    },
-    {
-      "title": "Read the contract before the body",
-      "paragraphs": [
-        "Use IntelliSense to identify the receiver, parameters, return type, and overload one piece at a time.",
-        "Keep request and response records separate from domain entities."
-      ]
-    },
-    {
-      "title": "Keep the boundary honest",
-      "paragraphs": [
-        "This work belongs in production; the lab does not claim that later artifacts already exist.",
-        "Translate expected rejection to HTTP status results."
-      ]
-    }
+    {"title":"Activate the shell honestly","paragraphs":["Earlier scaffolding created a non-buildable Web folder shell containing architecture-preview folders and .gitkeep files. It did not contain a Web project file, Program.cs, or solution entry. Session 33 preserves that shell and activates it with the official .NET Web template.","Structural CLI operations make cause and effect visible: dotnet new creates a project, dotnet add reference creates a dependency, and dotnet sln add changes solution membership. Inspect the resulting files after each operation."]},
+    {"title":"Transport contracts are not Domain objects","paragraphs":["ClockInRequest and ClockEntryResponse are small HTTP data carriers. Positional records concisely create constructors and properties and provide value-based equality. Sealed says these exact shapes are not inheritance bases.","Records do not validate input, protect Domain invariants, replace Domain objects, or guarantee every possible form is immutable. Separate request and response types may evolve independently even when their properties currently match. One important public type per matching file is this repository's discovery convention, not a C# requirement."]},
+    {"title":"Read the action result from the inside out","paragraphs":["ClockEntryResponse is the successful response-body shape. ActionResult<ClockEntryResponse> can represent that value or another HTTP ActionResult. Task<ActionResult<ClockEntryResponse>> means that HTTP outcome becomes available asynchronously.","BadRequest selects HTTP 400, Conflict selects HTTP 409, and Created selects HTTP 201. The helper selects the protocol status; its message is only response content."]},
+    {"title":"Program.cs is the composition root","paragraphs":["Program.cs connects concrete pieces without taking over their responsibilities. Remember: register, build, initialize, map, run.","Registration stores the recipe. Resolution creates the object. The scope owns the context; the database outlives both. AddControllers prepares controller services; MapControllers exposes controller routes."]}
   ],
   "lab": {
-    "title": "Create the first HTTP clock-in boundary",
-    "objective": "Create an ASP.NET Core composition root.",
-    "practice": [
-      "Controller routing",
-      "Request and response contracts",
-      "ActionResult",
-      "Async service calls"
-    ],
-    "task": "Expose POST /clock-entries/clock-in over AsyncClockEntryService and return BadRequest, Conflict, or Created deliberately.",
-    "startingCondition": "Session 32 verified the database query boundary. Session 33 explicitly creates the previously nonexistent Web project, request/response contracts, controller, route, and async service call.",
+    "title": "Activate the Web shell and expose clock-in",
+    "objective": "Create and run POST /clock-entries/clock-in over the existing async application and persistence boundaries.",
+    "practice": ["Official project templates","HTTP transport records","Controller results","Cancellation forwarding","ASP.NET Core composition"],
+    "task": "Activate the existing Web shell, implement one clock-in controller action, compose its dependency graph, and verify real HTTP behavior.",
+    "startingCondition": "Earlier scaffolding created a non-buildable Web folder shell with placeholder folders but no .csproj, Program.cs, or solution entry. Preserve those folders while activating the shell.",
     "pasteReadyInstructions": true,
     "stepCheckboxes": true,
     "steps": [
-      {
-        "text": "Step 1/12: Create src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj with Microsoft.NET.Sdk.Web, targeting net10.0 and referencing Domain and Infrastructure."
-      },
-      {
-        "text": "Step 2/12: Add the Web project to PinkMachine19.TimeClock.sln."
-      },
-      {
-        "text": "Step 3/12: In Web/Requests, create sealed record ClockInRequest(int EmployeeId, DateTime ClockInTime)."
-      },
-      {
-        "text": "Step 4/12: In Web/Responses, create sealed record ClockEntryResponse(int EmployeeId, DateTime ClockInTime)."
-      },
-      {
-        "text": "Step 5/12: In Web/Controllers, create sealed ClockEntriesController : ControllerBase with ApiController and Route(\"clock-entries\") attributes."
-      },
-      {
-        "text": "Step 6/12: Inject AsyncClockEntryService through the controller constructor."
-      },
-      {
-        "text": "Step 7/12: Add HttpPost(\"clock-in\") action ClockInAsync returning Task<ActionResult<ClockEntryResponse>> and accepting ClockInRequest plus CancellationToken."
-      },
-      {
-        "text": "Step 8/12: Inside ClockInAsync, return BadRequest when EmployeeId is not positive. This is an expected request rejection, not an exception."
-      },
-      {
-        "text": "Step 9/12: Await TryClockInAsync and forward the CancellationToken. Return Conflict when the service reports an existing open entry."
-      },
-      {
-        "text": "Step 10/12: Return Created with ClockEntryResponse when persistence succeeds."
-      },
-      {
-        "text": "Step 11/12: In Web/Program.cs, add controllers, register persistence, ensure the SQLite database exists, and map controllers."
-      },
-      {
-        "text": "Step 12/12: Build Web, start it long enough to verify startup, then build the solution and run every test with --no-build.",
-        "reveals": [{"title":"Solution","text":"The completed action validates input, awaits the service, and translates each expected result.","code":"if (request.EmployeeId <= 0) return BadRequest(\"EmployeeId must be positive.\");\nbool accepted = await _service.TryClockInAsync(request.EmployeeId, request.ClockInTime, cancellationToken);\nif (!accepted) return Conflict(\"The employee already has an open clock entry.\");\nreturn Created($\"/clock-entries/{request.EmployeeId}/open\", new ClockEntryResponse(request.EmployeeId, request.ClockInTime));"}]
-      }
+      {"text":"Inspect src/PinkMachine19.TimeClock.Web before generating anything. Confirm the placeholder folders exist and that the shell has no Web .csproj or Program.cs. Do not delete placeholders and do not use --force. After this step, 23 numbered steps remain.","code":"find src/PinkMachine19.TimeClock.Web -maxdepth 2 -type f -print | sort","completeWhen":"The existing shell has been inspected and its buildable versus placeholder state is known.","purposeAfter":"The course acknowledges earlier work instead of pretending the Web area never existed."},
+      {"text":"Define readable Bash variables for the repeated solution and project paths. Braces in ${project_prefix}.Web mark where the variable name ends before .Web is appended. After this step, 22 numbered steps remain.","code":"project_prefix=\"PinkMachine19.TimeClock\"\nweb_project_name=\"${project_prefix}.Web\"\nweb_directory=\"src/$web_project_name\"\nweb_project_file=\"$web_directory/$web_project_name.csproj\"\ndomain_project_file=\"src/${project_prefix}.Domain/${project_prefix}.Domain.csproj\"\ninfrastructure_project_file=\"src/${project_prefix}.Infrastructure/${project_prefix}.Infrastructure.csproj\"\nsolution_file=\"${project_prefix}.sln\"","completeWhen":"All seven descriptive variables print or expand to the intended paths."},
+      {"text":"Run the official Web template in the inspected shell. --framework is one option token; standalone -- would instead end option parsing. The template creates the Web SDK project, minimal Program.cs, settings, launch profile, and restore-ready structure. If those files already exist correctly from an earlier attempt, inspect them and continue rather than overwriting. After this step, 21 numbered steps remain.","code":"dotnet new web \\\n  --name \"$web_project_name\" \\\n  --output \"$web_directory\" \\\n  --framework net10.0","completeWhen":"The shell contains a net10.0 Web SDK .csproj and a non-empty minimal Program.cs."},
+      {"text":"Add explicit references from Web to Domain and Infrastructure. Domain exposes the application contracts and service types used at the HTTP boundary; Infrastructure supplies EF Core persistence types and implementation. After this step, 20 numbered steps remain.","code":"dotnet add \"$web_project_file\" reference \"$domain_project_file\"\ndotnet add \"$web_project_file\" reference \"$infrastructure_project_file\"\n\ndotnet list \"$web_project_file\" reference","completeWhen":"The reference listing shows Domain and Infrastructure exactly once."},
+      {"text":"Add the Web project to the solution, then inspect solution membership. dotnet sln add changes solution membership; it does not create the project. After this step, 19 numbered steps remain.","code":"dotnet sln \"$solution_file\" add \"$web_project_file\"\ndotnet sln \"$solution_file\" list","completeWhen":"The Web .csproj appears in the solution listing."},
+      {"text":"In Requests/ClockInRequest.cs, use the comment-first scaffold to type a public sealed positional record with int EmployeeId and DateTime ClockInTime. A record fits this small named transport value set and supplies value equality; sealed prevents inheritance. It does not validate input or protect Domain invariants. Keep this important public contract in its matching file for discovery and independent evolution. After this step, 18 numbered steps remain.","code":"// Declare a public sealed positional record named ClockInRequest.\n// Give its primary constructor int EmployeeId and DateTime ClockInTime.\n// End the declaration with a semicolon; do not add a body.","completeWhen":"ClockInRequest.cs contains the learner-authored record declaration beneath the comments."},
+      {"text":"In Responses/ClockEntryResponse.cs, type the corresponding public sealed positional response record using the comment-first scaffold. Keep it separate because incoming and outgoing HTTP contracts may evolve independently even when today's properties match. C# permits multiple types per file; this is a repository convention, not a language rule. After this step, 17 numbered steps remain.","code":"// Declare a public sealed positional record named ClockEntryResponse.\n// Give its primary constructor int EmployeeId and DateTime ClockInTime.\n// End the declaration with a semicolon; do not add a body.","completeWhen":"ClockEntryResponse.cs contains the learner-authored response record beneath the comments."},
+      {"text":"Create the Controllers folder if absent, then create ClockEntriesController.cs. Paste the using and framework shell. ApiController enables API conventions; Route establishes the base path; ControllerBase supplies HTTP helpers without MVC views; sealed prevents inheritance but does not make the class static. After this step, 16 numbered steps remain.","code":"mkdir -p \"$web_directory/Controllers\"\ncontroller_file=\"$web_directory/Controllers/ClockEntriesController.cs\"\ntouch \"$controller_file\"\ncode \"$controller_file\"\n\nusing Microsoft.AspNetCore.Mvc;\n\n[ApiController]\n[Route(\"clock-entries\")]\npublic sealed class ClockEntriesController : ControllerBase\n{\n}","completeWhen":"The controller file contains the attributes and empty ControllerBase-derived shell."},
+      {"text":"Add constructor injection inside the controller. The controller translates HTTP; AsyncClockEntryService coordinates the use case. Declare the explicit private readonly field, receive the concrete service, and assign it. Program.cs will provide it later. After this step, 15 numbered steps remain.","code":"// Declare a private readonly AsyncClockEntryService field named _service.\n// Add a public constructor receiving AsyncClockEntryService service.\n// Assign service to _service inside the constructor.","completeWhen":"The controller stores its injected AsyncClockEntryService in _service.","purposeAfter":"HTTP translation depends on the use-case coordinator without constructing persistence itself."},
+      {"text":"Read the return contract inside out: ClockEntryResponse is the success body; ActionResult<ClockEntryResponse> permits that value or another HTTP result; Task<ActionResult<ClockEntryResponse>> makes the outcome asynchronous. Paste the action attribute and signature, but leave behavior as comments for yourself to implement. After this step, 14 numbered steps remain.","code":"[HttpPost(\"clock-in\")]\npublic async Task<ActionResult<ClockEntryResponse>> ClockInAsync(\n    ClockInRequest request,\n    CancellationToken cancellationToken)\n{\n    // Validate EmployeeId before calling the service.\n    // Await the service with EmployeeId, ClockInTime, and cancellationToken.\n    // Translate false to Conflict.\n    // Translate success to Created with a response and location.\n}","completeWhen":"The action shell compiles conceptually as the intended nested contract and the body contains only guidance comments."},
+      {"text":"Implement the validation branch. Choose the protocol result first: BadRequest returns HTTP 400 regardless of its message. Expand the conversion once with explicit types: BadRequest returns BadRequestObjectResult, which inherits from ActionResult; ActionResult<ClockEntryResponse> can wrap that result. ASP.NET Core defines the types and conversion, the compiler enforces it, the IDE displays analysis, and async machinery creates the outer Task. After this step, 13 numbered steps remain.","code":"// If request.EmployeeId is not positive:\n//   create an explicitly typed BadRequestObjectResult with BadRequest(...);\n//   wrap it in an explicitly typed ActionResult<ClockEntryResponse>;\n//   return that HTTP outcome.\n// Use new ActionResult<ClockEntryResponse>(badRequestResult) for the explicit wrapping.","completeWhen":"A non-positive EmployeeId returns a visibly constructed HTTP 400 outcome.","questionsAfter":[{"question":"Why can this return without constructing ClockEntryResponse?","answer":"ClockEntryResponse is the success-body path. ActionResult<ClockEntryResponse> can instead hold an ActionResult such as BadRequestObjectResult."},{"question":"Am I returning a Task directly?","answer":"No. Inside an async method, the return expression supplies ActionResult<ClockEntryResponse>; compiler-generated async machinery completes the outer Task."}]},
+      {"text":"Implement the awaited service call with an explicitly typed bool named accepted. Pass request.EmployeeId, request.ClockInTime, and the same cancellationToken. This forwards request cancellation to genuine asynchronous database work. After this step, 12 numbered steps remain.","code":"// Await _service.TryClockInAsync exactly once.\n// Pass EmployeeId, ClockInTime, and cancellationToken in that order.\n// Store the result in an explicitly typed bool named accepted.","completeWhen":"The action awaits the service once and visibly forwards cancellationToken."},
+      {"text":"Implement the false branch with Conflict. Conflict selects HTTP 409; writing the word Conflict inside BadRequest would still produce 400. Choose the helper from protocol meaning, then write useful content. After this step, 11 numbered steps remain.","code":"// If accepted is false, return Conflict with a message\n// explaining that an open clock entry already exists.","completeWhen":"The false service outcome returns Conflict rather than BadRequest."},
+      {"text":"Create the successful response and location with explicit types. The $ enables string interpolation and braces identify the inserted C# expression. Then pass both variables to Created, which selects HTTP 201. Inline construction is only a later concise equivalent. After this step, 10 numbered steps remain.","code":"// Create an explicitly typed ClockEntryResponse named response.\n// Give it request.EmployeeId and request.ClockInTime.\n// Create an explicitly typed string named location with:\n// $\"/clock-entries/{request.EmployeeId}/open\"\n// Return Created(location, response).","completeWhen":"The success path returns HTTP 201 with an explicit response object and interpolated location.","purposeAfter":"The action now follows validate → await service → forward cancellation → inspect accepted → translate to HTTP."},
+      {"text":"Before editing Program.cs, read the two lifecycle maps. Program.cs is the composition root: it connects concrete pieces without taking over their jobs. After this step, 9 numbered steps remain.","code":"create builder\n→ register every service\n→ build provider/application\n→ create startup scope\n→ resolve actual DbContext\n→ ensure database schema\n→ dispose startup scope/context\n→ map controller routes\n→ run host\n\nHTTP request scope\n→ ClockEntriesController\n→ AsyncClockEntryService\n→ IAsyncClockEntryRepository / EfClockEntryRepository\n→ TimeClockDbContext\n→ SQLite","completeWhen":"You can state which graph exists at startup and which graph is created per HTTP request.","purposeAfter":"The remaining framework calls now have an ordering and ownership model rather than appearing as unrelated boilerplate."},
+      {"text":"Replace the generated Program.cs only within that file, preserving a recoverable editor history. Begin with the EF Core using, create an explicitly typed WebApplicationBuilder, and call AddControllers before Build. AddControllers registers services needed to construct and execute controllers. After this step, 8 numbered steps remain.","code":"using Microsoft.EntityFrameworkCore;\n\nWebApplicationBuilder builder =\n    WebApplication.CreateBuilder(args);\n\nbuilder.Services.AddControllers();","completeWhen":"Program.cs is saved, non-empty, and contains builder creation followed by AddControllers before any Build call."},
+      {"text":"Expose EF configuration before inference compresses it. Create an explicitly typed Action<DbContextOptionsBuilder> delegate whose typed parameter calls UseSqlite with Data Source=timeclock.db, then pass it to AddDbContext<TimeClockDbContext>. The selected overload expects this delegate, which is why the compiler can infer the shorter lambda later. Registration without UseSqlite may compile but fails when database work begins. After this step, 7 numbered steps remain.","code":"Action<DbContextOptionsBuilder> configureDatabase =\n    (DbContextOptionsBuilder optionsBuilder) =>\n    {\n        optionsBuilder.UseSqlite(\n            \"Data Source=timeclock.db\");\n    };\n\nbuilder.Services.AddDbContext<TimeClockDbContext>(\n    configureDatabase);","completeWhen":"The DbContext recipe visibly includes the SQLite provider and connection string before Build.","questionsAfter":[{"question":"Did AddDbContext create the startup context?","answer":"No. It registered a construction recipe and scoped lifetime. Resolution creates an instance later."},{"question":"Who infers an untyped lambda parameter in the shorter form?","answer":"The C# compiler applies the selected overload's Action<DbContextOptionsBuilder> contract. The IDE only displays language analysis."}]},
+      {"text":"Register IAsyncClockEntryRepository to EfClockEntryRepository and register AsyncClockEntryService, both scoped, using explicit generic calls. Scoped matches one graph per HTTP request. After this step, 6 numbered steps remain.","code":"builder.Services.AddScoped<\n    IAsyncClockEntryRepository,\n    EfClockEntryRepository>();\n\nbuilder.Services.AddScoped<AsyncClockEntryService>();","completeWhen":"Every constructor dependency for ClockEntriesController has a registration before Build."},
+      {"text":"Build the WebApplication only after AddControllers, AddDbContext, and both AddScoped registrations. builder.Services is mutable registration state; Build creates and finalizes the provider. Remember register → build → initialize → map → run. After this step, 5 numbered steps remain.","code":"WebApplication app = builder.Build();","completeWhen":"Exactly one builder.Build call appears after every registration and before startup initialization."},
+      {"text":"Add a bounded startup scope. Registration stores the recipe; resolution creates the object. CreateScope provides a legitimate scoped boundary before any request, GetRequiredService constructs the configured context, and EnsureCreatedAsync creates the schema when absent. Leaving the braces disposes the startup scope, context, tracking state, and temporary resources—not timeclock.db, its schema, or saved data. After this step, 4 numbered steps remain.","code":"using (IServiceScope scope = app.Services.CreateScope())\n{\n    TimeClockDbContext dbContext =\n        scope.ServiceProvider\n            .GetRequiredService<TimeClockDbContext>();\n\n    await dbContext.Database.EnsureCreatedAsync();\n}","completeWhen":"The initialization scope ends before route mapping and app.Run; the scope owns the context and the database outlives both.","purposeAfter":"Startup uses a real configured context without extending its scoped lifetime until host shutdown."},
+      {"text":"Map controller routes, then run the host. AddControllers prepared controller services; MapControllers reads route attributes and exposes endpoints. Route clock-entries plus HttpPost clock-in produces POST /clock-entries/clock-in. app.Run must be last. After this step, 3 numbered steps remain.","code":"app.MapControllers();\n\napp.Run();","completeWhen":"Program.cs ends with MapControllers followed by app.Run and contains no generated root MapGet."},
+      {"text":"Save and inspect Program.cs before building. If a top-level Web project reports CS5001, first verify Program.cs exists, is non-empty, and contains top-level statements; use editor undo or local history instead of destructive recovery. Build Web in Release from current source. After this step, 2 numbered steps remain.","code":"dotnet build \"$web_project_file\" --configuration Release","completeWhen":"The saved, non-empty Web project builds in Release with zero errors."},
+      {"text":"Start the freshly built Web project and note its actual listening base URL. EnsureCreatedAsync must succeed and the host must report that it is listening. GET / may return 404 because the only endpoint is POST /clock-entries/clock-in; a browser address bar sends GET. After this step, 1 numbered step remains.","code":"dotnet run --project \"$web_project_file\" --configuration Release --no-build\n\n# In another terminal, substitute the actual listening URL:\ncurl -i -X POST \"http://localhost:5000/clock-entries/clock-in\" \\\n  -H \"Content-Type: application/json\" \\\n  -d '{\"employeeId\":0,\"clockInTime\":\"2026-08-18T09:00:00\"}'","completeWhen":"The host listens and the invalid POST returns HTTP 400; an optional valid POST returns 201 and an immediate repeat returns 409."},
+      {"text":"Stop the host, then build the complete Release solution and run the complete suite with --no-build. --no-build runs existing compiled output, so it is trustworthy only after the matching build. Open Solution Reveal only after these checks. After this step, 0 numbered steps remain.","code":"dotnet build \"$solution_file\" --configuration Release\ndotnet test \"$solution_file\" --configuration Release --no-build","completeWhen":"The complete Release solution builds and every test passes.","purposeAfter":"Session 33 has proven the Web project, HTTP translation, cancellation forwarding, dependency graph, SQLite startup, and repository-wide compatibility."}
     ],
-    "expectedBehavior": "Expose POST /clock-entries/clock-in over AsyncClockEntryService and return BadRequest, Conflict, or Created deliberately.",
-    "validation": "dotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
+    "solution":"// Requests/ClockInRequest.cs\npublic sealed record ClockInRequest(int EmployeeId, DateTime ClockInTime);\n\n// Responses/ClockEntryResponse.cs\npublic sealed record ClockEntryResponse(int EmployeeId, DateTime ClockInTime);\n\n// Controllers/ClockEntriesController.cs\nusing Microsoft.AspNetCore.Mvc;\n\n[ApiController]\n[Route(\"clock-entries\")]\npublic sealed class ClockEntriesController : ControllerBase\n{\n    private readonly AsyncClockEntryService _service;\n\n    public ClockEntriesController(AsyncClockEntryService service)\n    {\n        _service = service;\n    }\n\n    [HttpPost(\"clock-in\")]\n    public async Task<ActionResult<ClockEntryResponse>> ClockInAsync(ClockInRequest request, CancellationToken cancellationToken)\n    {\n        if (request.EmployeeId <= 0)\n        {\n            return BadRequest(\"EmployeeId must be positive.\");\n        }\n\n        bool accepted = await _service.TryClockInAsync(request.EmployeeId, request.ClockInTime, cancellationToken);\n        if (!accepted)\n        {\n            return Conflict(\"The employee already has an open clock entry.\");\n        }\n\n        ClockEntryResponse response = new ClockEntryResponse(request.EmployeeId, request.ClockInTime);\n        string location = $\"/clock-entries/{request.EmployeeId}/open\";\n        return Created(location, response);\n    }\n}\n\n// Program.cs\nusing Microsoft.EntityFrameworkCore;\n\nWebApplicationBuilder builder = WebApplication.CreateBuilder(args);\nbuilder.Services.AddControllers();\nAction<DbContextOptionsBuilder> configureDatabase = (DbContextOptionsBuilder optionsBuilder) =>\n{\n    optionsBuilder.UseSqlite(\"Data Source=timeclock.db\");\n};\nbuilder.Services.AddDbContext<TimeClockDbContext>(configureDatabase);\nbuilder.Services.AddScoped<IAsyncClockEntryRepository, EfClockEntryRepository>();\nbuilder.Services.AddScoped<AsyncClockEntryService>();\nWebApplication app = builder.Build();\nusing (IServiceScope scope = app.Services.CreateScope())\n{\n    TimeClockDbContext dbContext = scope.ServiceProvider.GetRequiredService<TimeClockDbContext>();\n    await dbContext.Database.EnsureCreatedAsync();\n}\napp.MapControllers();\napp.Run();",
+    "expectedBehavior":"POST /clock-entries/clock-in returns 400 for a non-positive employee ID, 409 when an open entry already exists, and 201 with ClockEntryResponse after successful persistence.",
+    "validation":"dotnet build src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj --configuration Release\ndotnet run --project src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj --configuration Release --no-build\ndotnet build PinkMachine19.TimeClock.sln --configuration Release\ndotnet test PinkMachine19.TimeClock.sln --configuration Release --no-build"
   },
   "expectedFiles": [
-    {
-      "path": "src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj",
-      "action": "Modify",
-      "why": "Create the first HTTP host."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Web/Program.cs",
-      "action": "Modify",
-      "why": "Compose and route the app."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Web/Requests/ClockInRequest.cs",
-      "action": "Add",
-      "why": "Define input."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Web/Responses/ClockEntryResponse.cs",
-      "action": "Add",
-      "why": "Define output."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Web/Controllers/ClockEntriesController.cs",
-      "action": "Add",
-      "why": "Translate HTTP to the service call."
-    },
-    {
-      "path": "site/data/sessions/session-33.json",
-      "action": "Modify",
-      "why": "Synchronize all Session 33 representations."
-    }
+    {"path":"PinkMachine19.TimeClock.sln","action":"Modify","why":"Add the activated Web project to the solution."},
+    {"path":"src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj","action":"Add","why":"Activate the placeholder shell as a Web SDK project and reference Domain and Infrastructure."},
+    {"path":"src/PinkMachine19.TimeClock.Web/Program.cs","action":"Add","why":"Compose, initialize, map, and run the application."},
+    {"path":"src/PinkMachine19.TimeClock.Web/Properties/launchSettings.json","action":"Add","why":"Store template launch profiles."},
+    {"path":"src/PinkMachine19.TimeClock.Web/appsettings.json","action":"Add","why":"Provide template application settings."},
+    {"path":"src/PinkMachine19.TimeClock.Web/appsettings.Development.json","action":"Add","why":"Provide development-specific template settings."},
+    {"path":"src/PinkMachine19.TimeClock.Web/Requests/ClockInRequest.cs","action":"Add","why":"Define the incoming HTTP contract."},
+    {"path":"src/PinkMachine19.TimeClock.Web/Responses/ClockEntryResponse.cs","action":"Add","why":"Define the outgoing HTTP contract."},
+    {"path":"src/PinkMachine19.TimeClock.Web/Controllers/ClockEntriesController.cs","action":"Add","why":"Translate HTTP into the async clock-in use case."},
+    {"path":"site/data/sessions/session-33.json","action":"Modify","why":"Synchronize all Session 33 representations."}
   ],
-  "commit": "session-33: add the async clock-in api",
-  "review": [
-    "Every artifact named by the lesson is explicitly created or already verified.",
-    "Async suffixes and CancellationToken forwarding match genuine I/O only.",
-    "No unrelated learner naming cleanup is included.",
-    "The final solution remains buildable and testable."
-  ],
+  "commit":"session-33: add the async clock-in api",
+  "review":["The existing placeholder Web shell is described truthfully and preserved.","The official Web template creates routine host files.","Domain and Infrastructure references are both verified.","Request and response contracts remain separate from Domain and persistence types.","The controller selects 400, 409, and 201 through the correct helpers.","CancellationToken reaches TryClockInAsync.","All registrations and SQLite configuration precede Build.","The startup scope ends before MapControllers and Run.","The freshly built host starts before full-solution validation."],
   "postQuiz": [
-    {
-      "prompt": "Where does the Session 33 exercise belong?",
-      "options": [
-        "production",
-        "An unrelated earlier project",
-        "A fictional artifact"
-      ],
-      "correct": 0,
-      "explanation": "The verified cumulative design places it in production."
-    },
-    {
-      "prompt": "What should the return type tell a caller?",
-      "options": [
-        "What completion or value the method promises",
-        "Which CPU thread must run it",
-        "That errors cannot occur"
-      ],
-      "correct": 0,
-      "explanation": "A return type is a caller-facing contract."
-    },
-    {
-      "prompt": "What must happen before advancing?",
-      "options": [
-        "Run the focused behavior, Release build, and complete tests",
-        "Only read the solution",
-        "Rename unrelated learner code"
-      ],
-      "correct": 0,
-      "explanation": "Every session must finish buildable and testable."
-    }
+    {"prompt":"What determines whether the response is HTTP 400 or 409?","options":["The selected result helper","Words inside the message","The response record name"],"correct":0,"explanation":"BadRequest selects 400 and Conflict selects 409."},
+    {"prompt":"What does AddDbContext do before any resolution?","options":["Registers a construction recipe and scoped lifetime","Creates every request's context immediately","Creates the SQLite file without a context"],"correct":0,"explanation":"Registration stores the recipe; resolution creates the object."},
+    {"prompt":"Why can GET / return 404 while the application is healthy?","options":["Only POST /clock-entries/clock-in is mapped","EnsureCreatedAsync deletes the root route","Controllers require a browser refresh"],"correct":0,"explanation":"Routing matches both HTTP method and path."}
   ],
-  "reflections": [
-    "Which boundary owns the new code?",
-    "What does the main return type promise?",
-    "What verified state may the next session assume?"
-  ],
-  "whatBreaks": "Removing the Session 33 artifact breaks the focused behavior or its verified integration point.",
-  "summary": "Expose POST /clock-entries/clock-in over AsyncClockEntryService and return BadRequest, Conflict, or Created deliberately.",
-  "learningEnvironment": "production",
-  "buildState": {
-    "creates": [
-      "src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj",
-      "src/PinkMachine19.TimeClock.Web/Program.cs",
-      "src/PinkMachine19.TimeClock.Web/Requests/ClockInRequest.cs",
-      "src/PinkMachine19.TimeClock.Web/Responses/ClockEntryResponse.cs",
-      "src/PinkMachine19.TimeClock.Web/Controllers/ClockEntriesController.cs"
-    ],
-    "extends": [
-      "Controller routing",
-      "Request and response contracts",
-      "ActionResult",
-      "Async service calls"
-    ]
-  }
+  "reflections":["Which responsibilities belong to the controller rather than the service?","Which objects end when the startup scope closes, and what persists?","Where does compiler inference shorten a type relationship that was shown explicitly first?"],
+  "whatBreaks":"Removing the Web project leaves the shell non-buildable. Incorrect result helpers change the HTTP contract. Registrations after Build or missing UseSqlite fail at startup. An unbounded startup scope keeps its DbContext alive until host shutdown.",
+  "summary":"Session 33 activates the existing Web shell, exposes one deliberate async clock-in endpoint, and proves the complete HTTP-to-SQLite composition.",
+  "learningEnvironment":"production",
+  "buildState":{"creates":["src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj","src/PinkMachine19.TimeClock.Web/Program.cs","src/PinkMachine19.TimeClock.Web/Requests/ClockInRequest.cs","src/PinkMachine19.TimeClock.Web/Responses/ClockEntryResponse.cs","src/PinkMachine19.TimeClock.Web/Controllers/ClockEntriesController.cs"],"extends":["PinkMachine19.TimeClock.sln","Controller routing","HTTP result contracts","Async cancellation","ASP.NET Core dependency injection"]}
 }

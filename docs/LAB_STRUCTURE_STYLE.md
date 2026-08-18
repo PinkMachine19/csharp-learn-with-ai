@@ -79,6 +79,7 @@ Use a quick check to distinguish roles such as the class under test versus its t
 - Do not assume a learner can independently compose a large `Program.cs` demonstration unless the course previously practiced that exact composition.
 - Use `Step n/n` numbering consistently and keep instructions concise and text-to-speech friendly.
 - Present each numbered step as one complete TTS unit. End it with a visible “This step is complete when…” condition; if that condition needs several hidden parts, split them into additional numbered steps instead.
+- When a guided lab is delivered one step at a time, state how many official numbered steps remain after every step. Never hide required work behind “part” labels that do not change the published denominator.
 - Treat repository housekeeping that teaches no session concept as unnumbered pre-lab cleanup rather than inflating the learning-step count.
 
 ### Paste-ready instruction standard for Sessions 01–24
@@ -105,6 +106,8 @@ Use a quick check to distinguish roles such as the class under test versus its t
 
 - Explain unfamiliar types or APIs briefly before using them, such as `HashSet<T>`, `IEnumerable<T>`, `sealed`, or constructor injection.
 - Before first use of an external library, state its overall job and identify which visible names belong to the library. Show genuinely new third-party syntax on first use instead of asking the learner to guess it from prose or discover it through IntelliSense.
+- Prefer an official SDK or framework template for routine project scaffolding. Inspect an existing target directory before generation, preserve intentional files, explain what the command creates, and do not recommend destructive overwrite flags without evidence that replacement is intended.
+- For first exposure to nested generic framework contracts or inferred delegates, show the complete types and relationships before offering conventional inference. Attribute inference to the C# compiler; the IDE displays language analysis but does not define the language rule.
 - For fluent library syntax, identify the object currently held, what each call configures or checks, who invokes any lambda later, and what role the returned object plays in enabling the next chained call.
 - After a small framework-heavy cluster, offer a collapsed “What you should be asking right now” section with two or three conversational questions and answers. Explain required meaning at the point of use; do not outsource essential understanding to a glossary.
 - State important filtering conditions directly. Do not make learners infer why open or incomplete entries must be excluded.

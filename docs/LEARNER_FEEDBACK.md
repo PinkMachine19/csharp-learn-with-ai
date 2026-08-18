@@ -354,6 +354,237 @@ Do not require pure recall before the learner has had enough practice with that 
 
 For Session 32's first query method, the scaffold should direct the learner to create a public static `CompletedForEmployee` method, return `IQueryable<ClockEntryEntity>`, accept a `TimeClockDbContext` and employee ID, and temporarily return the context's `ClockEntries` query. The filtering logic remains a later learner-authored step.
 
+## Session 33 live-lab pacing and automatic feedback capture
+
+During guided labs, always announce the current position as **Step n/n** and state how many numbered steps remain. Present one numbered step as one complete unit. Do not split a step into hidden parts or later announce additional required work under the same number; if the action is too large, increase the official step count and update every denominator before guidance begins.
+
+Capture learner questions and observed friction proactively in the appropriate course feedback document when they reveal a reusable lesson improvement. The learner should not need to repeatedly say “make a Codex note.” Record direct active-lab corrections in `docs/LEARNER_FEEDBACK.md` and broader optional or future ideas in `docs/SECONDARY_TERTIARY_THOUGHTS.md`. Do not interrupt every interaction to narrate routine note-taking, and do not treat ordinary typos as curriculum defects unless the instructions contributed to them.
+
+### Session 33 readable shell variables: separate the project-family prefix
+
+When shell commands repeatedly use the long project-family name `PinkMachine19.TimeClock`, define it once as a descriptive variable such as `project_prefix`. Build the specific project name, directory, and project-file path from that value. This keeps the meaningful changing portion, such as `Web`, visible and avoids asking the learner to reread or retype the same long prefix.
+
+Prefer a progression such as `project_prefix` → `web_project_name` → `web_directory` → `web_project_file`. Briefly explain that variable values may be composed from earlier variables and that braces in `${project_prefix}` clearly mark where a variable name ends before appending `.Web`. Do not over-fragment one-off short values into variables; apply this when repetition genuinely obscures the command.
+
+### Session 33 project creation should use the .NET template command
+
+The first Web-project step instructed the learner to create a directory, touch a `.csproj`, and paste routine SDK XML even though the .NET SDK provides the normal `dotnet new web` workflow. Prefer the official template command for this production project and explain what it creates: the Web SDK project file, a minimal `Program.cs`, framework settings, and restore-ready project structure.
+
+After creation, use explicit `dotnet add ... reference ...` commands for the Domain and Infrastructure project references. Explain what each reference enables. This makes the resulting project-file changes inspectable without treating hand-authored boilerplate as the learning objective. Tell the learner that the generated minimal `Program.cs` is expected and will be deliberately replaced or extended at the later composition-root step.
+
+Only fall back to manual `.csproj` creation when exact non-template structure is itself the lesson or the installed SDK lacks the required template. Before running a template into an existing directory, inspect it and avoid `--force` when it could overwrite learner work.
+
+### Session 33 must acknowledge the Web folder scaffolded earlier
+
+The learner correctly remembered creating the Web area during the original solution scaffolding. Repository inspection shows that `src/PinkMachine19.TimeClock.Web` already contains planned subfolders and `.gitkeep` placeholders such as `Requests`, `Responses`, `Configuration`, `Dtos`, `Mappings`, `Options`, and `Validators`, but it was not yet a buildable .NET project: before Session 33 it had no Web `.csproj`, no `Program.cs`, and no solution entry.
+
+Session 33 must state this distinction before project creation: the earlier course created the **Web project shell/folder structure**, while this session activates that shell as a real ASP.NET Core project. Do not say the Web area was “previously nonexistent,” and do not make the learner feel that remembered earlier work was imaginary. Inspect the actual directory first, preserve its existing placeholder folders, and run the template into it only with a safe command that does not erase those files.
+
+Audit the original solution-scaffolding lesson and commands for the readable variable approach discovered here. Where the long `PinkMachine19.TimeClock` prefix or project paths repeat, consider defining `project_prefix` and deriving specific project names and paths. Preserve commands that are already clear; do not mechanically introduce variables when a value appears only once. Also make the early lesson explicit about which directories are merely architectural placeholders and which directories already contain buildable projects with `.csproj` files and solution entries.
+
+The preferred curriculum decision is to delay creating a buildable Web project until the Web layer is actually unlocked, so learners do not carry unexplained ASP.NET Core files through earlier layers. However, do not pre-create a detailed empty Web directory tree unless the architecture-preview lesson explicitly labels it as a non-buildable placeholder and later lessons explicitly say they are activating that shell. The cleanest option is usually to create the directory and real project together at first use. If future structure is previewed early, keep the preview documentary rather than materializing unused folders that later look like a forgotten project.
+
+The existing placeholder tree also omitted `Controllers` even though Session 33 needs that folder before several of the pre-created future-oriented folders. If the course retains early physical scaffolding, audit the planned tree against the first actual Web lesson and include only folders with a clear upcoming purpose, including `Controllers`. Better still, let the official ASP.NET Core project and its needed folders appear incrementally when their concepts are introduced rather than trying to predict the entire future structure with `.gitkeep` files.
+
+The live Session 33 attempt also showed that `dotnet new web` created valid template files before reporting the malformed trailing `-- framework net10.0` arguments. When a retry warns that it will overwrite files, inspect their timestamps and contents before recommending `--force`. If the intended template files were already created correctly, continue from the existing project instead of overwriting or deleting it.
+
+### Course-wide learner preference: CLI actions make structure causal
+
+The learner prefers creating projects, references, solution membership, and files through readable command-line actions even when the same result could be reached through the VS Code Explorer. This is not merely a tooling preference: typing a command makes the relationship between intention and repository change explicit. For example, `dotnet new` creates a project, `dotnet add ... reference` creates a dependency, and `dotnet sln ... add` changes solution membership. Explorer primarily shows the resulting structure but can hide why it exists.
+
+Favor concise, readable CLI commands for structural operations when the command has instructional value. Immediately state what repository state the command changes, then encourage a quick Explorer or file inspection afterward so the learner connects the action to its visible result. Use descriptive shell variables for repeated long paths. Do not turn this preference into command memorization, forbid normal IDE workflows, or use CLI ceremony for edits that are clearer inside the editor.
+
+### Session 33 must justify records before using them as HTTP contracts
+
+Before asking the learner to create `ClockInRequest` or `ClockEntryResponse` as a `record`, explain why a record fits this boundary instead of presenting `sealed record` as unexplained grammar.
+
+- These types primarily carry a small group of named values across the HTTP boundary; they do not own changing business behavior.
+- A positional record declares that data shape concisely and gives value-based equality, a useful default for data-carrier types and tests.
+- The generated constructor and readable representation reduce boilerplate without making the object dynamically typed or unstructured.
+- `sealed` communicates that this exact transport shape is not intended as a base type for an inheritance hierarchy.
+- The request and response remain separate even when their current properties look similar because incoming and outgoing API contracts can evolve independently.
+
+Also state the limits of the choice: records are not mandatory for every request or response, and a class is valid when the type needs different construction, mutability, framework-binding behavior, or substantial behavior. Do not imply that records automatically validate input, enforce Domain invariants, make data immutable in every form, or replace Domain entities. Keep the explanation adjacent to the first record step and reuse a short reminder for the response record.
+
+### Session 33 must explain one short public contract per file
+
+The learner reasonably questioned why a one-line positional record needs an entire file. Explain that C# does not require one type per file; this is a repository organization convention. A short declaration may still represent a complete public HTTP contract, and the compiler generates additional members from the positional-record syntax even though the source is concise.
+
+Keeping `ClockInRequest` in `Requests/ClockInRequest.cs` makes the contract easy to locate, keeps the filename aligned with the public type, produces smaller focused diffs, and lets the request evolve without sharing an unrelated file. Contrast this with tiny private nested helpers or tightly coupled implementation-only types, which may reasonably share a file. Do not suggest that file count measures complexity or that every one-line type universally deserves its own file.
+
+### Session 33 nested generic composition needs practice, not one dense line
+
+The first controller action combines `Task<T>`, `ActionResult<T>`, a response record, a framework result conversion, and `Task.FromResult<T>` in one signature and temporary return. For a learner who has consumed generics more often than deliberately constructed nested generic types, this becomes symbol-heavy before the HTTP meaning is secure.
+
+Teach the final return contract from the inside out:
+
+1. `ClockEntryResponse` is the successful body shape.
+2. `ActionResult<ClockEntryResponse>` means an HTTP action may produce that body or another HTTP result such as `BadRequest` or `Conflict`.
+3. `Task<ActionResult<ClockEntryResponse>>` means that HTTP outcome becomes available asynchronously.
+
+Do not require the learner to author the dense temporary line `Task.FromResult<ActionResult<ClockEntryResponse>>(BadRequest(...))` on first exposure. Either label it as pasteable framework scaffolding or split it into an explicitly typed temporary result followed by inferred `Task.FromResult(temporaryResult)`. When the genuine service await arrives, replace the temporary mechanism with an `async` method and direct action-result returns.
+
+Add optional short drills for composing and decomposing generics across the course. Include exercises that start with a plain value type, wrap it in one generic, then wrap that result in another; substitute concrete types for `T`; read nested types from the inside out; and correct misplaced angle brackets. Include both consuming existing generic APIs and deliberately writing small generic types or methods, because repeated consumption alone can leave the construction grammar abstract. Keep each drill one to three minutes and do not make the learner repeat the entire lab.
+
+### Session 33 should expose conversions before relying on inference
+
+The learner finds target typing and generic inference counterproductive when a type relationship is new because the omitted type prevents the concept from registering. In the first `ActionResult<T>` exercise, show the concrete intermediate types explicitly before offering the concise production form:
+
+- `BadRequest(...)` returns a `BadRequestObjectResult`; it does not contain or infer `ClockEntryResponse`.
+- `ActionResult<ClockEntryResponse>` is the action's broader contract. It can hold either a successful `ClockEntryResponse` value or an `ActionResult` representing a non-success HTTP outcome.
+- The framework-provided conversion is what lets a `BadRequestObjectResult` become the result side of `ActionResult<ClockEntryResponse>`.
+- `Task.FromResult<ActionResult<ClockEntryResponse>>(...)` then creates an already-completed Task whose result type is that complete HTTP contract.
+
+During first exposure, use explicitly typed intermediate variables or an explicit `ActionResult<ClockEntryResponse>` construction and explicit generic type arguments. Only afterward show the inferred shorter form and label exactly what the compiler omitted. Do not treat maximum concision as the default teaching form. Gradually introduce inference after the learner can reconstruct the complete type relationship from memory.
+
+When the method becomes `async Task<ActionResult<ClockEntryResponse>>`, explicitly explain that each `return` expression is checked against the inner async result type, `ActionResult<ClockEntryResponse>`, not against `Task` directly. Expand `return BadRequest(...)` once as `BadRequestObjectResult` → `ActionResult<ClockEntryResponse>` through the framework's result-side conversion; then explain that the async method builder produces the outer Task. Emphasize that `ClockEntryResponse` describes the successful body path, while a failure result such as Bad Request legitimately has no `ClockEntryResponse` value.
+
+### Session 33 must separate pasteable signatures from learner-authored behavior
+
+During the service-call step, the guidance correctly identified the nested ASP.NET Core method signature as pasteable scaffolding but then exposed the entire completed method body. That removed the intended practice of constructing the meaningful control flow.
+
+For framework-heavy actions, separate the two explicitly:
+
+- **Pasteable framework shell:** attributes and an unfamiliar nested generic signature may be shown when their grammar is not the current retrieval target.
+- **Learner-authored behavior:** provide pasteable C# comments describing validation, awaited service arguments, cancellation forwarding, Boolean decision, HTTP translation, and temporary fallback. Ask the learner to type that body beneath the comments.
+
+Only reveal the completed body when the learner is stuck, asks to see it, or requests verification after attempting it. Do not confuse sparing the learner from unfamiliar framework boilerplate with completing the lesson's actual decision logic for them.
+
+### Session 33 must distinguish the HTTP result from its message text
+
+The learner correctly wrote a message containing the word “Conflict” but still called `BadRequest(...)`. Explain at the decision step that the controller helper method selects the HTTP status code, while the string only supplies explanatory response content:
+
+- `BadRequest("...")` produces HTTP 400 regardless of the words in the message.
+- `Conflict("...")` produces HTTP 409 regardless of whether the message contains the word “conflict.”
+
+Ask the learner to choose the result method first based on protocol meaning, then write a useful human-readable message. Do not imply that ASP.NET Core interprets message text to select a status code.
+
+### Session 33 should refresh string interpolation at the Created location
+
+The `Created` step asks the learner to insert `request.EmployeeId` into a route string without reminding them of interpolation grammar. Add a brief just-in-time refresher before the instruction:
+
+```csharp
+string location = $"/items/{itemId}";
+```
+
+Explain that `$` enables interpolation and braces mark the C# expression whose value is inserted. Have the learner first create an explicitly typed `string location` variable, inspect the resulting route mentally, and then pass `location` plus the response object to `Created`. Only afterward show the more compact inline interpolation as an optional equivalent. This keeps route construction separate from the framework method call during first exposure.
+
+### Session 33 DbContext registration should expose the inferred delegate
+
+The concise registration `builder.Services.AddDbContext<TimeClockDbContext>(options => options.UseSqlite(...))` hides the lambda parameter type and the delegate contract at the exact moment both are new. During first exposure, expand it into an explicitly typed `Action<DbContextOptionsBuilder>` variable and an explicitly typed `DbContextOptionsBuilder` lambda parameter. Then pass that named delegate to the explicitly generic `AddDbContext<TimeClockDbContext>` call.
+
+Explain the chain without attributing it to the IDE: the selected `AddDbContext` overload expects an `Action<DbContextOptionsBuilder>`, so the C# compiler can infer the untyped lambda parameter. The IDE uses language-service analysis to display that inferred information, but it does not define the rule. After the learner understands and can reconstruct the explicit form, show the inline inferred lambda as an optional conventional equivalent. Apply the learner's broader preference: expose new types first; compress later.
+
+### Session 33 must explain registration-before-Build ordering
+
+The learner placed `WebApplication app = builder.Build()` before `builder.Services.AddControllers()` and `AddDbContext(...)`. This compiles, so build validation alone does not reveal the lifecycle error. Explain before composition that `builder.Services` is the mutable service-registration collection, while `builder.Build()` creates the application and finalizes the service provider. Registrations must be completed before `Build`; attempting to modify the service collection afterward can fail when the application starts.
+
+Use a visible phase sequence:
+
+```text
+create builder
+→ register every service
+→ build application
+→ create startup scope / initialize database
+→ map endpoints
+→ run
+```
+
+Add a startup verification because this class of error is runtime-visible rather than necessarily compile-visible. Ask one short prediction question before the first run: “Can the container construct the controller and every dependency after Build?”
+
+### Session 33 needs a purpose diagram before startup-scope boilerplate
+
+The Program.cs step asks the learner to create a scope, resolve `TimeClockDbContext`, and call `EnsureCreatedAsync` without first diagramming the intention. Before showing this framework code, distinguish registration from resolution:
+
+- `AddDbContext<TimeClockDbContext>(...)` registers a construction recipe and scoped lifetime; it does not create the context instance used at startup.
+- `builder.Build()` creates the application service provider from all registered recipes.
+- `app.Services.CreateScope()` creates a valid scoped-lifetime boundary outside an HTTP request.
+- `scope.ServiceProvider.GetRequiredService<TimeClockDbContext>()` asks the container to construct one context according to the registered recipe.
+- `dbContext.Database.EnsureCreatedAsync()` uses that actual context, provider, and connection to create the SQLite schema when it is absent.
+- Disposing the scope disposes the scoped context after initialization.
+
+Show the intent before syntax:
+
+```text
+register recipe
+→ build provider
+→ create startup scope
+→ resolve actual DbContext
+→ ensure database schema
+→ dispose startup scope
+→ begin serving requests
+```
+
+Also show the normal request-time graph separately:
+
+```text
+HTTP request scope
+→ ClockEntriesController
+→ AsyncClockEntryService
+→ IAsyncClockEntryRepository / EfClockEntryRepository
+→ TimeClockDbContext
+→ SQLite
+```
+
+Explain that normal requests receive scoped services automatically, while startup database initialization has no request scope, so Program.cs creates one deliberately. Label this block as application startup initialization, not generic DI ceremony. Keep the diagram adjacent to the code and include a short purpose reminder after it.
+
+### Session 33 must contrast AddControllers with MapControllers
+
+The learner asked how to map controllers after already calling `AddControllers`. Explain that these methods participate in different startup phases:
+
+- `builder.Services.AddControllers()` registers the services ASP.NET Core needs to create and execute controllers.
+- `app.MapControllers()` reads controller route attributes and adds those routes to the application's endpoint table.
+- `app.Run()` starts the host and must appear after endpoint mapping.
+
+Use the memory anchor: “AddControllers prepares controller services; MapControllers exposes controller routes.” Connect the controller's `[Route("clock-entries")]` and `[HttpPost("clock-in")]` attributes to the resulting `POST /clock-entries/clock-in` endpoint.
+
+### Session 33 final startup must explain the expected root 404
+
+After replacing the generated `app.MapGet("/", ...)` route with controller mapping, browsing to the application root sends `GET /`, but Session 33 defines only `POST /clock-entries/clock-in`. A 404 at `/` therefore means no endpoint matches that method-and-path pair; it does not by itself mean startup or controller mapping failed.
+
+At final validation, state the registered endpoint explicitly and distinguish both dimensions of routing:
+
+```text
+HTTP method: POST
+Path: /clock-entries/clock-in
+```
+
+Provide a readable `curl` request using the actual listening base URL and JSON body. First use an invalid employee ID to verify the controller's Bad Request branch without requiring successful persistence, then optionally use a valid value to observe Created and a repeated open entry to observe Conflict. Explain that typing the URL into a browser address bar issues GET, so it cannot exercise a POST-only action. Do not reintroduce a root route solely to hide this expected 404 unless the course intentionally wants a health or landing endpoint.
+
+### Session 33 must keep DbContext registration and provider configuration together
+
+The learner registered `AddDbContext<TimeClockDbContext>()` but accidentally moved the `UseSqlite("Data Source=timeclock.db")` expression into a later comment. The project still compiled because registration without a configured provider is syntactically valid; the problem appears when the context performs database work at startup.
+
+Keep the registration and provider configuration in the same visual code cluster. Immediately after it, ask: “Which provider and connection will this context use when resolved?” Validation must include starting the application or otherwise resolving the context and executing `EnsureCreatedAsync`; a successful build alone does not prove that an EF Core provider was configured.
+
+### Session 33 startup scope must end before app.Run
+
+A top-level using declaration such as `using IServiceScope scope = app.Services.CreateScope();` remains alive until control leaves the generated top-level method. Because `app.Run()` blocks until shutdown, that form keeps the startup scope and its `TimeClockDbContext` alive for the application's entire run.
+
+Use a bounded `using (IServiceScope scope = app.Services.CreateScope()) { ... }` block around context resolution and `EnsureCreatedAsync`. Explain that leaving the braces disposes the context before routes are mapped and the server begins accepting requests. This makes the intended lifecycle visible:
+
+```text
+create startup scope
+→ resolve context
+→ ensure schema
+→ leave block and dispose scope/context
+→ map routes and run
+```
+
+Include this lifecycle in startup validation; do not present using declarations and using blocks as interchangeable when their containing scope ends at materially different times.
+
+Before the startup-scope code, explicitly answer “What are we disposing, and what survives?” `TimeClockDbContext` is a short-lived unit-of-work object that owns tracking state and may own or coordinate database resources. The startup scope owns the scoped context instance it resolves. Disposing the scope disposes that context and releases its temporary resources. It does **not** delete the SQLite file, erase the schema, or undo `EnsureCreatedAsync`; `timeclock.db` and its created tables remain for later request scopes.
+
+Connect the scope to the registered lifetime rather than presenting it as arbitrary nesting:
+
+- `AddDbContext` registers `TimeClockDbContext` as scoped by default.
+- During an HTTP request, ASP.NET Core automatically creates and later disposes a request scope.
+- During startup, no HTTP request exists, so Program.cs creates an equivalent temporary scope deliberately.
+- The startup context is used only to ensure the schema, then discarded.
+- Later requests receive different scoped context instances for their own work and disposal.
+
+Use the memory anchor: “The scope owns the context; the database outlives both.” Explain that resolving a scoped service from the application's root provider would blur or extend its intended lifetime and may be rejected when scope validation is enabled.
+
 ### Session 32 learner feedback: separate organization concepts at first use
 
 The learner initially reasoned that Infrastructure's Domain project reference made `ClockEntryEntity` and `TimeClockDbContext` available. Correct this adjacent to the query class: those types already belong to the same Infrastructure project. A project reference exposes public types from another project; folders organize files; namespaces qualify type names; project membership determines compilation. These concepts are related but not interchangeable. In the current global-namespace learner repository, moving between Infrastructure folders does not itself require another `using` directive.

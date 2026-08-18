@@ -6,7 +6,7 @@
   "objectives": [
     "Explain what a solution (.sln) is and what a project (.csproj) is, and how the two relate.",
     "Distinguish a console application, a class library, an ASP.NET Core web project, and an xUnit test project by what each one produces.",
-    "Use dotnet new to generate a solution and all six permanent projects.",
+    "Use dotnet new to generate a solution and five buildable projects while labeling Web as a non-buildable architecture preview.",
     "Explain why source projects live under src/ and test projects live under tests/.",
     "Use dotnet sln add and dotnet build to assemble and build a solution from independently created projects.",
     "Choose project folders by architectural responsibility and explain when each one should be added.",
@@ -71,15 +71,15 @@
       "title": "A solution groups projects; a project is the buildable unit",
       "paragraphs": [
         "A .csproj file is the actual unit the .NET toolchain compiles: it lists a target framework, its dependencies, and the source files that belong to it. Every meaningful thing — building, running, testing, publishing — ultimately happens at the level of one .csproj.",
-        "A .sln file is a manifest of project paths. By the end of this lab it lists Domain, App, Infrastructure, Web, ScratchPad, and Domain.Tests so one build or test command can act on the complete learner workspace."
+        "A .sln file is a manifest of project paths. By the end of this lab it lists the five buildable projects: Domain, App, Infrastructure, ScratchPad, and Domain.Tests. Web remains a non-buildable folder preview until its concepts unlock in Session 33."
       ]
     },
     {
-      "title": "Four templates, six permanent projects",
+      "title": "Three templates, five projects, and one preview shell",
       "paragraphs": [
         "dotnet new console creates a runnable project. App is the production console host; ScratchPad is a second console project used only as the permanent learning notebook.",
-        "dotnet new classlib creates Domain and Infrastructure because neither runs by itself. dotnet new web creates the HTTP host. dotnet new xunit creates the permanent test project.",
-        "The lab creates all six projects. ScratchPad is never deleted, and production projects never reference it."
+        "dotnet new classlib creates Domain and Infrastructure because neither runs by itself. dotnet new xunit creates the permanent test project. The Web folder tree is only an explicitly labeled architecture preview here; it has no .csproj, Program.cs, or solution entry yet.",
+        "The lab creates five buildable projects and one non-buildable Web shell. ScratchPad is never deleted, and production projects never reference it."
       ]
     },
     {
@@ -173,15 +173,15 @@
         "code": "dotnet new gitignore"
       },
       {
-        "text": "Create the Domain and Infrastructure class libraries, the App and ScratchPad console projects, the Web project, and the Domain.Tests xUnit project in their named folders.",
-        "code": "dotnet new classlib -o \"$domain_project\"\ndotnet new console -o \"$app_project\"\ndotnet new classlib -o \"$infrastructure_project\"\ndotnet new web -o \"$web_project\"\ndotnet new console -o \"$scratchpad_project\"\ndotnet new xunit -o \"$domain_tests_project\""
+        "text": "Create the Domain and Infrastructure class libraries, the App and ScratchPad console projects, and the Domain.Tests xUnit project. Create the Web folder placeholders only as a non-buildable architecture preview; Session 33 will activate that shell with the Web template.",
+        "code": "dotnet new classlib -o \"$domain_project\"\ndotnet new console -o \"$app_project\"\ndotnet new classlib -o \"$infrastructure_project\"\ndotnet new console -o \"$scratchpad_project\"\ndotnet new xunit -o \"$domain_tests_project\"\nmkdir -p \"$web_project\"/{Configuration,Dtos,Mappings,Options,Requests,Responses,Validators}\ntouch \"$web_project\"/{Configuration,Dtos,Mappings,Options,Requests,Responses,Validators}/.gitkeep"
       },
       {
-        "text": "Add all six project files to PinkMachine19.TimeClock.sln by using solution_file and the six folder variables.",
-        "code": "dotnet sln \"$solution_file\" add \"$domain_project/${solution_name}.Domain.csproj\"\ndotnet sln \"$solution_file\" add \"$app_project/${solution_name}.App.csproj\"\ndotnet sln \"$solution_file\" add \"$infrastructure_project/${solution_name}.Infrastructure.csproj\"\ndotnet sln \"$solution_file\" add \"$web_project/${solution_name}.Web.csproj\"\ndotnet sln \"$solution_file\" add \"$scratchpad_project/${solution_name}.ScratchPad.csproj\"\ndotnet sln \"$solution_file\" add \"$domain_tests_project/${solution_name}.Domain.Tests.csproj\""
+        "text": "Add all five buildable project files to PinkMachine19.TimeClock.sln. Do not add Web because its preview shell has no project file yet.",
+        "code": "dotnet sln \"$solution_file\" add \"$domain_project/${solution_name}.Domain.csproj\"\ndotnet sln \"$solution_file\" add \"$app_project/${solution_name}.App.csproj\"\ndotnet sln \"$solution_file\" add \"$infrastructure_project/${solution_name}.Infrastructure.csproj\"\ndotnet sln \"$solution_file\" add \"$scratchpad_project/${solution_name}.ScratchPad.csproj\"\ndotnet sln \"$solution_file\" add \"$domain_tests_project/${solution_name}.Domain.Tests.csproj\""
       },
       {
-        "text": "Run dotnet sln list and confirm the solution contains six projects. Then build PinkMachine19.TimeClock.sln and confirm it reports zero errors.",
+        "text": "Run dotnet sln list and confirm the solution contains five buildable projects and no Web entry. Then build PinkMachine19.TimeClock.sln and confirm it reports zero errors.",
         "code": "dotnet sln \"$solution_file\" list\ndotnet build \"$solution_file\""
       },
       {
@@ -197,7 +197,7 @@
     {
       "path": "PinkMachine19.TimeClock.sln",
       "action": "Add",
-      "why": "Track all six permanent projects."
+      "why": "Track the five projects that are buildable at this point."
     },
     {
       "path": ".gitignore",
@@ -233,16 +233,6 @@
       "path": "src/PinkMachine19.TimeClock.Infrastructure/Class1.cs",
       "action": "Add",
       "why": "Record the infrastructure template until EF persistence replaces it."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj",
-      "action": "Add",
-      "why": "Create the HTTP host."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Web/Program.cs",
-      "action": "Add",
-      "why": "Record the scaffolded web host until Session 33 adds endpoints."
     },
     {
       "path": "src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj",
@@ -322,7 +312,7 @@
       "Domain project",
       "App project",
       "Infrastructure project",
-      "Web project",
+      "Non-buildable Web folder preview",
       "ScratchPad project",
       "Domain.Tests project"
     ],

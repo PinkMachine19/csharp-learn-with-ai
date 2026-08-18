@@ -2,7 +2,7 @@
   "number": 2,
   "category": "Tooling and project structure",
   "estimatedTime": "40 minutes",
-  "connection": "Session 01 left six scaffolded projects in one learner solution. They contain only template code and do not reference each other. Add the permanent dependency arrows required by the zero-to-N solution without adding business code.",
+  "connection": "Session 01 left five buildable projects in one solution plus a non-buildable Web folder preview. Add the currently possible dependency arrows without inventing a Web project before its concepts unlock.",
   "objectives": [
     "Use dotnet add reference to create a ProjectReference from one project to another.",
     "Read a .csproj's <ProjectReference> element and explain the relative path it contains.",
@@ -69,7 +69,7 @@
       "title": "ProjectReference creates a compile-time dependency",
       "paragraphs": [
         "dotnet add reference edits the consuming .csproj and adds one relative ProjectReference path. It does not copy source code or merge projects.",
-        "App, Infrastructure, Web, ScratchPad, and Domain.Tests each consume Domain independently."
+        "App, Infrastructure, ScratchPad, and Domain.Tests each consume Domain independently. The non-buildable Web shell cannot reference Domain until Session 33 activates it."
       ],
       "code": "dotnet add src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj reference src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj"
     },
@@ -98,13 +98,13 @@
   ],
   "lab": {
     "objective": "Add the permanent dependency arrows required by the zero-to-N solution without adding business code.",
-    "startingCondition": "Session 01 left six scaffolded projects in one learner solution. They contain only template code and do not reference each other.",
+    "startingCondition": "Session 01 left five buildable projects in one solution plus a clearly labeled non-buildable Web folder preview. The projects contain only template code and do not reference each other.",
     "steps": [
       {
-        "text": "Edit the App, Infrastructure, Web, ScratchPad, and Domain.Tests project files by adding one ProjectReference from each project to PinkMachine19.TimeClock.Domain.csproj. Do not add a reference from Domain to another project.",
-        "code": "dotnet add src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj reference src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\ndotnet add src/PinkMachine19.TimeClock.Infrastructure/PinkMachine19.TimeClock.Infrastructure.csproj reference src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\ndotnet add src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj reference src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\ndotnet add src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj reference src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\ndotnet add tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj reference src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj"
+        "text": "Edit the App, Infrastructure, ScratchPad, and Domain.Tests project files by adding one ProjectReference from each project to PinkMachine19.TimeClock.Domain.csproj. The Web preview has no .csproj yet, so it cannot receive a reference. Do not add a reference from Domain to another project.",
+        "code": "dotnet add src/PinkMachine19.TimeClock.App/PinkMachine19.TimeClock.App.csproj reference src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\ndotnet add src/PinkMachine19.TimeClock.Infrastructure/PinkMachine19.TimeClock.Infrastructure.csproj reference src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\ndotnet add src/PinkMachine19.TimeClock.ScratchPad/PinkMachine19.TimeClock.ScratchPad.csproj reference src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj\ndotnet add tests/PinkMachine19.TimeClock.Domain.Tests/PinkMachine19.TimeClock.Domain.Tests.csproj reference src/PinkMachine19.TimeClock.Domain/PinkMachine19.TimeClock.Domain.csproj"
       },
-      "Open each of the five edited .csproj files and locate the ProjectReference Include path that points to PinkMachine19.TimeClock.Domain.csproj.",
+      "Open each of the four edited .csproj files and locate the ProjectReference Include path that points to PinkMachine19.TimeClock.Domain.csproj.",
       "Temporarily add an App ProjectReference to PinkMachine19.TimeClock.Domain.csproj, build once to observe that the tooling permits the wrong direction, and immediately remove only that temporary reference.",
       {
         "text": "Build PinkMachine19.TimeClock.sln, then open PinkMachine19.TimeClock.Domain.csproj and confirm it contains no ProjectReference element.",
@@ -124,11 +124,6 @@
     },
     {
       "path": "src/PinkMachine19.TimeClock.Infrastructure/PinkMachine19.TimeClock.Infrastructure.csproj",
-      "action": "Modify",
-      "why": "Reference Domain."
-    },
-    {
-      "path": "src/PinkMachine19.TimeClock.Web/PinkMachine19.TimeClock.Web.csproj",
       "action": "Modify",
       "why": "Reference Domain."
     },
@@ -166,7 +161,7 @@
       "explanation": "A reference pulls in everything the referenced project needs to compile. A library referencing its own consumer forces every future consumer to drag that first consumer along."
     },
     {
-      "prompt": "Why does tests/PinkMachine19.TimeClock.Domain.Tests reference Domain, Infrastructure, and Web all at once, when PinkMachine19.TimeClock.App only references Domain?",
+      "prompt": "Why may Domain.Tests eventually reference several production layers while App references only Domain here?",
       "options": [
         "Test projects are exempt from the usual dependency-direction rule because nothing else is allowed to depend back on them",
         "This is a mistake in the real solution",
@@ -179,7 +174,7 @@
       "prompt": "PinkMachine19.TimeClock.Infrastructure will eventually add real EF Core database code. Based on this session's layering discussion, should PinkMachine19.TimeClock.Domain gain a reference to PinkMachine19.TimeClock.Infrastructure once that happens?",
       "options": [
         "Yes, so Domain can use EF Core types directly",
-        "No — Domain stays technology-agnostic; Infrastructure depends on Domain, not the other way around, exactly like App and Web already do",
+        "No — Domain stays technology-agnostic; Infrastructure depends on Domain, not the other way around, exactly like App already does",
         "Only if the database is SQLite"
       ],
       "correct": 1,
@@ -192,7 +187,7 @@
     "Why does a dependency graph that fans out from one shared project (Domain) tend to be easier to reason about than one where every project references every other project?"
   ],
   "whatBreaks": "Reversing the reference direction (Domain referencing App) compiles today, because nothing in the .NET toolchain enforces which way project references should point — but it silently blocks every future project, like PinkMachine19.TimeClock.Infrastructure or PinkMachine19.TimeClock.Web, from depending on Domain without also depending on App and everything App needs. Skipping dotnet add reference entirely leaves PinkMachine19.TimeClock.App unable to resolve ClockEntry or any other Domain type, and the compiler reports it as a missing type rather than a missing reference — a genuinely confusing error if you don't already know references are the fix. Letting a non-test project reference PinkMachine19.TimeClock.Domain.Tests would invert the one relationship that's supposed to stay one-directional in the other direction: tests may depend on everything, but nothing may depend on tests.",
-  "summary": "dotnet add reference performs one concrete edit — inserting a <ProjectReference> element with a relative path — and that element is the entire mechanism behind project dependencies in .NET. The direction those references point is a design decision the tooling will happily let you get wrong: PinkMachine19.TimeClock.App, PinkMachine19.TimeClock.Infrastructure, and PinkMachine19.TimeClock.Web each reference PinkMachine19.TimeClock.Domain because they are specific consumers of general-purpose code, and Domain references none of them so it stays reusable by all three, and by whatever consumer comes next.",
+  "summary": "dotnet add reference inserts a <ProjectReference> element with a relative path. App, Infrastructure, ScratchPad, and Domain.Tests can reference Domain because they are buildable consumers now; the Web preview cannot receive a reference until Session 33 activates it. Domain references none of its consumers, so it remains reusable.",
   "learningEnvironment": "solution",
   "buildState": {
     "creates": [],

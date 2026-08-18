@@ -44,7 +44,7 @@ from directly rather than replacing with an idealized invention.
    `GetClockEntry`/`ClockOutEmployee`.
 7. Session 25 reads the real, correct `Clockout` await and the real fake-async
    `GetClockEntry`, and identifies (without yet fixing) `Program.cs`'s real CS4014 bug.
-   Session 34 fixes it as part of the integration capstone.
+   The later integration sequence resolves and verifies it before the final cumulative workflow.
 8. Session 28 traces the real `PayrollServiceTests.cs` line by line.
 9. Sessions 30-33 (EF Core, ASP.NET Core) are new, clearly-labeled extensions of the real
    domain's real gaps (no data layer, broken WebApi scaffold) — not yet rewritten with that

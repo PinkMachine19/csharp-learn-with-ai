@@ -72,17 +72,24 @@
 - Safe next assumption: the first HTTP boundary and its DTOs now genuinely exist.
 - Remaining concern: authentication and broader HTTP integration hosting are later topics.
 
-## Session 34
+## Session 34A
 
 - Original inaccuracies: described a fictional missing registration and types that did not exist in the learner solution.
 - Design decision: extract the actual DbContext/repository/service registrations into `AddTimeClockPersistence` and verify scoped constructor resolution.
-- Files changed: Infrastructure `ServiceRegistration.cs`, Web `Program.cs`, registration test, and Session 34 lesson/build metadata.
+- Files changed: Infrastructure `ServiceRegistration.cs`, Web `Program.cs`, registration test, and Session 34A lesson/build metadata.
 - New learner artifacts: `ServiceRegistration.AddTimeClockPersistence` and `ServiceRegistrationTests`.
 - Production state: Web is the composition root and persistence dependencies are scoped per request.
 - Build result: Web startup and Release build passed with no resolution failure.
 - Test result: real container resolution test and full suite passed.
 - Safe next assumption: `AsyncClockEntryService` resolves transitively with its EF repository and DbContext.
 - Remaining concern: alternative lifetime edge cases remain optional.
+
+## Session 34B
+
+- Design decision: preserve validation, logging, and API error responses as their own production HTTP-boundary lesson.
+- Files changed: Web `ClockEntriesController.cs` and Session 34B lesson/build metadata.
+- Production state: invalid input, conflict, and unexpected failure map to deliberate ProblemDetails while structured logs retain safe diagnostic context.
+- Safe next assumption: the clock-in endpoint has explicit client-facing errors without leaking exception details.
 
 ## Session 35
 

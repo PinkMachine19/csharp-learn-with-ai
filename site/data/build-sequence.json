@@ -378,7 +378,7 @@
       ]
     },
     {
-      "number": 34,
+      "number": "34A",
       "environment": "production",
       "extends": [
         "Extension-method registration",
@@ -390,6 +390,17 @@
         "src/PinkMachine19.TimeClock.Infrastructure/ServiceRegistration.cs",
         "tests/PinkMachine19.TimeClock.Domain.Tests/ServiceRegistrationTests.cs"
       ]
+    },
+    {
+      "number": "34B",
+      "environment": "production",
+      "extends": [
+        "Boundary validation",
+        "Structured logging",
+        "ProblemDetails responses",
+        "HTTP error mapping"
+      ],
+      "creates": []
     },
     {
       "number": 35,

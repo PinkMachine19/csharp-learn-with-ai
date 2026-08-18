@@ -2,7 +2,7 @@
   "number": 35,
   "category": "Application milestone",
   "estimatedTime": "40 minutes",
-  "connection": "Sessions 26–30 prepared Task and DI concepts; Sessions 31–34 created real SQLite persistence, query execution, an HTTP boundary, and verified registrations. Session 35 tests the natural duplicate-clock-in rule across those boundaries.",
+  "connection": "Sessions 26–30 prepared Task and DI concepts; Sessions 31–34B created real SQLite persistence, query execution, an HTTP boundary, verified registrations, and deliberate API errors. Session 35 tests the natural duplicate-clock-in rule across those boundaries.",
   "objectives": [
     "Exercise AsyncClockEntryService with the real EF repository and SQLite.",
     "Verify the first clock-in persists.",
@@ -67,7 +67,7 @@
     {
       "title": "Verify the cumulative async clock-in workflow",
       "paragraphs": [
-        "Sessions 26–30 prepared Task and DI concepts; Sessions 31–34 created real SQLite persistence, query execution, an HTTP boundary, and verified registrations. Session 35 tests the natural duplicate-clock-in rule across those boundaries.",
+        "Sessions 26–30 prepared Task and DI concepts; Sessions 31–34B created real SQLite persistence, query execution, an HTTP boundary, verified registrations, and deliberate API errors. Session 35 tests the natural duplicate-clock-in rule across those boundaries.",
         "Exercise AsyncClockEntryService with the real EF repository and SQLite."
       ]
     },
@@ -96,7 +96,7 @@
       "Failure atomicity"
     ],
     "task": "Prove one clock-in is persisted and a second open clock-in is rejected without changing database state.",
-    "startingCondition": "Sessions 26–30 prepared Task and DI concepts; Sessions 31–34 created real SQLite persistence, query execution, an HTTP boundary, and verified registrations. Session 35 tests the natural duplicate-clock-in rule across those boundaries.",
+    "startingCondition": "Sessions 26–30 prepared Task and DI concepts; Sessions 31–34B created real SQLite persistence, query execution, an HTTP boundary, verified registrations, and deliberate API errors. Session 35 tests the natural duplicate-clock-in rule across those boundaries.",
     "pasteReadyInstructions": true,
     "stepCheckboxes": true,
     "steps": [
